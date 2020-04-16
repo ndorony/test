@@ -52,7 +52,8 @@
             </div>
         </div>
         <div class="row" dir="rtl">
-            <h2 v-bind:class="{ 'error': message.error }">{{ message.value }}</h2>
+            <h2 v-on:click="next()"
+                v-bind:class="{ 'error': message.error }">{{ message.value }}</h2>
         </div>
 
     </div>
@@ -72,9 +73,12 @@
             result: 0,
             exercise: '',
             message: '',
+            ended: false,
         },
         methods: {
             create: function (code) {
+                this.message = {};
+                this.ended = false;
                 let a = this.randomIntFromInterval(1, 10);
                 let b = this.randomIntFromInterval(0, 8);
                 this.result = a + b;
@@ -99,9 +103,14 @@
                 return a;
             }, check(index) {
                 if (this.results[index] === this.result) {
+                    this.ended = true;
                     this.message = {value: 'הצלחת! :)'}
                 } else {
                     this.message = {value: 'נסה שוב :(', error: true}
+                }
+            }, next() {
+                if (this.ended) {
+                    this.create()
                 }
             }
 
