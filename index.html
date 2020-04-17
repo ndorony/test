@@ -18,6 +18,10 @@
             color: #e53935;
         }
 
+        .success {
+            color: #64dd17;
+        }
+
         .result {
             border: 1px solid #ccc;
             padding: 0.01em 16px;
@@ -52,7 +56,7 @@
         </div>
         <div class="row" dir="rtl">
             <h2 v-on:click="next()"
-                v-bind:class="{ 'error': message.error }">{{ message.value }}</h2>
+                v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
 
     </div>
@@ -103,7 +107,7 @@
             }, check(index) {
                 if (this.results[index] === this.result) {
                     this.ended = true;
-                    this.message = {value: 'הצלחת! :)'}
+                    this.message = {value: 'הצלחת! :)', success: true}
                 } else {
                     this.message = {value: 'נסה שוב :(', error: true}
                 }
