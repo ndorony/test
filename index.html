@@ -79,11 +79,11 @@
                 this.message = {};
                 this.ended = false;
                 let a = this.randomIntFromInterval(1, 10);
-                let b = this.randomIntFromInterval(0, 8);
+                let b = this.randomIntFromInterval(0, 6);
                 this.result = a + b;
                 this.results = [this.result,];
                 while (this.results.length !== 4) {
-                    let option = this.randomIntFromInterval(1, 18);
+                    let option = this.randomIntFromInterval(1, 16);
                     if (!this.results.includes(option)) {
                         this.results.push(option);
                     }
