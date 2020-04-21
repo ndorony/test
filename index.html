@@ -191,12 +191,17 @@
         return generate_from_list(ABC, 0, 2);
     }
 
+    function nameToLetter() {
+        return generate_from_list(ABC, 2, 0);
+    }
+
     apps = [{icon: 'add_circle_outline', func: add},
         {icon: 'remove_circle_outline', func: sub},
         {icon: 'format_list_numbered', func: count},
         {icon: 'format_size', func: lowerToCapital},
         {icon: 'format_size', func: capitalToLower},
         {icon: 'format_shapes', func: letterToName},
+        {icon: 'format_shapes', func: nameToLetter},
     ];
 
     let app = new Vue({
