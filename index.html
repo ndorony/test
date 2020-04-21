@@ -56,8 +56,7 @@
 
         </div>
         <div class="row" dir="rtl">
-            <h2 v-on:click="next()"
-                v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
 
     </div>
@@ -205,13 +204,12 @@
         data: {
             result: 0,
             exercise: '',
-            message: '',
+            message: {},
             ended: false,
             currentAppNumber: 3
         },
         methods: {
             create: function (code) {
-                this.message = {};
                 this.ended = false;
                 let a = this.currentApp.func();
                 this.results = this.shuffle(a[1]);
@@ -227,7 +225,8 @@
             }, check: function (index) {
                 if (this.results[index] === this.result) {
                     this.ended = true;
-                    this.message = {value: this.getSuccessMsg(), success: true}
+                    this.message = {value: this.getSuccessMsg(), success: true};
+                    this.create();
                 } else {
                     this.message = {value: 'נסה שוב :(', error: true}
                 }
