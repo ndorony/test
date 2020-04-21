@@ -129,9 +129,76 @@
         return [getNItmes(result), results, result];
     }
 
+    function get_results_numbers(min, max) {
+        let results = [];
+        while (results.length !== 4) {
+            let option = randomIntFromInterval(min, max);
+            if (!results.includes(option)) {
+                results.push(option);
+            }
+        }
+
+        return results
+    }
+
+    const ABC = [["A", "a", "אֵי"],
+        ["B", "b", "בִי"],
+        ["C", "c", "סִי"],
+        ["D", "d", "דִי"],
+        ["E", "e", "אִי"],
+        ["F", "f", "אֵף"],
+        ["G", "g", "גִ׳י"],
+        ["H", "h", "אֵיְיץ'"],
+        ["I", "i", "אַי"],
+        ["J", "j", "גֵ'י"],
+        ["K", "k", "קֵי"],
+        ["L", "l", "אֶל"],
+        ["M", "m", "אֶם"],
+        ["N", "n", "אֶן"],
+        ["O", "o", "אוֹ"],
+        ["P", "p", "פִּי"],
+        ["Q", "q", "קְיוּ"],
+        ["R", "r", "אַר"],
+        ["S", "s", "אֶס"],
+        ["T", "t", "טִי"],
+        ["U", "u", "יוּ"],
+        ["V", "v", "וִי"],
+        ["W", "w", "דַאבְּלְיוּ"],
+        ["X", "x", "אֶקְס"],
+        ["Y", "y", "וַוי"],
+        ["Z", "z", "זד"],];
+
+    function generate_from_list(list, questionIndex, resultIndex) {
+        let results_numbers = get_results_numbers(0, list.length - 1);
+        let results = [];
+
+        for (let i = 0; i < results_numbers.length; i++) {
+            results.push(list[results_numbers[i]][resultIndex])
+        }
+
+        let results_number = results_numbers[randomIntFromInterval(0, results_numbers.length - 1)];
+        return [list[results_number][resultIndex], results, list[results_number][questionIndex]];
+    }
+
+    function lowerToCapital() {
+        return generate_from_list(ABC, 1, 0);
+    }
+
+    function capitalToLower() {
+        return generate_from_list(ABC, 0, 1);
+    }
+
+    function letterToName() {
+        return generate_from_list(ABC, 0, 2);
+    }
+
     apps = [{icon: 'add_circle_outline', func: add},
         {icon: 'remove_circle_outline', func: sub},
-        {icon: 'format_list_numbered', func: count}];
+        {icon: 'format_list_numbered', func: count},
+        {icon: 'format_size', func: lowerToCapital},
+        {icon: 'format_size', func: capitalToLower},
+        {icon: 'format_shapes', func: letterToName},
+    ];
 
     let app = new Vue({
         el: '#app',
@@ -140,7 +207,7 @@
             exercise: '',
             message: '',
             ended: false,
-            currentAppNumber: 2
+            currentAppNumber: 3
         },
         methods: {
             create: function (code) {
@@ -157,18 +224,18 @@
                     [a[i], a[j]] = [a[j], a[i]];
                 }
                 return a;
-            }, check: function(index) {
+            }, check: function (index) {
                 if (this.results[index] === this.result) {
                     this.ended = true;
                     this.message = {value: this.getSuccessMsg(), success: true}
                 } else {
                     this.message = {value: 'נסה שוב :(', error: true}
                 }
-            }, next: function() {
+            }, next: function () {
                 if (this.ended) {
                     this.create()
                 }
-            }, getSuccessMsg: function(){
+            }, getSuccessMsg: function () {
                 return he.decode("הצלחת &#128525;");
             }, changeApp: function () {
                 this.currentAppNumber = (this.currentAppNumber + 1) % apps.length;
