@@ -71,6 +71,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
 <script>
+    // https://freesound.org/people/MattLeschuck/sounds/511484/
+    const successSound = new Audio("./sounds/success.mp3");
+    // https://freesound.org/people/Leszek_Szary/sounds/171672/
+    const failureSound = new Audio("./sounds/failure.mp3");
     function randomIntFromInterval(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
@@ -231,8 +235,10 @@
                 if (this.results[index] === this.result) {
                     this.ended = true;
                     this.message = {value: this.getSuccessMsg(), success: true};
+                    successSound.play();
                     this.create();
                 } else {
+                    failureSound.play();
                     this.message = {value: 'נסה שוב :(', error: true}
                 }
             }, next: function () {
