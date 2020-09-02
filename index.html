@@ -144,59 +144,174 @@
         return results
     }
 
-    const ABC = [["A", "a", "אֵי"],
-        ["B", "b", "בִי"],
-        ["C", "c", "סִי"],
-        ["D", "d", "דִי"],
-        ["E", "e", "אִי"],
-        ["F", "f", "אֵף"],
-        ["G", "g", "גִ׳י"],
-        ["H", "h", "אֵיְיץ'"],
-        ["I", "i", "אַי"],
-        ["J", "j", "גֵ'י"],
-        ["K", "k", "קֵי"],
-        ["L", "l", "אֶל"],
-        ["M", "m", "אֶם"],
-        ["N", "n", "אֶן"],
-        ["O", "o", "אוֹ"],
-        ["P", "p", "פִּי"],
-        ["Q", "q", "קְיוּ"],
-        ["R", "r", "אַר"],
-        ["S", "s", "אֶס"],
-        ["T", "t", "טִי"],
-        ["U", "u", "יוּ"],
-        ["V", "v", "וִי"],
-        ["W", "w", "דַאבְּלְיוּ"],
-        ["X", "x", "אֶקְס"],
-        ["Y", "y", "וַוי"],
-        ["Z", "z", "זד"],];
+    const ABC = [
+        {
+            englishUpperCase: {type: "text", value: "A"},
+            englishLowerCase: {type: "text", value: "a"},
+            hebrewTransliteration: {type: "text", value: "אֵי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "B"},
+            englishLowerCase: {type: "text", value: "b"},
+            hebrewTransliteration: {type: "text", value: "בִי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "C"},
+            englishLowerCase: {type: "text", value: "c"},
+            hebrewTransliteration: {type: "text", value: "סִי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "D"},
+            englishLowerCase: {type: "text", value: "d"},
+            hebrewTransliteration: {type: "text", value: "דִי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "E"},
+            englishLowerCase: {type: "text", value: "e"},
+            hebrewTransliteration: {type: "text", value: "אִי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "F"},
+            englishLowerCase: {type: "text", value: "f"},
+            hebrewTransliteration: {type: "text", value: "אֵף"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "G"},
+            englishLowerCase: {type: "text", value: "g"},
+            hebrewTransliteration: {type: "text", value: "גִ׳י"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "H"},
+            englishLowerCase: {type: "text", value: "h"},
+            hebrewTransliteration: {type: "text", value: "אֵיְיץ'"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "I"},
+            englishLowerCase: {type: "text", value: "i"},
+            hebrewTransliteration: {type: "text", value: "אַי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "J"},
+            englishLowerCase: {type: "text", value: "j"},
+            hebrewTransliteration: {type: "text", value: "גֵ'י"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "K"},
+            englishLowerCase: {type: "text", value: "k"},
+            hebrewTransliteration: {type: "text", value: "קֵי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "L"},
+            englishLowerCase: {type: "text", value: "l"},
+            hebrewTransliteration: {type: "text", value: "אֶל"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "M"},
+            englishLowerCase: {type: "text", value: "m"},
+            hebrewTransliteration: {type: "text", value: "אֶם"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "N"},
+            englishLowerCase: {type: "text", value: "n"},
+            hebrewTransliteration: {type: "text", value: "אֶן"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "O"},
+            englishLowerCase: {type: "text", value: "o"},
+            hebrewTransliteration: {type: "text", value: "אוֹ"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "P"},
+            englishLowerCase: {type: "text", value: "p"},
+            hebrewTransliteration: {type: "text", value: "פִּי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "Q"},
+            englishLowerCase: {type: "text", value: "q"},
+            hebrewTransliteration: {type: "text", value: "קְיוּ"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "R"},
+            englishLowerCase: {type: "text", value: "r"},
+            hebrewTransliteration: {type: "text", value: "אַר"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "S"},
+            englishLowerCase: {type: "text", value: "s"},
+            hebrewTransliteration: {type: "text", value: "אֶס"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "T"},
+            englishLowerCase: {type: "text", value: "t"},
+            hebrewTransliteration: {type: "text", value: "טִי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "U"},
+            englishLowerCase: {type: "text", value: "u"},
+            hebrewTransliteration: {type: "text", value: "יוּ"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "V"},
+            englishLowerCase: {type: "text", value: "v"},
+            hebrewTransliteration: {type: "text", value: "וִי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "W"},
+            englishLowerCase: {type: "text", value: "w"},
+            hebrewTransliteration: {type: "text", value: "דַאבְּלְיוּ"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "X"},
+            englishLowerCase: {type: "text", value: "x"},
+            hebrewTransliteration: {type: "text", value: "אֶקְס"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "Y"},
+            englishLowerCase: {type: "text", value: "y"},
+            hebrewTransliteration: {type: "text", value: "וַוי"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "Z"},
+            englishLowerCase: {type: "text", value: "z"},
+            hebrewTransliteration: {type: "text", value: "זד"}
+        },
+    ];
+
+    function render(object) {
+        switch (object.type) {
+            case "text":
+                return object.value;
+            default:
+                return null;
+        }
+    }
 
     function generate_from_list(list, questionIndex, resultIndex) {
         let results_numbers = get_results_numbers(0, list.length - 1);
         let results = [];
 
         for (let i = 0; i < results_numbers.length; i++) {
-            results.push(list[results_numbers[i]][resultIndex])
+            results.push(render(list[results_numbers[i]][resultIndex]))
         }
 
         let results_number = results_numbers[randomIntFromInterval(0, results_numbers.length - 1)];
-        return [list[results_number][resultIndex], results, list[results_number][questionIndex]];
+        return [render(list[results_number][resultIndex]), results, render(list[results_number][questionIndex])];
     }
 
     function lowerToCapital() {
-        return generate_from_list(ABC, 1, 0);
+        return generate_from_list(ABC, "englishLowerCase", "englishUpperCase");
     }
 
     function capitalToLower() {
-        return generate_from_list(ABC, 0, 1);
+        return generate_from_list(ABC, "englishUpperCase", "englishUpperCase");
     }
 
     function letterToName() {
-        return generate_from_list(ABC, 0, 2);
+        return generate_from_list(ABC, "englishLowerCase", "hebrewTransliteration");
     }
 
     function nameToLetter() {
-        return generate_from_list(ABC, 2, 0);
+        return generate_from_list(ABC, "hebrewTransliteration", "englishLowerCase");
     }
 
     apps = [{icon: 'add_circle_outline', func: add},
