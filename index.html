@@ -47,7 +47,7 @@
     </nav>
     <div class="container">
         <div class="row">
-            <h3>{{exercise}}</h3>
+            <h3 v-html="exercise"></h3>
         </div>
         <div class="row">
             <a class="waves-effect waves-light btn-large result"
@@ -144,59 +144,207 @@
         return results
     }
 
-    const ABC = [["A", "a", "אֵי"],
-        ["B", "b", "בִי"],
-        ["C", "c", "סִי"],
-        ["D", "d", "דִי"],
-        ["E", "e", "אִי"],
-        ["F", "f", "אֵף"],
-        ["G", "g", "גִ׳י"],
-        ["H", "h", "אֵיְיץ'"],
-        ["I", "i", "אַי"],
-        ["J", "j", "גֵ'י"],
-        ["K", "k", "קֵי"],
-        ["L", "l", "אֶל"],
-        ["M", "m", "אֶם"],
-        ["N", "n", "אֶן"],
-        ["O", "o", "אוֹ"],
-        ["P", "p", "פִּי"],
-        ["Q", "q", "קְיוּ"],
-        ["R", "r", "אַר"],
-        ["S", "s", "אֶס"],
-        ["T", "t", "טִי"],
-        ["U", "u", "יוּ"],
-        ["V", "v", "וִי"],
-        ["W", "w", "דַאבְּלְיוּ"],
-        ["X", "x", "אֶקְס"],
-        ["Y", "y", "וַוי"],
-        ["Z", "z", "זד"],];
+    // The Alphabet records by tim.kahn - https://freesound.org/people/tim.kahn/packs/4371/
+    const ABC = [
+        {
+            englishUpperCase: {type: "text", value: "A"},
+            englishLowerCase: {type: "text", value: "a"},
+            hebrewTransliteration: {type: "text", value: "אֵי"},
+            audio: {type: "audio", value: "./sounds/letters/a.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "B"},
+            englishLowerCase: {type: "text", value: "b"},
+            hebrewTransliteration: {type: "text", value: "בִי"},
+            audio: {type: "audio", value: "./sounds/letters/b.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "C"},
+            englishLowerCase: {type: "text", value: "c"},
+            hebrewTransliteration: {type: "text", value: "סִי"},
+            audio: {type: "audio", value: "./sounds/letters/c.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "D"},
+            englishLowerCase: {type: "text", value: "d"},
+            hebrewTransliteration: {type: "text", value: "דִי"},
+            audio: {type: "audio", value: "./sounds/letters/d.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "E"},
+            englishLowerCase: {type: "text", value: "e"},
+            hebrewTransliteration: {type: "text", value: "אִי"},
+            audio: {type: "audio", value: "./sounds/letters/e.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "F"},
+            englishLowerCase: {type: "text", value: "f"},
+            hebrewTransliteration: {type: "text", value: "אֵף"},
+            audio: {type: "audio", value: "./sounds/letters/f.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "G"},
+            englishLowerCase: {type: "text", value: "g"},
+            hebrewTransliteration: {type: "text", value: "גִ׳י"},
+            audio: {type: "audio", value: "./sounds/letters/g.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "H"},
+            englishLowerCase: {type: "text", value: "h"},
+            hebrewTransliteration: {type: "text", value: "אֵיְיץ'"},
+            audio: {type: "audio", value: "./sounds/letters/h.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "I"},
+            englishLowerCase: {type: "text", value: "i"},
+            hebrewTransliteration: {type: "text", value: "אַי"},
+            audio: {type: "audio", value: "./sounds/letters/i.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "J"},
+            englishLowerCase: {type: "text", value: "j"},
+            hebrewTransliteration: {type: "text", value: "גֵ'י"},
+            audio: {type: "audio", value: "./sounds/letters/g.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "K"},
+            englishLowerCase: {type: "text", value: "k"},
+            hebrewTransliteration: {type: "text", value: "קֵי"},
+            audio: {type: "audio", value: "./sounds/letters/q.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "L"},
+            englishLowerCase: {type: "text", value: "l"},
+            hebrewTransliteration: {type: "text", value: "אֶל"},
+            audio: {type: "audio", value: "./sounds/letters/l.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "M"},
+            englishLowerCase: {type: "text", value: "m"},
+            hebrewTransliteration: {type: "text", value: "אֶם"},
+            audio: {type: "audio", value: "./sounds/letters/m.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "N"},
+            englishLowerCase: {type: "text", value: "n"},
+            hebrewTransliteration: {type: "text", value: "אֶן"},
+            audio: {type: "audio", value: "./sounds/letters/n.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "O"},
+            englishLowerCase: {type: "text", value: "o"},
+            hebrewTransliteration: {type: "text", value: "אוֹ"},
+            audio: {type: "audio", value: "./sounds/letters/o.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "P"},
+            englishLowerCase: {type: "text", value: "p"},
+            hebrewTransliteration: {type: "text", value: "פִּי"},
+            audio: {type: "audio", value: "./sounds/letters/p.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "Q"},
+            englishLowerCase: {type: "text", value: "q"},
+            hebrewTransliteration: {type: "text", value: "קְיוּ"},
+            audio: {type: "audio", value: "./sounds/letters/q.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "R"},
+            englishLowerCase: {type: "text", value: "r"},
+            hebrewTransliteration: {type: "text", value: "אַר"},
+            audio: {type: "audio", value: "./sounds/letters/r.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "S"},
+            englishLowerCase: {type: "text", value: "s"},
+            hebrewTransliteration: {type: "text", value: "אֶס"},
+            audio: {type: "audio", value: "./sounds/letters/s.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "T"},
+            englishLowerCase: {type: "text", value: "t"},
+            hebrewTransliteration: {type: "text", value: "טִי"},
+            audio: {type: "audio", value: "./sounds/letters/t.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "U"},
+            englishLowerCase: {type: "text", value: "u"},
+            hebrewTransliteration: {type: "text", value: "יוּ"},
+            audio: {type: "audio", value: "./sounds/letters/u.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "V"},
+            englishLowerCase: {type: "text", value: "v"},
+            hebrewTransliteration: {type: "text", value: "וִי"},
+            audio: {type: "audio", value: "./sounds/letters/v.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "W"},
+            englishLowerCase: {type: "text", value: "w"},
+            hebrewTransliteration: {type: "text", value: "דַאבְּלְיוּ"},
+            audio: {type: "audio", value: "./sounds/letters/w.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "X"},
+            englishLowerCase: {type: "text", value: "x"},
+            hebrewTransliteration: {type: "text", value: "אֶקְס"},
+            audio: {type: "audio", value: "./sounds/letters/x.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "Y"},
+            englishLowerCase: {type: "text", value: "y"},
+            hebrewTransliteration: {type: "text", value: "וַוי"},
+            audio: {type: "audio", value: "./sounds/letters/y.mp3"}
+        },
+        {
+            englishUpperCase: {type: "text", value: "Z"},
+            englishLowerCase: {type: "text", value: "z"},
+            hebrewTransliteration: {type: "text", value: "זד"},
+            audio: {type: "audio", value: "./sounds/letters/z.mp3"}
+        },
+    ];
+
+    function render(object) {
+        switch (object.type) {
+            case "text":
+                return object.value;
+            case "audio":
+                return `<audio controls><source src="${object.value}" type="audio/mpeg"></audio>`;
+            default:
+                return null;
+        }
+    }
 
     function generate_from_list(list, questionIndex, resultIndex) {
         let results_numbers = get_results_numbers(0, list.length - 1);
         let results = [];
 
         for (let i = 0; i < results_numbers.length; i++) {
-            results.push(list[results_numbers[i]][resultIndex])
+            results.push(render(list[results_numbers[i]][resultIndex]))
         }
 
         let results_number = results_numbers[randomIntFromInterval(0, results_numbers.length - 1)];
-        return [list[results_number][resultIndex], results, list[results_number][questionIndex]];
+        return [render(list[results_number][resultIndex]), results, render(list[results_number][questionIndex])];
     }
 
     function lowerToCapital() {
-        return generate_from_list(ABC, 1, 0);
+        return generate_from_list(ABC, "englishLowerCase", "englishUpperCase");
     }
 
     function capitalToLower() {
-        return generate_from_list(ABC, 0, 1);
+        return generate_from_list(ABC, "englishUpperCase", "englishUpperCase");
     }
 
     function letterToName() {
-        return generate_from_list(ABC, 0, 2);
+        return generate_from_list(ABC, "englishLowerCase", "hebrewTransliteration");
     }
 
     function nameToLetter() {
-        return generate_from_list(ABC, 2, 0);
+        return generate_from_list(ABC, "hebrewTransliteration", "englishLowerCase");
+    }
+
+    function audioToLetter() {
+        return generate_from_list(ABC, "audio", "englishLowerCase");
     }
 
     apps = [{icon: 'add_circle_outline', func: add},
@@ -206,6 +354,7 @@
         {icon: 'format_size', func: capitalToLower},
         {icon: 'format_shapes', func: letterToName},
         {icon: 'format_shapes', func: nameToLetter},
+        {icon: 'volume_up', func: audioToLetter},
     ];
 
     let app = new Vue({
