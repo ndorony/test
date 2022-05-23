@@ -79,6 +79,9 @@
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
+    function empty(){
+    }
+
     function add() {
         let a = randomIntFromInterval(1, 10);
         let b = randomIntFromInterval(0, 6);
@@ -91,7 +94,7 @@
             }
 
         }
-        return [result, results, `${a} + ${b} =`];
+        return [result, results, `${a} + ${b} =`, empty];
     }
 
     function sub() {
@@ -108,7 +111,7 @@
             }
 
         }
-        return [result, results, `${a} - ${b} =`];
+        return [result, results, `${a} - ${b} =`, empty];
     }
 
     function getNItmes(number) {
@@ -309,11 +312,19 @@
             case "text":
                 return object.value;
             case "audio":
-                return `<audio controls><source src="${object.value}" type="audio/mpeg"></audio>`;
+            return `<a href="#!" class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
             default:
                 return null;
         }
     }
+
+    function audio(url){
+        const sound = new Audio(url);
+        sound.play();
+    }
+
+
+
 
     function generate_from_list(list, questionIndex, resultIndex) {
         let results_numbers = get_results_numbers(0, list.length - 1);
@@ -324,7 +335,11 @@
         }
 
         let results_number = results_numbers[randomIntFromInterval(0, results_numbers.length - 1)];
-        return [render(list[results_number][resultIndex]), results, render(list[results_number][questionIndex])];
+        res =  [render(list[results_number][resultIndex]), results, render(list[results_number][questionIndex]), empty];
+        if(list[results_number][questionIndex].type == "audio"){
+            res[3] = function(){audio(list[results_number][questionIndex].value)}
+        }
+        return res;
     }
 
     function lowerToCapital() {
@@ -373,6 +388,7 @@
                 this.results = this.shuffle(a[1]);
                 this.exercise = a[2];
                 this.result = a[0];
+                a[3]();
 
             }, shuffle: function (a) {
                 for (let i = a.length - 1; i > 0; i--) {
@@ -385,7 +401,9 @@
                     this.ended = true;
                     this.message = {value: this.getSuccessMsg(), success: true};
                     successSound.play();
-                    this.create();
+                    setTimeout(this.create
+                    , 1)
+
                 } else {
                     failureSound.play();
                     this.message = {value: 'נסה שוב :(', error: true}
