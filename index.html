@@ -147,6 +147,43 @@
         return results
     }
 
+    const ALEPH_BET = [
+        {
+            letter: {type: "text", value:  "אָ"},
+            kamatz_sound: {type: "text_to_speech", value: "אָ"}
+        },
+        {
+            letter: {type: "text", value:  "בָ"},
+            kamatz_sound: {type: "text_to_speech", value: "בָ"}
+        },
+        {
+            letter: {type: "text", value:  "גָ"},
+            kamatz_sound: {type: "text_to_speech", value: "ָג"}
+        },
+        {
+            letter: {type: "text", value:  "דָ"},
+            kamatz_sound: {type: "text_to_speech", value: "דָ"}
+        },
+        {
+            letter: {type: "text", value:  "הָ"},
+            kamatz_sound: {type: "text_to_speech", value: "ָה"}
+        },
+        {
+            letter: {type: "text", value:  "וָ"},
+            kamatz_sound: {type: "text_to_speech", value: "וָ"}
+        },
+        {
+            letter: {type: "text", value:  "זָ"},
+            kamatz_sound: {type: "text_to_speech", value: "זָ"}
+        },
+        {
+            letter: {type: "text", value:  "חָ"},
+            kamatz_sound: {type: "text_to_speech", value: "חָ"}
+        }
+    ]
+
+
+
     // The Alphabet records by tim.kahn - https://freesound.org/people/tim.kahn/packs/4371/
     const ABC = [
         {
@@ -313,6 +350,8 @@
                 return object.value;
             case "audio":
             return `<a href="#!" class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
+            case "text_to_speech":
+                return `<a href="#!" class="brand-logo" onclick="text_to_speech('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
             default:
                 return null;
         }
@@ -323,8 +362,12 @@
         sound.play();
     }
 
-
-
+    function text_to_speech(text){
+        var msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        msg.lang = 'he-IL';
+        window.speechSynthesis.speak(msg);
+    }
 
     function generate_from_list(list, questionIndex, resultIndex) {
         let results_numbers = get_results_numbers(0, list.length - 1);
@@ -338,6 +381,9 @@
         res =  [render(list[results_number][resultIndex]), results, render(list[results_number][questionIndex]), empty];
         if(list[results_number][questionIndex].type == "audio"){
             res[3] = function(){audio(list[results_number][questionIndex].value)}
+        }
+        if(list[results_number][questionIndex].type == "text_to_speech"){
+            res[3] = function(){text_to_speech(list[results_number][questionIndex].value)}
         }
         return res;
     }
@@ -362,7 +408,13 @@
         return generate_from_list(ABC, "audio", "englishLowerCase");
     }
 
-    apps = [{icon: 'add_circle_outline', func: add},
+    function heAudioToLetter() {
+        return generate_from_list(ALEPH_BET, "kamatz_sound", "letter");
+    }
+
+    apps = [
+        {icon: 'volume_up', func: heAudioToLetter},
+        {icon: 'add_circle_outline', func: add},
         {icon: 'remove_circle_outline', func: sub},
         {icon: 'format_list_numbered', func: count},
         {icon: 'format_size', func: lowerToCapital},
@@ -379,7 +431,7 @@
             exercise: '',
             message: {},
             ended: false,
-            currentAppNumber: 3
+            currentAppNumber: 0
         },
         methods: {
             create: function (code) {
