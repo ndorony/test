@@ -365,6 +365,7 @@
     function text_to_speech(text){
         var msg = new SpeechSynthesisUtterance();
         msg.text = text;
+        msg.lang = "en_US"
         window.speechSynthesis.speak(msg);
     }
 
@@ -437,7 +438,7 @@
             exercise: '',
             message: {},
             ended: false,
-            currentAppNumber: 2
+            currentAppNumber: 0
         },
         methods: {
             create: function (code) {
