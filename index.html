@@ -150,35 +150,35 @@
     const ALEPH_BET = [
         {
             letter: {type: "text", value:  "אָ"},
-            kamatz_sound: {type: "text_to_speech", value: "אָ"}
+            kamatz_sound: {type: "text_to_speech", value: "aa"}
         },
         {
             letter: {type: "text", value:  "בָ"},
-            kamatz_sound: {type: "text_to_speech", value: "בָ"}
+            kamatz_sound: {type: "text_to_speech", value: "ba"}
         },
         {
             letter: {type: "text", value:  "גָ"},
-            kamatz_sound: {type: "text_to_speech", value: "ָג"}
+            kamatz_sound: {type: "text_to_speech", value: "ga"}
         },
         {
             letter: {type: "text", value:  "דָ"},
-            kamatz_sound: {type: "text_to_speech", value: "דָ"}
+            kamatz_sound: {type: "text_to_speech", value: "da"}
         },
         {
             letter: {type: "text", value:  "הָ"},
-            kamatz_sound: {type: "text_to_speech", value: "ָה"}
+            kamatz_sound: {type: "text_to_speech", value: "ha"}
         },
         {
             letter: {type: "text", value:  "וָ"},
-            kamatz_sound: {type: "text_to_speech", value: "וָ"}
+            kamatz_sound: {type: "text_to_speech", value: "va"}
         },
         {
             letter: {type: "text", value:  "זָ"},
-            kamatz_sound: {type: "text_to_speech", value: "זָ"}
+            kamatz_sound: {type: "text_to_speech", value: "za"}
         },
         {
             letter: {type: "text", value:  "חָ"},
-            kamatz_sound: {type: "text_to_speech", value: "חָ"}
+            kamatz_sound: {type: "text_to_speech", value: "cha"}
         }
     ]
 
@@ -365,9 +365,15 @@
     function text_to_speech(text){
         var msg = new SpeechSynthesisUtterance();
         msg.text = text;
-        msg.lang = 'he-IL';
         window.speechSynthesis.speak(msg);
     }
+
+    function text_to(text){
+        var msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        window.speechSynthesis.speak(msg);
+    }
+    text_to("a")
 
     function generate_from_list(list, questionIndex, resultIndex) {
         let results_numbers = get_results_numbers(0, list.length - 1);
@@ -431,7 +437,7 @@
             exercise: '',
             message: {},
             ended: false,
-            currentAppNumber: 0
+            currentAppNumber: 2
         },
         methods: {
             create: function (code) {
