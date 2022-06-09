@@ -405,7 +405,7 @@ let app = new Vue({
         }, changeApp: function () {
             this.score = 0;
             this.create();
-            this.currentAppNumber = (this.currentAppNumber + 1) % this.apps.length;
+            this.currentAppNumber = (this.currentAppNumber + 1) % apps.length;
         }
     }, created: function () {
         this.create();
