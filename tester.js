@@ -365,7 +365,8 @@ let app = new Vue({
         exercise: '',
         message: {},
         ended: false,
-        currentAppNumber: 0
+        currentAppNumber: 0,
+        score: 0,
     },
     methods: {
         create: function (code) {
@@ -389,9 +390,10 @@ let app = new Vue({
                 successSound.play();
                 setTimeout(this.create
                 , 1)
-
+                this.score += 1;
             } else {
                 failureSound.play();
+                this.score = Math.max(0, this.score - 1);
                 this.message = {value: 'נסה שוב :(', error: true}
             }
         }, next: function () {
@@ -401,7 +403,7 @@ let app = new Vue({
         }, getSuccessMsg: function () {
             return he.decode("הצלחת &#128525;");
         }, changeApp: function () {
-            this.currentAppNumber = (this.currentAppNumber + 1) % apps.length;
+            this.score = 0;
             this.create();
         }
     }, created: function () {
