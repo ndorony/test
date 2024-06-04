@@ -347,15 +347,15 @@ function heAudioToLetter() {
 }
 
 apps = [
-    {icon: 'volume_up', func: heAudioToLetter},
-    {icon: 'add_circle_outline', func: add},
-    {icon: 'remove_circle_outline', func: sub},
-    {icon: 'format_list_numbered', func: count},
-    {icon: 'format_size', func: lowerToCapital},
-    {icon: 'format_size', func: capitalToLower},
-    {icon: 'format_shapes', func: letterToName},
-    {icon: 'format_shapes', func: nameToLetter},
-    {icon: 'volume_up', func: audioToLetter},
+    {icon: 'format_shapes', func: nameToLetter, name:'זהה את האות'},
+    {icon: 'format_shapes', func: letterToName, name:'זהה את האות'},
+    {icon: 'volume_up', func: audioToLetter, name:'זהה את האות'},
+    {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה'},
+    {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה'},
+    {icon: 'add_circle_outline', func: add, name:'חיבור'},
+    {icon: 'remove_circle_outline', func: sub, name:'חיסור'},
+    {icon: 'format_list_numbered', func: count, name:'ספירה'},
+//    {icon: 'volume_up', func: heAudioToLetter, name:''},
 ];
 
 let app = new Vue({
@@ -404,8 +404,8 @@ let app = new Vue({
             return he.decode("הצלחת &#128525;");
         }, changeApp: function () {
             this.score = 0;
-            this.create();
             this.currentAppNumber = (this.currentAppNumber + 1) % apps.length;
+            this.create();
         }
     }, created: function () {
         this.create();
