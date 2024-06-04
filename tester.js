@@ -59,7 +59,7 @@ function count() {
     for (let i = 0; i < nums.length; i++) {
         results.push(getNItmes(nums[i]));
     }
-    return [getNItmes(result), results, result];
+    return [getNItmes(result), results, result, empty];
 }
 
 function get_results_numbers(min, max) {
