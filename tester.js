@@ -74,178 +74,144 @@ function get_results_numbers(min, max) {
     return results
 }
 
-const ALEPH_BET = [
-    {
-        letter: {type: "text", value:  "אָ"},
-        kamatz_sound: {type: "text_to_speech", value: "aa"}
-    },
-    {
-        letter: {type: "text", value:  "בָ"},
-        kamatz_sound: {type: "text_to_speech", value: "ba"}
-    },
-    {
-        letter: {type: "text", value:  "גָ"},
-        kamatz_sound: {type: "text_to_speech", value: "ga"}
-    },
-    {
-        letter: {type: "text", value:  "דָ"},
-        kamatz_sound: {type: "text_to_speech", value: "da"}
-    },
-    {
-        letter: {type: "text", value:  "הָ"},
-        kamatz_sound: {type: "text_to_speech", value: "ha"}
-    },
-    {
-        letter: {type: "text", value:  "וָ"},
-        kamatz_sound: {type: "text_to_speech", value: "va"}
-    },
-    {
-        letter: {type: "text", value:  "זָ"},
-        kamatz_sound: {type: "text_to_speech", value: "za"}
-    },
-    {
-        letter: {type: "text", value:  "חָ"},
-        kamatz_sound: {type: "text_to_speech", value: "cha"}
-    }
-]
 
 const FEELING = [{'name': {'type': 'text', 'value': 'שמח'},
-  'english_name': {'type': 'text', 'value': 'Happy'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Happy'},
   'hebrew_english_name': {'type': 'text', 'value': 'הַפִּי'},
   'emoji': {'type': 'text', 'value': '😊'}},
  {'name': {'type': 'text', 'value': 'עצוב'},
-  'english_name': {'type': 'text', 'value': 'Sad'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Sad'},
   'hebrew_english_name': {'type': 'text', 'value': 'סֵד'},
   'emoji': {'type': 'text', 'value': '😢'}},
  {'name': {'type': 'text', 'value': 'כועס'},
-  'english_name': {'type': 'text', 'value': 'Angry'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Angry'},
   'hebrew_english_name': {'type': 'text', 'value': 'אֵנְגְרִי'},
   'emoji': {'type': 'text', 'value': '😠'}},
  {'name': {'type': 'text', 'value': 'מפחד'},
-  'english_name': {'type': 'text', 'value': 'Scared'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Scared'},
   'hebrew_english_name': {'type': 'text', 'value': 'סְקֵירְד'},
   'emoji': {'type': 'text', 'value': '😨'}},
  {'name': {'type': 'text', 'value': 'מאוהב'},
-  'english_name': {'type': 'text', 'value': 'In love'},
+  'english_name': {'type': 'text_to_speech', 'value': 'In love'},
   'hebrew_english_name': {'type': 'text', 'value': 'אִין לָאב'},
   'emoji': {'type': 'text', 'value': '😍'}},
  {'name': {'type': 'text', 'value': 'מופתע'},
-  'english_name': {'type': 'text', 'value': 'Surprised'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Surprised'},
   'hebrew_english_name': {'type': 'text', 'value': 'סַרְפְּרִייזְד'},
   'emoji': {'type': 'text', 'value': '😮'}}]
 
 VERBS = [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
-  'verb_english': {'type': 'text', 'value': 'Walk'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Walk'},
   'verb_hebrew_english': {'type': 'text', 'value': 'ווֹק'},
   'emoji': {'type': 'text', 'value': '🚶'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לרוץ'},
-  'verb_english': {'type': 'text', 'value': 'Run'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Run'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רַן'},
   'emoji': {'type': 'text', 'value': '🏃'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לקפוץ'},
-  'verb_english': {'type': 'text', 'value': 'Jump'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Jump'},
   'verb_hebrew_english': {'type': 'text', 'value': "גַ'ַמפּ"},
   'emoji': {'type': 'text', 'value': '🤾'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשחות'},
-  'verb_english': {'type': 'text', 'value': 'Swim'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Swim'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סְווִים'},
   'emoji': {'type': 'text', 'value': '🏊'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לאכול'},
-  'verb_english': {'type': 'text', 'value': 'Eat'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Eat'},
   'verb_hebrew_english': {'type': 'text', 'value': 'אִיט'},
   'emoji': {'type': 'text', 'value': '🍽️'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשתות'},
-  'verb_english': {'type': 'text', 'value': 'Drink'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Drink'},
   'verb_hebrew_english': {'type': 'text', 'value': 'דְרִינק'},
   'emoji': {'type': 'text', 'value': '🥤'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשבת'},
-  'verb_english': {'type': 'text', 'value': 'Sit'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Sit'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סִיט'},
   'emoji': {'type': 'text', 'value': '🪑'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לעמוד'},
-  'verb_english': {'type': 'text', 'value': 'Stand'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Stand'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סְטֶנד'},
   'emoji': {'type': 'text', 'value': '🧍'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשיר'},
-  'verb_english': {'type': 'text', 'value': 'Sing'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Sing'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סִינג'},
   'emoji': {'type': 'text', 'value': '🎤'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לצייר'},
-  'verb_english': {'type': 'text', 'value': 'Draw'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Draw'},
   'verb_hebrew_english': {'type': 'text', 'value': 'דְרָו'},
   'emoji': {'type': 'text', 'value': '🎨'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לקרוא'},
-  'verb_english': {'type': 'text', 'value': 'Read'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Read'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רִיד'},
   'emoji': {'type': 'text', 'value': '📖'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לכתוב'},
-  'verb_english': {'type': 'text', 'value': 'Write'},
+  'verb_english': {'type':  'text_to_speech', 'value': 'Write'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רַייט'},
   'emoji': {'type': 'text', 'value': '✍️'}}]
 
 COLORS = [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
-  'color_english': {'type': 'text', 'value': 'Red'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Red'},
   'color_hebrew_english': {'type': 'text', 'value': 'רֵד'},
   'emoji': {'type': 'text', 'value': '🟥'}},
  {'color_hebrew': {'type': 'text', 'value': 'כחול'},
-  'color_english': {'type': 'text', 'value': 'Blue'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Blue'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּלוּ'},
   'emoji': {'type': 'text', 'value': '🟦'}},
  {'color_hebrew': {'type': 'text', 'value': 'ירוק'},
-  'color_english': {'type': 'text', 'value': 'Green'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Green'},
   'color_hebrew_english': {'type': 'text', 'value': 'גְרִין'},
   'emoji': {'type': 'text', 'value': '🟩'}},
  {'color_hebrew': {'type': 'text', 'value': 'צהוב'},
-  'color_english': {'type': 'text', 'value': 'Yellow'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Yellow'},
   'color_hebrew_english': {'type': 'text', 'value': 'יֵלְלוֹ'},
   'emoji': {'type': 'text', 'value': '💛'}},
  {'color_hebrew': {'type': 'text', 'value': 'שחור'},
-  'color_english': {'type': 'text', 'value': 'Black'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Black'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּלֶק'},
   'emoji': {'type': 'text', 'value': '⬛'}},
  {'color_hebrew': {'type': 'text', 'value': 'לבן'},
-  'color_english': {'type': 'text', 'value': 'White'},
+  'color_english': {'type': 'text_to_speech', 'value': 'White'},
   'color_hebrew_english': {'type': 'text', 'value': 'וַוייט'},
   'emoji': {'type': 'text', 'value': '⬜'}},
  {'color_hebrew': {'type': 'text', 'value': 'ורוד'},
-  'color_english': {'type': 'text', 'value': 'Pink'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Pink'},
   'color_hebrew_english': {'type': 'text', 'value': 'פִּינק'},
   'emoji': {'type': 'text', 'value': '🩷'}},
  {'color_hebrew': {'type': 'text', 'value': 'כתום'},
-  'color_english': {'type': 'text', 'value': 'Orange'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Orange'},
   'color_hebrew_english': {'type': 'text', 'value': "אוֹרֵנְג'"},
   'emoji': {'type': 'text', 'value': '🟧'}},
  {'color_hebrew': {'type': 'text', 'value': 'סגול'},
-  'color_english': {'type': 'text', 'value': 'Purple'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Purple'},
   'color_hebrew_english': {'type': 'text', 'value': 'פַּרְפֵּל'},
   'emoji': {'type': 'text', 'value': '🟪'}},
  {'color_hebrew': {'type': 'text', 'value': 'חום'},
-  'color_english': {'type': 'text', 'value': 'Brown'},
+  'color_english': {'type': 'text_to_speech', 'value': 'Brown'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּרָאון'},
   'emoji': {'type': 'text', 'value': '🟫'}}]
 
 QUESTION = [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
-  'question_word_english': {'type': 'text', 'value': 'What'},
+  'question_word_english': {'type': 'text_to_speech',  'value': 'What'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'וואַט'},
   'emoji': {'type': 'text', 'value': '❓'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'מי'},
-  'question_word_english': {'type': 'text', 'value': 'Who'},
+  'question_word_english': {'type': 'text_to_speech',  'value': 'Who'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'הוּ'},
   'emoji': {'type': 'text', 'value': '👤'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'מתי'},
-  'question_word_english': {'type': 'text', 'value': 'When'},
+  'question_word_english': {'type': 'text_to_speech',  'value': 'When'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'ווען'},
   'emoji': {'type': 'text', 'value': '⏰'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'איפה'},
-  'question_word_english': {'type': 'text', 'value': 'Where'},
+  'question_word_english': {'type': 'text_to_speech',  'value': 'Where'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'ווער'},
   'emoji': {'type': 'text', 'value': '📍'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'למה'},
-  'question_word_english': {'type': 'text', 'value': 'Why'},
+  'question_word_english': {'type': 'text_to_speech',  'value': 'Why'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'וואַי'},
   'emoji': {'type': 'text', 'value': '🤔'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'איך'},
-  'question_word_english': {'type': 'text', 'value': 'How'},
+  'question_word_english': {'type': 'text_to_speech','value': 'How'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'האוּ'},
   'emoji': {'type': 'text', 'value': '🛠️'}}]
 
@@ -417,7 +383,7 @@ function render(object) {
         case "audio":
         return `<a href="#!" class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
         case "text_to_speech":
-            return `<a href="#!" class="brand-logo" onclick="text_to_speech('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
+            return `<a href="#!" class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
         default:
             return null;
     }
@@ -465,7 +431,7 @@ function feelingName(){
 }
 
 function feelingEmoji(){
-   return generate_from_list(FEELING, "hebrew_english_name", "emoji");
+   return generate_from_list(FEELING, "english_name", "emoji");
 }
 
 
@@ -489,27 +455,24 @@ function audioToLetter() {
     return generate_from_list(ABC, "audio", "englishLowerCase");
 }
 
-function heAudioToLetter() {
-    return generate_from_list(ALEPH_BET, "kamatz_sound", "letter");
-}
 
 function verbsNameToHe() {
-    return generate_from_list(VERBS, "verb_hebrew_english", "verb_hebrew");
+    return generate_from_list(VERBS, "verb_english", "verb_hebrew");
 }
 
 function colorNameToColor(){
-    return generate_from_list(COLORS, "color_hebrew_english", "emoji");
+    return generate_from_list(COLORS, "color_english", "emoji");
 }
 
 function questionNameToHe(){
-    return generate_from_list(QUESTION, "question_word_hebrew_english", "question_word_hebrew");
+    return generate_from_list(QUESTION, "question_word_english", "question_word_hebrew");
 }
 
 apps = [
+    {icon: 'format_shapes', func: colorNameToColor, name:'צבעים'},
+    {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות'},
     {icon: 'format_shapes', func: feelingEmoji, name:'רגשות'},
     {icon: 'format_shapes', func: feelingName, name:'רגשות'},
-    {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות'},
-    {icon: 'format_shapes', func: colorNameToColor, name:'צבעים'},
     {icon: 'format_shapes', func: questionNameToHe, name:'שאלות'},
     {icon: 'format_shapes', func: nameToLetter, name:'זהה את האות'},
     {icon: 'format_shapes', func: letterToName, name:'זהה את האות'},
@@ -540,7 +503,7 @@ let app = new Vue({
             this.exercise = a[2];
             this.result = a[0];
             a[3]();
-
+            this.$forceUpdate();
         }, shuffle: function (a) {
             for (let i = a.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
