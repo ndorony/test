@@ -6,60 +6,57 @@ function randomIntFromInterval(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-function empty(){
-}
-
-function add() {
-    let a = randomIntFromInterval(1, 10);
-    let b = randomIntFromInterval(0, 6);
-    let result = a + b;
-    let results = [result,];
-    while (results.length !== 4) {
-        let option = randomIntFromInterval(1, 16);
-        if (!results.includes(option)) {
-            results.push(option);
-        }
-
-    }
-    return [result, results, `${a} + ${b} =`, empty];
-}
-
-function sub() {
-    let aa = randomIntFromInterval(1, 10);
-    let bb = randomIntFromInterval(0, 6);
-    let a = Math.max(aa, bb);
-    let b = Math.min(aa, bb);
-    let result = a - b;
-    let results = [result,];
-    while (results.length !== 4) {
-        let option = randomIntFromInterval(1, 16);
-        if (!results.includes(option)) {
-            results.push(option);
-        }
-
-    }
-    return [result, results, `${a} - ${b} =`, empty];
-}
-
 function getNItmes(number) {
     return he.decode(Array(number + 1).join("&#128540; "))
 }
 
-function count() {
-    let result = randomIntFromInterval(1, 5);
-    let nums = [result,];
-    while (nums.length !== 4) {
-        let option = randomIntFromInterval(1, 5);
-        if (!nums.includes(option)) {
-            nums.push(option);
+function createAsymmetricExercises(upTo, inverseMathFunction) {
+    const exercises = [];
+    for (let i = 1; i <= upTo; i++) {
+        for (let j = 1; j <= upTo; j++) {
+            const { a, b, result, symbol } = inverseMathFunction(i, j);
+            exercises.push({
+                question: {"type": "text", "value": `${a} ${symbol} ${b} =`},
+                answer: {"type": "text", "value": `${result}`}
+            });
         }
     }
+    return exercises;
+}
 
-    let results = [];
-    for (let i = 0; i < nums.length; i++) {
-        results.push(getNItmes(nums[i]));
+function inverseAddition(a, b) {
+    return { a, b, result: a + b, symbol: '+' };
+}
+
+function inverseSubtraction(a, b) {
+    return {a:a + b, b, result: a, symbol: '-' };
+}
+
+function inverseMultiplication(a, b) {
+    return {a, b, result: b * a, symbol: '*' };
+}
+
+function inverseDivision(a, b) {
+
+//    if (b === 0) return { a: 0, b: 1, result: 0, symbol: '*' }; // Prevent invalid multiplication
+    return {a:a * b, b, result: a, symbol: '/' };
+}
+
+
+function createCount(maxEmojis) {
+    const emoji = '😊';
+    const exercises = [];
+
+    for (let i = 1; i <= maxEmojis; i++) {
+        const questionEmojis = emoji.repeat(i);
+        const exercise = {
+            question: {"type": "text", "value": questionEmojis},
+            answer: {"type": "text", "value": `${i}`}
+        };
+        exercises.push(exercise);
     }
-    return [getNItmes(result), results, result, empty];
+
+    return exercises;
 }
 
 
@@ -362,8 +359,29 @@ ABC:  [
         hebrewTransliteration: {type: "text", value: "זד"},
         audio: {type: "audio", value: "./sounds/letters/z.mp3"}
     },
-]
+],
+MONTHS: [
+  {"name": {"type": "text", "value": "ינואר"}, "english_name": {"type": "text", "value": "January"}, "month_number": {"type": "text", "value": "1"}},
+  {"name": {"type": "text", "value": "פברואר"}, "english_name": {"type": "text", "value": "February"}, "month_number": {"type": "text", "value": "2"}},
+  {"name": {"type": "text", "value": "מרץ"}, "english_name": {"type": "text", "value": "March"}, "month_number": {"type": "text", "value": "3"}},
+  {"name": {"type": "text", "value": "אפריל"}, "english_name": {"type": "text", "value": "April"}, "month_number": {"type": "text", "value": "4"}},
+  {"name": {"type": "text", "value": "מאי"}, "english_name": {"type": "text", "value": "May"}, "month_number": {"type": "text", "value": "5"}},
+  {"name": {"type": "text", "value": "יוני"}, "english_name": {"type": "text", "value": "June"}, "month_number": {"type": "text", "value": "6"}},
+  {"name": {"type": "text", "value": "יולי"}, "english_name": {"type": "text", "value": "July"}, "month_number": {"type": "text", "value": "7"}},
+  {"name": {"type": "text", "value": "אוגוסט"}, "english_name": {"type": "text", "value": "August"}, "month_number": {"type": "text", "value": "8"}},
+  {"name": {"type": "text", "value": "ספטמבר"}, "english_name": {"type": "text", "value": "September"}, "month_number": {"type": "text", "value": "9"}},
+  {"name": {"type": "text", "value": "אוקטובר"}, "english_name": {"type": "text", "value": "October"}, "month_number": {"type": "text", "value": "10"}},
+  {"name": {"type": "text", "value": "נובמבר"}, "english_name": {"type": "text", "value": "November"}, "month_number": {"type": "text", "value": "11"}},
+  {"name": {"type": "text", "value": "דצמבר"}, "english_name": {"type": "text", "value": "December"}, "month_number": {"type": "text", "value": "12"}}
+],
+ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
+SUBTRACTION: createAsymmetricExercises(10, inverseSubtraction, "SUBTRACTION"),
+MULTIPLICATION: createAsymmetricExercises(10, inverseMultiplication, "MULTIPLICATION"),
+DIVISION: createAsymmetricExercises(10, inverseDivision, "DIVISION"),
+COUNT: createCount(5),
 }
+
+
 
 function render(object) {
     switch (object.type) {
@@ -492,6 +510,30 @@ function questionNameToHe(){
     return generateFromList('QUESTION', "question_word_english", "question_word_hebrew");
 }
 
+function monthName(){
+    return generateFromList('MONTHS', 'name', 'month_number')
+}
+
+function addition() {
+    return generateFromList('ADDITION', 'question', 'answer');
+}
+
+function subtraction() {
+    return generateFromList('SUBTRACTION', 'question', 'answer');
+}
+
+function multiplication() {
+    return generateFromList('MULTIPLICATION', 'question', 'answer');
+}
+
+function division() {
+    return generateFromList('DIVISION', 'question', 'answer');
+}
+
+function count() {
+    return generateFromList('COUNT', 'question', 'answer');
+}
+
 apps = [
     {icon: 'format_shapes', func: colorNameToColor, name:'צבעים'},
     {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות'},
@@ -503,10 +545,12 @@ apps = [
     {icon: 'volume_up', func: audioToLetter, name:'זהה את האות'},
     {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה'},
     {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה'},
-//    {icon: 'add_circle_outline', func: add, name:'חיבור'},
-//    {icon: 'remove_circle_outline', func: sub, name:'חיסור'},
-//    {icon: 'format_list_numbered', func: count, name:'ספירה'},
-//    {icon: 'volume_up', func: heAudioToLetter, name:''},
+    {icon: 'format_size', func: monthName, name:'חודשי השנה'},
+    {icon: 'add_circle_outline', func: addition, name:'חיבור'},
+    {icon: 'remove_circle_outline', func: subtraction, name:'חיסור'},
+    {icon: 'add_circle_outline', func: multiplication, name:'כפל'},
+    {icon: 'remove_circle_outline', func: division, name:'חילוק'},
+    {icon: 'format_list_numbered', func: count, name:'ספירה'},
 ];
 
 let app = new Vue({
