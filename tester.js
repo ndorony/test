@@ -62,20 +62,8 @@ function count() {
     return [getNItmes(result), results, result, empty];
 }
 
-function get_results_numbers(min, max) {
-    let results = [];
-    while (results.length !== 4) {
-        let option = randomIntFromInterval(min, max);
-        if (!results.includes(option)) {
-            results.push(option);
-        }
-    }
 
-    return results
-}
-
-
-const FEELING = [{'name': {'type': 'text', 'value': 'שמח'},
+const DATA = {FEELING : [{'name': {'type': 'text', 'value': 'שמח'},
   'english_name': {'type': 'text_to_speech', 'value': 'Happy'},
   'hebrew_english_name': {'type': 'text', 'value': 'הַפִּי'},
   'emoji': {'type': 'text', 'value': '😊'}},
@@ -98,9 +86,9 @@ const FEELING = [{'name': {'type': 'text', 'value': 'שמח'},
  {'name': {'type': 'text', 'value': 'מופתע'},
   'english_name': {'type': 'text_to_speech', 'value': 'Surprised'},
   'hebrew_english_name': {'type': 'text', 'value': 'סַרְפְּרִייזְד'},
-  'emoji': {'type': 'text', 'value': '😮'}}]
+  'emoji': {'type': 'text', 'value': '😮'}}],
 
-VERBS = [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
+VERBS : [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
   'verb_english': {'type':  'text_to_speech', 'value': 'Walk'},
   'verb_hebrew_english': {'type': 'text', 'value': 'ווֹק'},
   'emoji': {'type': 'text', 'value': '🚶'}},
@@ -147,9 +135,9 @@ VERBS = [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
  {'verb_hebrew': {'type': 'text', 'value': 'לכתוב'},
   'verb_english': {'type':  'text_to_speech', 'value': 'Write'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רַייט'},
-  'emoji': {'type': 'text', 'value': '✍️'}}]
+  'emoji': {'type': 'text', 'value': '✍️'}}],
 
-COLORS = [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
+COLORS : [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
   'color_english': {'type': 'text_to_speech', 'value': 'Red'},
   'color_hebrew_english': {'type': 'text', 'value': 'רֵד'},
   'emoji': {'type': 'text', 'value': '🟥'}},
@@ -188,9 +176,9 @@ COLORS = [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
  {'color_hebrew': {'type': 'text', 'value': 'חום'},
   'color_english': {'type': 'text_to_speech', 'value': 'Brown'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּרָאון'},
-  'emoji': {'type': 'text', 'value': '🟫'}}]
+  'emoji': {'type': 'text', 'value': '🟫'}}],
 
-QUESTION = [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
+QUESTION : [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
   'question_word_english': {'type': 'text_to_speech',  'value': 'What'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'וואַט'},
   'emoji': {'type': 'text', 'value': '❓'}},
@@ -213,11 +201,11 @@ QUESTION = [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
  {'question_word_hebrew': {'type': 'text', 'value': 'איך'},
   'question_word_english': {'type': 'text_to_speech','value': 'How'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'האוּ'},
-  'emoji': {'type': 'text', 'value': '🛠️'}}]
+  'emoji': {'type': 'text', 'value': '🛠️'}}],
 
 
 // The Alphabet records by tim.kahn - https://freesound.org/people/tim.kahn/packs/4371/
-const ABC = [
+ABC:  [
     {
         englishUpperCase: {type: "text", value: "A"},
         englishLowerCase: {type: "text", value: "a"},
@@ -374,7 +362,8 @@ const ABC = [
         hebrewTransliteration: {type: "text", value: "זד"},
         audio: {type: "audio", value: "./sounds/letters/z.mp3"}
     },
-];
+]
+}
 
 function render(object) {
     switch (object.type) {
@@ -408,64 +397,99 @@ function text_to(text){
 }
 text_to("a")
 
-function generate_from_list(list, questionIndex, resultIndex) {
-    let results_numbers = get_results_numbers(0, list.length - 1);
-    let results = [];
 
-    for (let i = 0; i < results_numbers.length; i++) {
-        results.push(render(list[results_numbers[i]][resultIndex]))
+const getDataList = (listName) => {
+    if (!DATA[listName]) {
+        throw new Error('List does not exist');
     }
-
-    let results_number = results_numbers[randomIntFromInterval(0, results_numbers.length - 1)];
-    res =  [render(list[results_number][resultIndex]), results, render(list[results_number][questionIndex]), empty];
-    if(list[results_number][questionIndex].type == "audio"){
-        res[3] = function(){audio(list[results_number][questionIndex].value)}
-    }
-    if(list[results_number][questionIndex].type == "text_to_speech"){
-        res[3] = function(){text_to_speech(list[results_number][questionIndex].value)}
-    }
-    return res;
+    return DATA[listName];
 }
+
+const getRandomIndexes = (length, count = 4) => {
+    const results = [];
+    while (results.length < count) {
+        const randomIndex = Math.floor(Math.random() * length);
+        if (!results.includes(randomIndex)) {
+            results.push(randomIndex);
+        }
+    }
+    return results;
+}
+
+const generateOptions = (list, resultIndexes, resultFieldIndex) => {
+    return resultIndexes.map(index => render(list[index][resultFieldIndex]));
+}
+
+function generateQuestion(list, index, questionIndex, action) {
+    const question = list[index][questionIndex];
+    if (question.type === "audio") {
+        action = () => audio(question.value);
+    } else if (question.type === "text_to_speech") {
+        action = () => text_to_speech(question.value);
+    }
+    return action;
+}
+
+function generateFromList(listName, questionIndex, resultIndex) {
+    const list = getDataList(listName);
+    const resultsIndexes = getRandomIndexes(list.length);
+    const options = generateOptions(list, resultsIndexes, resultIndex);
+
+    const randomResultIndex = resultsIndexes[Math.floor(Math.random() * resultsIndexes.length)];
+    const result = render(list[randomResultIndex][resultIndex]);
+    const question = render(list[randomResultIndex][questionIndex]);
+    let action = () => {};
+
+    action = generateQuestion(list, randomResultIndex, questionIndex, action);
+
+    return {
+        result: result,
+        options: options,
+        question: question,
+        action: action
+    };
+}
+
 function feelingName(){
-   return generate_from_list(FEELING, "name", "hebrew_english_name");
+   return generateFromList('FEELING', "name", "hebrew_english_name");
 }
 
 function feelingEmoji(){
-   return generate_from_list(FEELING, "english_name", "emoji");
+   return generateFromList('FEELING', "english_name", "emoji");
 }
 
 
 function lowerToCapital() {
-    return generate_from_list(ABC, "englishLowerCase", "englishUpperCase");
+    return generateFromList('ABC', "englishLowerCase", "englishUpperCase");
 }
 
 function capitalToLower() {
-    return generate_from_list(ABC, "englishUpperCase", "englishUpperCase");
+    return generateFromList('ABC', "englishUpperCase", "englishUpperCase");
 }
 
 function letterToName() {
-    return generate_from_list(ABC, "englishLowerCase", "hebrewTransliteration");
+    return generateFromList('ABC', "englishLowerCase", "hebrewTransliteration");
 }
 
 function nameToLetter() {
-    return generate_from_list(ABC, "hebrewTransliteration", "englishLowerCase");
+    return generateFromList('ABC', "hebrewTransliteration", "englishLowerCase");
 }
 
 function audioToLetter() {
-    return generate_from_list(ABC, "audio", "englishLowerCase");
+    return generateFromList('ABC', "audio", "englishLowerCase");
 }
 
 
 function verbsNameToHe() {
-    return generate_from_list(VERBS, "verb_english", "verb_hebrew");
+    return generateFromList('VERBS', "verb_english", "verb_hebrew");
 }
 
 function colorNameToColor(){
-    return generate_from_list(COLORS, "color_english", "emoji");
+    return generateFromList('COLORS', "color_english", "emoji");
 }
 
 function questionNameToHe(){
-    return generate_from_list(QUESTION, "question_word_english", "question_word_hebrew");
+    return generateFromList('QUESTION', "question_word_english", "question_word_hebrew");
 }
 
 apps = [
@@ -479,9 +503,9 @@ apps = [
     {icon: 'volume_up', func: audioToLetter, name:'זהה את האות'},
     {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה'},
     {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה'},
-    {icon: 'add_circle_outline', func: add, name:'חיבור'},
-    {icon: 'remove_circle_outline', func: sub, name:'חיסור'},
-    {icon: 'format_list_numbered', func: count, name:'ספירה'},
+//    {icon: 'add_circle_outline', func: add, name:'חיבור'},
+//    {icon: 'remove_circle_outline', func: sub, name:'חיסור'},
+//    {icon: 'format_list_numbered', func: count, name:'ספירה'},
 //    {icon: 'volume_up', func: heAudioToLetter, name:''},
 ];
 
@@ -495,14 +519,22 @@ let app = new Vue({
         currentAppNumber: 0,
         score: 0,
     },
+
+////    {
+//        result: result,
+//        options: options,
+//        question: question,
+//        action: action
+//    };
     methods: {
         create: function (code) {
             this.ended = false;
-            let a = this.currentApp.func();
-            this.results = this.shuffle(a[1]);
-            this.exercise = a[2];
-            this.result = a[0];
-            a[3]();
+            let question = this.currentApp.func();
+            this.results = this.shuffle(question.options);
+            this.exercise = question.question;
+            this.result = question.result;
+            question.action();
+            this.ended = false;
             this.$forceUpdate();
         }, shuffle: function (a) {
             for (let i = a.length - 1; i > 0; i--) {
@@ -511,12 +543,15 @@ let app = new Vue({
             }
             return a;
         }, check: function (index) {
-            if (this.results[index] === this.result) {
+            if (this.ended){
+
+            }
+            else if (this.results[index] === this.result) {
                 this.ended = true;
                 this.message = {value: this.getSuccessMsg(), success: true};
                 successSound.play();
                 setTimeout(this.create
-                , 1)
+                , 1000)
                 this.score += 1;
             } else {
                 failureSound.play();
