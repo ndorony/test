@@ -10,6 +10,25 @@ function getNItmes(number) {
     return he.decode(Array(number + 1).join("&#128540; "))
 }
 
+function setLocalStorage(key, value) {
+    if (typeof value === "object") { // Check if value is an object/array
+        value = JSON.stringify(value); // Convert object/array to JSON string
+    }
+    localStorage.setItem(key, value);
+}
+
+function getLocalStorage(key, defaultValue) {
+    let value = localStorage.getItem(key);
+    if (value === null) { // Key does not exist in localStorage
+        return defaultValue; // Return the default value
+    }
+    try {
+        return JSON.parse(value); // Try to parse the JSON string back to an object/array
+    } catch (e) {
+        return value; // Return the value as is if parsing fails
+    }
+}
+
 function createAsymmetricExercises(upTo, inverseMathFunction) {
     const exercises = [];
     for (let i = 1; i <= upTo; i++) {
@@ -563,13 +582,6 @@ let app = new Vue({
         currentAppNumber: 0,
         score: 0,
     },
-
-////    {
-//        result: result,
-//        options: options,
-//        question: question,
-//        action: action
-//    };
     methods: {
         create: function (code) {
             this.ended = false;
@@ -594,12 +606,13 @@ let app = new Vue({
                 this.ended = true;
                 this.message = {value: this.getSuccessMsg(), success: true};
                 successSound.play();
-                setTimeout(this.create
-                , 1000)
+                setTimeout(this.create, 1000)
                 this.score += 1;
+                this.saveScore();
             } else {
                 failureSound.play();
                 this.score = Math.max(0, this.score - 1);
+                this.saveScore();
                 this.message = {value: 'נסה שוב :(', error: true}
             }
         }, next: function () {
@@ -609,15 +622,21 @@ let app = new Vue({
         }, getSuccessMsg: function () {
             return he.decode("הצלחת &#128525;");
         }, changeApp: function () {
-            this.score = 0;
             this.currentAppNumber = (this.currentAppNumber + 1) % apps.length;
+            this.getScore();
             this.create();
+        }, getScore: function(){
+            this.score = getLocalStorage(`score${this.currentAppNumber}`, 0);
+        }, saveScore: function(){
+            setLocalStorage(`score${this.currentAppNumber}`, this.score);
         }
     }, created: function () {
+        this.getScore();
         this.create();
     }, computed: {
         currentApp: function () {
             return apps[this.currentAppNumber];
         }
     }
+
 })
