@@ -692,12 +692,20 @@ var MenuComponent = Vue.component('menu',{
 const SignUp = {
   template: `
     <div>
-      Sign Up
-      <div>
-        <label for="username">Username:</label>
-        <input type="text" id="username" v-model="username">
+      <div class="row">
+        <div class="col s4 offset-s4">
+        Sign Up
+        <div>
+          <label for="username">Username:</label>
+          <input type="text" id="username" v-model="username">
+        </div>
+        </div>
       </div>
-      <button @click="SignUp">Sign up</button>
+      <div class="row">
+        <div class="col s4 offset-s4">
+          <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="SignUp">Sign up</a>
+        </div>
+        </div>
     </div>
   `,
   data() {
