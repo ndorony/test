@@ -758,9 +758,7 @@ const Login = {
     login() {
       if (this.selectedUser) {
         sessionStorage.setItem('username', this.selectedUser);
-        this.$router.push('/');
-      } else if (this.username) {
-        sessionStorage.setItem('username', this.username);
+        this.$forceUpdate();
         this.$router.push('/');
       } else {
         alert('Please select a user or enter a username');
@@ -783,6 +781,10 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const username = getUser();
+  console.log(`username ${username}`)
+  if (this.app){
+    this.app.$root.username = username
+  }
   if (to.path === '/signUp'){
       next();
   } else if (!username && to.path !== '/login') {
@@ -797,10 +799,22 @@ router.beforeEach((to, from, next) => {
 
 var app = new Vue({
     router,
+    data() {
+        return {
+          username: getUser()
+        };
+      },
+
     methods: {
         UserLogout() {
            sessionStorage.removeItem('username');
+           this.username = null;
            this.$router.push('/login');
+        }
+    },
+    created: {
+        username: function(){
+            return getUser();
         }
     }
 }).$mount('#app')

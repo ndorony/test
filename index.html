@@ -34,15 +34,24 @@
             font-size: larger;
             text-transform: none;
         }
-
+    .nav-wrapper {
+          display: flex; /* Enable flexbox for the navbar */
+          justify-content: space-between; /* Distribute items evenly */
+          align-items: center; /* Align items vertically */
+          /* Add margins to the nav-wrapper */
+          margin: 0 3rem; /* Top and bottom: 0, Left and right: 2rem */
+        }
     </style>
 </head>
 <body>
+
     <div id="app">
         <nav style="background: #006064">
         <div class="nav-wrapper">
-            <a @click="UserLogout" class="brand-logo right"><i class="material-icons">logout</i></a>
-
+            <ul class="right">
+            <li><a @click="UserLogout"><i class="material-icons">logout</i></a></li>
+            <li><a><span v-if="username">היי, {{ username }}</span></a></li>
+            </ul>
             <router-link to="/"><i class="material-icons">home</i></router-link>
         </div>
     </nav>
