@@ -572,16 +572,34 @@ apps = [
     {icon: 'format_list_numbered', func: count, name:'ספירה'},
 ];
 
-let app = new Vue({
-    el: '#app',
-    data: {
+var AppComponent = Vue.component('app',{
+    template: `<div>
+
+    <div class="container">
+        <div class="row">
+            <h3 v-html="exercise"></h3>
+        </div>
+        <div class="row">
+            <a class="waves-effect waves-light btn-large result"
+               v-for="(result, index) in results"
+               v-on:click="check(index)">{{ result }}</a>
+
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3>{{ score }}</h3></div>
+    </div></div>`,
+
+    data: function() { return {
         result: 0,
         exercise: '',
         message: {},
         ended: false,
-        currentAppNumber: 0,
         score: 0,
-    },
+        currentAppNumber: null
+    }},
+
     methods: {
         create: function (code) {
             this.ended = false;
@@ -621,22 +639,55 @@ let app = new Vue({
             }
         }, getSuccessMsg: function () {
             return he.decode("הצלחת &#128525;");
-        }, changeApp: function () {
-            this.currentAppNumber = (this.currentAppNumber + 1) % apps.length;
-            this.getScore();
-            this.create();
         }, getScore: function(){
             this.score = getLocalStorage(`score${this.currentAppNumber}`, 0);
         }, saveScore: function(){
             setLocalStorage(`score${this.currentAppNumber}`, this.score);
         }
-    }, created: function () {
+    },
+
+    created: function () {
+        this.currentAppNumber = this.$route.params.currentAppNumber
         this.getScore();
         this.create();
-    }, computed: {
+    },
+
+    computed: {
         currentApp: function () {
             return apps[this.currentAppNumber];
         }
     }
 
 })
+var MenuComponent = Vue.component('menu',{
+    template: `
+   <div>
+   <div container>
+    <div class="row">
+      <div v-for="(app, index) in apps" :key="index" class="col s8 offset-s2">
+        <!-- Each app as a button -->
+        <router-link :to="'app/' + index" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+          {{ app.name }}
+        </router-link>
+      </div>
+    </div>
+   </div>
+
+    </div>`,
+    data: function(){
+        return {apps: apps}
+    }
+})
+
+const routes = [
+    {path: '/', component: MenuComponent},
+    {path: '/app/:currentAppNumber', component: AppComponent, props: true }
+]
+
+const router = new VueRouter({
+    routes
+})
+
+var app = new Vue({
+    router
+}).$mount('#app')

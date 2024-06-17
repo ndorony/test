@@ -38,33 +38,19 @@
     </style>
 </head>
 <body>
-
-<div id="app">
-    <nav style="background: #006064">
-        <div class="nav-wrapper" v-on:click="changeApp()">
-            <a href="#!" class="brand-logo"><i class="material-icons">{{currentApp.icon}}</i>{{ currentApp.name }}</a>
+    <div id="app">
+        <nav style="background: #006064">
+        <div class="nav-wrapper">
+            <router-link to="/"><i class="material-icons">home</i></router-link>
         </div>
     </nav>
-    <div class="container">
-        <div class="row">
-            <h3 v-html="exercise"></h3>
-        </div>
-        <div class="row">
-            <a class="waves-effect waves-light btn-large result"
-               v-for="(result, index) in results"
-               v-on:click="check(index)">{{ result }}</a>
 
-        </div>
-        <div class="row" dir="rtl">
-            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
-        </div>
-        <div class="row"><h3>{{ score }}</h3></div>
-    </div>
-
+    <p><router-view></router-view></p>
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/vue@2"></script>
+<script src="https://unpkg.com/vue-router@2.0.0/dist/vue-router.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js"></script>
 
 <!-- Material -->
