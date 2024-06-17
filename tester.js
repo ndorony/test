@@ -10,15 +10,25 @@ function getNItmes(number) {
     return he.decode(Array(number + 1).join("&#128540; "))
 }
 
+
+function getUser() {
+    return sessionStorage.getItem('username')
+}
+
+function getKey(key) {
+    return `${key}_${getUser()}_LocalData`;
+}
+
+
 function setLocalStorage(key, value) {
     if (typeof value === "object") { // Check if value is an object/array
         value = JSON.stringify(value); // Convert object/array to JSON string
     }
-    localStorage.setItem(key, value);
+    localStorage.setItem(getKey(key), value);
 }
 
 function getLocalStorage(key, defaultValue) {
-    let value = localStorage.getItem(key);
+    let value = localStorage.getItem(getKey(key));
     if (value === null) { // Key does not exist in localStorage
         return defaultValue; // Return the default value
     }
@@ -679,15 +689,118 @@ var MenuComponent = Vue.component('menu',{
     }
 })
 
+const SignUp = {
+  template: `
+    <div>
+      Sign Up
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" v-model="username">
+      </div>
+      <button @click="SignUp">Sign up</button>
+    </div>
+  `,
+  data() {
+    return {
+      username: ''
+    };
+  },
+  methods: {
+    SignUp() {
+      if (this.username) {
+        sessionStorage.setItem('username', this.username);
+        users = JSON.parse(localStorage.getItem('users')) || [];
+        users.push(this.username);
+        localStorage.setItem('users', JSON.stringify(users));
+        this.$router.push('/');
+      } else {
+        alert('Please enter a username');
+      }
+    }
+  }
+};
+
+const Login = {
+  template: `
+    <div>
+    <div class="row">
+      <div class="col s4 offset-s4">
+        <select id="selectUser" v-model="selectedUser" class="browser-default">
+          <option v-for="user in users" :key="user">{{ user }}</option>
+        </select>
+        <label for="selectUser">Select User</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s4 offset-s4">
+        <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="login" style="width: 100%; margin-bottom: 20px;">Login</a>
+        <router-link to="/signUp" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">Sign Up</router-link>
+      </div>
+    </div>
+  </div>
+  `,
+  data() {
+    return {
+      selectedUser: '',
+      users: null
+    };
+  },
+    created: function() {
+    this.users = JSON.parse(localStorage.getItem('users')) || [];
+      console.log(localStorage.getItem('users'));
+      console.log(this.users);
+    if (this.users.length === 0) {
+      console.log('signUp');
+      this.$router.push('/signUp');
+    }
+  },
+  methods: {
+    login() {
+      if (this.selectedUser) {
+        sessionStorage.setItem('username', this.selectedUser);
+        this.$router.push('/');
+      } else if (this.username) {
+        sessionStorage.setItem('username', this.username);
+        this.$router.push('/');
+      } else {
+        alert('Please select a user or enter a username');
+      }
+    }
+  }
+};
+
+
 const routes = [
     {path: '/', component: MenuComponent},
-    {path: '/app/:currentAppNumber', component: AppComponent, props: true }
+    {path: '/app/:currentAppNumber', component: AppComponent, props: true },
+    {path: '/signUp', component: SignUp},
+    {path: '/login', component: Login },
 ]
 
 const router = new VueRouter({
     routes
 })
 
+router.beforeEach((to, from, next) => {
+  const username = getUser();
+  if (to.path === '/signUp'){
+      next();
+  } else if (!username && to.path !== '/login') {
+    next('/login');
+  } else if (username && to.path === '/login') {
+    next('/');
+  } else {
+    next();
+  }
+});
+
+
 var app = new Vue({
-    router
+    router,
+    methods: {
+        UserLogout() {
+           sessionStorage.removeItem('username');
+           this.$router.push('/login');
+        }
+    }
 }).$mount('#app')
