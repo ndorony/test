@@ -842,6 +842,7 @@ var MenuComponent = Vue.component('menu',{
     watch: {
         '$route.params.currentMenu': {
           handler(newVal, oldVal) {
+            this.menu = null;
             this.init();
           },
         },
