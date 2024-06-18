@@ -726,6 +726,17 @@ var MenuComponent = Vue.component('menu',{
         }
     },
     created: function(){
+        this.init();
+    },
+    watch: {
+        '$route.params.currentMenu': {
+          handler(newVal, oldVal) {
+            this.init();
+          },
+        },
+      },
+    methods: {
+      init: function(){
         currentMenu = this.$route.params.currentMenu;
         if (!currentMenu){
             this.menu = apps;
@@ -733,7 +744,7 @@ var MenuComponent = Vue.component('menu',{
         }
         this.prefix = `${currentMenu}_`;
         this.menu = getItemById(apps, currentMenu);
-
+      }
     }
 })
 
@@ -803,10 +814,7 @@ const Login = {
   },
     created: function() {
     this.users = JSON.parse(localStorage.getItem('users')) || [];
-      console.log(localStorage.getItem('users'));
-      console.log(this.users);
     if (this.users.length === 0) {
-      console.log('signUp');
       this.$router.push('/signUp');
     }
   },
@@ -838,7 +846,6 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const username = getUser();
-  console.log(`username ${username}`)
   if (this.app){
     this.app.$root.username = username
   }
