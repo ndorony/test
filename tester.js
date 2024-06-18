@@ -452,17 +452,115 @@ const getDataList = (listName) => {
     return DATA[listName];
 }
 
-const getRandomIndexes = (list, resultIndex, count = 4) => {
-    length = list.length
-    const resultsIndexes = [];
-    const results = [];
-    while (resultsIndexes.length < count) {
-        const randomIndex = Math.floor(Math.random() * length);
-        if (!results.includes(list[randomIndex][resultIndex]['value'])) {
-            resultsIndexes.push(randomIndex);
-            results.push(list[randomIndex][resultIndex]['value'])
+function getWeightsKey(key){
+    return getKey(`${key}_Weights`)
+}
+
+const updateWeights = (weights, setItems) => {
+    // Check if the list contains 0 and all numbers are less than 2
+    const containsZero = weights.includes(0);
+    const allLessThanTwo = weights.every(weight => weight < 2);
+
+    if (containsZero && allLessThanTwo) {
+        // Convert all non-zero weights to 3
+        weights = weights.map(weight => weight === 0 ? weight : 3);
+
+        // Set the first setItems elements that are 0 to 5
+        let count = 0;
+        for (let i = 0; i < weights.length && count < setItems; i++) {
+            if (weights[i] === 0) {
+                weights[i] = 5;
+                count++;
+            }
         }
     }
+
+    return weights;
+}
+
+const getWeightsForKey = (key, setItems, elements) => {
+    // Check if weights already exist in localStorage
+    const storedWeights = localStorage.getItem(getWeightsKey(key));
+    if (storedWeights) {
+        let weights = JSON.parse(storedWeights);
+        if (setItems){
+            newWeights = updateWeights(weights, setItems);
+            if (newWeights) {
+                weights = newWeights;
+                localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
+
+            }
+        }
+        console.log(weights);
+        return weights;
+    }
+
+    // Initialize weights based on the mode
+    let weights;
+    if (setItems === 0) {
+        // All elements get a fixed weight of 5
+        weights = elements.map(() => 5);
+    } else {
+        // All elements get 0 except the first which gets 5
+        weights = elements.map((_, index) => index < setItems ? 5 : 0);
+    }
+
+    // Store the generated weights in localStorage
+    localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
+
+
+    return weights;
+}
+
+const updateWeightForKey = (key, index, change) => {
+    // Retrieve the current weights from localStorage
+    const storedWeights = localStorage.getItem(getWeightsKey(key));
+    if (!storedWeights) {
+        return
+    }
+
+    // Parse the stored weights
+    const weights = JSON.parse(storedWeights);
+
+    // Update the weight with the given change and ensure it stays within bounds
+    weights[index] = Math.max(1, Math.min(weights[index] + change, 15));
+
+    // Store the updated weights back in localStorage
+    localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
+
+    // Return the updated weights
+    return weights;
+}
+
+// Function to select a weighted random index
+const getWeightedRandomIndex = (list, key, setItems) => {
+    const weights = getWeightsForKey(key, setItems, list);
+    const totalWeight = weights.reduce((acc, weight) => acc + weight, 0);
+    const randomWeight = Math.random() * totalWeight;
+
+    let weightSum = 0;
+    for (let i = 0; i < weights.length; i++) {
+        weightSum += weights[i];
+        if (randomWeight < weightSum) {
+            return i;
+        }
+    }
+}
+
+// Function to select additional random indexes excluding a specific index
+const getRandomIndexesExcluding = (list, resultIndex, excludeIndex, count = 3) => {
+    const length = list.length;
+    const resultsIndexes = [];
+    const results = [];
+
+    while (resultsIndexes.length < count) {
+        const randomIndex = Math.floor(Math.random() * length);
+        if (randomIndex !== excludeIndex && !results.includes(list[randomIndex][resultIndex]['value'])) {
+            resultsIndexes.push(randomIndex);
+            results.push(list[randomIndex][resultIndex]['value']);
+        }
+    }
+
     return resultsIndexes;
 }
 
@@ -480,90 +578,96 @@ function generateQuestion(list, index, questionIndex, action) {
     return action;
 }
 
-function generateFromList(listName, questionIndex, resultIndex) {
+function generateFromList(listName, questionIndex, resultIndex, key, setItems=1) {
     const list = getDataList(listName);
-    const resultsIndexes = getRandomIndexes(list, resultIndex);
+
+    // Select a question using weighted random selection
+    const weightedRandomIndex = getWeightedRandomIndex(list, key, setItems);
+
+    // Select three additional answers excluding weights
+    const additionalIndexes = getRandomIndexesExcluding(list, resultIndex, weightedRandomIndex);
+
+    // Combine the question index with the additional answer indexes
+    const resultsIndexes = [weightedRandomIndex, ...additionalIndexes];
     const options = generateOptions(list, resultsIndexes, resultIndex);
 
-    const randomResultIndex = resultsIndexes[Math.floor(Math.random() * resultsIndexes.length)];
-    const result = render(list[randomResultIndex][resultIndex]);
-    const question = render(list[randomResultIndex][questionIndex]);
+    const result = render(list[weightedRandomIndex][resultIndex]);
+    const question = render(list[weightedRandomIndex][questionIndex]);
     let action = () => {};
 
-    action = generateQuestion(list, randomResultIndex, questionIndex, action);
+    action = generateQuestion(list, weightedRandomIndex, questionIndex, action);
 
     return {
         result: result,
         options: options,
         question: question,
-        action: action
+        action: action,
+        questionIndex: weightedRandomIndex,
     };
 }
 
-function feelingName(){
-   return generateFromList('FEELING', "name", "hebrew_english_name");
+function feelingName(key){
+   return generateFromList('FEELING', "name", "hebrew_english_name", key);
 }
 
-function feelingEmoji(){
-   return generateFromList('FEELING', "english_name", "emoji");
+function feelingEmoji(key){
+   return generateFromList('FEELING', "english_name", "emoji", key);
 }
 
-
-function lowerToCapital() {
-    return generateFromList('ABC', "englishLowerCase", "englishUpperCase");
+function lowerToCapital(key) {
+    return generateFromList('ABC', "englishLowerCase", "englishUpperCase", key);
 }
 
-function capitalToLower() {
-    return generateFromList('ABC', "englishUpperCase", "englishUpperCase");
+function capitalToLower(key) {
+    return generateFromList('ABC', "englishUpperCase", "englishUpperCase", key);
 }
 
-function letterToName() {
-    return generateFromList('ABC', "englishLowerCase", "hebrewTransliteration");
+function letterToName(key) {
+    return generateFromList('ABC', "englishLowerCase", "hebrewTransliteration", key);
 }
 
-function nameToLetter() {
-    return generateFromList('ABC', "hebrewTransliteration", "englishLowerCase");
+function nameToLetter(key) {
+    return generateFromList('ABC', "hebrewTransliteration", "englishLowerCase", key);
 }
 
-function audioToLetter() {
-    return generateFromList('ABC', "audio", "englishLowerCase");
+function audioToLetter(key) {
+    return generateFromList('ABC', "audio", "englishLowerCase", key);
 }
 
-
-function verbsNameToHe() {
-    return generateFromList('VERBS', "verb_english", "verb_hebrew");
+function verbsNameToHe(key) {
+    return generateFromList('VERBS', "verb_english", "verb_hebrew", key);
 }
 
-function colorNameToColor(){
-    return generateFromList('COLORS', "color_english", "emoji");
+function colorNameToColor(key){
+    return generateFromList('COLORS', "color_english", "emoji", key);
 }
 
-function questionNameToHe(){
-    return generateFromList('QUESTION', "question_word_english", "question_word_hebrew");
+function questionNameToHe(key){
+    return generateFromList('QUESTION', "question_word_english", "question_word_hebrew", key);
 }
 
-function monthName(){
-    return generateFromList('MONTHS', 'name', 'month_number')
+function monthName(key){
+    return generateFromList('MONTHS', 'name', 'month_number', key);
 }
 
-function addition() {
-    return generateFromList('ADDITION', 'question', 'answer');
+function addition(key) {
+    return generateFromList('ADDITION', 'question', 'answer', key, 10);
 }
 
-function subtraction() {
-    return generateFromList('SUBTRACTION', 'question', 'answer');
+function subtraction(key) {
+    return generateFromList('SUBTRACTION', 'question', 'answer', key, 10);
 }
 
-function multiplication() {
-    return generateFromList('MULTIPLICATION', 'question', 'answer');
+function multiplication(key) {
+    return generateFromList('MULTIPLICATION', 'question', 'answer', key, 10);
 }
 
-function division() {
-    return generateFromList('DIVISION', 'question', 'answer');
+function division(key) {
+    return generateFromList('DIVISION', 'question', 'answer', key, 10);
 }
 
-function count() {
-    return generateFromList('COUNT', 'question', 'answer');
+function count(key) {
+    return generateFromList('COUNT', 'question', 'answer', key);
 }
 
 apps =  {
@@ -650,16 +754,18 @@ var AppComponent = Vue.component('app',{
         message: {},
         ended: false,
         score: 0,
-        currentAppId: null
+        currentAppId: null,
+        questionIndex: null,
     }},
 
     methods: {
         create: function (code) {
             this.ended = false;
-            let question = this.currentApp.func();
+            let question = this.currentApp.func(this.currentAppId);
             this.results = this.shuffle(question.options);
             this.exercise = question.question;
             this.result = question.result;
+            this.questionIndex = question.questionIndex;
             question.action();
             this.ended = false;
             this.$forceUpdate();
@@ -677,6 +783,7 @@ var AppComponent = Vue.component('app',{
                 this.ended = true;
                 this.message = {value: this.getSuccessMsg(), success: true};
                 successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1)
                 setTimeout(this.create, 1000)
                 this.score += 1;
                 this.saveScore();
@@ -684,6 +791,7 @@ var AppComponent = Vue.component('app',{
                 failureSound.play();
                 this.score = Math.max(0, this.score - 1);
                 this.saveScore();
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1)
                 this.message = {value: 'נסה שוב :(', error: true}
             }
         }, next: function () {
