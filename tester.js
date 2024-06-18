@@ -452,15 +452,18 @@ const getDataList = (listName) => {
     return DATA[listName];
 }
 
-const getRandomIndexes = (length, count = 4) => {
+const getRandomIndexes = (list, resultIndex, count = 4) => {
+    length = list.length
+    const resultsIndexes = [];
     const results = [];
-    while (results.length < count) {
+    while (resultsIndexes.length < count) {
         const randomIndex = Math.floor(Math.random() * length);
-        if (!results.includes(randomIndex)) {
-            results.push(randomIndex);
+        if (!results.includes(list[randomIndex][resultIndex]['value'])) {
+            resultsIndexes.push(randomIndex);
+            results.push(list[randomIndex][resultIndex]['value'])
         }
     }
-    return results;
+    return resultsIndexes;
 }
 
 const generateOptions = (list, resultIndexes, resultFieldIndex) => {
@@ -479,7 +482,7 @@ function generateQuestion(list, index, questionIndex, action) {
 
 function generateFromList(listName, questionIndex, resultIndex) {
     const list = getDataList(listName);
-    const resultsIndexes = getRandomIndexes(list.length);
+    const resultsIndexes = getRandomIndexes(list, resultIndex);
     const options = generateOptions(list, resultsIndexes, resultIndex);
 
     const randomResultIndex = resultsIndexes[Math.floor(Math.random() * resultsIndexes.length)];
@@ -575,10 +578,10 @@ apps =  {
         {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות', type: 'app'},
         {icon: 'format_shapes', func: feelingEmoji, name:'רגשות', type: 'app'},
         {icon: 'format_shapes', func: feelingName, name:'רגשות', type: 'app'},
-        {icon: 'format_shapes', func: questionNameToHe, name:'שאלות', type: 'app'},
-        {icon: 'format_shapes', func: nameToLetter, name:'זהה את האות', type: 'app'},
-        {icon: 'format_shapes', func: letterToName, name:'זהה את האות', type: 'app'},
-        {icon: 'volume_up', func: audioToLetter, name:'זהה את האות', type: 'app'},
+        {icon: 'format_shapes', func: questionNameToHe, name:'מילות שאלה', type: 'app'},
+        {icon: 'format_shapes', func: nameToLetter, name:'שם לאות', type: 'app'},
+        {icon: 'format_shapes', func: letterToName, name:'אות לשם', type: 'app'},
+        {icon: 'volume_up', func: audioToLetter, name:'שמע לאות', type: 'app'},
         {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה', type: 'app'},
         {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה', type: 'app'},
       ]
