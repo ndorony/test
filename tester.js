@@ -563,24 +563,64 @@ function count() {
     return generateFromList('COUNT', 'question', 'answer');
 }
 
-apps = [
-    {icon: 'format_shapes', func: colorNameToColor, name:'צבעים'},
-    {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות'},
-    {icon: 'format_shapes', func: feelingEmoji, name:'רגשות'},
-    {icon: 'format_shapes', func: feelingName, name:'רגשות'},
-    {icon: 'format_shapes', func: questionNameToHe, name:'שאלות'},
-    {icon: 'format_shapes', func: nameToLetter, name:'זהה את האות'},
-    {icon: 'format_shapes', func: letterToName, name:'זהה את האות'},
-    {icon: 'volume_up', func: audioToLetter, name:'זהה את האות'},
-    {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה'},
-    {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה'},
-    {icon: 'format_size', func: monthName, name:'חודשי השנה'},
-    {icon: 'add_circle_outline', func: addition, name:'חיבור'},
-    {icon: 'remove_circle_outline', func: subtraction, name:'חיסור'},
-    {icon: 'add_circle_outline', func: multiplication, name:'כפל'},
-    {icon: 'remove_circle_outline', func: division, name:'חילוק'},
-    {icon: 'format_list_numbered', func: count, name:'ספירה'},
-];
+apps =  {
+    name: 'main',
+    type: 'menu',
+    items: [
+    {
+      name: 'אנגלית',
+      type: 'menu',
+      items: [
+        {icon: 'format_shapes', func: colorNameToColor, name:'צבעים', type: 'app'},
+        {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות', type: 'app'},
+        {icon: 'format_shapes', func: feelingEmoji, name:'רגשות', type: 'app'},
+        {icon: 'format_shapes', func: feelingName, name:'רגשות', type: 'app'},
+        {icon: 'format_shapes', func: questionNameToHe, name:'שאלות', type: 'app'},
+        {icon: 'format_shapes', func: nameToLetter, name:'זהה את האות', type: 'app'},
+        {icon: 'format_shapes', func: letterToName, name:'זהה את האות', type: 'app'},
+        {icon: 'volume_up', func: audioToLetter, name:'זהה את האות', type: 'app'},
+        {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה', type: 'app'},
+        {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה', type: 'app'},
+      ]
+    },
+    {
+      name: 'חשבון',
+      type: 'menu',
+      items: [
+        {icon: 'add_circle_outline', func: addition, name:'חיבור', type: 'app'},
+        {icon: 'remove_circle_outline', func: subtraction, name:'חיסור', type: 'app'},
+        {icon: 'add_circle_outline', func: multiplication, name:'כפל', type: 'app'},
+        {icon: 'remove_circle_outline', func: division, name:'חילוק', type: 'app'},
+        {icon: 'format_list_numbered', func: count, name:'ספירה', type: 'app'},
+      ]
+    },
+    {
+      name: 'ידע כללי',
+      type: 'menu',
+      items: [
+        {icon: 'format_size', func: monthName, name:'חודשי השנה', type: 'app'},
+      ]
+    }
+  ]
+};
+
+
+function getItemById(currentItem, id) {
+  // Split the ID into an array of indices
+  const indices = id.split('_').map(Number);
+
+  // Recursively traverse the items structure
+  for (const index of indices) {
+    if (!currentItem || !currentItem.hasOwnProperty('items')) {
+      return null; // Item not found
+    }
+
+    currentItem = currentItem.items[index];
+  }
+
+  // Return the found item
+  return currentItem;
+}
 
 var AppComponent = Vue.component('app',{
     template: `<div>
@@ -607,7 +647,7 @@ var AppComponent = Vue.component('app',{
         message: {},
         ended: false,
         score: 0,
-        currentAppNumber: null
+        currentAppId: null
     }},
 
     methods: {
@@ -650,33 +690,28 @@ var AppComponent = Vue.component('app',{
         }, getSuccessMsg: function () {
             return he.decode("הצלחת &#128525;");
         }, getScore: function(){
-            this.score = getLocalStorage(`score${this.currentAppNumber}`, 0);
+            this.score = getLocalStorage(`score${this.currentAppId}`, 0);
         }, saveScore: function(){
-            setLocalStorage(`score${this.currentAppNumber}`, this.score);
+            setLocalStorage(`score${this.currentAppId}`, this.score);
         }
     },
 
     created: function () {
-        this.currentAppNumber = this.$route.params.currentAppNumber
+        this.currentAppId = this.$route.params.currentAppId
+        this.currentApp = getItemById(apps, this.currentAppId);
         this.getScore();
         this.create();
     },
-
-    computed: {
-        currentApp: function () {
-            return apps[this.currentAppNumber];
-        }
-    }
-
 })
+
 var MenuComponent = Vue.component('menu',{
     template: `
    <div>
    <div container>
     <div class="row">
-      <div v-for="(app, index) in apps" :key="index" class="col s8 offset-s2">
+      <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
-        <router-link :to="'app/' + index" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+        <router-link :to="'/' + app.type + '/' + prefix + index" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
           {{ app.name }}
         </router-link>
       </div>
@@ -685,7 +720,20 @@ var MenuComponent = Vue.component('menu',{
 
     </div>`,
     data: function(){
-        return {apps: apps}
+        return {
+         menu: null,
+         prefix: ''
+        }
+    },
+    created: function(){
+        currentMenu = this.$route.params.currentMenu;
+        if (!currentMenu){
+            this.menu = apps;
+            return
+        }
+        this.prefix = `${currentMenu}_`;
+        this.menu = getItemById(apps, currentMenu);
+
     }
 })
 
@@ -777,8 +825,9 @@ const Login = {
 
 
 const routes = [
-    {path: '/', component: MenuComponent},
-    {path: '/app/:currentAppNumber', component: AppComponent, props: true },
+    {path: '/', component: MenuComponent,},
+    {path: '/menu/:currentMenu', component: MenuComponent,},
+    {path: '/app/:currentAppId', component: AppComponent, props: true },
     {path: '/signUp', component: SignUp},
     {path: '/login', component: Login },
 ]
