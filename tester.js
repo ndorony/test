@@ -822,7 +822,7 @@ var MenuComponent = Vue.component('menu',{
     <div class="row">
       <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
-        <router-link :to="'/' + app.type + '/' + prefix + index" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+        <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
           {{ app.name }}
         </router-link>
       </div>
@@ -833,7 +833,6 @@ var MenuComponent = Vue.component('menu',{
     data: function(){
         return {
          menu: null,
-         prefix: ''
         }
     },
     created: function(){
@@ -854,9 +853,19 @@ var MenuComponent = Vue.component('menu',{
             this.menu = apps;
             return
         }
-        this.prefix = `${currentMenu}_`;
         this.menu = getItemById(apps, currentMenu);
-      }
+      }, getLink: function(app, id){
+        menu = this.menu;
+        route = this.$route.params.currentMenu;
+        link = `/${app.type}/${route}_${id}`;
+        if (!route) {
+          link = `/${app.type}/${id}`;
+        }
+        if (menu === this.menu && route === this.$route.params.currentMenu){
+            return link;
+        }
+        return $route.path;
+      },
     }
 })
 
