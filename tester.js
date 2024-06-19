@@ -417,9 +417,9 @@ function render(object) {
         case "text":
             return object.value;
         case "audio":
-        return `<a href="#!" class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
+        return `<a class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
         case "text_to_speech":
-            return `<a href="#!" class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
+            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
         default:
             return null;
     }
