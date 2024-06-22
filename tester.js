@@ -456,14 +456,24 @@ function getWeightsKey(key){
     return getKey(`${key}_Weights`)
 }
 
-const updateWeights = (weights, setItems) => {
+function getProgress(key, total){
+    return getLocalStorage(`${key}_Progress`, {progress:0,
+                                               total:total});
+}
+
+function setProgress(key, total, progress){
+    return setLocalStorage(`${key}_Progress`, {progress: progress,
+                                               total: total});
+}
+
+const updateWeights = (key, weights, setItems) => {
     // Check if the list contains 0 and all numbers are less than 2
     const containsZero = weights.includes(0);
     const allLessThanTwo = weights.every(weight => weight < 2);
 
     if (containsZero && allLessThanTwo) {
         // Convert all non-zero weights to 3
-        weights = weights.map(weight => weight === 0 ? weight : 3);
+        weights = weights.map(weight => weight === 0 ? weight : 2);
 
         // Set the first setItems elements that are 0 to 5
         let count = 0;
@@ -473,6 +483,8 @@ const updateWeights = (weights, setItems) => {
                 count++;
             }
         }
+        setProgress(key, weights.length,
+                    weights.filter(function(number) { return number > 0;}).length);
     }
 
     return weights;
@@ -484,7 +496,7 @@ const getWeightsForKey = (key, setItems, elements) => {
     if (storedWeights) {
         let weights = JSON.parse(storedWeights);
         if (setItems){
-            newWeights = updateWeights(weights, setItems);
+            newWeights = updateWeights(key, weights, setItems);
             if (newWeights) {
                 weights = newWeights;
                 localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
@@ -501,6 +513,7 @@ const getWeightsForKey = (key, setItems, elements) => {
         // All elements get a fixed weight of 5
         weights = elements.map(() => 5);
     } else {
+        setProgress(key, weights.length, 1)
         // All elements get 0 except the first which gets 5
         weights = elements.map((_, index) => index < setItems ? 5 : 0);
     }
@@ -510,6 +523,10 @@ const getWeightsForKey = (key, setItems, elements) => {
 
 
     return weights;
+}
+
+function getScore(currentAppId){
+    return getLocalStorage(`score${currentAppId}`, 0);
 }
 
 const updateWeightForKey = (key, index, change) => {
@@ -749,6 +766,7 @@ var AppComponent = Vue.component('app',{
     </div></div>`,
 
     data: function() { return {
+        saved: [],
         result: 0,
         exercise: '',
         message: {},
@@ -759,7 +777,17 @@ var AppComponent = Vue.component('app',{
     }},
 
     methods: {
+        saveApp: function(appId){
+          if (this.saved.includes(appId)) {
+              return
+          }
+          appList = getLocalStorage('appList', []);
+          appList.push(appId);
+          setLocalStorage('appList', appList);
+          this.saved.push(appId);
+        },
         create: function (code) {
+            this.saved = []
             this.ended = false;
             let question = this.currentApp.func(this.currentAppId);
             this.results = this.shuffle(question.options);
@@ -796,12 +824,12 @@ var AppComponent = Vue.component('app',{
             }
         }, next: function () {
             if (this.ended) {
-                this.create()
+                this.create();
             }
         }, getSuccessMsg: function () {
             return he.decode("הצלחת &#128525;");
-        }, getScore: function(){
-            this.score = getLocalStorage(`score${this.currentAppId}`, 0);
+        }, updateScore: function(){
+            this.score = getScore(this.currentAppId);
         }, saveScore: function(){
             setLocalStorage(`score${this.currentAppId}`, this.score);
         }
@@ -810,8 +838,9 @@ var AppComponent = Vue.component('app',{
     created: function () {
         this.currentAppId = this.$route.params.currentAppId
         this.currentApp = getItemById(apps, this.currentAppId);
-        this.getScore();
+        this.updateScore();
         this.create();
+        this.saveApp(this.currentAppId);
     },
 })
 
@@ -869,21 +898,69 @@ var MenuComponent = Vue.component('menu',{
     }
 })
 
+var UserComponent = Vue.component('user', {
+  template: `
+    <div>
+      <div container>
+        <div class="row">
+          <div class="col s8 offset-s2">
+            <h4>{{ name }}</h4>
+            <div v-for="(app, index) in apps" :key="index" class="card">
+              <div class="card-content">
+                <span class="card-title">{{ app.name }}</span>
+                <p>Score: {{ app.score }}</p>
+                <p>Progress: {{ app.progress.progress }}/{{ app.progress.total }}</p>
+                <div class="progress">
+                  <div class="determinate" :style="{ width: ((app.progress.progress / app.progress.total) * 100) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  data: function() {
+    return {
+        name: '',
+        apps: []
+    }
+  },
+  created: function() {
+    this.name = getUser();
+    userApps = [];
+    appList = getLocalStorage('appList', []);
+    appList.forEach(function(appId, index) {
+      name = getItemById(apps, appId).name
+      score = getScore(appId);
+      progress = getProgress(appId, 1);
+      userApps.push({name: name,
+                     score: score,
+                     progress: progress})
+    });
+    this.apps = userApps;
+  },
+  methods: {
+
+  }
+});
+
+
 const SignUp = {
   template: `
     <div>
       <div class="row">
         <div class="col s4 offset-s4">
-        Sign Up
+        הרשמה
         <div>
-          <label for="username">Username:</label>
+          <label for="username">שם משתמש:</label>
           <input type="text" id="username" v-model="username">
         </div>
         </div>
       </div>
       <div class="row">
         <div class="col s4 offset-s4">
-          <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="SignUp">Sign up</a>
+          <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="SignUp">הרשם</a>
         </div>
         </div>
     </div>
@@ -902,7 +979,7 @@ const SignUp = {
         localStorage.setItem('users', JSON.stringify(users));
         this.$router.push('/');
       } else {
-        alert('Please enter a username');
+        alert('הכנס שם משתמש');
       }
     }
   }
@@ -916,13 +993,13 @@ const Login = {
         <select id="selectUser" v-model="selectedUser" class="browser-default">
           <option v-for="user in users" :key="user">{{ user }}</option>
         </select>
-        <label for="selectUser">Select User</label>
+        <label for="selectUser">בחר משתמש</label>
       </div>
     </div>
     <div class="row">
       <div class="col s4 offset-s4">
-        <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="login" style="width: 100%; margin-bottom: 20px;">Login</a>
-        <router-link to="/signUp" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">Sign Up</router-link>
+        <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="login" style="width: 100%; margin-bottom: 20px;">התחבר</a>
+        <router-link to="/signUp" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">הרשם</router-link>
       </div>
     </div>
   </div>
@@ -946,7 +1023,7 @@ const Login = {
         this.$forceUpdate();
         this.$router.push('/');
       } else {
-        alert('Please select a user or enter a username');
+        alert('בחר שם משתמש');
       }
     }
   }
@@ -955,6 +1032,7 @@ const Login = {
 
 const routes = [
     {path: '/', component: MenuComponent,},
+    {path: '/user', component: UserComponent},
     {path: '/menu/:currentMenu', component: MenuComponent,},
     {path: '/app/:currentAppId', component: AppComponent, props: true },
     {path: '/signUp', component: SignUp},

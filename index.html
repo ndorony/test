@@ -50,7 +50,7 @@
         <div class="nav-wrapper">
             <ul class="right">
             <li><a @click="UserLogout"><i class="material-icons">logout</i></a></li>
-            <li><a><span v-if="username">היי, {{ username }}</span></a></li>
+            <li v-if="username"><a><router-link to="/user"><span>היי, {{ username }}</span></router-link></a></li>
             </ul>
             <router-link to="/"><i class="material-icons">home</i></router-link>
         </div>
