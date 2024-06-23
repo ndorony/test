@@ -513,9 +513,9 @@ const getWeightsForKey = (key, setItems, elements) => {
         // All elements get a fixed weight of 5
         weights = elements.map(() => 5);
     } else {
-        setProgress(key, weights.length, 1)
         // All elements get 0 except the first which gets 5
         weights = elements.map((_, index) => index < setItems ? 5 : 0);
+        setProgress(key, weights.length, 1)
     }
 
     // Store the generated weights in localStorage
