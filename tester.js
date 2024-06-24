@@ -486,7 +486,9 @@ const updateWeights = (key, weights, setItems) => {
     const containsSign = weights.includes(-1);
     const allZero = weights.every(weight => weight < 1);
 
-    if (containsSign && allZero) {
+    if (allZero){
+
+    if (containsSign) {
         // Convert all zero weights to 2
         weights = weights.map(weight => weight === 0 ? 2 : weight);
 
@@ -498,10 +500,13 @@ const updateWeights = (key, weights, setItems) => {
                 count++;
             }
         }
+    } else {
+        weights = weights.map(() => 5);
+    }
 
-        setProgress(key, weights.length,
-                    weights.filter(function(number) { return number > -1;}).length);
-        setCurrentLevelProgress(key, weights);
+    setProgress(key, weights.length,
+                weights.filter(function(number) { return number > -1;}).length);
+    setCurrentLevelProgress(key, weights);
     }
     return weights;
 }
@@ -529,10 +534,10 @@ const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
     let weights;
     if (setItems === 0) {
         // All elements get a fixed weight of 5
-        weights = elements.map(() => 5);
+        weights = weights.map(() => 5);
     } else {
         // All elements get -1 except the first which gets 5
-        weights = elements.map((_, index) => index < setItems ? 5 : -1);
+        weights = weights.map((_, index) => index < setItems ? 5 : -1);
         setProgress(key, weights.length,
                     weights.filter(function(number) { return number > -1;}).length);
     }
