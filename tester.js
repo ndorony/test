@@ -938,7 +938,7 @@ var UserComponent = Vue.component('user', {
             <h4>{{ name }}</h4>
             <div v-for="(app, index) in apps" :key="index" class="card">
               <div class="card-content">
-                <span class="card-title">{{ app.name }}</span>
+                <span class="card-title"><router-link :to="'/app/' + app.id" style="width: 100%; margin-bottom: 20px;">{{ app.name }}</router-link></span>
                 <p>Score: {{ app.score }}</p>
                 <p>Progress: {{ app.progress.progress }}/{{ app.progress.total }}</p>
                 <div class="progress">
@@ -965,7 +965,8 @@ var UserComponent = Vue.component('user', {
       name = getItemById(apps, appId).name
       score = getScore(appId);
       progress = getProgress(appId, 1);
-      userApps.push({name: name,
+      userApps.push({id: appId,
+                     name: name,
                      score: score,
                      progress: progress})
     });
