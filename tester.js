@@ -1075,6 +1075,12 @@ const router = new VueRouter({
     routes
 })
 
+router.afterEach((to, from) => {
+  gtag('config', 'YOUR_TRACKING_ID', {
+    page_path: to.fullPath,
+  });
+});
+
 router.beforeEach((to, from, next) => {
   const username = getUser();
   if (this.app){
