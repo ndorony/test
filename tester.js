@@ -1119,6 +1119,11 @@ var app = new Vue({
         }
     },
     mounted() {
+        version = localStorage.getItem('version');
+        if (!version){
+            localStorage.clear();
+        }
+        localStorage.setItem('version', 0.1)
        document.getElementById('loading-screen').classList.add('hidden');
     }
 }).$mount('#app')
