@@ -433,7 +433,8 @@ function audio(url){
 function text_to_speech(text){
     var msg = new SpeechSynthesisUtterance();
     msg.text = text;
-    msg.lang = "en_US"
+    msg.lang = "en_US";
+    msg.rate = 0.7;
     window.speechSynthesis.speak(msg);
 }
 
@@ -466,31 +467,46 @@ function setProgress(key, total, progress){
                                                total: total});
 }
 
+function setCurrentLevelProgress(key, weights){
+    weights = weights.filter(number => number >= 0);
+    currentState = weights.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    levelProgress = getCurrentLevelProgress(key, currentState);
+    levelProgress.total = Math.max(levelProgress.total, currentState);
+    levelProgress.progress = levelProgress.total - currentState;
+    return setLocalStorage(`${key}_CurrentLevelProgress`, levelProgress);
+}
+
+function getCurrentLevelProgress(key, currentState=1){
+    return getLocalStorage(`${key}_CurrentLevelProgress`, {progress: 0,
+                                                           total: currentState});
+}
+
 const updateWeights = (key, weights, setItems) => {
     // Check if the list contains 0 and all numbers are less than 2
-    const containsZero = weights.includes(0);
-    const allLessThanTwo = weights.every(weight => weight < 2);
+    const containsSign = weights.includes(-1);
+    const allZero = weights.every(weight => weight < 1);
 
-    if (containsZero && allLessThanTwo) {
-        // Convert all non-zero weights to 3
-        weights = weights.map(weight => weight === 0 ? weight : 2);
+    if (containsSign && allZero) {
+        // Convert all zero weights to 2
+        weights = weights.map(weight => weight === 0 ? 2 : weight);
 
         // Set the first setItems elements that are 0 to 5
         let count = 0;
         for (let i = 0; i < weights.length && count < setItems; i++) {
-            if (weights[i] === 0) {
+            if (weights[i] === -1) {
                 weights[i] = 5;
                 count++;
             }
         }
+
         setProgress(key, weights.length,
-                    weights.filter(function(number) { return number > 0;}).length);
+                    weights.filter(function(number) { return number > -1;}).length);
     }
 
     return weights;
 }
 
-const getWeightsForKey = (key, setItems, elements) => {
+const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
     // Check if weights already exist in localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
     if (storedWeights) {
@@ -503,7 +519,9 @@ const getWeightsForKey = (key, setItems, elements) => {
 
             }
         }
-        console.log(weights);
+        if (skipNotRelevant){
+            weights =  weights.filter(number => number >= 0);
+        }
         return weights;
     }
 
@@ -513,15 +531,15 @@ const getWeightsForKey = (key, setItems, elements) => {
         // All elements get a fixed weight of 5
         weights = elements.map(() => 5);
     } else {
-        // All elements get 0 except the first which gets 5
-        weights = elements.map((_, index) => index < setItems ? 5 : 0);
-        setProgress(key, weights.length, 1)
+        // All elements get -1 except the first which gets 5
+        weights = elements.map((_, index) => index < setItems ? 5 : -1);
+        setProgress(key, weights.length,
+                    weights.filter(function(number) { return number > -1;}).length);
     }
 
     // Store the generated weights in localStorage
     localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
-
-
+    setCurrentLevelProgress(key, weights);
     return weights;
 }
 
@@ -540,18 +558,20 @@ const updateWeightForKey = (key, index, change) => {
     const weights = JSON.parse(storedWeights);
 
     // Update the weight with the given change and ensure it stays within bounds
-    weights[index] = Math.max(1, Math.min(weights[index] + change, 15));
+    weights[index] = Math.max(0, Math.min(weights[index] + change, 15));
 
     // Store the updated weights back in localStorage
     localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
 
-    // Return the updated weights
+    setCurrentLevelProgress(key, weights);
+
     return weights;
 }
 
 // Function to select a weighted random index
 const getWeightedRandomIndex = (list, key, setItems) => {
-    const weights = getWeightsForKey(key, setItems, list);
+    const weights = getWeightsForKey(key, setItems, list, skipNotRelevant=true);
+
     const totalWeight = weights.reduce((acc, weight) => acc + weight, 0);
     const randomWeight = Math.random() * totalWeight;
 
@@ -763,6 +783,10 @@ var AppComponent = Vue.component('app',{
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3>{{ score }}</h3></div>
+        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
+                <div class="progress">
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+        </div>
     </div></div>`,
 
     data: function() { return {
@@ -774,6 +798,7 @@ var AppComponent = Vue.component('app',{
         score: 0,
         currentAppId: null,
         questionIndex: null,
+        progress: null,
     }},
 
     methods: {
@@ -783,7 +808,8 @@ var AppComponent = Vue.component('app',{
           }
           appList = getLocalStorage('appList', []);
           appList.push(appId);
-          setLocalStorage('appList', appList);
+          setApp = new Set(appList);
+          setLocalStorage('appList', [...setApp]);
           this.saved.push(appId);
         },
         create: function (code) {
@@ -796,7 +822,10 @@ var AppComponent = Vue.component('app',{
             this.questionIndex = question.questionIndex;
             question.action();
             this.ended = false;
+            this.reloadProgress();
             this.$forceUpdate();
+        }, reloadProgress: function(){
+            this.progress = getCurrentLevelProgress(this.currentAppId);
         }, shuffle: function (a) {
             for (let i = a.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -814,6 +843,7 @@ var AppComponent = Vue.component('app',{
                 updateWeightForKey(this.currentAppId, this.questionIndex, -1)
                 setTimeout(this.create, 1000)
                 this.score += 1;
+                this.reloadProgress();
                 this.saveScore();
             } else {
                 failureSound.play();
@@ -821,6 +851,7 @@ var AppComponent = Vue.component('app',{
                 this.saveScore();
                 updateWeightForKey(this.currentAppId, this.questionIndex, 1)
                 this.message = {value: 'נסה שוב :(', error: true}
+                this.reloadProgress();
             }
         }, next: function () {
             if (this.ended) {
@@ -1079,5 +1110,8 @@ var app = new Vue({
         username: function(){
             return getUser();
         }
+    },
+    mounted() {
+       document.getElementById('loading-screen').classList.add('hidden');
     }
 }).$mount('#app')
