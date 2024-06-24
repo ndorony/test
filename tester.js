@@ -648,70 +648,6 @@ function generateFromList(listName, questionIndex, resultIndex, key, setItems=1)
     };
 }
 
-function feelingName(key){
-   return generateFromList('FEELING', "name", "hebrew_english_name", key);
-}
-
-function feelingEmoji(key){
-   return generateFromList('FEELING', "english_name", "emoji", key);
-}
-
-function lowerToCapital(key) {
-    return generateFromList('ABC', "englishLowerCase", "englishUpperCase", key);
-}
-
-function capitalToLower(key) {
-    return generateFromList('ABC', "englishUpperCase", "englishUpperCase", key);
-}
-
-function letterToName(key) {
-    return generateFromList('ABC', "englishLowerCase", "hebrewTransliteration", key);
-}
-
-function nameToLetter(key) {
-    return generateFromList('ABC', "hebrewTransliteration", "englishLowerCase", key);
-}
-
-function audioToLetter(key) {
-    return generateFromList('ABC', "audio", "englishLowerCase", key);
-}
-
-function verbsNameToHe(key) {
-    return generateFromList('VERBS', "verb_english", "verb_hebrew", key);
-}
-
-function colorNameToColor(key){
-    return generateFromList('COLORS', "color_english", "emoji", key);
-}
-
-function questionNameToHe(key){
-    return generateFromList('QUESTION', "question_word_english", "question_word_hebrew", key);
-}
-
-function monthName(key){
-    return generateFromList('MONTHS', 'name', 'month_number', key);
-}
-
-function addition(key) {
-    return generateFromList('ADDITION', 'question', 'answer', key, 10);
-}
-
-function subtraction(key) {
-    return generateFromList('SUBTRACTION', 'question', 'answer', key, 10);
-}
-
-function multiplication(key) {
-    return generateFromList('MULTIPLICATION', 'question', 'answer', key, 10);
-}
-
-function division(key) {
-    return generateFromList('DIVISION', 'question', 'answer', key, 10);
-}
-
-function count(key) {
-    return generateFromList('COUNT', 'question', 'answer', key);
-}
-
 apps =  {
     name: 'main',
     type: 'menu',
@@ -720,34 +656,34 @@ apps =  {
       name: 'אנגלית',
       type: 'menu',
       items: [
-        {icon: 'format_shapes', func: colorNameToColor, name:'צבעים', type: 'app'},
-        {icon: 'format_shapes', func: verbsNameToHe, name:'פעולות', type: 'app'},
-        {icon: 'format_shapes', func: feelingEmoji, name:'רגשות', type: 'app'},
-        {icon: 'format_shapes', func: feelingName, name:'רגשות', type: 'app'},
-        {icon: 'format_shapes', func: questionNameToHe, name:'מילות שאלה', type: 'app'},
-        {icon: 'format_shapes', func: nameToLetter, name:'שם לאות', type: 'app'},
-        {icon: 'format_shapes', func: letterToName, name:'אות לשם', type: 'app'},
-        {icon: 'volume_up', func: audioToLetter, name:'שמע לאות', type: 'app'},
-        {icon: 'format_size', func: lowerToCapital, name:'אות קטנה לגדולה', type: 'app'},
-        {icon: 'format_size', func: capitalToLower, name:'אות גדולה לקטנה', type: 'app'},
+        {icon: 'format_shapes', name:'צבעים', type: 'app', listName: 'COLORS', questionIndex: 'color_english', resultIndex: 'emoji' },
+        {icon: 'format_shapes', name:'פעולות', type: 'app', listName: 'VERBS', questionIndex: 'verb_english', resultIndex: 'verb_hebrew'},
+        {icon: 'format_shapes', name:'רגשות', type: 'app', listName: 'FEELING', questionIndex: 'english_name', resultIndex: 'emoji'},
+        {icon: 'format_shapes', name:'רגשות', type: 'app', listName: 'FEELING', questionIndex: 'name', resultIndex: 'hebrew_english_name'},
+        {icon: 'format_shapes', name:'מילות שאלה', type: 'app', listName: 'QUESTION', questionIndex: 'question_word_english', resultIndex: 'question_word_hebrew' },
+        {icon: 'format_shapes', name:'שם לאות', type: 'app', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
+        {icon: 'format_shapes', name:'אות לשם', type: 'app', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'hebrewTransliteration' },
+        {icon: 'volume_up', name:'שמע לאות', type: 'app', listName: 'ABC', questionIndex: 'audio', resultIndex: 'englishLowerCase' },
+        {icon: 'format_size', name:'אות קטנה לגדולה', type: 'app', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'englishUpperCase' },
+        {icon: 'format_size', name:'אות גדולה לקטנה', type: 'app', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase' },
       ]
     },
     {
       name: 'חשבון',
       type: 'menu',
       items: [
-        {icon: 'add_circle_outline', func: addition, name:'חיבור', type: 'app'},
-        {icon: 'remove_circle_outline', func: subtraction, name:'חיסור', type: 'app'},
-        {icon: 'add_circle_outline', func: multiplication, name:'כפל', type: 'app'},
-        {icon: 'remove_circle_outline', func: division, name:'חילוק', type: 'app'},
-        {icon: 'format_list_numbered', func: count, name:'ספירה', type: 'app'},
+        {icon: 'add_circle_outline', name:'חיבור', type: 'app', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10},
+        {icon: 'remove_circle_outline', name:'חיסור', type: 'app', listName: 'SUBTRACTION', questionIndex: 'question', resultIndex: 'answer', setItems: 10 },
+        {icon: 'add_circle_outline', name:'כפל', type: 'app', listName: 'MULTIPLICATION', questionIndex: 'question', resultIndex: 'answer', setItems: 10},
+        {icon: 'remove_circle_outline', name:'חילוק', type: 'app', listName: 'DIVISION', questionIndex: 'question', resultIndex: 'answer', setItems: 10},
+        {icon: 'format_list_numbered', name:'ספירה', type: 'app', listName: 'COUNT', questionIndex: 'question', resultIndex: 'answer'},
       ]
     },
     {
       name: 'ידע כללי',
       type: 'menu',
       items: [
-        {icon: 'format_size', func: monthName, name:'חודשי השנה', type: 'app'},
+        {icon: 'format_size', name:'חודשי השנה', type: 'app', listName: 'MONTHS', questionIndex: 'name', resultIndex: 'month_number'},
       ]
     }
   ]
@@ -819,16 +755,19 @@ var AppComponent = Vue.component('app',{
         },
         create: function (code) {
             this.saved = []
-            this.ended = false;
-            let question = this.currentApp.func(this.currentAppId);
+
+            let question = generateFromList(this.currentApp.listName, this.currentApp.questionIndex, this.currentApp.resultIndex, this.currentAppId,
+                                            this.currentApp.hasOwnProperty('setItems') ? this.currentApp['setItems'] : 1);
             this.results = this.shuffle(question.options);
             this.exercise = question.question;
             this.result = question.result;
             this.questionIndex = question.questionIndex;
             question.action();
-            this.ended = false;
             this.reloadProgress();
             this.$forceUpdate();
+            setTimeout(() => {
+            this.ended = false;
+            }, 500);
         }, reloadProgress: function(){
             this.progress = getCurrentLevelProgress(this.currentAppId);
         }, shuffle: function (a) {
