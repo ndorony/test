@@ -534,10 +534,10 @@ const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
     let weights;
     if (setItems === 0) {
         // All elements get a fixed weight of 5
-        weights = weights.map(() => 5);
+        weights = elements.map(() => 5);
     } else {
         // All elements get -1 except the first which gets 5
-        weights = weights.map((_, index) => index < setItems ? 5 : -1);
+        weights = elements.map((_, index) => index < setItems ? 5 : -1);
         setProgress(key, weights.length,
                     weights.filter(function(number) { return number > -1;}).length);
     }
