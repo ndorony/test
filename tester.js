@@ -501,8 +501,8 @@ const updateWeights = (key, weights, setItems) => {
 
         setProgress(key, weights.length,
                     weights.filter(function(number) { return number > -1;}).length);
+        setCurrentLevelProgress(key, weights);
     }
-
     return weights;
 }
 
