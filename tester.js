@@ -46,7 +46,8 @@ function createAsymmetricExercises(upTo, inverseMathFunction) {
             const { a, b, result, symbol } = inverseMathFunction(i, j);
             exercises.push({
                 question: {"type": "text", "value": `${a} ${symbol} ${b} =`},
-                answer: {"type": "text", "value": `${result}`}
+                answer: {"type": "text", "value": `${result}`},
+                id: {"type": "text", "value": `${i}`},
             });
         }
     }
@@ -80,7 +81,8 @@ function createCount(maxEmojis) {
         const questionEmojis = emoji.repeat(i);
         const exercise = {
             question: {"type": "text", "value": questionEmojis},
-            answer: {"type": "text", "value": `${i}`}
+            answer: {"type": "text", "value": `${i}`},
+            name: {"type": "text", "value": `${i}`}
         };
         exercises.push(exercise);
     }
@@ -115,117 +117,117 @@ const DATA = {FEELING : [{'name': {'type': 'text', 'value': 'שמח'},
   'emoji': {'type': 'text', 'value': '😮'}}],
 
 VERBS : [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Walk'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Walk'},
   'verb_hebrew_english': {'type': 'text', 'value': 'ווֹק'},
   'emoji': {'type': 'text', 'value': '🚶'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לרוץ'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Run'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Run'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רַן'},
   'emoji': {'type': 'text', 'value': '🏃'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לקפוץ'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Jump'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Jump'},
   'verb_hebrew_english': {'type': 'text', 'value': "גַ'ַמפּ"},
   'emoji': {'type': 'text', 'value': '🤾'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשחות'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Swim'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Swim'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סְווִים'},
   'emoji': {'type': 'text', 'value': '🏊'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לאכול'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Eat'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Eat'},
   'verb_hebrew_english': {'type': 'text', 'value': 'אִיט'},
   'emoji': {'type': 'text', 'value': '🍽️'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשתות'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Drink'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Drink'},
   'verb_hebrew_english': {'type': 'text', 'value': 'דְרִינק'},
   'emoji': {'type': 'text', 'value': '🥤'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשבת'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Sit'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Sit'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סִיט'},
   'emoji': {'type': 'text', 'value': '🪑'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לעמוד'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Stand'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Stand'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סְטֶנד'},
   'emoji': {'type': 'text', 'value': '🧍'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לשיר'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Sing'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Sing'},
   'verb_hebrew_english': {'type': 'text', 'value': 'סִינג'},
   'emoji': {'type': 'text', 'value': '🎤'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לצייר'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Draw'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Draw'},
   'verb_hebrew_english': {'type': 'text', 'value': 'דְרָו'},
   'emoji': {'type': 'text', 'value': '🎨'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לקרוא'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Read'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Read'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רִיד'},
   'emoji': {'type': 'text', 'value': '📖'}},
  {'verb_hebrew': {'type': 'text', 'value': 'לכתוב'},
-  'verb_english': {'type':  'text_to_speech', 'value': 'Write'},
+  'english_name': {'type':  'text_to_speech', 'value': 'Write'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רַייט'},
   'emoji': {'type': 'text', 'value': '✍️'}}],
 
 COLORS : [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Red'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Red'},
   'color_hebrew_english': {'type': 'text', 'value': 'רֵד'},
   'emoji': {'type': 'text', 'value': '🟥'}},
  {'color_hebrew': {'type': 'text', 'value': 'כחול'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Blue'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Blue'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּלוּ'},
   'emoji': {'type': 'text', 'value': '🟦'}},
  {'color_hebrew': {'type': 'text', 'value': 'ירוק'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Green'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Green'},
   'color_hebrew_english': {'type': 'text', 'value': 'גְרִין'},
   'emoji': {'type': 'text', 'value': '🟩'}},
  {'color_hebrew': {'type': 'text', 'value': 'צהוב'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Yellow'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Yellow'},
   'color_hebrew_english': {'type': 'text', 'value': 'יֵלְלוֹ'},
   'emoji': {'type': 'text', 'value': '💛'}},
  {'color_hebrew': {'type': 'text', 'value': 'שחור'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Black'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Black'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּלֶק'},
   'emoji': {'type': 'text', 'value': '⬛'}},
  {'color_hebrew': {'type': 'text', 'value': 'לבן'},
-  'color_english': {'type': 'text_to_speech', 'value': 'White'},
+  'english_name': {'type': 'text_to_speech', 'value': 'White'},
   'color_hebrew_english': {'type': 'text', 'value': 'וַוייט'},
   'emoji': {'type': 'text', 'value': '⬜'}},
  {'color_hebrew': {'type': 'text', 'value': 'ורוד'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Pink'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Pink'},
   'color_hebrew_english': {'type': 'text', 'value': 'פִּינק'},
   'emoji': {'type': 'text', 'value': '🩷'}},
  {'color_hebrew': {'type': 'text', 'value': 'כתום'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Orange'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Orange'},
   'color_hebrew_english': {'type': 'text', 'value': "אוֹרֵנְג'"},
   'emoji': {'type': 'text', 'value': '🟧'}},
  {'color_hebrew': {'type': 'text', 'value': 'סגול'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Purple'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Purple'},
   'color_hebrew_english': {'type': 'text', 'value': 'פַּרְפֵּל'},
   'emoji': {'type': 'text', 'value': '🟪'}},
  {'color_hebrew': {'type': 'text', 'value': 'חום'},
-  'color_english': {'type': 'text_to_speech', 'value': 'Brown'},
+  'english_name': {'type': 'text_to_speech', 'value': 'Brown'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּרָאון'},
   'emoji': {'type': 'text', 'value': '🟫'}}],
 
 QUESTION : [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
-  'question_word_english': {'type': 'text_to_speech',  'value': 'What'},
+  'english_name': {'type': 'text_to_speech',  'value': 'What'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'וואַט'},
   'emoji': {'type': 'text', 'value': '❓'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'מי'},
-  'question_word_english': {'type': 'text_to_speech',  'value': 'Who'},
+  'english_name': {'type': 'text_to_speech',  'value': 'Who'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'הוּ'},
   'emoji': {'type': 'text', 'value': '👤'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'מתי'},
-  'question_word_english': {'type': 'text_to_speech',  'value': 'When'},
+  'english_name': {'type': 'text_to_speech',  'value': 'When'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'ווען'},
   'emoji': {'type': 'text', 'value': '⏰'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'איפה'},
-  'question_word_english': {'type': 'text_to_speech',  'value': 'Where'},
+  'english_name': {'type': 'text_to_speech',  'value': 'Where'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'ווער'},
   'emoji': {'type': 'text', 'value': '📍'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'למה'},
-  'question_word_english': {'type': 'text_to_speech',  'value': 'Why'},
+  'english_name': {'type': 'text_to_speech',  'value': 'Why'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'וואַי'},
   'emoji': {'type': 'text', 'value': '🤔'}},
  {'question_word_hebrew': {'type': 'text', 'value': 'איך'},
-  'question_word_english': {'type': 'text_to_speech','value': 'How'},
+  'english_name': {'type': 'text_to_speech','value': 'How'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'האוּ'},
   'emoji': {'type': 'text', 'value': '🛠️'}}],
 
@@ -494,12 +496,17 @@ const updateWeights = (key, weights, setItems) => {
 
         // Set the first setItems elements that are 0 to 5
         let count = 0;
+        newsItems = [];
         for (let i = 0; i < weights.length && count < setItems; i++) {
             if (weights[i] === -1) {
                 weights[i] = 5;
+                newsItems.push(i);
                 count++;
             }
         }
+        oldNew = getLocalStorage(`${key}_new_items`, []);
+        newsItems = oldNew.concat(newsItems);
+        setLocalStorage(`${key}_new_items`, newsItems);
     } else {
         weights = weights.map(() => 5);
     }
@@ -540,11 +547,13 @@ const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
         weights = elements.map((_, index) => index < setItems ? 5 : -1);
         setProgress(key, weights.length,
                     weights.filter(function(number) { return number > -1;}).length);
+        setLocalStorage(`${key}_new_items`, Array.from({ length: setItems }, (_, index) => index));
     }
 
     // Store the generated weights in localStorage
     localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
     setCurrentLevelProgress(key, weights);
+
     return weights;
 }
 
@@ -610,8 +619,8 @@ const generateOptions = (list, resultIndexes, resultFieldIndex) => {
     return resultIndexes.map(index => render(list[index][resultFieldIndex]));
 }
 
-function generateQuestion(list, index, questionIndex, action) {
-    const question = list[index][questionIndex];
+function generateQuestion(question) {
+    let action = () => {};
     if (question.type === "audio") {
         action = () => audio(question.value);
     } else if (question.type === "text_to_speech") {
@@ -635,9 +644,10 @@ function generateFromList(listName, questionIndex, resultIndex, key, setItems=1)
 
     const result = render(list[weightedRandomIndex][resultIndex]);
     const question = render(list[weightedRandomIndex][questionIndex]);
+
     let action = () => {};
 
-    action = generateQuestion(list, weightedRandomIndex, questionIndex, action);
+    action = generateQuestion(list[weightedRandomIndex][questionIndex]);
 
     return {
         result: result,
@@ -656,11 +666,11 @@ apps =  {
       name: 'אנגלית',
       type: 'menu',
       items: [
-        {icon: 'format_shapes', name:'צבעים', type: 'app', listName: 'COLORS', questionIndex: 'color_english', resultIndex: 'emoji' },
-        {icon: 'format_shapes', name:'פעולות', type: 'app', listName: 'VERBS', questionIndex: 'verb_english', resultIndex: 'verb_hebrew'},
+        {icon: 'format_shapes', name:'צבעים', type: 'app', listName: 'COLORS', questionIndex: 'english_name', resultIndex: 'emoji' },
+        {icon: 'format_shapes', name:'פעולות', type: 'app', listName: 'VERBS', questionIndex: 'english_name', resultIndex: 'verb_hebrew'},
         {icon: 'format_shapes', name:'רגשות', type: 'app', listName: 'FEELING', questionIndex: 'english_name', resultIndex: 'emoji'},
         {icon: 'format_shapes', name:'רגשות', type: 'app', listName: 'FEELING', questionIndex: 'name', resultIndex: 'hebrew_english_name'},
-        {icon: 'format_shapes', name:'מילות שאלה', type: 'app', listName: 'QUESTION', questionIndex: 'question_word_english', resultIndex: 'question_word_hebrew' },
+        {icon: 'format_shapes', name:'מילות שאלה', type: 'app', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew' },
         {icon: 'format_shapes', name:'שם לאות', type: 'app', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
         {icon: 'format_shapes', name:'אות לשם', type: 'app', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'hebrewTransliteration' },
         {icon: 'volume_up', name:'שמע לאות', type: 'app', listName: 'ABC', questionIndex: 'audio', resultIndex: 'englishLowerCase' },
@@ -707,7 +717,11 @@ function getItemById(currentItem, id) {
   return currentItem;
 }
 
-var AppComponent = Vue.component('app',{
+function getSetItems(currentApp){
+    return currentApp.hasOwnProperty('setItems') ? currentApp['setItems'] : 1;
+}
+
+var PlayComponent = Vue.component('play',{
     template: `<div>
 
     <div class="container">
@@ -757,19 +771,33 @@ var AppComponent = Vue.component('app',{
             this.saved = []
 
             let question = generateFromList(this.currentApp.listName, this.currentApp.questionIndex, this.currentApp.resultIndex, this.currentAppId,
-                                            this.currentApp.hasOwnProperty('setItems') ? this.currentApp['setItems'] : 1);
+                                            getSetItems(this.currentApp));
             this.results = this.shuffle(question.options);
             this.exercise = question.question;
             this.result = question.result;
             this.questionIndex = question.questionIndex;
-            question.action();
-            this.reloadProgress();
-            this.$forceUpdate();
-            setTimeout(() => {
-            this.ended = false;
-            }, 500);
+            if(this.reloadProgress()){
+                question.action();
+                this.$forceUpdate();
+                setTimeout(() => {
+                this.ended = false;
+                }, 500);
+            }
+
         }, reloadProgress: function(){
             this.progress = getCurrentLevelProgress(this.currentAppId);
+            if (this.progress.progress == this.progress.total){
+                this.$router.push('/app/' + this.currentAppId);
+                return false;
+
+            } else if (this.progress.progress == 0){
+                if(getLocalStorage(`${this.currentAppId}_new_items`, []).length != 0){
+                   this.$router.push('/display/news/' + this.currentAppId);
+                   return false;
+                }
+            }
+            return true;
+
         }, shuffle: function (a) {
             for (let i = a.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -785,10 +813,11 @@ var AppComponent = Vue.component('app',{
                 this.message = {value: this.getSuccessMsg(), success: true};
                 successSound.play();
                 updateWeightForKey(this.currentAppId, this.questionIndex, -1)
-                setTimeout(this.create, 1000)
                 this.score += 1;
-                this.reloadProgress();
-                this.saveScore();
+                if (this.reloadProgress()){
+                    this.saveScore();
+                    setTimeout(this.create, 1000)
+                }
             } else {
                 failureSound.play();
                 this.score = Math.max(0, this.score - 1);
@@ -813,11 +842,171 @@ var AppComponent = Vue.component('app',{
     created: function () {
         this.currentAppId = this.$route.params.currentAppId
         this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
         this.updateScore();
         this.create();
         this.saveApp(this.currentAppId);
     },
 })
+
+var DisplayComponent = Vue.component('display',{
+    template: `
+    <div class="container">
+            <div class="row">
+                <h3 v-html="exercise"></h3>
+            </div>
+            <div class="row">
+                <div class="center-align">
+                   <a class="waves-effect waves-light btn-large result" v-on:click="next()">{{ result }}</a>
+                </div>
+            </div>
+    </div>`,
+
+    data: function() { return {
+        score: null,
+        displayNew: null,
+        displayAll: null,
+        currentAppId: null,
+        currentApp: null,
+        progress: null,
+        displayKey: null,
+        index: null,
+        result: null,
+        exercise: null,
+        currentIndex: null,
+        progress: null,
+        key: null,
+        value: null,
+    }},
+
+    mounted() {},
+    methods: {
+        getItems: function(){
+            this.currentIndex = 0;
+            const data = getDataList(this.currentApp.listName);
+            if (this.displayNew){
+                indexes = getLocalStorage(`${this.currentAppId}_new_items`, []);
+                return indexes.map(index => data[index]);
+            } else if (this.displayAll){
+                weights = getWeightsForKey(this.currentAppId);
+                return data.filter((item, index) => weights[index] >= 0)
+            } else if (this.key){
+                weights = getWeightsForKey(this.currentAppId);
+                return data.filter((item, index) => weights[index] >= 0 && data[index][this.key].value == this.value)
+            }
+            return [data[this.itemId],];
+        }, display: function(){
+            item = this.items[this.currentIndex];
+            this.exercise = render(item[this.currentApp.questionIndex]);
+            this.result = render(item[this.currentApp.resultIndex]);
+            action = generateQuestion(item[this.currentApp.questionIndex]);
+            action();
+
+        }, next: function(){
+            if (this.items.length > this.currentIndex + 1){
+                this.currentIndex += 1;
+                this.display();
+                return
+            }
+
+            if (this.displayNew){
+                setLocalStorage(`${this.currentAppId}_new_items`, []);
+                this.$router.push('/play/' + this.currentAppId);
+                return
+            }
+            this.$router.push('/app/' + this.currentAppId);
+        },
+    },
+
+    created: function () {
+        this.currentAppId = this.$route.params.currentAppId;
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.itemId = this.$route.params.itemId;
+        this.key = this.$route.params.key;
+        this.value = this.$route.params.value;
+        this.displayAll = this.$route.path.startsWith('/display/all');
+        this.displayNew = this.$route.path.startsWith('/display/news');
+        this.items = this.getItems();
+        this.display();
+
+    },
+})
+
+
+var AppComponent = Vue.component('app',{
+    template: `<div>
+
+         <div class="container">
+        <div class="row">
+        <router-link :to="'/play/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+          שחק
+        </router-link>
+        <router-link :to="'/display/all/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+          הצג הכל
+        </router-link>
+        </div>
+        <div class="row">
+        <div v-for="(item, index) in items" :key="index" class="col s12 m6 l4">
+                    <div class="card">
+                        <div class="card-content">
+                            <span v-if="item[1]" class="card-title">
+                            <router-link :to="'/display/key/' + currentAppId + '/' + displayKey + '/' + item[0]">
+                                    {{ item[0] }}
+                            </router-link>
+                            </span>
+                            <span v-else class="card-title">
+                                <i class="material-icons">lock</i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <div class="row"><h3>{{ score }}</h3></div>
+        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
+                <div class="progress">
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+        </div>
+    </div></div>`,
+
+    data: function() { return {
+        score: null,
+        currentAppId: null,
+        currentApp: null,
+        progress: null,
+        weights: null,
+        data: null,
+        displayKey: null
+    }},
+
+    methods: {
+        displayItem: function(item){
+            return item[this.displayKey].value;
+        }
+    },
+
+    created: function () {
+        this.currentAppId = this.$route.params.currentAppId
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.score = getScore(this.currentAppId);
+        this.progress = getProgress(this.currentAppId, 1);
+        this.data = DATA[this.currentApp.listName];
+        displayNames = ["id", "name", "english_name", "englishUpperCase"];
+        for (let i = 0; i < displayNames.length; i++) {
+            if(this.data[0].hasOwnProperty(displayNames[i])){
+                this.displayKey = displayNames[i];
+                break;
+            }
+        }
+
+        this.weights = getWeightsForKey(this.currentAppId, getSetItems(this.currentApp), getDataList(this.currentApp.listName));
+        this.items = Array.from(new Set(this.data.map((item, index) => {
+                          const value = item[this.displayKey].value;
+                          const isPositive = this.weights[index] >= 0;
+                          return JSON.stringify([value, isPositive]);
+                        }))).map(item => JSON.parse(item));
+    },
+})
+
 
 var MenuComponent = Vue.component('menu',{
     template: `
@@ -901,6 +1090,7 @@ var UserComponent = Vue.component('user', {
         apps: []
     }
   },
+
   created: function() {
     this.name = getUser();
     userApps = [];
@@ -1011,6 +1201,11 @@ const routes = [
     {path: '/user', component: UserComponent},
     {path: '/menu/:currentMenu', component: MenuComponent,},
     {path: '/app/:currentAppId', component: AppComponent, props: true },
+    {path: '/play/:currentAppId', component: PlayComponent, props: true },
+    {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
+    {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
+    {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },
+    {path: '/display/key/:currentAppId/:key/:value', component: DisplayComponent, props: true },
     {path: '/signUp', component: SignUp},
     {path: '/login', component: Login },
 ]
