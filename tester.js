@@ -116,6 +116,100 @@ const DATA = {FEELING : [{'name': {'type': 'text', 'value': 'שמח'},
   'hebrew_english_name': {'type': 'text', 'value': 'סַרְפְּרִייזְד'},
   'emoji': {'type': 'text', 'value': '😮'}}],
 
+ANIMALS : [
+  {
+    "animal_hebrew": {
+      "type": "text",
+      "value": "כלב"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Dog"
+    },
+    "animal_hebrew_english": {
+      "type": "text",
+      "value": "דּוֹג"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🐶"
+    }
+  },
+  {
+    "animal_hebrew": {
+      "type": "text",
+      "value": "חתול"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Cat"
+    },
+    "animal_hebrew_english": {
+      "type": "text",
+      "value": "קֶט"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🐱"
+    }
+  },
+  {
+    "animal_hebrew": {
+      "type": "text",
+      "value": "פרה"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Cow"
+    },
+    "animal_hebrew_english": {
+      "type": "text",
+      "value": "קַו"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🐮"
+    }
+  },
+  {
+    "animal_hebrew": {
+      "type": "text",
+      "value": "פיל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Elephant"
+    },
+    "animal_hebrew_english": {
+      "type": "text",
+      "value": "אֵלֶפֶנְט"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🐘"
+    }
+  },
+  {
+    "animal_hebrew": {
+      "type": "text",
+      "value": "אריה"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Lion"
+    },
+    "animal_hebrew_english": {
+      "type": "text",
+      "value": "לַיּוֹן"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🦁"
+    }
+  }
+],
+
+
 VERBS : [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
   'english_name': {'type':  'text_to_speech', 'value': 'Walk'},
   'verb_hebrew_english': {'type': 'text', 'value': 'ווֹק'},
@@ -440,13 +534,6 @@ function text_to_speech(text){
     window.speechSynthesis.speak(msg);
 }
 
-function text_to(text){
-    var msg = new SpeechSynthesisUtterance();
-    msg.text = text;
-    window.speechSynthesis.speak(msg);
-}
-text_to("a")
-
 
 const getDataList = (listName) => {
     if (!DATA[listName]) {
@@ -492,6 +579,7 @@ const updateWeights = (key, weights, setItems) => {
 
     if (containsSign) {
         // Convert all zero weights to 2
+        // todo: dynamic numbers
         weights = weights.map(weight => weight === 0 ? 2 : weight);
 
         // Set the first setItems elements that are 0 to 5
@@ -645,8 +733,6 @@ function generateFromList(listName, questionIndex, resultIndex, key, setItems=1)
     const result = render(list[weightedRandomIndex][resultIndex]);
     const question = render(list[weightedRandomIndex][questionIndex]);
 
-    let action = () => {};
-
     action = generateQuestion(list[weightedRandomIndex][questionIndex]);
 
     return {
@@ -676,6 +762,8 @@ apps =  {
         {icon: 'volume_up', name:'שמע לאות', type: 'app', listName: 'ABC', questionIndex: 'audio', resultIndex: 'englishLowerCase' },
         {icon: 'format_size', name:'אות קטנה לגדולה', type: 'app', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'englishUpperCase' },
         {icon: 'format_size', name:'אות גדולה לקטנה', type: 'app', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase' },
+        {icon: 'format_shapes', name:'חיות', type: 'app', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'emoji'},
+
       ]
     },
     {
@@ -806,7 +894,7 @@ var PlayComponent = Vue.component('play',{
             return a;
         }, check: function (index) {
             if (this.ended){
-
+                return
             }
             else if (this.results[index] === this.result) {
                 this.ended = true;
