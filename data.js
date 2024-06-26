@@ -619,6 +619,351 @@ ANIMALS : [
   }
 ],
 
+BODY_PARTS: [
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "ראש"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Head"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "הֵד"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👤"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "עין"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Eye"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "אָי"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👁️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אוזן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Ear"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "אִיר"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👂"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אף"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Nose"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "נוֹז"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👃"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "פה"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Mouth"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "מָאוּת'"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👄"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "יד"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Hand"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "הֵנד"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🖐️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "רגל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Leg"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "לֵג"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🦵"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בטן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Belly"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "בֵּלִי"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🤰"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "גב"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Back"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "בֵּק"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🔙"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "כתף"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Shoulder"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "שׁוֹלדֵר"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "💪"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מרפק"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Elbow"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "אֵלבּוֹ"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "💪"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "ברך"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Knee"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "נִי"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🦵"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "כף רגל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Foot"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "פוּט"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🦶"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אצבע"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Finger"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "פִינגֵר"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👆"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בוהן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Thumb"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "ת'אָם"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👍"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "צוואר"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Neck"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "נֵק"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🦒"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "שיער"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Hair"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "הֵר"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "💇"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "לשון"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Tongue"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "טאָנג"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👅"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "שן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Tooth"
+    },
+    "hebrew_english": {
+      "type": "text",
+      "value": "טוּת'"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🦷"
+    }
+  },
+],
+
 
 VERBS : [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
   'english_name': {'type':  'text_to_speech', 'value': 'Walk'},

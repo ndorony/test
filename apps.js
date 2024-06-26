@@ -17,6 +17,7 @@ apps =  {
         {icon: 'format_size', name:'אות קטנה לגדולה', type: 'app', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'englishUpperCase' },
         {icon: 'format_size', name:'אות גדולה לקטנה', type: 'app', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase' },
         {icon: 'format_shapes', name:'חיות', type: 'app', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+        {icon: 'format_shapes', name:'חלקי גוף', type: 'app', listName: 'BODY_PARTS', questionIndex: 'english_name', resultIndex: 'hebrew'},
       ]
     },
     {
