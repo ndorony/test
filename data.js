@@ -965,7 +965,8 @@ BODY_PARTS: [
 ],
 
 
-VERBS : [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
+VERBS : [
+ {'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
   'english_name': {'type':  'text_to_speech', 'value': 'Walk'},
   'verb_hebrew_english': {'type': 'text', 'value': 'ווֹק'},
   'emoji': {'type': 'text', 'value': '🚶'}},
@@ -1014,7 +1015,8 @@ VERBS : [{'verb_hebrew': {'type': 'text', 'value': 'ללכת'},
   'verb_hebrew_english': {'type': 'text', 'value': 'רַייט'},
   'emoji': {'type': 'text', 'value': '✍️'}}],
 
-COLORS : [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
+COLORS : [
+ {'color_hebrew': {'type': 'text', 'value': 'אדום'},
   'english_name': {'type': 'text_to_speech', 'value': 'Red'},
   'color_hebrew_english': {'type': 'text', 'value': 'רֵד'},
   'emoji': {'type': 'text', 'value': '🟥'}},
@@ -1055,7 +1057,8 @@ COLORS : [{'color_hebrew': {'type': 'text', 'value': 'אדום'},
   'color_hebrew_english': {'type': 'text', 'value': 'בְּרָאון'},
   'emoji': {'type': 'text', 'value': '🟫'}}],
 
-QUESTION : [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
+QUESTION : [
+ {'question_word_hebrew': {'type': 'text', 'value': 'מה'},
   'english_name': {'type': 'text_to_speech',  'value': 'What'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'וואַט'},
   'emoji': {'type': 'text', 'value': '❓'}},
@@ -1079,7 +1082,6 @@ QUESTION : [{'question_word_hebrew': {'type': 'text', 'value': 'מה'},
   'english_name': {'type': 'text_to_speech','value': 'How'},
   'question_word_hebrew_english': {'type': 'text', 'value': 'האוּ'},
   'emoji': {'type': 'text', 'value': '🛠️'}}],
-
 
 // The Alphabet records by tim.kahn - https://freesound.org/people/tim.kahn/packs/4371/
 ABC:  [
@@ -1240,6 +1242,7 @@ ABC:  [
         audio: {type: "audio", value: "./sounds/letters/z.mp3"}
     },
 ],
+
 MONTHS: [
   {"name": {"type": "text", "value": "ינואר"}, "english_name": {"type": "text", "value": "January"}, "month_number": {"type": "text", "value": "1"}},
   {"name": {"type": "text", "value": "פברואר"}, "english_name": {"type": "text", "value": "February"}, "month_number": {"type": "text", "value": "2"}},
@@ -1254,6 +1257,537 @@ MONTHS: [
   {"name": {"type": "text", "value": "נובמבר"}, "english_name": {"type": "text", "value": "November"}, "month_number": {"type": "text", "value": "11"}},
   {"name": {"type": "text", "value": "דצמבר"}, "english_name": {"type": "text", "value": "December"}, "month_number": {"type": "text", "value": "12"}}
 ],
+
+NUMBERS: [
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "אחד"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "One"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "וָאן"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שתיים"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Two"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "טוּ"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שלוש"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Three"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "ת'רִי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "ארבע"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Four"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "פוֹר"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "חמש"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Five"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "פָיב"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שש"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Six"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סִיקְס"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שבע"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Seven"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סֵבֵן"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שמונה"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Eight"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "אֵייט"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "תשע"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Nine"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "נָיין"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "עשר"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Ten"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "טֵן"
+      }
+    }
+  ],
+
+SHAPES: [
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "עיגול"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Circle"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סֵרקֵל"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "ריבוע"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Square"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סקוֵר"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "משולש"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Triangle"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "טרָיאֵנגֵל"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "מלבן"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Rectangle"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "רֵקטָנגֵל"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "אליפסה"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Oval"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "אוֹבָל"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "משושה"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Hexagon"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "הֵקסָגוֹן"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "כוכב"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Star"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סטָאר"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "טרפז"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Trapezoid"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "טרָפֵזוֹיד"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "מעוין"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Diamond"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "דָיאמוֹנד"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "חצי עיגול"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Semicircle"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סֵמיסֵרקֵל"
+      }
+    }
+  ],
+
+DAYS_OF_WEEK: [
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "ראשון"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Sunday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סָנדֵי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שני"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Monday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "מָנדֵי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שלישי"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Tuesday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "טיוּזדֵי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "רביעי"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Wednesday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "וֵנזדֵי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "חמישי"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Thursday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "ת'ֵרזדֵי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שישי"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Friday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "פרָיידֵי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "שבת"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Saturday"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סָטֵרדֵי"
+      }
+    }
+  ],
+
+FRUITS_AND_VEGETABLES: [
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "תפוח"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Apple"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "אֵפֵּל"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "בננה"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Banana"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "בָּנָנָה"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "תפוז"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Orange"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "אוֹרֵנג'"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "תות"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Strawberry"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "סטרוֹבֵּרי"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "ענבים"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Grapes"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "גרֵייפּס"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "גזר"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Carrot"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "קֵרֵט"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "עגבנייה"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Tomato"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "טוֹמֵיטוֹ"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "מלפפון"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Cucumber"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "קיוּקָמבֵּר"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "פלפל"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Pepper"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "פֵּפֵּר"
+      }
+    },
+    {
+      "hebrew": {
+        "type": "text",
+        "value": "חסה"
+      },
+      "english_name": {
+        "type": "text_to_speech",
+        "value": "Lettuce"
+      },
+      "hebrew_english": {
+        "type": "text",
+        "value": "לֵטוּס"
+      }
+    }
+  ],
+
 ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
 SUBTRACTION: createAsymmetricExercises(10, inverseSubtraction, "SUBTRACTION"),
 MULTIPLICATION: createAsymmetricExercises(10, inverseMultiplication, "MULTIPLICATION"),

@@ -18,6 +18,10 @@ apps =  {
         {icon: 'format_size', name:'אות גדולה לקטנה', type: 'app', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase' },
         {icon: 'format_shapes', name:'חיות', type: 'app', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew'},
         {icon: 'format_shapes', name:'חלקי גוף', type: 'app', listName: 'BODY_PARTS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+        {icon: 'format_shapes', name:'מספרים', type: 'app', listName: 'NUMBERS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+        {icon: 'format_shapes', name:'צורות', type: 'app', listName: 'SHAPES', questionIndex: 'english_name', resultIndex: 'hebrew'},
+        {icon: 'format_shapes', name:'ימי השבוע', type: 'app', listName: 'DAYS_OF_WEEK', questionIndex: 'english_name', resultIndex: 'hebrew'},
+        {icon: 'format_shapes', name:'פירות וירקות', type: 'app', listName: 'FRUITS_AND_VEGETABLES', questionIndex: 'english_name', resultIndex: 'hebrew'},
       ]
     },
     {
