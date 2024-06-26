@@ -1213,12 +1213,11 @@ const routes = [
 const router = new VueRouter({
     routes
 })
-
-router.afterEach((to, from) => {
+function sendMetric(path){
   gtag('config', 'YOUR_TRACKING_ID', {
-    page_path: to.fullPath,
+    page_path: path,
   });
-});
+}
 
 router.beforeEach((to, from, next) => {
   const username = getUser();
@@ -1226,12 +1225,16 @@ router.beforeEach((to, from, next) => {
     this.app.$root.username = username
   }
   if (to.path === '/signUp'){
+      sendMetric(to.path);
       next();
   } else if (!username && to.path !== '/login') {
+    sendMetric('/login');
     next('/login');
   } else if (username && to.path === '/login') {
+    sendMetric('/');
     next('/');
   } else {
+    sendMetric(to.path);
     next();
   }
 });
