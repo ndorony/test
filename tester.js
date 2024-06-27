@@ -19,6 +19,8 @@ function render(object) {
         return `<a class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
         case "text_to_speech":
             return `<a class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
+        case "speech":
+            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
         default:
             return null;
     }
@@ -197,7 +199,7 @@ function generateQuestion(question) {
     let action = () => {};
     if (question.type === "audio") {
         action = () => audio(question.value);
-    } else if (question.type === "text_to_speech") {
+    } else if (question.type === "text_to_speech" || question.type === "speech" ) {
         action = () => text_to_speech(question.value);
     }
     return action;
@@ -252,28 +254,8 @@ function getSetItems(currentApp){
     return currentApp.hasOwnProperty('setItems') ? currentApp['setItems'] : 1;
 }
 
-var PlayComponent = Vue.component('play',{
-    template: `<div>
-
-    <div class="container">
-        <div class="row">
-            <h3 v-html="exercise"></h3>
-        </div>
-        <div class="row">
-            <a class="waves-effect waves-light btn-large result"
-               v-for="(result, index) in results"
-               v-on:click="check(index)">{{ result }}</a>
-
-        </div>
-        <div class="row" dir="rtl">
-            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
-        </div>
-        <div class="row"><h3>{{ score }}</h3></div>
-        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
-                <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
-        </div>
-    </div></div>`,
+var BaseGameComponent = Vue.component('base-game',{
+    template: `<div>base</div>`,
 
     data: function() { return {
         saved: [],
@@ -298,6 +280,74 @@ var PlayComponent = Vue.component('play',{
           setLocalStorage('appList', [...setApp]);
           this.saved.push(appId);
         },
+        reloadProgress: function(){
+            this.progress = getCurrentLevelProgress(this.currentAppId);
+            if (this.progress.progress == this.progress.total){
+                this.$router.push('/app/' + this.currentAppId);
+                return false;
+
+            } else if (this.progress.progress == 0){
+                if(getLocalStorage(`${this.currentAppId}_new_items`, []).length != 0){
+                   this.$router.push('/display/news/' + this.currentAppId);
+                   return false;
+                }
+            }
+            return true;
+
+        },
+        next: function () {
+            if (this.ended) {
+                this.create();
+            }
+        },
+        getSuccessMsg: function () {
+            return he.decode("הצלחת &#128525;");
+        },
+        updateScore: function(){
+            this.score = getScore(this.currentAppId);
+        },
+        saveScore: function(){
+            setLocalStorage(`score${this.currentAppId}`, this.score);
+        }
+    },
+
+    created: function () {
+        this.currentAppId = this.$route.params.currentAppId
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
+        this.updateScore();
+        this.create();
+        this.saveApp(this.currentAppId);
+    },
+})
+
+var MCQComponent = Vue.component('msq',Vue.extend({
+    template: `<div>
+
+    <div class="container">
+        <div class="row">
+            <h3 v-html="exercise"></h3>
+        </div>
+        <div class="row">
+            <a class="waves-effect waves-light btn-large result"
+               v-for="(result, index) in results"
+               v-on:click="check(index)">{{ result }}</a>
+
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3>{{ score }}</h3></div>
+        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
+                <div class="progress">
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+        </div>
+        </div>
+    </div>`,
+
+    extends: BaseGameComponent,
+
+    methods: {
         create: function (code) {
             this.saved = []
 
@@ -315,27 +365,15 @@ var PlayComponent = Vue.component('play',{
                 }, 500);
             }
 
-        }, reloadProgress: function(){
-            this.progress = getCurrentLevelProgress(this.currentAppId);
-            if (this.progress.progress == this.progress.total){
-                this.$router.push('/app/' + this.currentAppId);
-                return false;
-
-            } else if (this.progress.progress == 0){
-                if(getLocalStorage(`${this.currentAppId}_new_items`, []).length != 0){
-                   this.$router.push('/display/news/' + this.currentAppId);
-                   return false;
-                }
-            }
-            return true;
-
-        }, shuffle: function (a) {
+        },
+        shuffle: function (a) {
             for (let i = a.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [a[i], a[j]] = [a[j], a[i]];
             }
             return a;
-        }, check: function (index) {
+        },
+        check: function (index) {
             if (this.ended){
                 return
             }
@@ -357,28 +395,96 @@ var PlayComponent = Vue.component('play',{
                 this.message = {value: 'נסה שוב :(', error: true}
                 this.reloadProgress();
             }
-        }, next: function () {
-            if (this.ended) {
-                this.create();
+        },
+    },
+}))
+
+var SpellComponent = Vue.component('spelling',Vue.extend({
+    template: `<div>
+
+    <div class="container">
+        <div class="row">
+            <h3 v-html="exercise"></h3>
+        </div>
+        <div class="row">
+        <div class="col s8 offset-s2">
+        <div>
+          <label for="answer">הקלד את המילה:</label>
+          <input type="text" id="answer" v-model="answer">
+        </div>
+        </div>
+       </div>
+       <div class="row">
+            <div class="center-align">
+               <a class="waves-effect waves-light btn-large result" v-on:click="check()">בדוק</a>
+            </div>
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3>{{ score }}</h3></div>
+        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
+                <div class="progress">
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+        </div>
+        </div>
+    </div>`,
+
+    extends: BaseGameComponent,
+
+    data: function() { return {
+        answer: null
+    }},
+
+    methods: {
+        create: function (code) {
+            this.saved = []
+            const list = getDataList(this.currentApp.listName);
+            const weightedRandomIndex = getWeightedRandomIndex(list,
+                                                               this.currentApp.questionIndex,
+                                                               getSetItems(this.currentApp));
+            this.result = list[weightedRandomIndex][this.currentApp.questionIndex].value;
+            this.exercise = render({'type': 'speech', 'value': this.result});
+            this.questionIndex = weightedRandomIndex;
+            if(this.reloadProgress()){
+
+                this.$forceUpdate();
+                setTimeout(() => {
+                this.ended = false;
+                text_to_speech(this.result);
+                }, 500);
             }
-        }, getSuccessMsg: function () {
-            return he.decode("הצלחת &#128525;");
-        }, updateScore: function(){
-            this.score = getScore(this.currentAppId);
-        }, saveScore: function(){
-            setLocalStorage(`score${this.currentAppId}`, this.score);
+
+        },
+        check: function (index) {
+            if (this.ended){
+                return
+            }
+            else if (this.result.toLowerCase() === this.answer.trim().toLowerCase()) {
+                this.ended = true;
+                this.message = {value: this.getSuccessMsg(), success: true};
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1)
+                this.score += 1;
+                if (this.reloadProgress()){
+                    this.saveScore();
+                    setTimeout(this.create, 1000)
+                }
+            } else {
+                failureSound.play();
+                this.score = Math.max(0, this.score - 1);
+                this.saveScore();
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1)
+                this.message = {value: `נסה שוב :( התשובה היא ${this.result}`, error: true}
+                this.reloadProgress();
+            }
+        },
+
+         display: function(){
+
         }
     },
-
-    created: function () {
-        this.currentAppId = this.$route.params.currentAppId
-        this.currentApp = getItemById(apps, this.currentAppId);
-        this.reloadProgress();
-        this.updateScore();
-        this.create();
-        this.saveApp(this.currentAppId);
-    },
-})
+}))
 
 var DisplayComponent = Vue.component('display',{
     template: `
@@ -399,6 +505,7 @@ var DisplayComponent = Vue.component('display',{
         displayAll: null,
         currentAppId: null,
         currentApp: null,
+        currentAppType: null,
         progress: null,
         displayKey: null,
         index: null,
@@ -428,8 +535,15 @@ var DisplayComponent = Vue.component('display',{
             return [data[this.itemId],];
         }, display: function(){
             item = this.items[this.currentIndex];
-            this.exercise = render(item[this.currentApp.questionIndex]);
-            this.result = render(item[this.currentApp.resultIndex]);
+            if (this.currentAppType == 'spell'){
+                this.exercise = render({'type': 'speech',
+                                        'value': item[this.currentApp.questionIndex].value});
+                this.result = item[this.currentApp.questionIndex].value;
+
+            }else{
+                this.exercise = render(item[this.currentApp.questionIndex]);
+                this.result = render(item[this.currentApp.resultIndex]);
+            }
             action = generateQuestion(item[this.currentApp.questionIndex]);
             action();
 
@@ -442,7 +556,7 @@ var DisplayComponent = Vue.component('display',{
 
             if (this.displayNew){
                 setLocalStorage(`${this.currentAppId}_new_items`, []);
-                this.$router.push('/play/' + this.currentAppId);
+                this.$router.push('/play/' + this.currentAppType + '/' + this.currentAppId);
                 return
             }
             this.$router.push('/app/' + this.currentAppId);
@@ -452,6 +566,7 @@ var DisplayComponent = Vue.component('display',{
     created: function () {
         this.currentAppId = this.$route.params.currentAppId;
         this.currentApp = getItemById(apps, this.currentAppId);
+        this.currentAppType = this.currentApp.appType;
         this.itemId = this.$route.params.itemId;
         this.key = this.$route.params.key;
         this.value = this.$route.params.value;
@@ -469,7 +584,7 @@ var AppComponent = Vue.component('app',{
 
          <div class="container">
         <div class="row">
-        <router-link :to="'/play/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+        <router-link :to="'/play/' + currentAppType + '/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
           שחק
         </router-link>
         <router-link :to="'/display/all/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
@@ -502,6 +617,7 @@ var AppComponent = Vue.component('app',{
     data: function() { return {
         score: null,
         currentAppId: null,
+        currentAppType: null,
         currentApp: null,
         progress: null,
         weights: null,
@@ -518,6 +634,7 @@ var AppComponent = Vue.component('app',{
     created: function () {
         this.currentAppId = this.$route.params.currentAppId
         this.currentApp = getItemById(apps, this.currentAppId);
+        this.currentAppType = this.currentApp.appType
         this.score = getScore(this.currentAppId);
         this.progress = getProgress(this.currentAppId, 1);
         this.data = DATA[this.currentApp.listName];
@@ -752,7 +869,8 @@ const routes = [
     {path: '/user', component: UserComponent},
     {path: '/menu/:currentMenu', component: MenuComponent,},
     {path: '/app/:currentAppId', component: AppComponent, props: true },
-    {path: '/play/:currentAppId', component: PlayComponent, props: true },
+    {path: '/play/mcq/:currentAppId', component: MCQComponent, props: true },
+    {path: '/play/spell/:currentAppId', component: SpellComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },

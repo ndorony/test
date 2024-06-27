@@ -27,11 +27,6 @@ function getLocalStorage(key, defaultValue) {
     }
 }
 
-
-function getWeightsKey(key){
-    return getKey(`${key}_Weights`)
-}
-
 function getProgress(key, total){
     return getLocalStorage(`${key}_Progress`, {progress:0,
                                                total:total});
@@ -54,3 +49,6 @@ function getActivityMode(){
     return getLocalStorage('activityMode', 'learn');
 }
 
+function getWeightsKey(key){
+    return getKey(`${getActivityMode()}_${key}_Weights`)
+}
