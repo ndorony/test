@@ -16,11 +16,11 @@ function render(object) {
         case "text":
             return object.value;
         case "audio":
-        return `<a class="brand-logo" onclick="audio('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
+        return `<a class="brand-logo" onclick="audio('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
         case "text_to_speech":
             return `<a class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
         case "speech":
-            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')"><span class="material-icons">play_circle_filled</span></a>`;
+            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
         default:
             return null;
     }
@@ -399,7 +399,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
     },
 }))
 
-var SpellComponent = Vue.component('spelling',Vue.extend({
+var SpellComponent = Vue.component('spell',Vue.extend({
     template: `<div>
 
     <div class="container">
@@ -447,7 +447,6 @@ var SpellComponent = Vue.component('spelling',Vue.extend({
             this.exercise = render({'type': 'speech', 'value': this.result});
             this.questionIndex = weightedRandomIndex;
             if(this.reloadProgress()){
-
                 this.$forceUpdate();
                 setTimeout(() => {
                 this.ended = false;
@@ -466,6 +465,7 @@ var SpellComponent = Vue.component('spelling',Vue.extend({
                 successSound.play();
                 updateWeightForKey(this.currentAppId, this.questionIndex, -1)
                 this.score += 1;
+                this.answer = '';
                 if (this.reloadProgress()){
                     this.saveScore();
                     setTimeout(this.create, 1000)
