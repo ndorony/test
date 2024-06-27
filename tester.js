@@ -883,7 +883,7 @@ const router = new VueRouter({
     routes
 })
 function sendMetric(path){
-  gtag('config', 'YOUR_TRACKING_ID', {
+  gtag('config', 'G-2T1G2WVRMD', {
     page_path: path,
   });
 }
