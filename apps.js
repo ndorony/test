@@ -40,6 +40,11 @@ apps =  {
       type: 'menu',
       items: [
         {icon: 'format_size', name:'חודשי השנה', type: 'app', listName: 'MONTHS', questionIndex: 'name', resultIndex: 'month_number'},
+        {icon: 'format_size', name:'ערי בירה', type: 'app', listName: 'COUNTRIES', questionIndex: 'name', resultIndex: 'capital'},
+        {icon: 'format_size', name:'אתרים מפורסמים', type: 'app', listName: 'COUNTRIES', questionIndex: 'name', resultIndex: 'monument'},
+        {icon: 'format_size', name:'סופרים', type: 'app', listName: 'AUTHORS', questionIndex: 'name', resultIndex: 'book'},
+        {icon: 'format_size', name:'מדענים', type: 'app', listName: 'SCIENTISTS', questionIndex: 'name', resultIndex: 'theory'},
+        {icon: 'format_size', name:'ציירים', type: 'app', listName: 'PAINTERS', questionIndex: 'name', resultIndex: 'artwork'},
       ]
     }
   ]

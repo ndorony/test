@@ -117,7 +117,7 @@ const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
 
     // Initialize weights based on the mode
     let weights;
-    if (setItems === 0) {
+    if (setItems === 0 || getActivityMode() == 'practicing') {
         // All elements get a fixed weight of 5
         weights = elements.map(() => 5);
     } else {
@@ -600,6 +600,15 @@ var UserComponent = Vue.component('user', {
         <div class="row">
           <div class="col s8 offset-s2">
             <h4>{{ name }}</h4>
+          </div>
+          <div class="input-field col s8 offset-s2">
+            <select @change="handleModeChange" v-model="selectedMode">
+              <option value="" disabled selected>בחר מצב משחק</option>
+              <option v-for="mode in modes" :value="mode.key" :key="mode.key">{{ mode.description }}</option>
+            </select>
+          </div>
+          <div class="col s8 offset-s2">
+
             <div v-for="(app, index) in apps" :key="index" class="card">
               <div class="card-content">
                 <span class="card-title"><router-link :to="'/app/' + app.id" style="width: 100%; margin-bottom: 20px;">{{ app.name }}</router-link></span>
@@ -618,7 +627,10 @@ var UserComponent = Vue.component('user', {
   data: function() {
     return {
         name: '',
-        apps: []
+        apps: [],
+        modes: [{"key": "learning", "description": "מצב למידה"},
+                {"key": "practicing", "description": "מצב תרגול"}],
+        selectedMode: null
     }
   },
 
@@ -638,8 +650,16 @@ var UserComponent = Vue.component('user', {
     this.apps = userApps;
   },
   methods: {
-
-  }
+    handleModeChange: function(){
+        setActivityMode(this.selectedMode);
+    }
+  },
+  mounted() {
+      // Initialize the select element when the component is mounted
+      this.$nextTick(() => {
+        M.FormSelect.init(document.querySelectorAll('select'));
+      });
+    }
 });
 
 

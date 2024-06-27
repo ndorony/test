@@ -45,3 +45,12 @@ function setProgress(key, total, progress){
 function getScore(currentAppId){
     return getLocalStorage(`score${currentAppId}`, 0);
 }
+
+function setActivityMode(activityMode){
+    return setLocalStorage('activityMode', activityMode);
+}
+
+function getActivityMode(){
+    return getLocalStorage('activityMode', 'learn');
+}
+
