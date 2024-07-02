@@ -883,6 +883,11 @@ const router = new VueRouter({
     routes
 })
 function sendMetric(path){
+gtag('event', 'page_view', {
+  'page_location': path,
+  'page_title': document.title
+});
+}
   gtag('config', 'G-2T1G2WVRMD', {
     page_path: path,
   });
