@@ -258,8 +258,8 @@ function getItemById(currentItem, id) {
   return currentItem;
 }
 
-function getSetItems(currentApp){
-    return currentApp.hasOwnProperty('setItems') ? currentApp['setItems'] : 1;
+function getSetItems(currentApp, defaultValue=1){
+    return currentApp.hasOwnProperty('setItems') ? currentApp['setItems'] : defaultValue;
 }
 
 var BaseGameComponent = Vue.component('base-game',{
@@ -411,10 +411,10 @@ var CommonComponent = Vue.component('common',Vue.extend({
     template: `<div>
     <div class="container">
         <div class="row">
-          <div class="col s8 offset-s2">
+          <div class="col s10 offset-s1">
             <div class="card">
              <div class="radio-group">
-              <label v-for="(button, idx) in indexes['a']" :key="idx + globalKey" style="padding: 30px">
+              <label v-for="(button, idx) in indexes['a']" :key="idx + globalKey" style="padding:5%">
                 <input
                   class="with-gap"
                   name="a"
@@ -429,7 +429,7 @@ var CommonComponent = Vue.component('common',Vue.extend({
             </div>
             <div class="card">
              <div class="radio-group">
-              <label v-for="(button, idx) in indexes['b']" :key="idx + globalKey + 10" style="padding: 30px">
+              <label v-for="(button, idx) in indexes['b']" :key="idx + globalKey + 10" style="padding:5%">
                 <input
                   class="with-gap"
                   name="a"
@@ -472,11 +472,11 @@ var CommonComponent = Vue.component('common',Vue.extend({
             this.selectedButtons = {}
             this.indexes = {}
             this.list = getDataList(this.currentApp.listName);
-            const weightedRandomIndex = getWeightedRandomIndex(this.list, this.currentAppId, 5);
-            const additionalIndexes = getRandomIndexesExcluding(this.list, this.currentApp.a, weightedRandomIndex, 8);
+            const weightedRandomIndex = getWeightedRandomIndex(this.list, this.currentAppId, getSetItems(this.currentApp, 5));
+            const additionalIndexes = getRandomIndexesExcluding(this.list, this.currentApp.a, weightedRandomIndex, 10);
             this.questionIndex = weightedRandomIndex;
-            this.indexes['a'] = this.shuffle(additionalIndexes.slice(0, 4).concat(weightedRandomIndex));
-            this.indexes['b'] = this.shuffle(additionalIndexes.slice(-4).concat(weightedRandomIndex));
+            this.indexes['a'] = this.shuffle(additionalIndexes.slice(0, 5).concat(weightedRandomIndex));
+            this.indexes['b'] = this.shuffle(additionalIndexes.slice(-5).concat(weightedRandomIndex));
             if(this.reloadProgress()){
                 this.$forceUpdate();
                 setTimeout(() => {
