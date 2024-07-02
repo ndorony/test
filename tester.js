@@ -1,3 +1,16 @@
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      }, error => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+
+
 // https://freesound.org/people/MattLeschuck/sounds/511484/
 const successSound = new Audio("./sounds/success.mp3");
 // https://freesound.org/people/Leszek_Szary/sounds/171672/
