@@ -98,7 +98,7 @@ const updateWeights = (key, weights, setItems) => {
     return weights;
 }
 
-const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
+const getWeightsForKey = (key, setItems, elements) => {
     // Check if weights already exist in localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
     if (storedWeights) {
@@ -110,9 +110,6 @@ const getWeightsForKey = (key, setItems, elements, skipNotRelevant=false) => {
                 localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
 
             }
-        }
-        if (skipNotRelevant){
-            weights =  weights.filter(number => number >= 0);
         }
         return weights;
     }
@@ -159,19 +156,31 @@ const updateWeightForKey = (key, index, change) => {
 }
 
 // Function to select a weighted random index
-const getWeightedRandomIndex = (list, key, setItems) => {
-    const weights = getWeightsForKey(key, setItems, list, skipNotRelevant=true);
+const getWeightedRandomIndexes = (list, key, setItems, count=1) => {
+    const weights = getWeightsForKey(key, setItems, list);
+    indexes = [];
+    totalWeight = weights.filter(number => number >= 0).reduce((acc, weight) => acc + weight, 0);
 
-    const totalWeight = weights.reduce((acc, weight) => acc + weight, 0);
-    const randomWeight = Math.random() * totalWeight;
+    while (indexes.length < count && totalWeight > 0) {
+        const randomWeight = Math.random() * totalWeight;
+        let weightSum = 0;
 
-    let weightSum = 0;
-    for (let i = 0; i < weights.length; i++) {
-        weightSum += weights[i];
-        if (randomWeight < weightSum) {
-            return i;
+        for (let i = 0; i < weights.length; i++) {
+            if (i < 0 || indexes.includes(i)){
+                continue
+            }
+            weightSum += weights[i];
+            if (randomWeight < weightSum) {
+                indexes.push(i);
+                totalWeight -= weights[i];
+                break
+            }
         }
     }
+    return indexes;
+}
+const getWeightedRandomIndex = (list, key, setItems) => {
+    return getWeightedRandomIndexes(list, key, setItems, count=1);
 }
 
 // Function to select additional random indexes excluding a specific index
@@ -182,12 +191,11 @@ const getRandomIndexesExcluding = (list, resultIndex, excludeIndex, count = 3) =
 
     while (resultsIndexes.length < count) {
         const randomIndex = Math.floor(Math.random() * length);
-        if (randomIndex !== excludeIndex && !results.includes(list[randomIndex][resultIndex]['value'])) {
+        if (randomIndex != excludeIndex && !results.includes(list[randomIndex][resultIndex]['value'])) {
             resultsIndexes.push(randomIndex);
             results.push(list[randomIndex][resultIndex]['value']);
         }
     }
-
     return resultsIndexes;
 }
 
@@ -308,7 +316,14 @@ var BaseGameComponent = Vue.component('base-game',{
         },
         saveScore: function(){
             setLocalStorage(`score${this.currentAppId}`, this.score);
-        }
+        },
+        shuffle: function (a) {
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        },
     },
 
     created: function () {
@@ -366,13 +381,6 @@ var MCQComponent = Vue.component('msq',Vue.extend({
             }
 
         },
-        shuffle: function (a) {
-            for (let i = a.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [a[i], a[j]] = [a[j], a[i]];
-            }
-            return a;
-        },
         check: function (index) {
             if (this.ended){
                 return
@@ -396,6 +404,129 @@ var MCQComponent = Vue.component('msq',Vue.extend({
                 this.reloadProgress();
             }
         },
+    },
+}))
+
+var CommonComponent = Vue.component('common',Vue.extend({
+    template: `<div>
+    <div class="container">
+        <div class="row">
+          <div class="col s8 offset-s2">
+            <div class="card">
+             <div class="radio-group">
+              <label v-for="(button, idx) in indexes['a']" :key="idx + globalKey" style="padding: 30px">
+                <input
+                  class="with-gap"
+                  name="a"
+                  type="radio"
+                  :value="button"
+                  v-model="selectedButtons['a']"
+                  @change="runLogicIfBothSelected"
+                />
+                <span>{{ getButton('a', idx) }}</span>
+              </label>
+             </div>
+            </div>
+            <div class="card">
+             <div class="radio-group">
+              <label v-for="(button, idx) in indexes['b']" :key="idx + globalKey + 10" style="padding: 30px">
+                <input
+                  class="with-gap"
+                  name="a"
+                  type="radio"
+                  :value="button"
+                  v-model="selectedButtons['b']"
+                  @change="runLogicIfBothSelected"
+                />
+                <span>{{ getButton('b', idx) }}</span>
+              </label>
+             </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3>{{ score }}</h3></div>
+        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
+                <div class="progress">
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+        </div>
+        </div>
+    </div>`,
+
+    extends: BaseGameComponent,
+
+    data: function() { return {
+        groups: ['a', 'b'],
+        indexes: null,
+        questionIndex: null,
+        selectedButtons: null,
+        list: null,
+        globalKey: 0,
+    }},
+
+    methods: {
+        create: function (code) {
+            this.selectedButtons = {}
+            this.indexes = {}
+            this.list = getDataList(this.currentApp.listName);
+            const weightedRandomIndex = getWeightedRandomIndex(this.list, this.currentAppId, 5);
+            const additionalIndexes = getRandomIndexesExcluding(this.list, this.currentApp.a, weightedRandomIndex, 8);
+            this.questionIndex = weightedRandomIndex;
+            this.indexes['a'] = this.shuffle(additionalIndexes.slice(0, 4).concat(weightedRandomIndex));
+            this.indexes['b'] = this.shuffle(additionalIndexes.slice(-4).concat(weightedRandomIndex));
+            if(this.reloadProgress()){
+                this.$forceUpdate();
+                setTimeout(() => {
+                this.ended = false;
+                }, 500);
+            }
+
+        }, clearSelection() {
+          this.selectedButtons = {
+            'a': null,
+            'b': null
+          };
+        },
+        getButton(group, idx){
+               return this.list[this.indexes[group][idx]][this.currentApp[group]].value;
+        },
+
+        runLogicIfBothSelected() {
+
+          if (this.selectedButtons.a == null || this.selectedButtons.b == null) {
+           return
+          }
+            if (this.selectedButtons.a === this.selectedButtons.b){
+                    this.ended = true;
+                    this.message = {value: this.getSuccessMsg(), success: true};
+                    successSound.play();
+                    updateWeightForKey(this.currentAppId, this.questionIndex, -1)
+                    this.score += 1;
+                    this.questionIndex = null;
+                    if (this.reloadProgress()){
+                        this.saveScore();
+                        setTimeout(this.create, 500)
+                    }
+            } else {
+                failureSound.play();
+                this.score = Math.max(0, this.score - 1);
+                this.saveScore();
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1)
+                this.message = {value: `נסה שוב :(`, error: true}
+                this.reloadProgress();
+
+            }
+            this.clearSelection();
+            this.globalKey += 100;
+            this.$forceUpdate();
+
+          },
+         display: function(){
+
+        }
     },
 }))
 
@@ -871,6 +1002,7 @@ const routes = [
     {path: '/app/:currentAppId', component: AppComponent, props: true },
     {path: '/play/mcq/:currentAppId', component: MCQComponent, props: true },
     {path: '/play/spell/:currentAppId', component: SpellComponent, props: true },
+    {path: '/play/common/:currentAppId', component: CommonComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },
@@ -888,10 +1020,7 @@ gtag('event', 'page_view', {
   'page_title': document.title
 });
 }
-  gtag('config', 'G-2T1G2WVRMD', {
-    page_path: path,
-  });
-}
+
 
 router.beforeEach((to, from, next) => {
   const username = getUser();
