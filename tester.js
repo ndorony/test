@@ -236,7 +236,7 @@ function generateQuestion(question) {
     return action;
 }
 
-function generateFromList(listName, questionIndex, resultIndex, key, setItems=1) {
+function generateFromList(listName, questionIndex, resultIndex, key, setItems=1, questionType=null) {
     const list = getDataList(listName);
 
     // Select a question using weighted random selection
@@ -248,9 +248,13 @@ function generateFromList(listName, questionIndex, resultIndex, key, setItems=1)
     // Combine the question index with the additional answer indexes
     const resultsIndexes = [weightedRandomIndex, ...additionalIndexes];
     const options = generateOptions(list, resultsIndexes, resultIndex);
+    questionItem = { ...list[weightedRandomIndex][questionIndex] };
+    if (questionType){
+        questionItem['type'] = questionType;
+    }
 
     const result = render(list[weightedRandomIndex][resultIndex]);
-    const question = render(list[weightedRandomIndex][questionIndex]);
+    const question = render(questionItem);
 
     action = generateQuestion(list[weightedRandomIndex][questionIndex]);
 
@@ -390,7 +394,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
             this.saved = []
 
             let question = generateFromList(this.currentApp.listName, this.currentApp.questionIndex, this.currentApp.resultIndex, this.currentAppId,
-                                            getSetItems(this.currentApp));
+                                            getSetItems(this.currentApp), questionType=this.currentApp.questionType);
             this.results = this.shuffle(question.options);
             this.exercise = question.question;
             this.result = question.result;
@@ -690,15 +694,20 @@ var DisplayComponent = Vue.component('display',{
         }, display: function(){
             item = this.items[this.currentIndex];
             if (this.currentAppType == 'spell'){
-                this.exercise = render({'type': 'speech',
-                                        'value': item[this.currentApp.questionIndex].value});
+                questionItem = {'type': 'speech',
+                                'value': item[this.currentApp.questionIndex].value}
+                this.exercise = render(questionItem);
                 this.result = item[this.currentApp.questionIndex].value;
 
             }else{
-                this.exercise = render(item[this.currentApp.questionIndex]);
+                questionItem = { ...item[this.currentApp.questionIndex] };
+                if (this.currentApp.questionType){
+                    questionItem['type'] = this.currentApp.questionType;
+                }
+                this.exercise = render(questionItem);
                 this.result = render(item[this.currentApp.resultIndex]);
             }
-            action = generateQuestion(item[this.currentApp.questionIndex]);
+            action = generateQuestion(questionItem);
             action();
 
         }, next: function(){

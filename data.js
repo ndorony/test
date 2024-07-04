@@ -2056,6 +2056,624 @@ PAINTERS: [
     {"name": {"type": "text", "value": "קנז'י מיזוגוצ'י"},
      "artwork": {"type": "text", "value": "החדר הכחול"}}
   ],
+HEBREW_LETTERS_WITH_NIKUD : [
+    {
+        "letter": {
+            "type": "text",
+            "value": "אָ"
+        },
+        "groups": ["א", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "בָּ"
+        },
+        "groups": ["ב", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "גָּ"
+        },
+        "groups": ["ג", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "דָּ"
+        },
+        "groups": ["ד", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "הָ"
+        },
+        "groups": ["ה", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "וָ"
+        },
+        "groups": ["ו", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "זָ"
+        },
+        "groups": ["ז", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "חָ"
+        },
+        "groups": ["ח", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "טָ"
+        },
+        "groups": ["ט", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "יָ"
+        },
+        "groups": ["י", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "כָּ"
+        },
+        "groups": ["כ", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "לָ"
+        },
+        "groups": ["ל", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "מָ"
+        },
+        "groups": ["מ", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "נָ"
+        },
+        "groups": ["נ", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "סָ"
+        },
+        "groups": ["ס", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "עָ"
+        },
+        "groups": ["ע", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "פָּ"
+        },
+        "groups": ["פ", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "צָ"
+        },
+        "groups": ["צ", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "קָ"
+        },
+        "groups": ["ק", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "רָ"
+        },
+        "groups": ["ר", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "שָׁ"
+        },
+        "groups": ["ש", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "תָּ"
+        },
+        "groups": ["ת", "קמץ"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "אִ"
+        },
+        "groups": ["א", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "בִּ"
+        },
+        "groups": ["ב", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "גִּ"
+        },
+        "groups": ["ג", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "דִּ"
+        },
+        "groups": ["ד", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "הִ"
+        },
+        "groups": ["ה", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "וִ"
+        },
+        "groups": ["ו", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "זִ"
+        },
+        "groups": ["ז", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "חִ"
+        },
+        "groups": ["ח", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "טִ"
+        },
+        "groups": ["ט", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "יִ"
+        },
+        "groups": ["י", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "כִּ"
+        },
+        "groups": ["כ", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "לִ"
+        },
+        "groups": ["ל", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "מִ"
+        },
+        "groups": ["מ", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "נִ"
+        },
+        "groups": ["נ", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "סִ"
+        },
+        "groups": ["ס", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "עִ"
+        },
+        "groups": ["ע", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "פִּ"
+        },
+        "groups": ["פ", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "צִ"
+        },
+        "groups": ["צ", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "קִ"
+        },
+        "groups": ["ק", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "רִ"
+        },
+        "groups": ["ר", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "שִׁ"
+        },
+        "groups": ["ש", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "תִּ"
+        },
+        "groups": ["ת", "חיריק"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "אֶ"
+        },
+        "groups": ["א", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "בֶּ"
+        },
+        "groups": ["ב", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "גֶּ"
+        },
+        "groups": ["ג", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "דֶּ"
+        },
+        "groups": ["ד", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "הֶ"
+        },
+        "groups": ["ה", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "וֶ"
+        },
+        "groups": ["ו", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "זֶ"
+        },
+        "groups": ["ז", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "חֶ"
+        },
+        "groups": ["ח", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "טֶ"
+        },
+        "groups": ["ט", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "יֶ"
+        },
+        "groups": ["י", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "כֶּ"
+        },
+        "groups": ["כ", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "לֶ"
+        },
+        "groups": ["ל", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "מֶ"
+        },
+        "groups": ["מ", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "נֶ"
+        },
+        "groups": ["נ", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "סֶ"
+        },
+        "groups": ["ס", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "עֶ"
+        },
+        "groups": ["ע", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "פֶּ"
+        },
+        "groups": ["פ", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "צֶ"
+        },
+        "groups": ["צ", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "קֶ"
+        },
+        "groups": ["ק", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "רֶ"
+        },
+        "groups": ["ר", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "שֶׁ"
+        },
+        "groups": ["ש", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "תֶּ"
+        },
+        "groups": ["ת", "סגול"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "אֹ"
+        },
+        "groups": ["א", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "בֹּ"
+        },
+        "groups": ["ב", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "גֹּ"
+        },
+        "groups": ["ג", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "דֹּ"
+        },
+        "groups": ["ד", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "הֹ"
+        },
+        "groups": ["ה", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "וֹ"
+        },
+        "groups": ["ו", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "זֹ"
+        },
+        "groups": ["ז", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "חֹ"
+        },
+        "groups": ["ח", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "טֹ"
+        },
+        "groups": ["ט", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "יֹ"
+        },
+        "groups": ["י", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "כֹּ"
+        },
+        "groups": ["כ", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "לֹ"
+        },
+        "groups": ["ל", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "מֹ"
+        },
+        "groups": ["מ", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "נֹ"
+        },
+        "groups": ["נ", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "סֹ"
+        },
+        "groups": ["ס", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "עֹ"
+        },
+        "groups": ["ע", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "פֹּ"
+        },
+        "groups": ["פ", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "צֹ"
+        },
+        "groups": ["צ", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "קֹ"
+        },
+        "groups": ["ק", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "רֹ"
+        },
+        "groups": ["ר", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "שֹׁ"
+        },
+        "groups": ["ש", "חולם"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "תֹּ"
+        },
+        "groups": ["ת", "חולם"]
+    }
+],
 
 ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
 SUBTRACTION: createAsymmetricExercises(10, inverseSubtraction, "SUBTRACTION"),
