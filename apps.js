@@ -48,6 +48,13 @@ apps =  {
         {icon: 'format_size', name:'מדענים', type: 'app', appType: 'mcq', listName: 'SCIENTISTS', questionIndex: 'name', resultIndex: 'theory'},
         {icon: 'format_size', name:'ציירים', type: 'app', appType: 'mcq', listName: 'PAINTERS', questionIndex: 'name', resultIndex: 'artwork'},
       ]
-    }
+    },
+    {
+      name: 'עברית',
+      type: 'menu',
+      items: [
+        {icon: 'format_size', name:'אותיות', type: 'app', appType: 'mcq', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter'},
+      ]
+    },
   ]
 };

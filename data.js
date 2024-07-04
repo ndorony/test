@@ -1083,6 +1083,117 @@ QUESTION : [
   'question_word_hebrew_english': {'type': 'text', 'value': 'האוּ'},
   'emoji': {'type': 'text', 'value': '🛠️'}}],
 
+ hebrewAlphabet : [
+    {
+        letter: {type: "text", value: "א"},
+        letterName: {type: "speech", value: "אָלֶף"},
+    },
+    {
+        letter: {type: "text", value: "ב"},
+        letterName: {type: "speech", value: "בֵּת"},
+    },
+    {
+        letter: {type: "text", value: "ג"},
+        letterName: {type: "speech", value: "גִימֶל"},
+    },
+    {
+        letter: {type: "text", value: "ד"},
+        letterName: {type: "speech", value: "דָלֶת"},
+    },
+    {
+        letter: {type: "text", value: "ה"},
+        letterName: {type: "speech", value: "הֵיי"},
+    },
+    {
+        letter: {type: "text", value: "ו"},
+        letterName: {type: "speech", value: "וָו"},
+    },
+    {
+        letter: {type: "text", value: "ז"},
+        letterName: {type: "speech", value: "זַיִן"},
+    },
+    {
+        letter: {type: "text", value: "ח"},
+        letterName: {type: "speech", value: "חֵת"},
+    },
+    {
+        letter: {type: "text", value: "ט"},
+        letterName: {type: "speech", value: "טֵת"},
+    },
+    {
+        letter: {type: "text", value: "י"},
+        letterName: {type: "speech", value: "יוּד"},
+    },
+    {
+        letter: {type: "text", value: "כ"},
+        letterName: {type: "speech", value: "כַּף"},
+    },
+    {
+        letter: {type: "text", value: "ך"},
+        letterName: {type: "speech", value: "כַּף סוֹפִית"},
+    },
+    {
+        letter: {type: "text", value: "ל"},
+        letterName: {type: "speech", value: "לָמֶד"},
+    },
+    {
+        letter: {type: "text", value: "מ"},
+        letterName: {type: "speech", value: "מֵם"},
+    },
+    {
+        letter: {type: "text", value: "ם"},
+        letterName: {type: "speech", value: "מֵם סוֹפִית"},
+    },
+    {
+        letter: {type: "text", value: "נ"},
+        letterName: {type: "speech", value: "נוּן"},
+    },
+    {
+        letter: {type: "text", value: "ן"},
+        letterName: {type: "speech", value: "נוּן סוֹפִית"},
+    },
+    {
+        letter: {type: "text", value: "ס"},
+        letterName: {type: "speech", value: "סָמֶך"},
+    },
+    {
+        letter: {type: "text", value: "ע"},
+        letterName: {type: "speech", value: "עַיִן"},
+    },
+    {
+        letter: {type: "text", value: "פ"},
+        letterName: {type: "speech", value: "פֵּא"},
+    },
+    {
+        letter: {type: "text", value: "ף"},
+        letterName: {type: "speech", value: "פֵּא סוֹפִית"},
+    },
+    {
+        letter: {type: "text", value: "צ"},
+        letterName: {type: "speech", value: "צָדִיק"},
+    },
+    {
+        letter: {type: "text", value: "ץ"},
+        letterName: {type: "speech", value: "צָדִיק סוֹפִית"},
+    },
+    {
+        letter: {type: "text", value: "ק"},
+        letterName: {type: "speech", value: "קוּף"},
+    },
+    {
+        letter: {type: "text", value: "ר"},
+        letterName: {type: "speech", value: "רֵשׁ"},
+    },
+    {
+        letter: {type: "text", value: "ש"},
+        letterName: {type: "speech", value: "שִׁן"},
+    },
+    {
+        letter: {type: "text", value: "ת"},
+        letterName: {type: "speech", value: "תָּו"},
+    }
+],
+
 // The Alphabet records by tim.kahn - https://freesound.org/people/tim.kahn/packs/4371/
 ABC:  [
     {

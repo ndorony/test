@@ -44,10 +44,20 @@ function audio(url){
     sound.play();
 }
 
+function isHebrew(str) {
+    const hebrewRegex = /^[\u0590-\u05FF\uFB1D-\uFB4F\s.,?!'"()-]*$/;
+    return hebrewRegex.test(str);
+}
+
 function text_to_speech(text){
     var msg = new SpeechSynthesisUtterance();
     msg.text = text;
-    msg.lang = "en_US";
+    if (isHebrew(text)){
+        msg.lang = "he-IL";
+    } else {
+        msg.lang = "en_US";
+    }
+
     msg.rate = 0.7;
     window.speechSynthesis.speak(msg);
 }
@@ -782,7 +792,7 @@ var AppComponent = Vue.component('app',{
         this.score = getScore(this.currentAppId);
         this.progress = getProgress(this.currentAppId, 1);
         this.data = DATA[this.currentApp.listName];
-        displayNames = ["id", "name", "english_name", "englishUpperCase"];
+        displayNames = ["id", "name", "english_name", "englishUpperCase", 'letter'];
         for (let i = 0; i < displayNames.length; i++) {
             if(this.data[0].hasOwnProperty(displayNames[i])){
                 this.displayKey = displayNames[i];
