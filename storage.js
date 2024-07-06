@@ -41,6 +41,15 @@ function getScore(currentAppId){
     return getLocalStorage(`score${currentAppId}`, 0);
 }
 
+function setTheme(themeKey){
+    console.log(`themeKey ${themeKey}`)
+    return setLocalStorage('theme', themeKey);
+}
+
+function getTheme(){
+    return themeOptions[getLocalStorage('theme', 'base')];
+}
+
 function setActivityMode(activityMode){
     return setLocalStorage('activityMode', activityMode);
 }

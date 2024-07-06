@@ -2,8 +2,6 @@ const CACHE_NAME = 'my-app-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles/main.css',
-  '/scripts/main.js',
   'https://fonts.googleapis.com/icon?family=Material+Icons',
   'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css',
   'https://unpkg.com/vue@2',

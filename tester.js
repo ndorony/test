@@ -293,6 +293,7 @@ var BaseGameComponent = Vue.component('base-game',{
     template: `<div>base</div>`,
 
     data: function() { return {
+        theme: getTheme(),
         saved: [],
         result: 0,
         exercise: '',
@@ -382,7 +383,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
         <div class="row"><h3>{{ score }}</h3></div>
         <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
                 <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%',  background: theme.colors.secondary}" ></div>
         </div>
         </div>
     </div>`,
@@ -478,7 +479,7 @@ var CommonComponent = Vue.component('common',Vue.extend({
         <div class="row"><h3>{{ score }}</h3></div>
         <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
                 <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%', background: theme.colors.secondary}"}></div>
         </div>
         </div>
     </div>`,
@@ -583,7 +584,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
         <div class="row"><h3>{{ score }}</h3></div>
         <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
                 <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%',  background: theme.colors.secondary}"></div>
         </div>
         </div>
     </div>`,
@@ -658,6 +659,7 @@ var DisplayComponent = Vue.component('display',{
     </div>`,
 
     data: function() { return {
+        theme: getTheme(),
         score: null,
         displayNew: null,
         displayAll: null,
@@ -773,11 +775,12 @@ var AppComponent = Vue.component('app',{
         <div class="row"><h3>{{ score }}</h3></div>
         <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
                 <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%' }"></div>
+                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%',  background: theme.colors.secondary}"></div>
         </div>
     </div></div>`,
 
     data: function() { return {
+        theme: getTheme(),
         score: null,
         currentAppId: null,
         currentAppType: null,
@@ -837,6 +840,7 @@ var MenuComponent = Vue.component('menu',{
     data: function(){
         return {
          menu: null,
+         theme: getTheme(),
         }
     },
     created: function(){
@@ -887,6 +891,12 @@ var UserComponent = Vue.component('user', {
               <option v-for="mode in modes" :value="mode.key" :key="mode.key">{{ mode.description }}</option>
             </select>
           </div>
+          <div class="input-field col s8 offset-s2">
+            <select @change="handleThemeChanged" v-model="selectedTheme">
+              <option value="" disabled selected>בחר נושא</option>
+              <option v-for="(theme, key) in themes" :key="key" :value="key">{{ theme.name }}</option>
+            </select>
+          </div>
           <div class="col s8 offset-s2">
 
             <div v-for="(app, index) in apps" :key="index" class="card">
@@ -894,8 +904,8 @@ var UserComponent = Vue.component('user', {
                 <span class="card-title"><router-link :to="'/app/' + app.id" style="width: 100%; margin-bottom: 20px;">{{ app.name }}</router-link></span>
                 <p>Score: {{ app.score }}</p>
                 <p>Progress: {{ app.progress.progress }}/{{ app.progress.total }}</p>
-                <div class="progress">
-                  <div class="determinate" :style="{ width: ((app.progress.progress / app.progress.total) * 100) + '%' }"></div>
+                <div class="progress" :style="{background: theme.colors.primary}">
+                  <div class="determinate" :style="{ width: ((app.progress.progress / app.progress.total) * 100) + '%',  background: theme.colors.secondary}"></div>
                 </div>
               </div>
             </div>
@@ -910,11 +920,15 @@ var UserComponent = Vue.component('user', {
         apps: [],
         modes: [{"key": "learning", "description": "מצב למידה"},
                 {"key": "practicing", "description": "מצב תרגול"}],
-        selectedMode: null
+        selectedMode: null,
+        selectedTheme: null,
+        themes: null,
+        theme: getTheme(),
     }
   },
 
   created: function() {
+    this.themes = themeOptions;
     this.name = getUser();
     userApps = [];
     appList = getLocalStorage('appList', []);
@@ -932,7 +946,12 @@ var UserComponent = Vue.component('user', {
   methods: {
     handleModeChange: function(){
         setActivityMode(this.selectedMode);
-    }
+    },
+    handleThemeChanged: function(){
+        setTheme(this.selectedTheme);
+        this.$emit('theme-changed', this.selectedTheme);
+        this.theme = getTheme();
+    },
   },
   mounted() {
       // Initialize the select element when the component is mounted
@@ -1079,7 +1098,8 @@ var app = new Vue({
     router,
     data() {
         return {
-          username: getUser()
+          username: getUser(),
+          theme: getTheme(),
         };
       },
 
@@ -1088,12 +1108,14 @@ var app = new Vue({
            sessionStorage.removeItem('username');
            this.username = null;
            this.$router.push('/login');
+        }, updateTheme(){
+           this.theme = getTheme();
         }
     },
     created: {
-        username: function(){
+         username: function(){
             return getUser();
-        }
+         }
     },
     mounted() {
         version = localStorage.getItem('version');

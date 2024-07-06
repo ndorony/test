@@ -97,8 +97,8 @@
   </div>
 
     <div id="app" v-cloak>
-        <nav style="background: #006064">
-        <div class="nav-wrapper">
+        <nav :style="{ background: theme.colors.primary }">
+            <div class="nav-wrapper">
             <ul class="right">
             <li><a @click="UserLogout"><i class="material-icons">logout</i></a></li>
             <li><a><router-link to="/user"><span  v-if="username" >היי, {{ username }}</span></router-link></a></li>
@@ -107,7 +107,7 @@
         </div>
     </nav>
 
-    <p><router-view></router-view></p>
+    <p><router-view @theme-changed="updateTheme"></router-view></p>
 </div>
 
 
@@ -119,6 +119,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script src="./data.js"></script>
 <script src="./apps.js"></script>
+<script src="./themes.js"></script>
 <script src="./storage.js"></script>
 <script src="./tester.js"></script>
 </body>
