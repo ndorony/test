@@ -206,16 +206,34 @@ const getWeightedRandomIndex = (list, key, setItems) => {
 }
 
 // Function to select additional random indexes excluding a specific index
-const getRandomIndexesExcluding = (list, resultIndex, excludeIndex, count = 3) => {
-    const length = list.length;
+const getRandomIndexesExcluding = (list, resultIndex, answerIndex, count = 3) => {
+
+    const targetGroups = list[answerIndex].groups;
+    let filteredIndexes;
+
+    if (targetGroups && targetGroups.length > 0) {
+        filteredIndexes = list
+            .map((item, index) => ({ item, index }))
+            .filter(({ item, index }) =>
+                index !== answerIndex &&
+                item.groups &&
+                item.groups.some(group => targetGroups.includes(group))
+            )
+            .map(({ index }) => index);
+    } else {
+        filteredIndexes = list
+            .map((item, index) => index)
+            .filter(index => index !== answerIndex);
+    }
     const resultsIndexes = [];
     const results = [];
-
-    while (resultsIndexes.length < count) {
-        const randomIndex = Math.floor(Math.random() * length);
-        if (randomIndex != excludeIndex && !results.includes(list[randomIndex][resultIndex]['value'])) {
-            resultsIndexes.push(randomIndex);
-            results.push(list[randomIndex][resultIndex]['value']);
+    const answerValue = list[answerIndex][resultIndex]['value'];
+    while (resultsIndexes.length < count && resultsIndexes.length < filteredIndexes.length) {
+        const randomIndex = Math.floor(Math.random() * filteredIndexes.length);
+        randomValue = list[filteredIndexes[randomIndex]][resultIndex]['value'];
+        if (randomValue != answerValue && !results.includes(randomValue)){
+            resultsIndexes.push(filteredIndexes[randomIndex]);
+            results.push(randomValue);
         }
     }
     return resultsIndexes;
