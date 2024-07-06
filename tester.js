@@ -325,9 +325,9 @@ var ProgressBarComponent = Vue.component('progress-bar', {
   template: `
     <div>
       <p>{{ title }}: {{ progress.progress }}/{{ progress.total }}</p>
-      <div class="progress" :style="{background: theme.colors.secondary}">
-        <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%', background: theme.colors.primary}"></div>
-      </div>
+    <div class="progress-container" :style="{ background: theme.progressBar.background }">
+        <div class="progress-bar" :style="{ width: (100 - ((progress.progress / progress.total) * 100)) + '%' }"></div>
+    </div>
     </div>
   `,
   data() {
