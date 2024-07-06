@@ -1,4 +1,3 @@
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
@@ -289,6 +288,39 @@ function getSetItems(currentApp, defaultValue=1){
     return currentApp.hasOwnProperty('setItems') ? currentApp['setItems'] : defaultValue;
 }
 
+
+var ProgressBarComponent = Vue.component('progress-bar', {
+  props: {
+    progress: {
+      type: Object,
+      required: true
+    },
+    title: {
+      type: Object,
+      required: true
+    },
+    theme: {
+      type: Object,
+      required: true
+    }
+  },
+  template: `
+    <div>
+      <p>{{ title }}: {{ progress.progress }}/{{ progress.total }}</p>
+      <div class="progress" :style="{background: theme.colors.secondary}">
+        <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%', background: theme.colors.primary}"></div>
+      </div>
+    </div>
+  `,
+  data() {
+    return {};
+  },
+  computed: {},
+  methods: {}
+});
+
+
+
 var BaseGameComponent = Vue.component('base-game',{
     template: `<div>base</div>`,
 
@@ -381,9 +413,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3>{{ score }}</h3></div>
-        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
-                <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%',  background: theme.colors.secondary}" ></div>
+        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
     </div>`,
@@ -477,9 +507,7 @@ var CommonComponent = Vue.component('common',Vue.extend({
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3>{{ score }}</h3></div>
-        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
-                <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%', background: theme.colors.secondary}"}></div>
+        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
     </div>`,
@@ -582,9 +610,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3>{{ score }}</h3></div>
-        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
-                <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%',  background: theme.colors.secondary}"></div>
+        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
     </div>`,
@@ -773,9 +799,7 @@ var AppComponent = Vue.component('app',{
                 </div>
         </div>
         <div class="row"><h3>{{ score }}</h3></div>
-        <p>Current Level: {{ progress.progress }}/{{ progress.total }}</p>
-                <div class="progress">
-                  <div class="determinate" :style="{ width: ((progress.progress / progress.total) * 100) + '%',  background: theme.colors.secondary}"></div>
+        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
     </div></div>`,
 
@@ -903,9 +927,7 @@ var UserComponent = Vue.component('user', {
               <div class="card-content">
                 <span class="card-title"><router-link :to="'/app/' + app.id" style="width: 100%; margin-bottom: 20px;">{{ app.name }}</router-link></span>
                 <p>Score: {{ app.score }}</p>
-                <p>Progress: {{ app.progress.progress }}/{{ app.progress.total }}</p>
-                <div class="progress" :style="{background: theme.colors.primary}">
-                  <div class="determinate" :style="{ width: ((app.progress.progress / app.progress.total) * 100) + '%',  background: theme.colors.secondary}"></div>
+                <progress-bar :title="'Progress'" :progress="app.progress" :theme="theme"></progress-bar>
                 </div>
               </div>
             </div>
