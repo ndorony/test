@@ -406,7 +406,8 @@ var MCQComponent = Vue.component('msq',Vue.extend({
         <div class="row">
             <a class="waves-effect waves-light btn-large result"
                v-for="(result, index) in results"
-               v-on:click="check(index)">{{ result }}</a>
+               v-on:click="check(index)"
+               :style="{background: theme.colors.secondary}">{{ result }}</a>
 
         </div>
         <div class="row" dir="rtl">
@@ -603,7 +604,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
        </div>
        <div class="row">
             <div class="center-align">
-               <a class="waves-effect waves-light btn-large result" v-on:click="check()">בדוק</a>
+               <a class="waves-effect waves-light btn-large result" v-on:click="check()" :style="{background: theme.colors.secondary}">בדוק</a>
             </div>
         </div>
         <div class="row" dir="rtl">
@@ -775,10 +776,10 @@ var AppComponent = Vue.component('app',{
 
          <div class="container">
         <div class="row">
-        <router-link :to="'/play/' + currentAppType + '/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+        <router-link :to="'/play/' + currentAppType + '/' + currentAppId" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
           שחק
         </router-link>
-        <router-link :to="'/display/all/' + currentAppId" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+        <router-link :to="'/display/all/' + currentAppId" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
           הצג הכל
         </router-link>
         </div>
@@ -853,7 +854,7 @@ var MenuComponent = Vue.component('menu',{
     <div class="row">
       <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
-        <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result blue-grey lighten-1" style="width: 100%; margin-bottom: 20px;">
+        <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
           {{ app.name }}
         </router-link>
       </div>
@@ -1060,6 +1061,7 @@ const Login = {
         sessionStorage.setItem('username', this.selectedUser);
         this.$forceUpdate();
         this.$router.push('/');
+        this.$emit('theme-changed', this.selectedTheme);
       } else {
         alert('בחר שם משתמש');
       }

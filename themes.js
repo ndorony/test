@@ -4,7 +4,7 @@ const themeOptions = {
     name: 'בסיסי',
     colors: {
       primary: '#006064', // White
-      secondary: '#F0F0F0', // Light Grey
+      secondary: '#78909c', // Light Grey
       accent: '#C0C0C0', // Silver
       background: '#FFFFFF', // White
       text: '#000000' // Black
