@@ -698,7 +698,7 @@ var DisplayComponent = Vue.component('display',{
             </div>
             <div class="row">
                 <div class="center-align">
-                   <a class="waves-effect waves-light btn-large result" v-on:click="next()">{{ result }}</a>
+                   <a class="waves-effect waves-light btn-large result" v-on:click="next()" :style="{background: theme.colors.secondary}">{{ result }}</a>
                 </div>
             </div>
     </div>`,
