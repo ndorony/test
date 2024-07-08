@@ -745,8 +745,11 @@ var DisplayComponent = Vue.component('display',{
                                 'value': item[this.currentApp.questionIndex].value}
                 this.exercise = render(questionItem);
                 this.result = item[this.currentApp.questionIndex].value;
-
-            }else{
+            }
+            else if (this.currentAppType == 'common'){
+                this.exercise = item[this.currentApp.a].value;
+                this.result = item[this.currentApp.b].value;
+            } else {
                 questionItem = { ...item[this.currentApp.questionIndex] };
                 if (this.currentApp.questionType){
                     questionItem['type'] = this.currentApp.questionType;
