@@ -2676,6 +2676,369 @@ HEBREW_LETTERS_WITH_NIKUD : [
     }
 ],
 
+CONFUSING_LETTERS : [
+    {
+        "letter": {
+            "type": "text",
+            "value": "B"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "b"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/b.mp3"
+        },
+        "groups": ["bd"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "D"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "d"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/d.mp3"
+        },
+        "groups": ["bd"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "P"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "p"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/p.mp3"
+        },
+        "groups": ["pq"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "Q"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "q"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/q.mp3"
+        },
+        "groups": ["pq"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "M"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "m"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/m.mp3"
+        },
+        "groups": ["mn"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "N"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "n"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/n.mp3"
+        },
+        "groups": ["mn"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "U"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "u"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/u.mp3"
+        },
+        "groups": ["uv"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "V"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "v"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/v.mp3"
+        },
+        "groups": ["uv"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "I"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "i"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/i.mp3"
+        },
+        "groups": ["il"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "L"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "l"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/l.mp3"
+        },
+        "groups": ["il"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "W"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "w"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/w.mp3"
+        },
+        "groups": ["wm"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "M"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "m"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/m.mp3"
+        },
+        "groups": ["wm"]
+    },
+    {
+            "letter": {
+                "type": "text",
+                "value": "b"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "B"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/b.mp3"
+            },
+            "groups": ["BD"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "d"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "D"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/d.mp3"
+            },
+            "groups": ["BD"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "p"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "P"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/p.mp3"
+            },
+            "groups": ["PQ"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "q"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "Q"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/q.mp3"
+            },
+            "groups": ["PQ"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "m"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "M"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/m.mp3"
+            },
+            "groups": ["MN"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "n"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "N"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/n.mp3"
+            },
+            "groups": ["MN"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "u"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "U"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/u.mp3"
+            },
+            "groups": ["UV"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "v"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "V"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/v.mp3"
+            },
+            "groups": ["UV"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "i"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "I"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/i.mp3"
+            },
+            "groups": ["IL"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "l"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "L"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/l.mp3"
+            },
+            "groups": ["IL"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "w"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "W"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/w.mp3"
+            },
+            "groups": ["WM"]
+        },
+        {
+            "letter": {
+                "type": "text",
+                "value": "m"
+            },
+            "confusingLetter": {
+                "type": "text",
+                "value": "M"
+            },
+            "audio": {
+                "type": "audio",
+                "value": "./sounds/letters/m.mp3"
+            },
+            "groups": ["WM"]
+        }
+],
+
 ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
 SUBTRACTION: createAsymmetricExercises(10, inverseSubtraction, "SUBTRACTION"),
 MULTIPLICATION: createAsymmetricExercises(10, inverseMultiplication, "MULTIPLICATION"),

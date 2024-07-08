@@ -228,7 +228,8 @@ const getRandomIndexesExcluding = (list, resultIndex, answerIndex, count = 3) =>
     const resultsIndexes = [];
     const results = [];
     const answerValue = list[answerIndex][resultIndex]['value'];
-    while (resultsIndexes.length < count && resultsIndexes.length < filteredIndexes.length) {
+    //                                                                           this -1 is the result
+    while (resultsIndexes.length < count && resultsIndexes.length < filteredIndexes.length - 1) {
         const randomIndex = Math.floor(Math.random() * filteredIndexes.length);
         randomValue = list[filteredIndexes[randomIndex]][resultIndex]['value'];
         if (randomValue != answerValue && !results.includes(randomValue)){
