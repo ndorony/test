@@ -9,6 +9,11 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+function removeDuplicates(arr) {
+  const map = new Map();
+  arr.forEach(item => map.set(JSON.stringify(item), item));
+  return Array.from(map.values());
+}
 
 // https://freesound.org/people/MattLeschuck/sounds/511484/
 const successSound = new Audio("./sounds/success.mp3");
@@ -1037,7 +1042,7 @@ const SignUp = {
         sessionStorage.setItem('username', this.username);
         users = JSON.parse(localStorage.getItem('users')) || [];
         users.push(this.username);
-        localStorage.setItem('users', JSON.stringify(users));
+        localStorage.setItem('users', JSON.stringify(removeDuplicates(users)));
         this.$router.push('/');
       } else {
         alert('הכנס שם משתמש');
@@ -1072,7 +1077,7 @@ const Login = {
     };
   },
     created: function() {
-    this.users = JSON.parse(localStorage.getItem('users')) || [];
+    this.users = removeDuplicates(JSON.parse(localStorage.getItem('users'))) || [];
     if (this.users.length === 0) {
       this.$router.push('/signUp');
     }
