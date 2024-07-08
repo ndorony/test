@@ -2830,6 +2830,36 @@ CONFUSING_LETTERS : [
     {
         "letter": {
             "type": "text",
+            "value": "J"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "j"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/j.mp3"
+        },
+        "groups": ["gj"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "G"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "g"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/g.mp3"
+        },
+        "groups": ["gj"]
+    },
+    {
+        "letter": {
+            "type": "text",
             "value": "I"
         },
         "confusingLetter": {
