@@ -1370,6 +1370,349 @@ MONTHS: [
   {"name": {"type": "text", "value": "דצמבר"}, "english_name": {"type": "text", "value": "December"}, "month_number": {"type": "text", "value": "12"}}
 ],
 
+WEATHER: [
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "שמש"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Sunny"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "☀️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "גשם"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Rainy"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🌧️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מעונן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Cloudy"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "☁️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "שלג"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Snowy"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "❄️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "רוח"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Windy"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🌬️"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "חם"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Hot"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🔥"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "קר"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Cold"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🥶"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "קשת בענן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Rainbow"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "🌈"
+    }
+  }
+],
+
+FAMILY: [
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אבא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Father"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👨"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אמא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Mother"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👩"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אח"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Brother"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👦"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אחות"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Sister"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👧"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "סבא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Grandfather"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👴"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "סבתא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Grandmother"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👵"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "דוד"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Uncle"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👨‍🦱"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "דודה"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Aunt"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👩‍🦱"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בן"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Son"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👦"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בת"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Daughter"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👧"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אחיין"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Nephew"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👶"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "משפחה"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Family"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👪"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אבא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Dad"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👨"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אמא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Mom"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👩"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "סבתא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Grandma"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👵"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "סבא"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Grandpa"
+    },
+    "emoji": {
+      "type": "text",
+      "value": "👴"
+    }
+  }
+],
+
+
 NUMBERS: [
     {
       "hebrew": {
@@ -2024,6 +2367,259 @@ COUNTRIES: [
      "capital": {"type": "text", "value": "מקסיקו סיטי"},
      "monument": {"type": "text", "value": "פירמידת השמש בטאוטיהואקן"}}
   ],
+
+PREPOSITIONS: [
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מעל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Above"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מתחת"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Below"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "ליד"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Next to"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בין"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Between"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מאחורי"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Behind"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "לפני"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "In front of"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בתוך"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Inside"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מחוץ"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Outside"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "על"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "On"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מתחת ל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Under"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "קרוב ל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Near"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בפנים"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Inside"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בחוץ"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Outside"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "עם"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "With"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "בלי"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Without"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מול"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Opposite"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "דרך"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Through"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "אל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "To"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מ"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "From"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "כמו"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Like"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "על יד"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "By"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "עד"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Until"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "ל"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "For"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "ב"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "In"
+    }
+  },
+  {
+    "hebrew": {
+      "type": "text",
+      "value": "מול"
+    },
+    "english_name": {
+      "type": "text_to_speech",
+      "value": "Against"
+    }
+  }
+],
 
 PAINTERS: [
     {"name": {"type": "text", "value": "ליאונרדו דה וינצ'י"},
