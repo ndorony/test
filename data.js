@@ -2800,6 +2800,36 @@ CONFUSING_LETTERS : [
     {
         "letter": {
             "type": "text",
+            "value": "H"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "h"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/h.mp3"
+        },
+        "groups": ["hn"]
+    },
+    {
+        "letter": {
+            "type": "text",
+            "value": "N"
+        },
+        "confusingLetter": {
+            "type": "text",
+            "value": "n"
+        },
+        "audio": {
+            "type": "audio",
+            "value": "./sounds/letters/n.mp3"
+        },
+        "groups": ["hn"]
+    },
+    {
+        "letter": {
+            "type": "text",
             "value": "I"
         },
         "confusingLetter": {
