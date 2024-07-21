@@ -106,9 +106,22 @@
       left: 0;
     }
 
+    .select-wrapper input.select-dropdown {
+      padding-right: 10px;
+    }
+
+
+    .select-wrapper input.select-dropdown {
+        text-align: right; /* Align text to the right */
+    }
+    .select-wrapper ul.dropdown-content {
+        direction: rtl; /* Set dropdown content direction to RTL */
+        text-align: right; /* Align dropdown text to the right */
+    }
+
     </style>
 </head>
-<body>
+<body dir="rtl">
   <div class="loading-screen" id="loading-screen">
     טוען...
   </div>
@@ -116,14 +129,13 @@
     <div id="app" v-cloak>
         <nav :style="{ background: theme.colors.primary }">
             <div class="nav-wrapper">
+            <router-link to="/"><i class="material-icons">home</i></router-link>
             <ul class="right">
             <li><a @click="UserLogout"><i class="material-icons">logout</i></a></li>
             <li><a><router-link to="/user"><span  v-if="username" >היי, {{ username }}</span></router-link></a></li>
             </ul>
-            <router-link to="/"><i class="material-icons">home</i></router-link>
         </div>
     </nav>
-
     <p><router-view @theme-changed="updateTheme"></router-view></p>
 </div>
 

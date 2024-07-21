@@ -324,13 +324,13 @@ var ProgressBarComponent = Vue.component('progress-bar', {
       required: true
     },
     theme: {
-      type: Object,
+      type: String,
       required: true
     }
   },
   template: `
     <div>
-      <p>{{ title }}: {{ progress.progress }}/{{ progress.total }}</p>
+      <p :style="{color: theme.colors.text}">{{ title }}: {{ progress.progress }}/{{ progress.total }}</p>
     <div class="progress-container" :style="{ background: theme.progressBar.background }">
         <div class="progress-bar" :style="{ width: (100 - ((progress.progress / progress.total) * 100)) + '%' }"></div>
     </div>
@@ -425,7 +425,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
 
     <div class="container">
         <div class="row">
-            <h3 v-html="exercise"></h3>
+            <h3 v-html="exercise" :style="{color: theme.colors.text}"></h3>
         </div>
         <div class="row">
             <a class="waves-effect waves-light btn-large result"
@@ -437,7 +437,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
         <div class="row" dir="rtl">
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
-        <div class="row"><h3>{{ score }}</h3></div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
         <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
@@ -531,7 +531,7 @@ var CommonComponent = Vue.component('common',Vue.extend({
         <div class="row" dir="rtl">
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
-        <div class="row"><h3>{{ score }}</h3></div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
         <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
@@ -616,7 +616,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
 
     <div class="container">
         <div class="row">
-            <h3 v-html="exercise"></h3>
+            <h3 v-html="exercise" :style="{color: theme.colors.text}"></h3>
         </div>
         <div class="row">
         <div class="col s8 offset-s2">
@@ -634,7 +634,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
         <div class="row" dir="rtl">
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
-        <div class="row"><h3>{{ score }}</h3></div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
         <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
@@ -700,7 +700,7 @@ var DisplayComponent = Vue.component('display',{
     template: `
     <div class="container">
             <div class="row">
-                <h3 v-html="exercise"></h3>
+                <h3 v-html="exercise" :style="{color: theme.colors.text}"></h3>
             </div>
             <div class="row">
                 <div class="center-align">
@@ -826,7 +826,7 @@ var AppComponent = Vue.component('app',{
                     </div>
                 </div>
         </div>
-        <div class="row"><h3>{{ score }}</h3></div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
         <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
         </div>
     </div></div>`,
@@ -934,20 +934,21 @@ var UserComponent = Vue.component('user', {
     <div>
       <div container>
         <div class="row">
-          <div class="col s8 offset-s2">
+          <div class="col s8 offset-s2" :style="{color: theme.colors.secondary}">
             <h4>{{ name }}</h4>
           </div>
+
           <div class="input-field col s8 offset-s2">
-            <select @change="handleModeChange" v-model="selectedMode">
-              <option value="" disabled selected>בחר מצב משחק</option>
+            <select id="useMode" @change="handleModeChange" v-model="selectedMode">
               <option v-for="mode in modes" :value="mode.key" :key="mode.key">{{ mode.description }}</option>
             </select>
+            <label for="selectUser">בחר מצב משחק</label>
           </div>
           <div class="input-field col s8 offset-s2">
-            <select @change="handleThemeChanged" v-model="selectedTheme">
-              <option value="" disabled selected>בחר נושא</option>
-              <option v-for="(theme, key) in themes" :key="key" :value="key">{{ theme.name }}</option>
+            <select id="selectedTheme" @change="handleThemeChanged" v-model="selectedTheme">
+              <option v-for="(theme, key) in themes" :key="key" :value="key" >{{ theme.name }}</option>
             </select>
+            <label for="selectedTheme">בחר נושא</label>
           </div>
           <div class="col s8 offset-s2">
 
@@ -1018,22 +1019,24 @@ const SignUp = {
       <div class="row">
         <div class="col s4 offset-s4">
         הרשמה
-        <div>
-          <label for="username">שם משתמש:</label>
+        <div class="input-field">
+          <label for="username" :style="{ color: theme.colors.label }">שם משתמש:</label>
           <input type="text" id="username" v-model="username">
         </div>
         </div>
       </div>
+
       <div class="row">
         <div class="col s4 offset-s4">
-          <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="SignUp">הרשם</a>
+          <a class="waves-effect waves-light btn-large result blue-grey lighten-1" @click="SignUp"  style="width: 100%; margin-bottom: 20px;">הרשם</a>
         </div>
         </div>
     </div>
   `,
   data() {
     return {
-      username: ''
+      username: '',
+      theme: getTheme(),
     };
   },
   methods: {
@@ -1056,8 +1059,8 @@ const Login = {
     <div>
     <div class="row">
       <div class="col s4 offset-s4">
-        <select id="selectUser" v-model="selectedUser" class="browser-default">
-          <option v-for="user in users" :key="user">{{ user }}</option>
+        <select id="selectUser" v-model="selectedUser" class="browser-default" :disabled="!users">
+          <option v-for="user in users" :key="user" >{{ user }}</option>
         </select>
         <label for="selectUser">בחר משתמש</label>
       </div>
@@ -1073,7 +1076,9 @@ const Login = {
   data() {
     return {
       selectedUser: '',
-      users: null
+      users: null,
+      theme: getTheme()
+
     };
   },
     created: function() {
@@ -1081,6 +1086,7 @@ const Login = {
     if (this.users.length === 0) {
       this.$router.push('/signUp');
     }
+    theme = getTheme();
   },
   methods: {
     login() {
@@ -1161,6 +1167,50 @@ var app = new Vue({
            this.$router.push('/login');
         }, updateTheme(){
            this.theme = getTheme();
+           this.changeGlobalStyle();
+        }, addGlobalStyle() {
+          const style = document.createElement('style');
+          style.id = 'dynamic-global-style';
+          style.innerHTML = `
+                  body {
+                    background-color: #F5F5F5; /* Hex color code */
+                  }
+
+                .dropdown-content li > a, .dropdown-content li > span {
+                  color: black !important;
+                  background: white !important;
+                }
+
+                .select-wrapper input.select-dropdown {
+                  color: black !important;
+                  background: white !important;
+                  padding-right: 10px;
+                }
+          `;
+          document.head.appendChild(style);
+        },
+        changeGlobalStyle() {
+          const style = document.getElementById('dynamic-global-style');
+            style.innerHTML = `
+               body {
+                  background-color: ${this.theme.colors.background}; /* Hex color code */
+                }
+
+                .dropdown-content li > a, .dropdown-content li > span {
+                  color: ${this.theme.colors.text} !important;
+                  background: ${this.theme.colors.tertiary} !important;
+                  text-align: right; /* Align text to the right */
+                }
+
+                .select-wrapper input.select-dropdown {
+                  color: ${this.theme.colors.text} !important;
+                  background: ${this.theme.colors.background} !important;
+                  text-align: right; /* Align text to the right */
+
+                }
+
+
+            `;
         }
     },
     created: {
@@ -1169,11 +1219,12 @@ var app = new Vue({
          }
     },
     mounted() {
-        version = localStorage.getItem('version');
+        version = localStorage.getItem('en_version', 0.1);
         if (!version){
             localStorage.clear();
         }
-        localStorage.setItem('version', 0.1)
+        this.addGlobalStyle();
+        localStorage.setItem('en_version', 0.1)
        document.getElementById('loading-screen').classList.add('hidden');
     }
 }).$mount('#app')
