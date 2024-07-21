@@ -8,7 +8,7 @@ function createAsymmetricExercises(upTo, inverseMathFunction) {
                 question: {"type": "text", "value": `${a} ${symbol} ${b} =`},
                 answer: {"type": "text", "value": `${result}`},
                 id: {"type": "text", "value": `${i}`},
-                groups: [a],
+                groups: [i],
             });
         }
     }
@@ -20,7 +20,7 @@ function inverseAddition(a, b) {
 }
 
 function inverseSubtraction(a, b) {
-    return {a:a + b, b, result: a, symbol: '-' };
+    return {a:a + b, b:a, result: b, symbol: '-' };
 }
 
 function inverseMultiplication(a, b) {
