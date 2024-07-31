@@ -36,7 +36,9 @@ apps =  {
         {icon: 'format_shapes', name:'חמש ברווזים', type: 'app', appType: 'mcq', listName: 'FIVE_LITTLE_DUCKS', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
         {icon: 'format_shapes', name:'לדוד משה', type: 'app', appType: 'mcq', listName: 'OLD_MACDONALD', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
         {icon: 'format_shapes', name:'חמש קופים קפצו על המיטה', type: 'app', appType: 'mcq', listName: 'FIVE_LITTLE_MONKEYS', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
-
+        {icon: 'format_shapes', name:'קפיצה', type: 'app', appType: 'mcq', listName: 'JUMP', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+        {icon: 'format_shapes', name:'הנסיך', type: 'app', appType: 'mcq', listName: 'PRINCE', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+        {icon: 'format_shapes', name:'גברים', type: 'app', appType: 'mcq', listName: 'MAN', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
        ]
       },
       ]
