@@ -4723,7 +4723,7 @@ PRINCE: [
     }
   ],
 
-MAN : [[
+MAN : [
     {
       "name": {"type": "text", "value": "להיות"},
       "english_name": {"type": "text_to_speech", "value": "Be"},
