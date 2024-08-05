@@ -1432,6 +1432,7 @@ const SignUp = {
         sessionStorage.setItem('username', this.username);
         users = JSON.parse(localStorage.getItem('users')) || [];
         users.push(this.username);
+        DATA['NAME'] = getUniqueElements(this.username);
         localStorage.setItem('users', JSON.stringify(removeDuplicates(users)));
         this.$router.push('/');
       } else {
