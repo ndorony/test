@@ -5196,3 +5196,21 @@ MULTIPLICATION: createAsymmetricExercises(10, inverseMultiplication, "MULTIPLICA
 DIVISION: createAsymmetricExercises(10, inverseDivision, "DIVISION"),
 COUNT: createCount(5),
 }
+
+function getUniqueElements(word) {
+    const uniqueLettersSet = new Set();
+    const uniqueElements = [];
+    const hebrewLettersRegex = /^[\u0590-\u05FF]+$/; // טווח תווי יוניקוד של אותיות עבריות
+
+    for (const char of word) {
+        if (hebrewLettersRegex.test(char) && !uniqueLettersSet.has(char)) {
+            uniqueLettersSet.add(char);
+            const element = DATA['hebrewAlphabet'].find(item => item.letter.value === char);
+            if (element) {
+                uniqueElements.push(element);
+            }
+        }
+    }
+
+    return uniqueElements;
+}

@@ -119,6 +119,30 @@
         text-align: right; /* Align dropdown text to the right */
     }
 
+    canvas {
+        border: 1px solid black;
+    }
+
+    .game-area {
+    width: 100%;
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+    }
+
+    #drawingCanvas {
+        touch-action: none;
+    }
+
+    .falling-answer {
+        position: absolute;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        cursor: pointer;
+        user-select: none;
+    }
+
     </style>
 </head>
 <body dir="rtl">
@@ -131,7 +155,6 @@
             <div class="nav-wrapper">
             <router-link to="/"><i class="material-icons">home</i></router-link>
             <ul class="right">
-            <li><a @click="UserLogout"><i class="material-icons">logout</i></a></li>
             <li><a><router-link to="/user"><span  v-if="username" >היי, {{ username }}</span></router-link></a></li>
             </ul>
         </div>
@@ -151,5 +174,7 @@
 <script src="./themes.js"></script>
 <script src="./storage.js"></script>
 <script src="./tester.js"></script>
+
+<script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
 </body>
 </html>

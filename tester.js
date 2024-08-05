@@ -320,11 +320,11 @@ var ProgressBarComponent = Vue.component('progress-bar', {
       required: true
     },
     title: {
-      type: Object,
+      type: String,
       required: true
     },
     theme: {
-      type: String,
+      type: Object,
       required: true
     }
   },
@@ -438,7 +438,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
-        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
     </div>`,
@@ -532,7 +532,7 @@ var CommonComponent = Vue.component('common',Vue.extend({
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
-        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
     </div>`,
@@ -635,7 +635,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
         </div>
         <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
-        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
         </div>
         </div>
     </div>`,
@@ -651,7 +651,7 @@ var SpellComponent = Vue.component('spell',Vue.extend({
             this.saved = []
             const list = getDataList(this.currentApp.listName);
             const weightedRandomIndex = getWeightedRandomIndex(list,
-                                                               this.currentApp.questionIndex,
+                                                               this.currentAppId,
                                                                getSetItems(this.currentApp));
             this.result = list[weightedRandomIndex][this.currentApp.questionIndex].value;
             this.exercise = render({'type': 'speech', 'value': this.result});
@@ -695,6 +695,383 @@ var SpellComponent = Vue.component('spell',Vue.extend({
         }
     },
 }))
+
+var DrawLetterComponent = Vue.component('draw', Vue.extend({
+    template: `<div>
+
+    <div class="container">
+        <div class="row">
+            <h5 v-html="title" :style="{color: theme.colors.text}"></h5>
+            <h5 v-html="exercise" :style="{color: theme.colors.text}"></h5>
+
+        </div>
+        <div class="row">
+        <div class="center-align">
+          <canvas  id="drawingCanvas" width="%100" height="280"></canvas>
+        </div>
+       </div>
+
+        <div class="row">
+            <div class="center-align">
+               <a class="waves-effect waves-light btn-large result" v-on:click="check()" :style="{background: theme.colors.secondary}">בדוק</a>
+               <a class="waves-effect waves-light btn-large result" v-on:click="clearCanvas()" :style="{background: theme.colors.secondary}">נקה</a>
+            </div>
+        </div>
+        <div class="row" dir="rtl">
+            <h5 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h5>
+        </div>
+        <div class="row"><h5 :style="{color: theme.colors.text}">{{ score }}</h5></div>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
+        </div>
+        </div>
+
+    </div>`,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            title: '',
+            answer: null,
+            recognizedLetter: '',
+            score: 0
+        }
+    },
+
+    methods: {
+        create: function (code) {
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'black';
+
+        const getCoordinates = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            if (e.type.includes('touch')) {
+                return [
+                    (e.touches[0].clientX - rect.left) * scaleX,
+                    (e.touches[0].clientY - rect.top) * scaleY
+                ];
+            } else {
+                return [
+                    (e.clientX - rect.left) * scaleX,
+                    (e.clientY - rect.top) * scaleY
+                ];
+            }
+        };
+
+        const startDrawing = (e) => {
+            isDrawing = true;
+            [lastX, lastY] = getCoordinates(e);
+        };
+
+        const draw = (e) => {
+            if (!isDrawing) return;
+            e.preventDefault(); // Prevent scrolling on touch devices
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            const [currentX, currentY] = getCoordinates(e);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            [lastX, lastY] = [currentX, currentY];
+        };
+
+        const stopDrawing = () => {
+            isDrawing = false;
+        };
+
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+
+            const list = getDataList(this.currentApp.listName);
+            const weightedRandomIndex = getWeightedRandomIndex(list,
+                                                               this.currentAppId,
+                                                               getSetItems(this.currentApp));
+            this.title = this.currentApp.title;
+            this.questionIndex = weightedRandomIndex;
+            this.result = list[weightedRandomIndex][this.currentApp.resultIndex].value;
+            this.exercise = render(list[weightedRandomIndex][this.currentApp.questionIndex]);
+            action = generateQuestion(list[weightedRandomIndex][this.currentApp.questionIndex]);
+            if(this.reloadProgress()){
+                this.$forceUpdate();
+                setTimeout(() => {
+                this.ended = false;
+                action();
+                }, 500);
+            }
+        },
+
+        getCoordinates(e) {
+            const canvas = document.getElementById('drawingCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            return [x, y];
+        },
+
+        clearCanvas: function() {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            resultDiv.textContent = '';
+        },
+        check: function () {
+            const canvas = document.getElementById('drawingCanvas');
+            const list = getDataList(this.currentApp.listName);
+            const whitelist = new Set();
+            list.forEach(item => {
+                const letter = item[this.currentApp.resultIndex].value.toUpperCase();
+                if (/[A-Z]/.test(letter)) {
+                    whitelist.add(letter);
+                }
+            });
+            const tessedit_char_whitelist = Array.from(whitelist).join('')
+            console.log(tessedit_char_whitelist);
+
+
+            Tesseract.recognize(canvas, 'eng', {
+                logger: m => console.log(m),
+                tessedit_char_whitelist: tessedit_char_whitelist,
+                oem: Tesseract.OEM_LSTM_ONLY,
+                psm: Tesseract.PSM_SINGLE_CHAR
+            }).then(({ data: { text, confidence, symbols } }) => {
+                this.recognizedLetter = text.trim().charAt(0);
+                console.log("Recognized letter:", this.recognizedLetter);
+                console.log("Confidence:", confidence);
+                console.log("Expected result:", this.result);
+
+                const confidenceThreshold = 40;
+
+                if (this.recognizedLetter && /[A-Z]/.test(this.recognizedLetter.toUpperCase())) {
+                    if (this.recognizedLetter === this.result.toUpperCase() && confidence >= confidenceThreshold) {
+                        this.message = {value: this.getSuccessMsg(), success: true};
+                        this.score += 1;
+                        this.saveScore();
+
+                        updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                    } else if (confidence < confidenceThreshold) {
+                        this.message = {value: 'לא בטוח בזיהוי. נסה לכתוב ברור יותר.', error: true};
+                    } else {
+                        this.message = {value: `נסה שוב :( התשובה היא ${this.result}`, error: true};
+                        this.score = Math.max(0, this.score - 1);
+                        this.saveScore();
+                        updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                    }
+                } else {
+                    this.message = {value: 'לא זוהתה אות באנגלית. נסה שוב.', error: true};
+                }
+
+                this.saveScore();
+                this.reloadProgress();
+                setTimeout(this.clearCanvas, 500);
+                if (this.message.success) {
+                    setTimeout(this.create, 1000);
+                }
+            });
+        },
+
+        calculateScore(confidence, symbols) {
+            if (symbols && symbols.length > 0) {
+                let symbolConfidence = symbols[0].confidence;
+                let normalizedScore = Math.round(symbolConfidence);
+                return Math.min(Math.max(normalizedScore, 0), 100) / 10;
+            } else {
+                return Math.round(confidence) / 10;
+            }
+        },
+
+        clearCanvas() {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        },
+
+        display: function() {
+        }
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
+        this.updateScore();
+        this.create();
+    }
+}));
+
+var FallingAnswersComponent = Vue.component('falling-answers', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="row">
+            <h3 v-html="title" :style="{color: theme.colors.text}"></h3>
+        </div>
+        <div class="row">
+            <h3 v-html="exercise" :style="{color: theme.colors.text}"></h3>
+        </div>
+        <div class="row">
+            <div class="game-area" ref="gameArea">
+                <div v-for="answer in fallingAnswers"
+                     :key="answer.id"
+                     class="falling-answer"
+                     :style="{top: answer.top + 'px', left: answer.left + 'px'}"
+                     @click="checkAnswer(answer)">
+                    {{ answer.text }}
+                </div>
+            </div>
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
+    </div>
+    `,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            title: '',
+            fallingAnswers: [],
+            score: 0,
+            gameInterval: null,
+            spawnInterval: null,
+            list: [],
+            mounted: false,
+            currentQuestionIndex: -1,
+            maxAnswersOnScreen: 6,
+        }
+    },
+
+    methods: {
+        create: function() {
+        },
+
+        createNewQuestion: function() {
+            const weightedRandomIndex = getWeightedRandomIndex(this.list,
+                                                               this.currentAppId,
+                                                               getSetItems(this.currentApp));
+            this.title = this.currentApp.title;
+            this.currentQuestionIndex = weightedRandomIndex;
+            this.result = this.list[weightedRandomIndex][this.currentApp.resultIndex].value;
+            this.exercise = render(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            action = generateQuestion(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            action();
+            this.updateFallingAnswers();
+        },
+
+        updateFallingAnswers: function() {
+
+            const correctAnswer = this.list[this.currentQuestionIndex][this.currentApp.resultIndex].value;
+            const wrongIndexes = getRandomIndexesExcluding(this.list, this.currentApp.resultIndex, this.currentQuestionIndex, this.maxAnswersOnScreen - 1);
+
+            // Clear all existing answers
+            this.fallingAnswers = [];
+       this.createAnswer(correctAnswer, true)
+
+            // Add the correct answer
+            this.fallingAnswers.push(this.createAnswer(correctAnswer, true));
+
+            // Add wrong answers
+            wrongIndexes.forEach(wrongIndex => {
+                const wrongAnswer = this.list[wrongIndex][this.currentApp.resultIndex].value;
+                this.fallingAnswers.push(this.createAnswer(wrongAnswer, false));
+            });
+
+            // Shuffle the answers
+            this.fallingAnswers = this.shuffleArray(this.fallingAnswers);
+        },
+
+
+        shuffleArray: function(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        },
+
+
+        startFallingAnimation: function() {
+            const gameAreaHeight = this.$refs.gameArea.offsetHeight;
+            const gameAreaWidth = this.$refs.gameArea.offsetWidth;
+
+            this.fallInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * this.fallingAnswers.length);
+                const answer = this.fallingAnswers[randomIndex];
+                if (answer.top > gameAreaHeight) {
+                    answer.top = Math.random() * -200 - 50;
+                    answer.left = Math.random() * (gameAreaWidth - 50);
+                }
+            }, 1000);
+
+            this.gameInterval = setInterval(() => {
+                this.fallingAnswers.forEach(answer => {
+                    answer.top += 2;
+                });
+            }, 50);
+        },
+
+
+        createAnswer: function(text, isCorrect) {
+            const gameAreaWidth = this.$refs.gameArea ? this.$refs.gameArea.offsetWidth : window.innerWidth;
+            return {
+                id: Math.random().toString(36).substr(2, 9),
+                text: text,
+                isCorrect: isCorrect,
+                top: Math.random() * -200 - 50, // This will create a range from -250 to -50
+                left: Math.random() * (gameAreaWidth - 50)
+            };
+        },
+
+        checkAnswer: function(answer) {
+            if (answer.isCorrect) {
+                this.message = {value: this.getSuccessMsg(), success: true};
+                this.score += 1;
+                updateWeightForKey(this.currentAppId, this.currentQuestionIndex, -1);
+                this.createNewQuestion();
+            } else {
+                this.message = {value: 'נסה שוב', error: true};
+                this.score = Math.max(0, this.score - 1);
+            }
+            this.saveScore();
+            this.reloadProgress();
+        }
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
+        this.updateScore();
+        this.mounted = true;
+        this.list = getDataList(this.currentApp.listName);
+        this.createNewQuestion();
+        this.reloadProgress();
+        this.startFallingAnimation();
+    },
+
+    beforeDestroy() {
+        clearInterval(this.gameInterval);
+        clearInterval(this.fallInterval);
+    }
+}));
+
 
 var DisplayComponent = Vue.component('display',{
     template: `
@@ -827,7 +1204,7 @@ var AppComponent = Vue.component('app',{
                 </div>
         </div>
         <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
-        <progress-bar :title="'Current Level'" :progress="progress" :theme="theme"></progress-bar>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
         </div>
     </div></div>`,
 
@@ -955,12 +1332,17 @@ var UserComponent = Vue.component('user', {
             <div v-for="(app, index) in apps" :key="index" class="card">
               <div class="card-content">
                 <span class="card-title"><router-link :to="'/app/' + app.id" style="width: 100%; margin-bottom: 20px;">{{ app.name }}</router-link></span>
-                <p>Score: {{ app.score }}</p>
-                <progress-bar :title="'Progress'" :progress="app.progress" :theme="theme"></progress-bar>
+                <p>נקודות: {{ app.score }}</p>
+                <progress-bar :title="'התקדמות'" :progress="app.progress" :theme="theme"></progress-bar>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        <div class="row">
+        <div class="waves-effect waves-light btn-large result lighten-1 col s8 offset-s2" :style="{background: theme.colors.secondary}">
+          <a @click="userLogout">התנתק</a>
+        </div>
         </div>
       </div>
     </div>
@@ -997,6 +1379,11 @@ var UserComponent = Vue.component('user', {
   methods: {
     handleModeChange: function(){
         setActivityMode(this.selectedMode);
+    },
+    userLogout: function(){
+           sessionStorage.removeItem('username');
+           this.username = null;
+           this.$router.push('/login');
     },
     handleThemeChanged: function(){
         setTheme(this.selectedTheme);
@@ -1092,6 +1479,7 @@ const Login = {
     login() {
       if (this.selectedUser) {
         sessionStorage.setItem('username', this.selectedUser);
+        DATA['NAME'] = getUniqueElements(this.selectedUser);
         this.$forceUpdate();
         this.$router.push('/');
         this.$emit('theme-changed', this.selectedTheme);
@@ -1111,6 +1499,8 @@ const routes = [
     {path: '/play/mcq/:currentAppId', component: MCQComponent, props: true },
     {path: '/play/spell/:currentAppId', component: SpellComponent, props: true },
     {path: '/play/common/:currentAppId', component: CommonComponent, props: true },
+    {path: '/play/draw_letter/:currentAppId', component: DrawLetterComponent, props: true },
+    {path: '/play/falling_answers/:currentAppId', component: FallingAnswersComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },
@@ -1161,11 +1551,7 @@ var app = new Vue({
       },
 
     methods: {
-        UserLogout() {
-           sessionStorage.removeItem('username');
-           this.username = null;
-           this.$router.push('/login');
-        }, updateTheme(){
+        updateTheme(){
            this.theme = getTheme();
            this.changeGlobalStyle();
         }, addGlobalStyle() {
@@ -1219,6 +1605,9 @@ var app = new Vue({
          }
     },
     mounted() {
+        if (this.username){
+            DATA['NAME'] = getUniqueElements(this.username);
+        }
         version = localStorage.getItem('en_version', 0.1);
         if (!version){
             localStorage.clear();
