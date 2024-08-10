@@ -1343,7 +1343,6 @@ var UserComponent = Vue.component('user', {
                 {{ voice.name }}
               </option>
             </select>
-            <label for="hebrewVoiceSelect">בחר קול לשמיעת המילה "שלום"</label>
           </div>
         </div>
         <div class="row">
@@ -1355,7 +1354,6 @@ var UserComponent = Vue.component('user', {
                 {{ voice.name }}
               </option>
             </select>
-            <label for="englishVoiceSelect">Choose voice to hear "Hello"</label>
           </div>
         </div>
 
