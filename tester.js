@@ -57,11 +57,18 @@ function text_to_speech(text){
     var msg = new SpeechSynthesisUtterance();
     msg.text = text;
     if (isHebrew(text)){
+        lang = 'he';
         msg.lang = "he-IL";
     } else {
+        lang = 'en';
         msg.lang = "en_US";
     }
+    voice = getVoice(lang);
+    console.log(`Get ${voice}`)
 
+    if (voice){
+        msg.voice = voice;
+    }
     msg.rate = 0.7;
     window.speechSynthesis.speak(msg);
 }
@@ -1327,6 +1334,32 @@ var UserComponent = Vue.component('user', {
             </select>
             <label for="selectedTheme">בחר נושא</label>
           </div>
+
+          <div class="row">
+          <div class="input-field col s8 offset-s2">
+            <select id="hebrewVoiceSelect" v-model="selectedHebrewVoice" @change="handleHebrewVoiceChange">
+              <option value="">בחר קול עברי</option>
+              <option v-for="voice in hebrewVoices" :key="voice.voiceURI" :value="voice.voiceURI">
+                {{ voice.name }}
+              </option>
+            </select>
+            <label for="hebrewVoiceSelect">בחר קול לשמיעת המילה "שלום"</label>
+          </div>
+        </div>
+        <div class="row">
+
+          <div class="input-field col s8 offset-s2">
+            <select id="englishVoiceSelect" v-model="selectedEnglishVoice" @change="handleEnglishVoiceChange">
+              <option value="">Choose English voice</option>
+              <option v-for="voice in englishVoices" :key="voice.voiceURI" :value="voice.voiceURI">
+                {{ voice.name }}
+              </option>
+            </select>
+            <label for="englishVoiceSelect">Choose voice to hear "Hello"</label>
+          </div>
+        </div>
+
+
           <div class="col s8 offset-s2">
 
             <div v-for="(app, index) in apps" :key="index" class="card">
@@ -1339,6 +1372,7 @@ var UserComponent = Vue.component('user', {
             </div>
           </div>
         </div>
+
         <div class="row">
         <div class="waves-effect waves-light btn-large result lighten-1 col s8 offset-s2" :style="{background: theme.colors.secondary}">
           <a @click="userLogout">התנתק</a>
@@ -1357,6 +1391,10 @@ var UserComponent = Vue.component('user', {
         selectedTheme: null,
         themes: null,
         theme: getTheme(),
+        hebrewVoices: [],
+        englishVoices: [],
+        selectedHebrewVoice: '',
+        selectedEnglishVoice: '',
     }
   },
 
@@ -1375,6 +1413,7 @@ var UserComponent = Vue.component('user', {
                      progress: progress})
     });
     this.apps = userApps;
+    this.loadVoices();
   },
   methods: {
     handleModeChange: function(){
@@ -1390,12 +1429,58 @@ var UserComponent = Vue.component('user', {
         this.$emit('theme-changed', this.selectedTheme);
         this.theme = getTheme();
     },
+    loadVoices: function() {
+      let synth = window.speechSynthesis;
+      let voices = synth.getVoices();
+      this.hebrewVoices = voices.filter(voice => voice.lang.startsWith('he'));
+      this.englishVoices = voices.filter(voice => voice.lang.startsWith('en'));
+      console.log(this.hebrewVoices)
+      if (voices.length === 0) {
+        setTimeout(this.loadVoices, 10);
+      } else {
+        console.log('Hebrew voices:', this.hebrewVoices);
+        console.log('English voices:', this.englishVoices);
+
+        // Initialize select elements
+        this.$nextTick(() => {
+          M.FormSelect.init(document.querySelectorAll('select'));
+        });
+      }
+    },
+    handleHebrewVoiceChange: function() {
+      if (!this.selectedHebrewVoice) return;
+      setVoice('he', this.selectedHebrewVoice);
+      this.speakWord('he');
+    },
+    handleEnglishVoiceChange: function() {
+      if (!this.selectedEnglishVoice) return;
+      setVoice('en', this.selectedEnglishVoice);
+      this.speakWord('en');
+    },
+    speakWord: function(lang) {
+      let voice, text;
+      if (lang === 'he') {
+        voice = this.hebrewVoices.find(v => v.voiceURI === this.selectedHebrewVoice);
+        console.log(this.hebrewVoices)
+        text = "שלום";
+      } else {
+        voice = this.englishVoices.find(v => v.voiceURI === this.selectedEnglishVoice);
+        text = "Hello";
+      }
+
+      let utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = voice;
+      window.speechSynthesis.speak(utterance);
+    },
   },
   mounted() {
       // Initialize the select element when the component is mounted
       this.$nextTick(() => {
         M.FormSelect.init(document.querySelectorAll('select'));
       });
+     if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = this.loadVoices;
+    }
     }
 });
 

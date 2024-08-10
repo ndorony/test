@@ -67,3 +67,41 @@ function getActivityMode(){
 function getWeightsKey(key){
     return getKey(`${getActivityMode()}_${key}_Weights`)
 }
+
+function setVoice(lang, uri){
+    console.log(`Set ${lang} ${uri}`)
+    localStorage.setItem(`${lang}_voice`, uri);
+}
+
+let voices = [];
+
+function getVoice(lang){
+    let voice;
+       // Check if the voices array is empty and load voices if needed
+    if (voices.length === 0) {
+        console.log('Loading voices...');
+        let synth = window.speechSynthesis;
+
+        // Load voices asynchronously and populate the global voices array
+        synth.onvoiceschanged = () => {
+            voices = synth.getVoices();
+        };
+
+        // Force the voices to load if they haven't yet
+        synth.getVoices();
+    }
+    uri = localStorage.getItem(`${lang}_voice`, null)
+    console.log(`Get ${uri} ${lang} uri`)
+    console.log(`${lang}_voice`)
+    if (uri) {
+        voice = voices.find(v => v.voiceURI == uri);
+        console.log(`Get ${voice} voice`)
+    } else {
+        rVoices = voices.filter(v => v.lang.startsWith(lang));
+
+        if (rVoices.length > 0) {
+            voice = rVoices[0];
+       }
+    }
+    return voice
+}
