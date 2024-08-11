@@ -92,7 +92,7 @@ function getVoice(lang){
     }
     uri = localStorage.getItem(`${lang}_voice`, null)
     console.log(`Get ${uri} ${lang} uri`)
-    console.log(`${lang}_voice`)
+    console.log(`${lang}_voice ${voices.length}`)
     if (uri) {
         voice = voices.find(v => v.voiceURI == uri);
         console.log(`Get ${voice} voice`)
