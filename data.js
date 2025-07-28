@@ -5194,7 +5194,7 @@ ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
 SUBTRACTION: createAsymmetricExercises(10, inverseSubtraction, "SUBTRACTION"),
 MULTIPLICATION: createAsymmetricExercises(10, inverseMultiplication, "MULTIPLICATION"),
 DIVISION: createAsymmetricExercises(10, inverseDivision, "DIVISION"),
-COUNT: createCount(5),
+COUNT: createCount(10),
 }
 
 function getUniqueElements(word) {
