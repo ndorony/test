@@ -1261,7 +1261,7 @@ ABC:  [
         englishUpperCase: {type: "text", value: "K"},
         englishLowerCase: {type: "text", value: "k"},
         hebrewTransliteration: {type: "text", value: "קֵי"},
-        audio: {type: "audio", value: "./sounds/letters/q.mp3"}
+        audio: {type: "audio", value: "./sounds/letters/k.mp3"}
     },
     {
         englishUpperCase: {type: "text", value: "L"},
