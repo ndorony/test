@@ -5197,6 +5197,12 @@ DIVISION: createAsymmetricExercises(10, inverseDivision, "DIVISION"),
 COUNT: createCount(10),
 }
 
+function filterABCByString(lettersStr, abcList) {
+    const letterSet = new Set(lettersStr.split("")); // להאיץ את הבדיקה
+    return abcList.filter(item => letterSet.has(item.englishUpperCase.value));
+}
+DATA.practiceABC = filterABCByString("QRYPGJKZVN", DATA.ABC)
+
 function getUniqueElements(word) {
     const uniqueLettersSet = new Set();
     const uniqueElements = [];

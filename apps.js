@@ -30,6 +30,7 @@ apps =  {
         {icon: 'format_shapes', name:'משפחה', type: 'app', appType: 'mcq', listName: 'FAMILY', questionIndex: 'english_name', resultIndex:'hebrew', setItems: 3},
         {icon: 'format_shapes', name:'מזג אוויר', type: 'app', appType: 'mcq', listName: 'WEATHER', questionIndex: 'english_name', resultIndex:'hebrew', setItems: 3},
         {icon: 'format_shapes', name:'מילות יחס', type: 'app', appType: 'mcq', listName: 'PREPOSITIONS', questionIndex: 'english_name', resultIndex:'hebrew', setItems: 3},
+
          {
       name: 'שירים',
       type: 'menu',
@@ -74,6 +75,13 @@ apps =  {
         {icon: 'format_size', name:'אותיות', type: 'app', appType: 'mcq', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter'},
         {icon: 'format_size', name:'אותיות עם ניקוד', type: 'app', appType: 'mcq', listName: 'HEBREW_LETTERS_WITH_NIKUD', questionIndex: 'letter', resultIndex: 'letter', questionType: 'speech'},
         {icon: 'format_size', name:'השם שלי', type: 'app', appType: 'mcq', listName: 'NAME', questionIndex: 'letterName', resultIndex: 'letter'},
+      ]
+    },
+    {
+      name: 'תרגול',
+      type: 'menu',
+      items: [
+        {icon: 'volume_up', name:' שמע לאות גדולה', type: 'app', appType: 'mcq', listName: 'practiceABC', questionIndex: 'audio', resultIndex: 'englishUpperCase', setItems: 4},
       ]
     },
   ]
