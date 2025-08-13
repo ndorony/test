@@ -1255,7 +1255,7 @@ ABC:  [
         englishUpperCase: {type: "text", value: "J"},
         englishLowerCase: {type: "text", value: "j"},
         hebrewTransliteration: {type: "text", value: "גֵ'י"},
-        audio: {type: "audio", value: "./sounds/letters/g.mp3"}
+        audio: {type: "audio", value: "./sounds/letters/j.mp3"}
     },
     {
         englishUpperCase: {type: "text", value: "K"},
