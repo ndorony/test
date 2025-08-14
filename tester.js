@@ -1182,6 +1182,230 @@ var DisplayComponent = Vue.component('display',{
 })
 
 
+// Speech-to-Text Game Component (say the letter name in English)
+var SpeechToTextComponent = Vue.component('s2t', Vue.extend({
+  template: `
+  <div class="container">
+    <div class="row">
+      <h3 v-html="title" :style="{color: theme.colors.text}"></h3>
+    </div>
+
+    <div class="row">
+      <h1 class="center-align"
+          :style="{color: theme.colors.text, fontSize: '8rem', margin: '20px 0'}">
+        {{ displayLetter }}
+      </h1>
+    </div>
+
+    <div class="row center-align">
+      <a class="waves-effect waves-light btn-large"
+         :style="{background: theme.colors.secondary}"
+         @click="startListening"
+         :disabled="!canListen || isListening">
+        <i class="material-icons left">mic</i>
+        {{ isListening ? 'מקשיב...' : 'אמור את שם האות' }}
+      </a>
+    </div>
+
+    <div class="row center-align" v-if="lastHeard">
+      <h5 :style="{color: theme.colors.text}">
+        Recognized: “{{ lastHeard }}” → {{ lastLetter || '—' }}
+      </h5>
+    </div>
+
+    <div class="row" dir="rtl">
+      <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">
+        {{ message.value }}
+      </h2>
+    </div>
+
+    <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
+    <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
+  </div>
+  `,
+
+  // Reuse scoring/progress/sounds/navigation from BaseGameComponent
+  extends: BaseGameComponent,
+
+  data: function () {
+    return {
+      title: '',
+      list: [],
+      currentIndex: null,      // index in DATA list
+      displayLetter: '',       // big letter shown on screen (e.g., "A")
+      expectedLetter: '',      // canonical uppercase letter for messages (e.g., "A")
+      expectedSpoken: [],      // array of accepted spoken variants (lowercase)
+      rec: null,               // SpeechRecognition instance
+      canListen: false,        // browser supports Web Speech?
+      isListening: false,      // currently listening?
+      lastHeard: '',           // raw top transcript
+      lastLetter: '',          // parsed/normalized variant that matched (if any)
+    };
+  },
+
+  methods: {
+    // Helper because your getWeightedRandomIndex sometimes returns [idx] or idx
+    pickWeightedIndex(list, key, setItems) {
+      const v = getWeightedRandomIndex(list, key, setItems);
+      return Array.isArray(v) ? v[0] : v;
+    },
+
+    /**
+     * Extract the accepted spoken variants from the data item.
+     * Expected format (what you added): item.spoken = { type: "text", value: ["a","ay","ei"] }
+     * Fallback gracefully if field is missing.
+     */
+    getSpokenVariants(item) {
+      // Prefer explicit spoken array (case-insensitive match)
+      if (item.spoken && Array.isArray(item.spoken.value)) {
+        return item.spoken.value.map(s => String(s).toLowerCase().trim()).filter(Boolean);
+      }
+      // Fallback: accept the obvious single name based on the letter itself
+      const v = (item.englishUpperCase && item.englishUpperCase.value) || '';
+      return [String(v).toLowerCase()];
+    },
+
+    /**
+     * Create/initialize (or reuse) a SpeechRecognition instance.
+     * Sets event handlers and language.
+     */
+    ensureRecognizer() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return null;
+
+      if (!this.rec) {
+        this.rec = new SR();
+        this.rec.lang = 'en-US';       // English letter names
+        this.rec.interimResults = false;
+        this.rec.maxAlternatives = 3;  // often the right word is not the first alternative
+        this.rec.continuous = false;   // push-to-talk UX
+
+        this.rec.onstart = () => { this.isListening = true; };
+        this.rec.onend   = () => { this.isListening = false; };
+
+        this.rec.onerror = (e) => {
+          this.isListening = false;
+          this.message = { value: 'Microphone/permission error. Try again.', error: true };
+        };
+
+        this.rec.onresult = (event) => {
+          // Collect alternatives and normalize them
+          const alts = [];
+          for (let i = 0; i < event.results[0].length; i++) {
+            alts.push(event.results[0][i].transcript);
+          }
+          this.lastHeard = alts[0] || '';
+
+          // Normalize: keep letters/words, lowercase, trim
+          const norm = (t) => String(t).toLowerCase().replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+
+          // A small helper to detect "double u" / "double-you" → "double u"
+          const normalizeW = (t) => t.replace(/\bdouble[-\s]?you\b/g, 'double u');
+
+          let matched = null;
+          outer: for (const raw of alts) {
+            const t = normalizeW(norm(raw));
+            // Try exact token match with any allowed variant
+            for (const v of this.expectedSpoken) {
+              if (t === v) { matched = v; break outer; }
+              // Also allow the variant to appear as a whole word in a short phrase like "the letter c"
+              if ((' ' + t + ' ').includes(' ' + v + ' ')) { matched = v; break outer; }
+            }
+            // Special: allow patterns like "letter b"
+            const m = t.match(/letter\s+([a-z])\b/);
+            if (m && m[1] === this.expectedLetter.toLowerCase()) {
+              matched = this.expectedLetter.toLowerCase();
+              break;
+            }
+          }
+
+          this.lastLetter = matched;
+
+          if (!matched) {
+            try { failureSound.play(); } catch (e) {}
+            this.score = Math.max(0, this.score - 1);
+            this.saveScore();
+            updateWeightForKey(this.currentAppId, this.currentIndex, 1);
+            this.message = { value: 'No letter name recognized. Try again.', error: true };
+            this.reloadProgress();
+            return;
+          }
+
+          // Success path
+          this.ended = true;
+          this.message = { value: this.getSuccessMsg(), success: true };
+          try { successSound.play(); } catch (e) {}
+          updateWeightForKey(this.currentAppId, this.currentIndex, -1);
+          this.score += 1;
+          if (this.reloadProgress()) {
+            this.saveScore();
+            setTimeout(this.create, 800);
+          }
+        };
+      }
+      return this.rec;
+    },
+
+    /**
+     * Starts a new round: choose a weighted item, show the uppercase letter,
+     * and cache the accepted spoken variants from the data.
+     */
+    create() {
+      this.list = getDataList(this.currentApp.listName);
+      const idx  = this.pickWeightedIndex(this.list, this.currentAppId, getSetItems(this.currentApp));
+      const item = this.list[idx];
+
+      this.currentIndex   = idx;
+      this.displayLetter  = item[this.currentApp.resultIndex].value; // typically englishUpperCase
+      this.expectedLetter = String(this.displayLetter).toUpperCase();
+      this.expectedSpoken = this.getSpokenVariants(item);
+
+      // Title and optional audio cue (reusing your render/generateQuestion if desired)
+      this.title = this.currentApp.title || 'Say the letter name in English';
+      if (this.reloadProgress()) {
+        this.$forceUpdate();
+        setTimeout(() => { this.ended = false; }, 200);
+      }
+    },
+
+    /**
+     * Start speech recognition (push-to-talk).
+     */
+    startListening() {
+      const rec = this.ensureRecognizer();
+      if (!rec) {
+        this.message = { value: 'Speech recognition is not supported in this browser.', error: true };
+        return;
+      }
+      this.lastHeard = '';
+      this.lastLetter = '';
+      try { rec.start(); } catch (e) { /* ignore if already started */ }
+    },
+  },
+
+  mounted() {
+    this.currentAppId = this.$route.params.currentAppId;
+    this.currentApp   = getItemById(apps, this.currentAppId);
+    this.reloadProgress();
+    this.updateScore();
+
+    // Feature detection for Web Speech API
+    this.canListen = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!this.canListen) {
+      this.message = { value: 'Speech recognition is not supported here (try Chrome/Android).', error: true };
+    }
+
+    this.create();
+  },
+
+  beforeDestroy() {
+    if (this.rec && this.isListening) {
+      try { this.rec.stop(); } catch (e) {}
+    }
+  }
+}));
+
+
 var AppComponent = Vue.component('app',{
     template: `<div>
 
@@ -1589,6 +1813,7 @@ const routes = [
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },
     {path: '/display/key/:currentAppId/:key/:value', component: DisplayComponent, props: true },
+    { path: '/play/s2t/:currentAppId', component: SpeechToTextComponent, props: true },
     {path: '/signUp', component: SignUp},
     {path: '/login', component: Login },
 ]
