@@ -1381,6 +1381,88 @@ ABC: [
     }
 ],
 
+FAVORITE_COLOR_LESSON: [
+  {
+    "hebrew": {"type": "text", "value": "מה"},
+    "english_name": {"type": "text_to_speech", "value": "What"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "צבע"},
+    "english_name": {"type": "text_to_speech", "value": "Color"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ה"},
+    "english_name": {"type": "text_to_speech", "value": "The"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מועדף"},
+    "english_name": {"type": "text_to_speech", "value": "Favorite"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שלי"},
+    "english_name": {"type": "text_to_speech", "value": "My"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "המועדף"},
+    "english_name": {"type": "text_to_speech", "value": "Favorite"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "הוא"},
+    "english_name": {"type": "text_to_speech", "value": "Is"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "אדום"},
+    "english_name": {"type": "text_to_speech", "value": "Red"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "כחול"},
+    "english_name": {"type": "text_to_speech", "value": "Blue"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "צהוב"},
+    "english_name": {"type": "text_to_speech", "value": "Yellow"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ירוק"},
+    "english_name": {"type": "text_to_speech", "value": "Green"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "כתום"},
+    "english_name": {"type": "text_to_speech", "value": "Orange"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "סגול"},
+    "english_name": {"type": "text_to_speech", "value": "Purple"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ורוד"},
+    "english_name": {"type": "text_to_speech", "value": "Pink"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "חום"},
+    "english_name": {"type": "text_to_speech", "value": "Brown"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שחור"},
+    "english_name": {"type": "text_to_speech", "value": "Black"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לבן"},
+    "english_name": {"type": "text_to_speech", "value": "White"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "אפור"},
+    "english_name": {"type": "text_to_speech", "value": "Gray"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "זהב"},
+    "english_name": {"type": "text_to_speech", "value": "Gold"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "כסף"},
+    "english_name": {"type": "text_to_speech", "value": "Silver"}
+  }
+],
 
 MONTHS: [
   {"name": {"type": "text", "value": "ינואר"}, "english_name": {"type": "text", "value": "January"}, "month_number": {"type": "text", "value": "1"}},
