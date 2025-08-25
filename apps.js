@@ -85,7 +85,7 @@ apps =  {
       items: [
         {icon: 'volume_up', name:' שמע לאות גדולה', type: 'app', appType: 'mcq', listName: 'practiceABC', questionIndex: 'audio', resultIndex: 'englishUpperCase', setItems: 4},
         {icon: 'record_voice_over', name: 'אמור את שם האות', type: 'app', appType: 's2t', listName: 'practiceABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase', setItems: 5, title: 'אמור בקול את שם האות'},
-        {icon: 'volume_up', name:' מה הצבע', type: 'app', appType: 'mcq', listName: 'FAVORITE_COLOR_LESSON', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 4},
+        {icon: 'volume_up', name:' מה הצבע', type: 'app', appType: 'mcq', listName: 'FAVORITE_COLOR_LESSON', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 1},
       ]
     },
   ]
