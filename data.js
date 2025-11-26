@@ -2730,6 +2730,301 @@ PREPOSITIONS: [
   }
 ],
 
+COLUMN_WORDS: [
+  {
+    "hebrew": {"type": "text", "value": "עיר"},
+    "english_name": {"type": "text_to_speech", "value": "City"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "בית חולים"},
+    "english_name": {"type": "text_to_speech", "value": "Hospital"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ספריה"},
+    "english_name": {"type": "text_to_speech", "value": "Library"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "פארק"},
+    "english_name": {"type": "text_to_speech", "value": "Park"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "רחוב"},
+    "english_name": {"type": "text_to_speech", "value": "Street"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שכונה"},
+    "english_name": {"type": "text_to_speech", "value": "Town"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מה הכתובת שלך?"},
+    "english_name": {"type": "text_to_speech", "value": "What is your address?"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "הכתובת שלי..."},
+    "english_name": {"type": "text_to_speech", "value": "My address is..."}
+  },
+  {
+    "hebrew": {"type": "text", "value": "חוף ים"},
+    "english_name": {"type": "text_to_speech", "value": "Beach"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "אוזניים"},
+    "english_name": {"type": "text_to_speech", "value": "Ears"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "רגליים"},
+    "english_name": {"type": "text_to_speech", "value": "Feet"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "גבינה"},
+    "english_name": {"type": "text_to_speech", "value": "Cheese"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ירוק"},
+    "english_name": {"type": "text_to_speech", "value": "Green"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לישון"},
+    "english_name": {"type": "text_to_speech", "value": "Sleep"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שיניים"},
+    "english_name": {"type": "text_to_speech", "value": "Teeth"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "נקי"},
+    "english_name": {"type": "text_to_speech", "value": "Clean"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "בשר"},
+    "english_name": {"type": "text_to_speech", "value": "Meat"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לקרוא"},
+    "english_name": {"type": "text_to_speech", "value": "Read"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מורה"},
+    "english_name": {"type": "text_to_speech", "value": "Teacher"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "כסא"},
+    "english_name": {"type": "text_to_speech", "value": "Chair"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לשחק"},
+    "english_name": {"type": "text_to_speech", "value": "Play"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "סירה"},
+    "english_name": {"type": "text_to_speech", "value": "Boat"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "נהג"},
+    "english_name": {"type": "text_to_speech", "value": "Drive"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ללכת"},
+    "english_name": {"type": "text_to_speech", "value": "Walk"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "באוטובוס/מכונית/רכבת"},
+    "english_name": {"type": "text_to_speech", "value": "By bus/car/train"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "פרח"},
+    "english_name": {"type": "text_to_speech", "value": "Flower"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "חום"},
+    "english_name": {"type": "text_to_speech", "value": "Brown"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "בית"},
+    "english_name": {"type": "text_to_speech", "value": "House"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מאחור"},
+    "english_name": {"type": "text_to_speech", "value": "Behind"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מול"},
+    "english_name": {"type": "text_to_speech", "value": "In front of"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "להתקרר"},
+    "english_name": {"type": "text_to_speech", "value": "Cool"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ספר"},
+    "english_name": {"type": "text_to_speech", "value": "Book"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "עוגיה"},
+    "english_name": {"type": "text_to_speech", "value": "Cookie"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "כיתה"},
+    "english_name": {"type": "text_to_speech", "value": "Classroom"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "קפה"},
+    "english_name": {"type": "text_to_speech", "value": "Coffee"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מלכה"},
+    "english_name": {"type": "text_to_speech", "value": "Queen"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "עץ"},
+    "english_name": {"type": "text_to_speech", "value": "Tree"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לאכול"},
+    "english_name": {"type": "text_to_speech", "value": "Eat"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "בבקשה"},
+    "english_name": {"type": "text_to_speech", "value": "Please"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "תה"},
+    "english_name": {"type": "text_to_speech", "value": "Tea"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "רופא"},
+    "english_name": {"type": "text_to_speech", "value": "Doctor"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "אנשים"},
+    "english_name": {"type": "text_to_speech", "value": "People"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שוטר"},
+    "english_name": {"type": "text_to_speech", "value": "Police"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שכן"},
+    "english_name": {"type": "text_to_speech", "value": "Neighbor"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מטוס"},
+    "english_name": {"type": "text_to_speech", "value": "Airplane"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "שיער"},
+    "english_name": {"type": "text_to_speech", "value": "Hair"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "גשם"},
+    "english_name": {"type": "text_to_speech", "value": "Rain"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "רכבת"},
+    "english_name": {"type": "text_to_speech", "value": "Train"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לחכות"},
+    "english_name": {"type": "text_to_speech", "value": "Wait"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "יום הולדת"},
+    "english_name": {"type": "text_to_speech", "value": "Birthday"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "עפרונות צבעוניים"},
+    "english_name": {"type": "text_to_speech", "value": "Crayons"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "אפור"},
+    "english_name": {"type": "text_to_speech", "value": "Gray"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "היום"},
+    "english_name": {"type": "text_to_speech", "value": "Today"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מכונית"},
+    "english_name": {"type": "text_to_speech", "value": "Car"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לטוס/לעוף"},
+    "english_name": {"type": "text_to_speech", "value": "Fly"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "ענן"},
+    "english_name": {"type": "text_to_speech", "value": "Cloud"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "פרה"},
+    "english_name": {"type": "text_to_speech", "value": "Cow"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "בחוץ"},
+    "english_name": {"type": "text_to_speech", "value": "Outside"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "פה"},
+    "english_name": {"type": "text_to_speech", "value": "Mouth"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "עיר"},
+    "english_name": {"type": "text_to_speech", "value": "Town"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מימין ל"},
+    "english_name": {"type": "text_to_speech", "value": "To the right of"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "משמאל ל"},
+    "english_name": {"type": "text_to_speech", "value": "To the left of"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "בלון"},
+    "english_name": {"type": "text_to_speech", "value": "Balloon"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "מגפיים"},
+    "english_name": {"type": "text_to_speech", "value": "Boots"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "איגלו"},
+    "english_name": {"type": "text_to_speech", "value": "Igloo"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "אוכל"},
+    "english_name": {"type": "text_to_speech", "value": "Food"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "נכון"},
+    "english_name": {"type": "text_to_speech", "value": "Look"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "חשוב"},
+    "english_name": {"type": "text_to_speech", "value": "Important"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "סימן"},
+    "english_name": {"type": "text_to_speech", "value": "Sign"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לחצות את הרחוב"},
+    "english_name": {"type": "text_to_speech", "value": "Cross the street"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "גן חיות"},
+    "english_name": {"type": "text_to_speech", "value": "Zoo"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "לכנס בבטח"},
+    "english_name": {"type": "text_to_speech", "value": "Safe"}
+  },
+  {
+    "hebrew": {"type": "text", "value": "רמזור"},
+    "english_name": {"type": "text_to_speech", "value": "Traffic light"}
+  }
+],
+
 PAINTERS: [
     {"name": {"type": "text", "value": "ליאונרדו דה וינצ'י"},
      "artwork": {"type": "text", "value": "המונה ליזה"}},
