@@ -33,6 +33,24 @@ apps =  {
         {icon: 'format_shapes', name:'מילים חדשות', type: 'app', appType: 'mcq', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex:'hebrew', setItems: 10},
         {icon: 'record_voice_over', name: 'אמור את שם האות', type: 'app', appType: 's2t', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase', setItems: 5, title: 'אמור בקול את שם האות'},
 
+        {
+          name: 'אוצר מילים לפי נושאים',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'אוכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_FOOD', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'אנשים ומשפחה', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_PEOPLE_AND_FAMILY', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'חפצים ומקומות', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_OBJECTS_AND_PLACES', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'ימים ומילות זמן', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_DAYS_AND_TIMEWORDS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'מספרים', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_NUMBERS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'רגשות וצרכים', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_FEELINGS_AND_NEEDS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'מושגי זמן כלליים', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_TIME_GENERAL', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'פעולות יומיות', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_DAILY_ACTIONS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'חלקי גוף', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_BODY_PARTS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'שונות', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_MISC', questionIndex: 'english_name', resultIndex: 'hebrew'},
+            {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_VOCAB_ALL', questionIndex: 'english_name', resultIndex: 'hebrew'},
+          ]
+        },
+
 
          {
       name: 'שירים',

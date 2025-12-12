@@ -5594,12 +5594,131 @@ MAN : [
       "hebrew_english_name": {"type": "text", "value": "קָאטִינְג"}
     }],
 
+ENGLISH_VOCAB_FOOD: [
+  {"hebrew": {"type": "text", "value": "לחם"}, "english_name": {"type": "text_to_speech", "value": "Bread"}},
+  {"hebrew": {"type": "text", "value": "ארוחת בוקר"}, "english_name": {"type": "text_to_speech", "value": "Breakfast"}},
+  {"hebrew": {"type": "text", "value": "גזר"}, "english_name": {"type": "text_to_speech", "value": "Carrot"}},
+  {"hebrew": {"type": "text", "value": "גבינה"}, "english_name": {"type": "text_to_speech", "value": "Cheese"}},
+  {"hebrew": {"type": "text", "value": "עוף"}, "english_name": {"type": "text_to_speech", "value": "Chicken"}},
+  {"hebrew": {"type": "text", "value": "צ'יפס"}, "english_name": {"type": "text_to_speech", "value": "Chips"}},
+  {"hebrew": {"type": "text", "value": "שוקולד"}, "english_name": {"type": "text_to_speech", "value": "Chocolate"}},
+  {"hebrew": {"type": "text", "value": "קפה"}, "english_name": {"type": "text_to_speech", "value": "Coffee"}},
+  {"hebrew": {"type": "text", "value": "עוגייה"}, "english_name": {"type": "text_to_speech", "value": "Cookie"}},
+  {"hebrew": {"type": "text", "value": "ארוחת ערב"}, "english_name": {"type": "text_to_speech", "value": "Dinner"}},
+  {"hebrew": {"type": "text", "value": "שתייה"}, "english_name": {"type": "text_to_speech", "value": "Drink"}},
+  {"hebrew": {"type": "text", "value": "לאכול"}, "english_name": {"type": "text_to_speech", "value": "Eat"}},
+  {"hebrew": {"type": "text", "value": "בשר"}, "english_name": {"type": "text_to_speech", "value": "Meat"}},
+  {"hebrew": {"type": "text", "value": "מילקשייק"}, "english_name": {"type": "text_to_speech", "value": "Milkshake"}},
+  {"hebrew": {"type": "text", "value": "בצל"}, "english_name": {"type": "text_to_speech", "value": "Onion"}},
+  {"hebrew": {"type": "text", "value": "דג"}, "english_name": {"type": "text_to_speech", "value": "Fish"}},
+  {"hebrew": {"type": "text", "value": "אוכל"}, "english_name": {"type": "text_to_speech", "value": "Food"}},
+  {"hebrew": {"type": "text", "value": "פרי"}, "english_name": {"type": "text_to_speech", "value": "Fruit"}},
+  {"hebrew": {"type": "text", "value": "ריבה"}, "english_name": {"type": "text_to_speech", "value": "Jam"}},
+  {"hebrew": {"type": "text", "value": "מיץ"}, "english_name": {"type": "text_to_speech", "value": "Juice"}},
+  {"hebrew": {"type": "text", "value": "סלט"}, "english_name": {"type": "text_to_speech", "value": "Salad"}},
+  {"hebrew": {"type": "text", "value": "סנדוויץ'"}, "english_name": {"type": "text_to_speech", "value": "Sandwich"}},
+  {"hebrew": {"type": "text", "value": "פלפלים"}, "english_name": {"type": "text_to_speech", "value": "Peppers"}},
+  {"hebrew": {"type": "text", "value": "עגבנייה"}, "english_name": {"type": "text_to_speech", "value": "Tomato"}},
+  {"hebrew": {"type": "text", "value": "תרד"}, "english_name": {"type": "text_to_speech", "value": "Spinach"}},
+  {"hebrew": {"type": "text", "value": "ירקות"}, "english_name": {"type": "text_to_speech", "value": "Vegetables"}}
+],
+
+ENGLISH_VOCAB_PEOPLE_AND_FAMILY: [
+  {"hebrew": {"type": "text", "value": "מורה"}, "english_name": {"type": "text_to_speech", "value": "Teacher"}},
+  {"hebrew": {"type": "text", "value": "ילדים"}, "english_name": {"type": "text_to_speech", "value": "Children"}},
+  {"hebrew": {"type": "text", "value": "אח"}, "english_name": {"type": "text_to_speech", "value": "Brother"}},
+  {"hebrew": {"type": "text", "value": "אבא"}, "english_name": {"type": "text_to_speech", "value": "Father"}},
+  {"hebrew": {"type": "text", "value": "סבתא"}, "english_name": {"type": "text_to_speech", "value": "Grandmother"}},
+  {"hebrew": {"type": "text", "value": "סבא"}, "english_name": {"type": "text_to_speech", "value": "Grandfather"}},
+  {"hebrew": {"type": "text", "value": "אמא"}, "english_name": {"type": "text_to_speech", "value": "Mother"}}
+],
+
+ENGLISH_VOCAB_OBJECTS_AND_PLACES: [
+  {"hebrew": {"type": "text", "value": "מטבח"}, "english_name": {"type": "text_to_speech", "value": "Kitchen"}},
+  {"hebrew": {"type": "text", "value": "כיסא"}, "english_name": {"type": "text_to_speech", "value": "Chair"}},
+  {"hebrew": {"type": "text", "value": "שולחן"}, "english_name": {"type": "text_to_speech", "value": "Table"}},
+  {"hebrew": {"type": "text", "value": "מסעדה"}, "english_name": {"type": "text_to_speech", "value": "Restaurant"}},
+  {"hebrew": {"type": "text", "value": "חנות"}, "english_name": {"type": "text_to_speech", "value": "Shop"}}
+],
+
+ENGLISH_VOCAB_DAYS_AND_TIMEWORDS: [
+  {"hebrew": {"type": "text", "value": "יום שני"}, "english_name": {"type": "text_to_speech", "value": "Monday"}},
+  {"hebrew": {"type": "text", "value": "יום רביעי"}, "english_name": {"type": "text_to_speech", "value": "Wednesday"}},
+  {"hebrew": {"type": "text", "value": "יום חמישי"}, "english_name": {"type": "text_to_speech", "value": "Thursday"}},
+  {"hebrew": {"type": "text", "value": "יום שישי"}, "english_name": {"type": "text_to_speech", "value": "Friday"}},
+  {"hebrew": {"type": "text", "value": "יום שבת"}, "english_name": {"type": "text_to_speech", "value": "Saturday"}},
+  {"hebrew": {"type": "text", "value": "יום ראשון"}, "english_name": {"type": "text_to_speech", "value": "Sunday"}},
+  {"hebrew": {"type": "text", "value": "היום"}, "english_name": {"type": "text_to_speech", "value": "Today"}},
+  {"hebrew": {"type": "text", "value": "מחר"}, "english_name": {"type": "text_to_speech", "value": "Tomorrow"}},
+  {"hebrew": {"type": "text", "value": "אתמול"}, "english_name": {"type": "text_to_speech", "value": "Yesterday"}},
+  {"hebrew": {"type": "text", "value": "יום שלישי"}, "english_name": {"type": "text_to_speech", "value": "Tuesday"}}
+],
+
+ENGLISH_VOCAB_NUMBERS: [
+  {"hebrew": {"type": "text", "value": "שלוש"}, "english_name": {"type": "text_to_speech", "value": "Three"}},
+  {"hebrew": {"type": "text", "value": "אחד עשר"}, "english_name": {"type": "text_to_speech", "value": "Eleven"}},
+  {"hebrew": {"type": "text", "value": "שנים עשר"}, "english_name": {"type": "text_to_speech", "value": "Twelve"}},
+  {"hebrew": {"type": "text", "value": "שלוש עשרה"}, "english_name": {"type": "text_to_speech", "value": "Thirteen"}},
+  {"hebrew": {"type": "text", "value": "ארבע עשרה"}, "english_name": {"type": "text_to_speech", "value": "Fourteen"}},
+  {"hebrew": {"type": "text", "value": "חמש עשרה"}, "english_name": {"type": "text_to_speech", "value": "Fifteen"}},
+  {"hebrew": {"type": "text", "value": "שש עשרה"}, "english_name": {"type": "text_to_speech", "value": "Sixteen"}},
+  {"hebrew": {"type": "text", "value": "שבע עשרה"}, "english_name": {"type": "text_to_speech", "value": "Seventeen"}},
+  {"hebrew": {"type": "text", "value": "שמונה עשרה"}, "english_name": {"type": "text_to_speech", "value": "Eighteen"}},
+  {"hebrew": {"type": "text", "value": "תשע עשרה"}, "english_name": {"type": "text_to_speech", "value": "Nineteen"}},
+  {"hebrew": {"type": "text", "value": "עשרים"}, "english_name": {"type": "text_to_speech", "value": "Twenty"}}
+],
+
+ENGLISH_VOCAB_FEELINGS_AND_NEEDS: [
+  {"hebrew": {"type": "text", "value": "רעב"}, "english_name": {"type": "text_to_speech", "value": "Hungry"}},
+  {"hebrew": {"type": "text", "value": "צמא"}, "english_name": {"type": "text_to_speech", "value": "Thirsty"}},
+  {"hebrew": {"type": "text", "value": "צריך"}, "english_name": {"type": "text_to_speech", "value": "Need"}},
+  {"hebrew": {"type": "text", "value": "רוצה"}, "english_name": {"type": "text_to_speech", "value": "Want"}}
+],
+
+ENGLISH_VOCAB_TIME_GENERAL: [
+  {"hebrew": {"type": "text", "value": "יום"}, "english_name": {"type": "text_to_speech", "value": "Day"}},
+  {"hebrew": {"type": "text", "value": "זמן"}, "english_name": {"type": "text_to_speech", "value": "Time"}}
+],
+
+ENGLISH_VOCAB_DAILY_ACTIONS: [
+  {"hebrew": {"type": "text", "value": "לשטוף"}, "english_name": {"type": "text_to_speech", "value": "Wash"}}
+],
+
+ENGLISH_VOCAB_BODY_PARTS: [
+  {"hebrew": {"type": "text", "value": "פה"}, "english_name": {"type": "text_to_speech", "value": "Mouth"}},
+  {"hebrew": {"type": "text", "value": "שיניים"}, "english_name": {"type": "text_to_speech", "value": "Teeth"}}
+],
+
+ENGLISH_VOCAB_MISC: [
+  {"hebrew": {"type": "text", "value": "יום הולדת"}, "english_name": {"type": "text_to_speech", "value": "Birthday"}},
+  {"hebrew": {"type": "text", "value": "מועדף"}, "english_name": {"type": "text_to_speech", "value": "Favorite"}},
+  {"hebrew": {"type": "text", "value": "לשתף"}, "english_name": {"type": "text_to_speech", "value": "Share"}},
+  {"hebrew": {"type": "text", "value": "קצר"}, "english_name": {"type": "text_to_speech", "value": "Short"}},
+  {"hebrew": {"type": "text", "value": "ארוחת צהריים"}, "english_name": {"type": "text_to_speech", "value": "Lunch"}}
+],
+
+ENGLISH_VOCAB_ALL: [],
+
 ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
 SUBTRACTION: createAsymmetricExercises(10, inverseSubtraction, "SUBTRACTION"),
 MULTIPLICATION: createAsymmetricExercises(10, inverseMultiplication, "MULTIPLICATION"),
 DIVISION: createAsymmetricExercises(10, inverseDivision, "DIVISION"),
 COUNT: createCount(10),
 }
+
+const ENGLISH_VOCABULARY_LISTS = [
+    DATA.ENGLISH_VOCAB_FOOD,
+    DATA.ENGLISH_VOCAB_PEOPLE_AND_FAMILY,
+    DATA.ENGLISH_VOCAB_OBJECTS_AND_PLACES,
+    DATA.ENGLISH_VOCAB_DAYS_AND_TIMEWORDS,
+    DATA.ENGLISH_VOCAB_NUMBERS,
+    DATA.ENGLISH_VOCAB_FEELINGS_AND_NEEDS,
+    DATA.ENGLISH_VOCAB_TIME_GENERAL,
+    DATA.ENGLISH_VOCAB_DAILY_ACTIONS,
+    DATA.ENGLISH_VOCAB_BODY_PARTS,
+    DATA.ENGLISH_VOCAB_MISC,
+];
+DATA.ENGLISH_VOCAB_ALL = ENGLISH_VOCABULARY_LISTS.flat();
 
 function filterABCByString(lettersStr, abcList) {
     const letterSet = new Set(lettersStr.split("")); // להאיץ את הבדיקה
