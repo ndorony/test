@@ -143,6 +143,34 @@
         user-select: none;
     }
 
+    .attempt-history {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    .attempt-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      background-color: #bdbdbd;
+    }
+
+    .attempt-dot-success {
+      background-color: #4caf50;
+    }
+
+    .attempt-dot-failure {
+      background-color: #e53935;
+    }
+
+    .attempt-dot-empty {
+      background-color: #e0e0e0;
+      opacity: 0.6;
+    }
+
     </style>
 </head>
 <body dir="rtl">

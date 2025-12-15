@@ -68,6 +68,22 @@ function getWeightsKey(key){
     return getKey(`${getActivityMode()}_${key}_Weights`)
 }
 
+function recordAttemptResult(key, index, isSuccess, limit=3){
+    if (index === undefined || index === null){
+        return;
+    }
+    const storageKey = getKey(`${key}_attemptHistory`);
+    const history = getLocalStorage(`${key}_attemptHistory`, {});
+    const itemHistory = history[index] || [];
+    itemHistory.push(isSuccess);
+    history[index] = itemHistory.slice(-limit);
+    localStorage.setItem(storageKey, JSON.stringify(history));
+}
+
+function getAttemptHistory(key){
+    return getLocalStorage(`${key}_attemptHistory`, {});
+}
+
 function setVoice(lang, uri){
     console.log(`Set ${lang} ${uri}`)
     localStorage.setItem(`${lang}_voice`, uri);

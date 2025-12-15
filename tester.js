@@ -171,6 +171,7 @@ const getWeightsForKey = (key, setItems, elements) => {
 const updateWeightForKey = (key, index, change) => {
     // Retrieve the current weights from localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
+    recordAttemptResult(key, index, change < 0);
     if (!storedWeights) {
         return
     }
@@ -1446,14 +1447,21 @@ var AppComponent = Vue.component('app',{
         <div v-for="(item, index) in items" :key="index" class="col s12 m6 l4">
                     <div class="card">
                         <div class="card-content">
-                            <span v-if="item[1]" class="card-title">
-                            <router-link :to="'/display/key/' + currentAppId + '/' + displayKey + '/' + item[0]">
-                                    {{ item[0] }}
+                            <span v-if="item.unlocked" class="card-title">
+                            <router-link :to="'/display/key/' + currentAppId + '/' + displayKey + '/' + item.value">
+                                    {{ item.value }}
                             </router-link>
                             </span>
                             <span v-else class="card-title">
                                 <i class="material-icons">lock</i>
                             </span>
+                            <div class="attempt-history">
+                              <span
+                                v-for="(attempt, dotIndex) in getRecentAttempts(item.index)"
+                                :key="dotIndex"
+                                :class="['attempt-dot', dotClass(attempt)]"
+                              ></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1471,6 +1479,7 @@ var AppComponent = Vue.component('app',{
         currentApp: null,
         progress: null,
         weights: null,
+        attemptHistory: {},
         data: null,
         displayKey: null
     }},
@@ -1478,6 +1487,20 @@ var AppComponent = Vue.component('app',{
     methods: {
         displayItem: function(item){
             return item[this.displayKey].value;
+        },
+        getRecentAttempts: function(itemIndex){
+            const attempts = this.attemptHistory[itemIndex] || [];
+            const recent = attempts.slice(-3);
+            while (recent.length < 3){
+                recent.unshift(null);
+            }
+            return recent;
+        },
+        dotClass: function(attempt){
+            if (attempt === null){
+                return 'attempt-dot-empty';
+            }
+            return attempt ? 'attempt-dot-success' : 'attempt-dot-failure';
         }
     },
 
@@ -1497,11 +1520,21 @@ var AppComponent = Vue.component('app',{
         }
 
         this.weights = getWeightsForKey(this.currentAppId, getSetItems(this.currentApp), getDataList(this.currentApp.listName));
-        this.items = Array.from(new Set(this.data.map((item, index) => {
-                          const value = item[this.displayKey].value;
-                          const isPositive = this.weights[index] >= 0;
-                          return JSON.stringify([value, isPositive]);
-                        }))).map(item => JSON.parse(item));
+        this.attemptHistory = getAttemptHistory(this.currentAppId);
+        const seenValues = new Set();
+        this.items = [];
+        this.data.forEach((item, index) => {
+            const value = item[this.displayKey].value;
+            if (seenValues.has(value)){
+                return;
+            }
+            seenValues.add(value);
+            this.items.push({
+                value: value,
+                unlocked: this.weights[index] >= 0,
+                index: index,
+            });
+        });
     },
 })
 
