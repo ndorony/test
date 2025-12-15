@@ -68,7 +68,7 @@ function getWeightsKey(key){
     return getKey(`${getActivityMode()}_${key}_Weights`)
 }
 
-function recordAttemptResult(key, index, isSuccess, limit=3){
+function recordAttemptResult(key, index, isSuccess, limit=5){
     if (index === undefined || index === null){
         return;
     }
