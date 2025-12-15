@@ -1490,8 +1490,8 @@ var AppComponent = Vue.component('app',{
         },
         getRecentAttempts: function(itemIndex){
             const attempts = this.attemptHistory[itemIndex] || [];
-            const recent = attempts.slice(-3);
-            while (recent.length < 3){
+            const recent = attempts.slice(-5);
+            while (recent.length < 5){
                 recent.unshift(null);
             }
             return recent;
