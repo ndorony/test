@@ -5594,6 +5594,489 @@ MAN : [
       "hebrew_english_name": {"type": "text", "value": "קָאטִינְג"}
     }],
 
+SUMMER_VACATION: [
+  {
+    "name": {"type": "text", "value": "There's"},
+    "english_name": {"type": "text_to_speech", "value": "There's"},
+    "hebrew_english_name": {"type": "text", "value": "יש"}
+  },
+  {
+    "name": {"type": "text", "value": "a"},
+    "english_name": {"type": "text_to_speech", "value": "a"},
+    "hebrew_english_name": {"type": "text", "value": "א"}
+  },
+  {
+    "name": {"type": "text", "value": "hundred"},
+    "english_name": {"type": "text_to_speech", "value": "hundred"},
+    "hebrew_english_name": {"type": "text", "value": "מאה"}
+  },
+  {
+    "name": {"type": "text", "value": "and"},
+    "english_name": {"type": "text_to_speech", "value": "and"},
+    "hebrew_english_name": {"type": "text", "value": "ו"}
+  },
+  {
+    "name": {"type": "text", "value": "four"},
+    "english_name": {"type": "text_to_speech", "value": "four"},
+    "hebrew_english_name": {"type": "text", "value": "ארבע"}
+  },
+  {
+    "name": {"type": "text", "value": "days"},
+    "english_name": {"type": "text_to_speech", "value": "days"},
+    "hebrew_english_name": {"type": "text", "value": "ימים"}
+  },
+  {
+    "name": {"type": "text", "value": "of"},
+    "english_name": {"type": "text_to_speech", "value": "of"},
+    "hebrew_english_name": {"type": "text", "value": "של"}
+  },
+  {
+    "name": {"type": "text", "value": "summer"},
+    "english_name": {"type": "text_to_speech", "value": "summer"},
+    "hebrew_english_name": {"type": "text", "value": "קיץ"}
+  },
+  {
+    "name": {"type": "text", "value": "vacation"},
+    "english_name": {"type": "text_to_speech", "value": "vacation"},
+    "hebrew_english_name": {"type": "text", "value": "חופש"}
+  },
+  {
+    "name": {"type": "text", "value": "Then"},
+    "english_name": {"type": "text_to_speech", "value": "Then"},
+    "hebrew_english_name": {"type": "text", "value": "אז"}
+  },
+  {
+    "name": {"type": "text", "value": "school"},
+    "english_name": {"type": "text_to_speech", "value": "school"},
+    "hebrew_english_name": {"type": "text", "value": "בית ספר"}
+  },
+  {
+    "name": {"type": "text", "value": "comes"},
+    "english_name": {"type": "text_to_speech", "value": "comes"},
+    "hebrew_english_name": {"type": "text", "value": "מגיע"}
+  },
+  {
+    "name": {"type": "text", "value": "along"},
+    "english_name": {"type": "text_to_speech", "value": "along"},
+    "hebrew_english_name": {"type": "text", "value": "בקרוב"}
+  },
+  {
+    "name": {"type": "text", "value": "just"},
+    "english_name": {"type": "text_to_speech", "value": "just"},
+    "hebrew_english_name": {"type": "text", "value": "רק"}
+  },
+  {
+    "name": {"type": "text", "value": "to"},
+    "english_name": {"type": "text_to_speech", "value": "to"},
+    "hebrew_english_name": {"type": "text", "value": "כדי"}
+  },
+  {
+    "name": {"type": "text", "value": "end"},
+    "english_name": {"type": "text_to_speech", "value": "end"},
+    "hebrew_english_name": {"type": "text", "value": "לסיים"}
+  },
+  {
+    "name": {"type": "text", "value": "it"},
+    "english_name": {"type": "text_to_speech", "value": "it"},
+    "hebrew_english_name": {"type": "text", "value": "אותו"}
+  },
+  {
+    "name": {"type": "text", "value": "So"},
+    "english_name": {"type": "text_to_speech", "value": "So"},
+    "hebrew_english_name": {"type": "text", "value": "אז"}
+  },
+  {
+    "name": {"type": "text", "value": "the"},
+    "english_name": {"type": "text_to_speech", "value": "the"},
+    "hebrew_english_name": {"type": "text", "value": "ה"}
+  },
+  {
+    "name": {"type": "text", "value": "annual"},
+    "english_name": {"type": "text_to_speech", "value": "annual"},
+    "hebrew_english_name": {"type": "text", "value": "שנתי"}
+  },
+  {
+    "name": {"type": "text", "value": "problem"},
+    "english_name": {"type": "text_to_speech", "value": "problem"},
+    "hebrew_english_name": {"type": "text", "value": "בעיה"}
+  },
+  {
+    "name": {"type": "text", "value": "for"},
+    "english_name": {"type": "text_to_speech", "value": "for"},
+    "hebrew_english_name": {"type": "text", "value": "עבור"}
+  },
+  {
+    "name": {"type": "text", "value": "our"},
+    "english_name": {"type": "text_to_speech", "value": "our"},
+    "hebrew_english_name": {"type": "text", "value": "שלנו"}
+  },
+  {
+    "name": {"type": "text", "value": "generation"},
+    "english_name": {"type": "text_to_speech", "value": "generation"},
+    "hebrew_english_name": {"type": "text", "value": "דור"}
+  },
+  {
+    "name": {"type": "text", "value": "Is"},
+    "english_name": {"type": "text_to_speech", "value": "Is"},
+    "hebrew_english_name": {"type": "text", "value": "היא"}
+  },
+  {
+    "name": {"type": "text", "value": "finding"},
+    "english_name": {"type": "text_to_speech", "value": "finding"},
+    "hebrew_english_name": {"type": "text", "value": "למצוא"}
+  },
+  {
+    "name": {"type": "text", "value": "good"},
+    "english_name": {"type": "text_to_speech", "value": "good"},
+    "hebrew_english_name": {"type": "text", "value": "טובה"}
+  },
+  {
+    "name": {"type": "text", "value": "way"},
+    "english_name": {"type": "text_to_speech", "value": "way"},
+    "hebrew_english_name": {"type": "text", "value": "דרך"}
+  },
+  {
+    "name": {"type": "text", "value": "spend"},
+    "english_name": {"type": "text_to_speech", "value": "spend"},
+    "hebrew_english_name": {"type": "text", "value": "לבלות"}
+  },
+  {
+    "name": {"type": "text", "value": "Like"},
+    "english_name": {"type": "text_to_speech", "value": "Like"},
+    "hebrew_english_name": {"type": "text", "value": "כמו"}
+  },
+  {
+    "name": {"type": "text", "value": "maybe"},
+    "english_name": {"type": "text_to_speech", "value": "maybe"},
+    "hebrew_english_name": {"type": "text", "value": "אולי"}
+  },
+  {
+    "name": {"type": "text", "value": "Building"},
+    "english_name": {"type": "text_to_speech", "value": "Building"},
+    "hebrew_english_name": {"type": "text", "value": "בונים"}
+  },
+  {
+    "name": {"type": "text", "value": "rocket"},
+    "english_name": {"type": "text_to_speech", "value": "rocket"},
+    "hebrew_english_name": {"type": "text", "value": "טיל"}
+  },
+  {
+    "name": {"type": "text", "value": "Or"},
+    "english_name": {"type": "text_to_speech", "value": "Or"},
+    "hebrew_english_name": {"type": "text", "value": "או"}
+  },
+  {
+    "name": {"type": "text", "value": "fighting"},
+    "english_name": {"type": "text_to_speech", "value": "fighting"},
+    "hebrew_english_name": {"type": "text", "value": "נלחמים"}
+  },
+  {
+    "name": {"type": "text", "value": "mummy"},
+    "english_name": {"type": "text_to_speech", "value": "mummy"},
+    "hebrew_english_name": {"type": "text", "value": "מומיה"}
+  },
+  {
+    "name": {"type": "text", "value": "climbing"},
+    "english_name": {"type": "text_to_speech", "value": "climbing"},
+    "hebrew_english_name": {"type": "text", "value": "מטפסים"}
+  },
+  {
+    "name": {"type": "text", "value": "up"},
+    "english_name": {"type": "text_to_speech", "value": "up"},
+    "hebrew_english_name": {"type": "text", "value": "למעלה"}
+  },
+  {
+    "name": {"type": "text", "value": "Eiffel"},
+    "english_name": {"type": "text_to_speech", "value": "Eiffel"},
+    "hebrew_english_name": {"type": "text", "value": "אייפל"}
+  },
+  {
+    "name": {"type": "text", "value": "Tower"},
+    "english_name": {"type": "text_to_speech", "value": "Tower"},
+    "hebrew_english_name": {"type": "text", "value": "מגדל"}
+  },
+  {
+    "name": {"type": "text", "value": "Discovering"},
+    "english_name": {"type": "text_to_speech", "value": "Discovering"},
+    "hebrew_english_name": {"type": "text", "value": "מגלים"}
+  },
+  {
+    "name": {"type": "text", "value": "something"},
+    "english_name": {"type": "text_to_speech", "value": "something"},
+    "hebrew_english_name": {"type": "text", "value": "משהו"}
+  },
+  {
+    "name": {"type": "text", "value": "that"},
+    "english_name": {"type": "text_to_speech", "value": "that"},
+    "hebrew_english_name": {"type": "text", "value": "ש"}
+  },
+  {
+    "name": {"type": "text", "value": "doesn't"},
+    "english_name": {"type": "text_to_speech", "value": "doesn't"},
+    "hebrew_english_name": {"type": "text", "value": "לא"}
+  },
+  {
+    "name": {"type": "text", "value": "exist"},
+    "english_name": {"type": "text_to_speech", "value": "exist"},
+    "hebrew_english_name": {"type": "text", "value": "קיים"}
+  },
+  {
+    "name": {"type": "text", "value": "Hey"},
+    "english_name": {"type": "text_to_speech", "value": "Hey"},
+    "hebrew_english_name": {"type": "text", "value": "היי"}
+  },
+  {
+    "name": {"type": "text", "value": "giving"},
+    "english_name": {"type": "text_to_speech", "value": "giving"},
+    "hebrew_english_name": {"type": "text", "value": "נותנים"}
+  },
+  {
+    "name": {"type": "text", "value": "monkey"},
+    "english_name": {"type": "text_to_speech", "value": "monkey"},
+    "hebrew_english_name": {"type": "text", "value": "קוף"}
+  },
+  {
+    "name": {"type": "text", "value": "shower"},
+    "english_name": {"type": "text_to_speech", "value": "shower"},
+    "hebrew_english_name": {"type": "text", "value": "מקלחת"}
+  },
+  {
+    "name": {"type": "text", "value": "Surfing"},
+    "english_name": {"type": "text_to_speech", "value": "Surfing"},
+    "hebrew_english_name": {"type": "text", "value": "גולשים"}
+  },
+  {
+    "name": {"type": "text", "value": "tidal"},
+    "english_name": {"type": "text_to_speech", "value": "tidal"},
+    "hebrew_english_name": {"type": "text", "value": "גאות"}
+  },
+  {
+    "name": {"type": "text", "value": "waves"},
+    "english_name": {"type": "text_to_speech", "value": "waves"},
+    "hebrew_english_name": {"type": "text", "value": "גלים"}
+  },
+  {
+    "name": {"type": "text", "value": "Creating"},
+    "english_name": {"type": "text_to_speech", "value": "Creating"},
+    "hebrew_english_name": {"type": "text", "value": "יוצרים"}
+  },
+  {
+    "name": {"type": "text", "value": "nanobots"},
+    "english_name": {"type": "text_to_speech", "value": "nanobots"},
+    "hebrew_english_name": {"type": "text", "value": "ננובוטים"}
+  },
+  {
+    "name": {"type": "text", "value": "locating"},
+    "english_name": {"type": "text_to_speech", "value": "locating"},
+    "hebrew_english_name": {"type": "text", "value": "מאתרים"}
+  },
+  {
+    "name": {"type": "text", "value": "Frankenstein's"},
+    "english_name": {"type": "text_to_speech", "value": "Frankenstein's"},
+    "hebrew_english_name": {"type": "text", "value": "של פרנקנשטיין"}
+  },
+  {
+    "name": {"type": "text", "value": "brain"},
+    "english_name": {"type": "text_to_speech", "value": "brain"},
+    "hebrew_english_name": {"type": "text", "value": "מוח"}
+  },
+  {
+    "name": {"type": "text", "value": "It's"},
+    "english_name": {"type": "text_to_speech", "value": "It's"},
+    "hebrew_english_name": {"type": "text", "value": "זה"}
+  },
+  {
+    "name": {"type": "text", "value": "over"},
+    "english_name": {"type": "text_to_speech", "value": "over"},
+    "hebrew_english_name": {"type": "text", "value": "שם"}
+  },
+  {
+    "name": {"type": "text", "value": "here"},
+    "english_name": {"type": "text_to_speech", "value": "here"},
+    "hebrew_english_name": {"type": "text", "value": "כאן"}
+  },
+  {
+    "name": {"type": "text", "value": "Finding"},
+    "english_name": {"type": "text_to_speech", "value": "Finding"},
+    "hebrew_english_name": {"type": "text", "value": "מחפשים"}
+  },
+  {
+    "name": {"type": "text", "value": "dodo"},
+    "english_name": {"type": "text_to_speech", "value": "dodo"},
+    "hebrew_english_name": {"type": "text", "value": "דודו"}
+  },
+  {
+    "name": {"type": "text", "value": "bird"},
+    "english_name": {"type": "text_to_speech", "value": "bird"},
+    "hebrew_english_name": {"type": "text", "value": "ציפור"}
+  },
+  {
+    "name": {"type": "text", "value": "Painting"},
+    "english_name": {"type": "text_to_speech", "value": "Painting"},
+    "hebrew_english_name": {"type": "text", "value": "מציירים"}
+  },
+  {
+    "name": {"type": "text", "value": "continent"},
+    "english_name": {"type": "text_to_speech", "value": "continent"},
+    "hebrew_english_name": {"type": "text", "value": "יבשת"}
+  },
+  {
+    "name": {"type": "text", "value": "driving"},
+    "english_name": {"type": "text_to_speech", "value": "driving"},
+    "hebrew_english_name": {"type": "text", "value": "משגעים"}
+  },
+  {
+    "name": {"type": "text", "value": "sister"},
+    "english_name": {"type": "text_to_speech", "value": "sister"},
+    "hebrew_english_name": {"type": "text", "value": "אחות"}
+  },
+  {
+    "name": {"type": "text", "value": "insane"},
+    "english_name": {"type": "text_to_speech", "value": "insane"},
+    "hebrew_english_name": {"type": "text", "value": "משוגעת"}
+  },
+  {
+    "name": {"type": "text", "value": "Phineas"},
+    "english_name": {"type": "text_to_speech", "value": "Phineas"},
+    "hebrew_english_name": {"type": "text", "value": "פיניאס"}
+  },
+  {
+    "name": {"type": "text", "value": "As"},
+    "english_name": {"type": "text_to_speech", "value": "As"},
+    "hebrew_english_name": {"type": "text", "value": "כמו"}
+  },
+  {
+    "name": {"type": "text", "value": "you"},
+    "english_name": {"type": "text_to_speech", "value": "you"},
+    "hebrew_english_name": {"type": "text", "value": "אתה"}
+  },
+  {
+    "name": {"type": "text", "value": "can"},
+    "english_name": {"type": "text_to_speech", "value": "can"},
+    "hebrew_english_name": {"type": "text", "value": "יכול"}
+  },
+  {
+    "name": {"type": "text", "value": "see"},
+    "english_name": {"type": "text_to_speech", "value": "see"},
+    "hebrew_english_name": {"type": "text", "value": "לראות"}
+  },
+  {
+    "name": {"type": "text", "value": "whole"},
+    "english_name": {"type": "text_to_speech", "value": "whole"},
+    "hebrew_english_name": {"type": "text", "value": "שלם"}
+  },
+  {
+    "name": {"type": "text", "value": "lot"},
+    "english_name": {"type": "text_to_speech", "value": "lot"},
+    "hebrew_english_name": {"type": "text", "value": "הרבה"}
+  },
+  {
+    "name": {"type": "text", "value": "stuff"},
+    "english_name": {"type": "text_to_speech", "value": "stuff"},
+    "hebrew_english_name": {"type": "text", "value": "דברים"}
+  },
+  {
+    "name": {"type": "text", "value": "do"},
+    "english_name": {"type": "text_to_speech", "value": "do"},
+    "hebrew_english_name": {"type": "text", "value": "לעשות"}
+  },
+  {
+    "name": {"type": "text", "value": "Before"},
+    "english_name": {"type": "text_to_speech", "value": "Before"},
+    "hebrew_english_name": {"type": "text", "value": "לפני"}
+  },
+  {
+    "name": {"type": "text", "value": "starts"},
+    "english_name": {"type": "text_to_speech", "value": "starts"},
+    "hebrew_english_name": {"type": "text", "value": "מתחיל"}
+  },
+  {
+    "name": {"type": "text", "value": "this"},
+    "english_name": {"type": "text_to_speech", "value": "this"},
+    "hebrew_english_name": {"type": "text", "value": "הזה"}
+  },
+  {
+    "name": {"type": "text", "value": "fall"},
+    "english_name": {"type": "text_to_speech", "value": "fall"},
+    "hebrew_english_name": {"type": "text", "value": "סתיו"}
+  },
+  {
+    "name": {"type": "text", "value": "Come"},
+    "english_name": {"type": "text_to_speech", "value": "Come"},
+    "hebrew_english_name": {"type": "text", "value": "בוא"}
+  },
+  {
+    "name": {"type": "text", "value": "on"},
+    "english_name": {"type": "text_to_speech", "value": "on"},
+    "hebrew_english_name": {"type": "text", "value": "על"}
+  },
+  {
+    "name": {"type": "text", "value": "Perry"},
+    "english_name": {"type": "text_to_speech", "value": "Perry"},
+    "hebrew_english_name": {"type": "text", "value": "פרי"}
+  },
+  {
+    "name": {"type": "text", "value": "stick"},
+    "english_name": {"type": "text_to_speech", "value": "stick"},
+    "hebrew_english_name": {"type": "text", "value": "הישאר"}
+  },
+  {
+    "name": {"type": "text", "value": "with"},
+    "english_name": {"type": "text_to_speech", "value": "with"},
+    "hebrew_english_name": {"type": "text", "value": "עם"}
+  },
+  {
+    "name": {"type": "text", "value": "us"},
+    "english_name": {"type": "text_to_speech", "value": "us"},
+    "hebrew_english_name": {"type": "text", "value": "איתנו"}
+  },
+  {
+    "name": {"type": "text", "value": "Cause"},
+    "english_name": {"type": "text_to_speech", "value": "Cause"},
+    "hebrew_english_name": {"type": "text", "value": "כי"}
+  },
+  {
+    "name": {"type": "text", "value": "Ferb"},
+    "english_name": {"type": "text_to_speech", "value": "Ferb"},
+    "hebrew_english_name": {"type": "text", "value": "פרב"}
+  },
+  {
+    "name": {"type": "text", "value": "are"},
+    "english_name": {"type": "text_to_speech", "value": "are"},
+    "hebrew_english_name": {"type": "text", "value": "הם"}
+  },
+  {
+    "name": {"type": "text", "value": "gonna"},
+    "english_name": {"type": "text_to_speech", "value": "gonna"},
+    "hebrew_english_name": {"type": "text", "value": "הולכים"}
+  },
+  {
+    "name": {"type": "text", "value": "all"},
+    "english_name": {"type": "text_to_speech", "value": "all"},
+    "hebrew_english_name": {"type": "text", "value": "כולנו"}
+  },
+  {
+    "name": {"type": "text", "value": "Mom"},
+    "english_name": {"type": "text_to_speech", "value": "Mom"},
+    "hebrew_english_name": {"type": "text", "value": "אמא"}
+  },
+  {
+    "name": {"type": "text", "value": "making"},
+    "english_name": {"type": "text_to_speech", "value": "making"},
+    "hebrew_english_name": {"type": "text", "value": "עושה"}
+  },
+  {
+    "name": {"type": "text", "value": "title"},
+    "english_name": {"type": "text_to_speech", "value": "title"},
+    "hebrew_english_name": {"type": "text", "value": "כותרת"}
+  },
+  {
+    "name": {"type": "text", "value": "sequence"},
+    "english_name": {"type": "text_to_speech", "value": "sequence"},
+    "hebrew_english_name": {"type": "text", "value": "רצף"}
+  }
+],
+
 ENGLISH_VOCAB_FOOD: [
   {"hebrew": {"type": "text", "value": "לחם"}, "english_name": {"type": "text_to_speech", "value": "Bread"}},
   {"hebrew": {"type": "text", "value": "ארוחת בוקר"}, "english_name": {"type": "text_to_speech", "value": "Breakfast"}},
