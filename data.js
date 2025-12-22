@@ -5594,6 +5594,489 @@ MAN : [
       "hebrew_english_name": {"type": "text", "value": "קָאטִינְג"}
     }],
 
+SUMMER_VACATION: [
+  {
+    "name": {"type": "text", "value": "There's"},
+    "english_name": {"type": "text_to_speech", "value": "There's"},
+    "hebrew_english_name": {"type": "text", "value": "There's"}
+  },
+  {
+    "name": {"type": "text", "value": "a"},
+    "english_name": {"type": "text_to_speech", "value": "a"},
+    "hebrew_english_name": {"type": "text", "value": "a"}
+  },
+  {
+    "name": {"type": "text", "value": "hundred"},
+    "english_name": {"type": "text_to_speech", "value": "hundred"},
+    "hebrew_english_name": {"type": "text", "value": "hundred"}
+  },
+  {
+    "name": {"type": "text", "value": "and"},
+    "english_name": {"type": "text_to_speech", "value": "and"},
+    "hebrew_english_name": {"type": "text", "value": "and"}
+  },
+  {
+    "name": {"type": "text", "value": "four"},
+    "english_name": {"type": "text_to_speech", "value": "four"},
+    "hebrew_english_name": {"type": "text", "value": "four"}
+  },
+  {
+    "name": {"type": "text", "value": "days"},
+    "english_name": {"type": "text_to_speech", "value": "days"},
+    "hebrew_english_name": {"type": "text", "value": "days"}
+  },
+  {
+    "name": {"type": "text", "value": "of"},
+    "english_name": {"type": "text_to_speech", "value": "of"},
+    "hebrew_english_name": {"type": "text", "value": "of"}
+  },
+  {
+    "name": {"type": "text", "value": "summer"},
+    "english_name": {"type": "text_to_speech", "value": "summer"},
+    "hebrew_english_name": {"type": "text", "value": "summer"}
+  },
+  {
+    "name": {"type": "text", "value": "vacation"},
+    "english_name": {"type": "text_to_speech", "value": "vacation"},
+    "hebrew_english_name": {"type": "text", "value": "vacation"}
+  },
+  {
+    "name": {"type": "text", "value": "Then"},
+    "english_name": {"type": "text_to_speech", "value": "Then"},
+    "hebrew_english_name": {"type": "text", "value": "Then"}
+  },
+  {
+    "name": {"type": "text", "value": "school"},
+    "english_name": {"type": "text_to_speech", "value": "school"},
+    "hebrew_english_name": {"type": "text", "value": "school"}
+  },
+  {
+    "name": {"type": "text", "value": "comes"},
+    "english_name": {"type": "text_to_speech", "value": "comes"},
+    "hebrew_english_name": {"type": "text", "value": "comes"}
+  },
+  {
+    "name": {"type": "text", "value": "along"},
+    "english_name": {"type": "text_to_speech", "value": "along"},
+    "hebrew_english_name": {"type": "text", "value": "along"}
+  },
+  {
+    "name": {"type": "text", "value": "just"},
+    "english_name": {"type": "text_to_speech", "value": "just"},
+    "hebrew_english_name": {"type": "text", "value": "just"}
+  },
+  {
+    "name": {"type": "text", "value": "to"},
+    "english_name": {"type": "text_to_speech", "value": "to"},
+    "hebrew_english_name": {"type": "text", "value": "to"}
+  },
+  {
+    "name": {"type": "text", "value": "end"},
+    "english_name": {"type": "text_to_speech", "value": "end"},
+    "hebrew_english_name": {"type": "text", "value": "end"}
+  },
+  {
+    "name": {"type": "text", "value": "it"},
+    "english_name": {"type": "text_to_speech", "value": "it"},
+    "hebrew_english_name": {"type": "text", "value": "it"}
+  },
+  {
+    "name": {"type": "text", "value": "So"},
+    "english_name": {"type": "text_to_speech", "value": "So"},
+    "hebrew_english_name": {"type": "text", "value": "So"}
+  },
+  {
+    "name": {"type": "text", "value": "the"},
+    "english_name": {"type": "text_to_speech", "value": "the"},
+    "hebrew_english_name": {"type": "text", "value": "the"}
+  },
+  {
+    "name": {"type": "text", "value": "annual"},
+    "english_name": {"type": "text_to_speech", "value": "annual"},
+    "hebrew_english_name": {"type": "text", "value": "annual"}
+  },
+  {
+    "name": {"type": "text", "value": "problem"},
+    "english_name": {"type": "text_to_speech", "value": "problem"},
+    "hebrew_english_name": {"type": "text", "value": "problem"}
+  },
+  {
+    "name": {"type": "text", "value": "for"},
+    "english_name": {"type": "text_to_speech", "value": "for"},
+    "hebrew_english_name": {"type": "text", "value": "for"}
+  },
+  {
+    "name": {"type": "text", "value": "our"},
+    "english_name": {"type": "text_to_speech", "value": "our"},
+    "hebrew_english_name": {"type": "text", "value": "our"}
+  },
+  {
+    "name": {"type": "text", "value": "generation"},
+    "english_name": {"type": "text_to_speech", "value": "generation"},
+    "hebrew_english_name": {"type": "text", "value": "generation"}
+  },
+  {
+    "name": {"type": "text", "value": "Is"},
+    "english_name": {"type": "text_to_speech", "value": "Is"},
+    "hebrew_english_name": {"type": "text", "value": "Is"}
+  },
+  {
+    "name": {"type": "text", "value": "finding"},
+    "english_name": {"type": "text_to_speech", "value": "finding"},
+    "hebrew_english_name": {"type": "text", "value": "finding"}
+  },
+  {
+    "name": {"type": "text", "value": "good"},
+    "english_name": {"type": "text_to_speech", "value": "good"},
+    "hebrew_english_name": {"type": "text", "value": "good"}
+  },
+  {
+    "name": {"type": "text", "value": "way"},
+    "english_name": {"type": "text_to_speech", "value": "way"},
+    "hebrew_english_name": {"type": "text", "value": "way"}
+  },
+  {
+    "name": {"type": "text", "value": "spend"},
+    "english_name": {"type": "text_to_speech", "value": "spend"},
+    "hebrew_english_name": {"type": "text", "value": "spend"}
+  },
+  {
+    "name": {"type": "text", "value": "Like"},
+    "english_name": {"type": "text_to_speech", "value": "Like"},
+    "hebrew_english_name": {"type": "text", "value": "Like"}
+  },
+  {
+    "name": {"type": "text", "value": "maybe"},
+    "english_name": {"type": "text_to_speech", "value": "maybe"},
+    "hebrew_english_name": {"type": "text", "value": "maybe"}
+  },
+  {
+    "name": {"type": "text", "value": "Building"},
+    "english_name": {"type": "text_to_speech", "value": "Building"},
+    "hebrew_english_name": {"type": "text", "value": "Building"}
+  },
+  {
+    "name": {"type": "text", "value": "rocket"},
+    "english_name": {"type": "text_to_speech", "value": "rocket"},
+    "hebrew_english_name": {"type": "text", "value": "rocket"}
+  },
+  {
+    "name": {"type": "text", "value": "Or"},
+    "english_name": {"type": "text_to_speech", "value": "Or"},
+    "hebrew_english_name": {"type": "text", "value": "Or"}
+  },
+  {
+    "name": {"type": "text", "value": "fighting"},
+    "english_name": {"type": "text_to_speech", "value": "fighting"},
+    "hebrew_english_name": {"type": "text", "value": "fighting"}
+  },
+  {
+    "name": {"type": "text", "value": "mummy"},
+    "english_name": {"type": "text_to_speech", "value": "mummy"},
+    "hebrew_english_name": {"type": "text", "value": "mummy"}
+  },
+  {
+    "name": {"type": "text", "value": "climbing"},
+    "english_name": {"type": "text_to_speech", "value": "climbing"},
+    "hebrew_english_name": {"type": "text", "value": "climbing"}
+  },
+  {
+    "name": {"type": "text", "value": "up"},
+    "english_name": {"type": "text_to_speech", "value": "up"},
+    "hebrew_english_name": {"type": "text", "value": "up"}
+  },
+  {
+    "name": {"type": "text", "value": "Eiffel"},
+    "english_name": {"type": "text_to_speech", "value": "Eiffel"},
+    "hebrew_english_name": {"type": "text", "value": "Eiffel"}
+  },
+  {
+    "name": {"type": "text", "value": "Tower"},
+    "english_name": {"type": "text_to_speech", "value": "Tower"},
+    "hebrew_english_name": {"type": "text", "value": "Tower"}
+  },
+  {
+    "name": {"type": "text", "value": "Discovering"},
+    "english_name": {"type": "text_to_speech", "value": "Discovering"},
+    "hebrew_english_name": {"type": "text", "value": "Discovering"}
+  },
+  {
+    "name": {"type": "text", "value": "something"},
+    "english_name": {"type": "text_to_speech", "value": "something"},
+    "hebrew_english_name": {"type": "text", "value": "something"}
+  },
+  {
+    "name": {"type": "text", "value": "that"},
+    "english_name": {"type": "text_to_speech", "value": "that"},
+    "hebrew_english_name": {"type": "text", "value": "that"}
+  },
+  {
+    "name": {"type": "text", "value": "doesn't"},
+    "english_name": {"type": "text_to_speech", "value": "doesn't"},
+    "hebrew_english_name": {"type": "text", "value": "doesn't"}
+  },
+  {
+    "name": {"type": "text", "value": "exist"},
+    "english_name": {"type": "text_to_speech", "value": "exist"},
+    "hebrew_english_name": {"type": "text", "value": "exist"}
+  },
+  {
+    "name": {"type": "text", "value": "Hey"},
+    "english_name": {"type": "text_to_speech", "value": "Hey"},
+    "hebrew_english_name": {"type": "text", "value": "Hey"}
+  },
+  {
+    "name": {"type": "text", "value": "giving"},
+    "english_name": {"type": "text_to_speech", "value": "giving"},
+    "hebrew_english_name": {"type": "text", "value": "giving"}
+  },
+  {
+    "name": {"type": "text", "value": "monkey"},
+    "english_name": {"type": "text_to_speech", "value": "monkey"},
+    "hebrew_english_name": {"type": "text", "value": "monkey"}
+  },
+  {
+    "name": {"type": "text", "value": "shower"},
+    "english_name": {"type": "text_to_speech", "value": "shower"},
+    "hebrew_english_name": {"type": "text", "value": "shower"}
+  },
+  {
+    "name": {"type": "text", "value": "Surfing"},
+    "english_name": {"type": "text_to_speech", "value": "Surfing"},
+    "hebrew_english_name": {"type": "text", "value": "Surfing"}
+  },
+  {
+    "name": {"type": "text", "value": "tidal"},
+    "english_name": {"type": "text_to_speech", "value": "tidal"},
+    "hebrew_english_name": {"type": "text", "value": "tidal"}
+  },
+  {
+    "name": {"type": "text", "value": "waves"},
+    "english_name": {"type": "text_to_speech", "value": "waves"},
+    "hebrew_english_name": {"type": "text", "value": "waves"}
+  },
+  {
+    "name": {"type": "text", "value": "Creating"},
+    "english_name": {"type": "text_to_speech", "value": "Creating"},
+    "hebrew_english_name": {"type": "text", "value": "Creating"}
+  },
+  {
+    "name": {"type": "text", "value": "nanobots"},
+    "english_name": {"type": "text_to_speech", "value": "nanobots"},
+    "hebrew_english_name": {"type": "text", "value": "nanobots"}
+  },
+  {
+    "name": {"type": "text", "value": "locating"},
+    "english_name": {"type": "text_to_speech", "value": "locating"},
+    "hebrew_english_name": {"type": "text", "value": "locating"}
+  },
+  {
+    "name": {"type": "text", "value": "Frankenstein's"},
+    "english_name": {"type": "text_to_speech", "value": "Frankenstein's"},
+    "hebrew_english_name": {"type": "text", "value": "Frankenstein's"}
+  },
+  {
+    "name": {"type": "text", "value": "brain"},
+    "english_name": {"type": "text_to_speech", "value": "brain"},
+    "hebrew_english_name": {"type": "text", "value": "brain"}
+  },
+  {
+    "name": {"type": "text", "value": "It's"},
+    "english_name": {"type": "text_to_speech", "value": "It's"},
+    "hebrew_english_name": {"type": "text", "value": "It's"}
+  },
+  {
+    "name": {"type": "text", "value": "over"},
+    "english_name": {"type": "text_to_speech", "value": "over"},
+    "hebrew_english_name": {"type": "text", "value": "over"}
+  },
+  {
+    "name": {"type": "text", "value": "here"},
+    "english_name": {"type": "text_to_speech", "value": "here"},
+    "hebrew_english_name": {"type": "text", "value": "here"}
+  },
+  {
+    "name": {"type": "text", "value": "Finding"},
+    "english_name": {"type": "text_to_speech", "value": "Finding"},
+    "hebrew_english_name": {"type": "text", "value": "Finding"}
+  },
+  {
+    "name": {"type": "text", "value": "dodo"},
+    "english_name": {"type": "text_to_speech", "value": "dodo"},
+    "hebrew_english_name": {"type": "text", "value": "dodo"}
+  },
+  {
+    "name": {"type": "text", "value": "bird"},
+    "english_name": {"type": "text_to_speech", "value": "bird"},
+    "hebrew_english_name": {"type": "text", "value": "bird"}
+  },
+  {
+    "name": {"type": "text", "value": "Painting"},
+    "english_name": {"type": "text_to_speech", "value": "Painting"},
+    "hebrew_english_name": {"type": "text", "value": "Painting"}
+  },
+  {
+    "name": {"type": "text", "value": "continent"},
+    "english_name": {"type": "text_to_speech", "value": "continent"},
+    "hebrew_english_name": {"type": "text", "value": "continent"}
+  },
+  {
+    "name": {"type": "text", "value": "driving"},
+    "english_name": {"type": "text_to_speech", "value": "driving"},
+    "hebrew_english_name": {"type": "text", "value": "driving"}
+  },
+  {
+    "name": {"type": "text", "value": "sister"},
+    "english_name": {"type": "text_to_speech", "value": "sister"},
+    "hebrew_english_name": {"type": "text", "value": "sister"}
+  },
+  {
+    "name": {"type": "text", "value": "insane"},
+    "english_name": {"type": "text_to_speech", "value": "insane"},
+    "hebrew_english_name": {"type": "text", "value": "insane"}
+  },
+  {
+    "name": {"type": "text", "value": "Phineas"},
+    "english_name": {"type": "text_to_speech", "value": "Phineas"},
+    "hebrew_english_name": {"type": "text", "value": "Phineas"}
+  },
+  {
+    "name": {"type": "text", "value": "As"},
+    "english_name": {"type": "text_to_speech", "value": "As"},
+    "hebrew_english_name": {"type": "text", "value": "As"}
+  },
+  {
+    "name": {"type": "text", "value": "you"},
+    "english_name": {"type": "text_to_speech", "value": "you"},
+    "hebrew_english_name": {"type": "text", "value": "you"}
+  },
+  {
+    "name": {"type": "text", "value": "can"},
+    "english_name": {"type": "text_to_speech", "value": "can"},
+    "hebrew_english_name": {"type": "text", "value": "can"}
+  },
+  {
+    "name": {"type": "text", "value": "see"},
+    "english_name": {"type": "text_to_speech", "value": "see"},
+    "hebrew_english_name": {"type": "text", "value": "see"}
+  },
+  {
+    "name": {"type": "text", "value": "whole"},
+    "english_name": {"type": "text_to_speech", "value": "whole"},
+    "hebrew_english_name": {"type": "text", "value": "whole"}
+  },
+  {
+    "name": {"type": "text", "value": "lot"},
+    "english_name": {"type": "text_to_speech", "value": "lot"},
+    "hebrew_english_name": {"type": "text", "value": "lot"}
+  },
+  {
+    "name": {"type": "text", "value": "stuff"},
+    "english_name": {"type": "text_to_speech", "value": "stuff"},
+    "hebrew_english_name": {"type": "text", "value": "stuff"}
+  },
+  {
+    "name": {"type": "text", "value": "do"},
+    "english_name": {"type": "text_to_speech", "value": "do"},
+    "hebrew_english_name": {"type": "text", "value": "do"}
+  },
+  {
+    "name": {"type": "text", "value": "Before"},
+    "english_name": {"type": "text_to_speech", "value": "Before"},
+    "hebrew_english_name": {"type": "text", "value": "Before"}
+  },
+  {
+    "name": {"type": "text", "value": "starts"},
+    "english_name": {"type": "text_to_speech", "value": "starts"},
+    "hebrew_english_name": {"type": "text", "value": "starts"}
+  },
+  {
+    "name": {"type": "text", "value": "this"},
+    "english_name": {"type": "text_to_speech", "value": "this"},
+    "hebrew_english_name": {"type": "text", "value": "this"}
+  },
+  {
+    "name": {"type": "text", "value": "fall"},
+    "english_name": {"type": "text_to_speech", "value": "fall"},
+    "hebrew_english_name": {"type": "text", "value": "fall"}
+  },
+  {
+    "name": {"type": "text", "value": "Come"},
+    "english_name": {"type": "text_to_speech", "value": "Come"},
+    "hebrew_english_name": {"type": "text", "value": "Come"}
+  },
+  {
+    "name": {"type": "text", "value": "on"},
+    "english_name": {"type": "text_to_speech", "value": "on"},
+    "hebrew_english_name": {"type": "text", "value": "on"}
+  },
+  {
+    "name": {"type": "text", "value": "Perry"},
+    "english_name": {"type": "text_to_speech", "value": "Perry"},
+    "hebrew_english_name": {"type": "text", "value": "Perry"}
+  },
+  {
+    "name": {"type": "text", "value": "stick"},
+    "english_name": {"type": "text_to_speech", "value": "stick"},
+    "hebrew_english_name": {"type": "text", "value": "stick"}
+  },
+  {
+    "name": {"type": "text", "value": "with"},
+    "english_name": {"type": "text_to_speech", "value": "with"},
+    "hebrew_english_name": {"type": "text", "value": "with"}
+  },
+  {
+    "name": {"type": "text", "value": "us"},
+    "english_name": {"type": "text_to_speech", "value": "us"},
+    "hebrew_english_name": {"type": "text", "value": "us"}
+  },
+  {
+    "name": {"type": "text", "value": "Cause"},
+    "english_name": {"type": "text_to_speech", "value": "Cause"},
+    "hebrew_english_name": {"type": "text", "value": "Cause"}
+  },
+  {
+    "name": {"type": "text", "value": "Ferb"},
+    "english_name": {"type": "text_to_speech", "value": "Ferb"},
+    "hebrew_english_name": {"type": "text", "value": "Ferb"}
+  },
+  {
+    "name": {"type": "text", "value": "are"},
+    "english_name": {"type": "text_to_speech", "value": "are"},
+    "hebrew_english_name": {"type": "text", "value": "are"}
+  },
+  {
+    "name": {"type": "text", "value": "gonna"},
+    "english_name": {"type": "text_to_speech", "value": "gonna"},
+    "hebrew_english_name": {"type": "text", "value": "gonna"}
+  },
+  {
+    "name": {"type": "text", "value": "all"},
+    "english_name": {"type": "text_to_speech", "value": "all"},
+    "hebrew_english_name": {"type": "text", "value": "all"}
+  },
+  {
+    "name": {"type": "text", "value": "Mom"},
+    "english_name": {"type": "text_to_speech", "value": "Mom"},
+    "hebrew_english_name": {"type": "text", "value": "Mom"}
+  },
+  {
+    "name": {"type": "text", "value": "making"},
+    "english_name": {"type": "text_to_speech", "value": "making"},
+    "hebrew_english_name": {"type": "text", "value": "making"}
+  },
+  {
+    "name": {"type": "text", "value": "title"},
+    "english_name": {"type": "text_to_speech", "value": "title"},
+    "hebrew_english_name": {"type": "text", "value": "title"}
+  },
+  {
+    "name": {"type": "text", "value": "sequence"},
+    "english_name": {"type": "text_to_speech", "value": "sequence"},
+    "hebrew_english_name": {"type": "text", "value": "sequence"}
+  }
+],
+
 ENGLISH_VOCAB_FOOD: [
   {"hebrew": {"type": "text", "value": "לחם"}, "english_name": {"type": "text_to_speech", "value": "Bread"}},
   {"hebrew": {"type": "text", "value": "ארוחת בוקר"}, "english_name": {"type": "text_to_speech", "value": "Breakfast"}},
