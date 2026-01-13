@@ -63,6 +63,7 @@ apps =  {
         {icon: 'format_shapes', name:'הנסיך', type: 'app', appType: 'mcq', listName: 'PRINCE', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
         {icon: 'format_shapes', name:'גברים', type: 'app', appType: 'mcq', listName: 'MAN', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
         {icon: 'format_shapes', name:'החופש הגדול', type: 'app', appType: 'mcq', listName: 'SUMMER_VACATION', questionIndex: 'english_name', resultIndex:'hebrew_english_name', setItems: 3},
+        {icon: 'format_shapes', name:'שלג', type: 'app', appType: 'mcq', listName: 'SNOW', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
        ]
       },
       ]
