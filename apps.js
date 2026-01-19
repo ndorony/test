@@ -66,6 +66,40 @@ apps =  {
         {icon: 'format_shapes', name:'שלג', type: 'app', appType: 'mcq', listName: 'SNOW', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
        ]
       },
+        {
+          name: 'מילים לחזרה למבחן',
+          type: 'menu',
+          items: [
+            {
+              name: 'אנגלית לעברית',
+              type: 'menu',
+              items: [
+                {icon: 'format_shapes', name:'בגדים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_CLOTHING', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'אוכל ושתייה', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_FOOD_AND_DRINK', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'פעולות וביטויים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_ACTIONS_AND_PHRASES', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'מספרים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_NUMBERS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'תיאורים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_DESCRIPTIONS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'מקומות וחדרים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_PLACES_AND_ROOMS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'שונות', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_MISC', questionIndex: 'english_name', resultIndex: 'hebrew'},
+                {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_ALL', questionIndex: 'english_name', resultIndex: 'hebrew'},
+              ]
+            },
+            {
+              name: 'עברית לאנגלית',
+              type: 'menu',
+              items: [
+                {icon: 'format_shapes', name:'בגדים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_CLOTHING', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'אוכל ושתייה', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_FOOD_AND_DRINK', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'פעולות וביטויים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_ACTIONS_AND_PHRASES', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'מספרים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_NUMBERS', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'תיאורים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_DESCRIPTIONS', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'מקומות וחדרים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_PLACES_AND_ROOMS', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'שונות', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_MISC', questionIndex: 'hebrew', resultIndex: 'english'},
+                {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_28_ALL', questionIndex: 'hebrew', resultIndex: 'english'},
+              ]
+            },
+          ]
+        },
       ]
     },
     {
