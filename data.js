@@ -6578,6 +6578,89 @@ ENGLISH_VOCAB_MISC: [
   {"hebrew": {"type": "text", "value": "ארוחת צהריים"}, "english_name": {"type": "text_to_speech", "value": "Lunch"}}
 ],
 
+ENGLISH_0_28_CLOTHING: [
+  {"hebrew": {"type": "text", "value": "מגפיים"}, "english_name": {"type": "text_to_speech", "value": "Boots"}},
+  {"hebrew": {"type": "text", "value": "בגדים"}, "english_name": {"type": "text_to_speech", "value": "Clothes"}},
+  {"hebrew": {"type": "text", "value": "מעיל"}, "english_name": {"type": "text_to_speech", "value": "Coat"}},
+  {"hebrew": {"type": "text", "value": "שמלה"}, "english_name": {"type": "text_to_speech", "value": "Dress"}},
+  {"hebrew": {"type": "text", "value": "חולצה"}, "english_name": {"type": "text_to_speech", "value": "Shirt"}},
+  {"hebrew": {"type": "text", "value": "מכנסיים"}, "english_name": {"type": "text_to_speech", "value": "Pants"}},
+  {"hebrew": {"type": "text", "value": "נעליים"}, "english_name": {"type": "text_to_speech", "value": "Shoes"}},
+  {"hebrew": {"type": "text", "value": "חצאית"}, "english_name": {"type": "text_to_speech", "value": "Skirt"}},
+  {"hebrew": {"type": "text", "value": "גרביים"}, "english_name": {"type": "text_to_speech", "value": "Socks"}},
+  {"hebrew": {"type": "text", "value": "סוודר"}, "english_name": {"type": "text_to_speech", "value": "Sweater"}}
+],
+
+ENGLISH_0_28_FOOD_AND_DRINK: [
+  {"hebrew": {"type": "text", "value": "עוגה"}, "english_name": {"type": "text_to_speech", "value": "Cake"}},
+  {"hebrew": {"type": "text", "value": "מילקשייק"}, "english_name": {"type": "text_to_speech", "value": "Milkshake"}}
+],
+
+ENGLISH_0_28_ACTIONS_AND_PHRASES: [
+  {"hebrew": {"type": "text", "value": "לקחת"}, "english_name": {"type": "text_to_speech", "value": "Take"}},
+  {"hebrew": {"type": "text", "value": "לכתוב"}, "english_name": {"type": "text_to_speech", "value": "Write"}},
+  {"hebrew": {"type": "text", "value": "לאהוב"}, "english_name": {"type": "text_to_speech", "value": "Like"}},
+  {"hebrew": {"type": "text", "value": "ללבוש"}, "english_name": {"type": "text_to_speech", "value": "Put on"}},
+  {"hebrew": {"type": "text", "value": "להוריד"}, "english_name": {"type": "text_to_speech", "value": "Take off"}},
+  {"hebrew": {"type": "text", "value": "לקנות"}, "english_name": {"type": "text_to_speech", "value": "Buy"}},
+  {"hebrew": {"type": "text", "value": "לישון"}, "english_name": {"type": "text_to_speech", "value": "Sleep"}},
+  {"hebrew": {"type": "text", "value": "נקי"}, "english_name": {"type": "text_to_speech", "value": "Clean"}},
+  {"hebrew": {"type": "text", "value": "כמה זה עולה"}, "english_name": {"type": "text_to_speech", "value": "How much is it"}}
+],
+
+ENGLISH_0_28_NUMBERS: [
+  {"hebrew": {"type": "text", "value": "חמש"}, "english_name": {"type": "text_to_speech", "value": "Five"}},
+  {"hebrew": {"type": "text", "value": "תשע"}, "english_name": {"type": "text_to_speech", "value": "Nine"}},
+  {"hebrew": {"type": "text", "value": "עשרים"}, "english_name": {"type": "text_to_speech", "value": "Twenty"}},
+  {"hebrew": {"type": "text", "value": "עשר"}, "english_name": {"type": "text_to_speech", "value": "Ten"}},
+  {"hebrew": {"type": "text", "value": "חמישים"}, "english_name": {"type": "text_to_speech", "value": "Fifty"}},
+  {"hebrew": {"type": "text", "value": "שלושים"}, "english_name": {"type": "text_to_speech", "value": "Thirty"}},
+  {"hebrew": {"type": "text", "value": "מאה"}, "english_name": {"type": "text_to_speech", "value": "One hundred"}},
+  {"hebrew": {"type": "text", "value": "שישים"}, "english_name": {"type": "text_to_speech", "value": "Sixty"}},
+  {"hebrew": {"type": "text", "value": "שמונים"}, "english_name": {"type": "text_to_speech", "value": "Eighty"}},
+  {"hebrew": {"type": "text", "value": "ארבעים"}, "english_name": {"type": "text_to_speech", "value": "Forty"}},
+  {"hebrew": {"type": "text", "value": "תשעים"}, "english_name": {"type": "text_to_speech", "value": "Ninety"}},
+  {"hebrew": {"type": "text", "value": "שבעים"}, "english_name": {"type": "text_to_speech", "value": "Seventy"}}
+],
+
+ENGLISH_0_28_DESCRIPTIONS: [
+  {"hebrew": {"type": "text", "value": "קר"}, "english_name": {"type": "text_to_speech", "value": "Cold"}},
+  {"hebrew": {"type": "text", "value": "ארוך"}, "english_name": {"type": "text_to_speech", "value": "Long"}},
+  {"hebrew": {"type": "text", "value": "חם"}, "english_name": {"type": "text_to_speech", "value": "Warm"}},
+  {"hebrew": {"type": "text", "value": "לבן"}, "english_name": {"type": "text_to_speech", "value": "White"}},
+  {"hebrew": {"type": "text", "value": "חדש"}, "english_name": {"type": "text_to_speech", "value": "New"}},
+  {"hebrew": {"type": "text", "value": "ישן"}, "english_name": {"type": "text_to_speech", "value": "Old"}},
+  {"hebrew": {"type": "text", "value": "סגור"}, "english_name": {"type": "text_to_speech", "value": "Close"}},
+  {"hebrew": {"type": "text", "value": "מאוחר"}, "english_name": {"type": "text_to_speech", "value": "Late"}},
+  {"hebrew": {"type": "text", "value": "יותר"}, "english_name": {"type": "text_to_speech", "value": "More"}},
+  {"hebrew": {"type": "text", "value": "מידה"}, "english_name": {"type": "text_to_speech", "value": "Size"}}
+],
+
+ENGLISH_0_28_PLACES_AND_ROOMS: [
+  {"hebrew": {"type": "text", "value": "בית"}, "english_name": {"type": "text_to_speech", "value": "Home"}},
+  {"hebrew": {"type": "text", "value": "חנות"}, "english_name": {"type": "text_to_speech", "value": "Store"}},
+  {"hebrew": {"type": "text", "value": "סלון"}, "english_name": {"type": "text_to_speech", "value": "Living room"}},
+  {"hebrew": {"type": "text", "value": "חדר שינה"}, "english_name": {"type": "text_to_speech", "value": "Bedroom"}},
+  {"hebrew": {"type": "text", "value": "חדר אמבטיה"}, "english_name": {"type": "text_to_speech", "value": "Bathroom"}},
+  {"hebrew": {"type": "text", "value": "ארון"}, "english_name": {"type": "text_to_speech", "value": "Closet"}}
+],
+
+ENGLISH_0_28_MISC: [
+  {"hebrew": {"type": "text", "value": "שם"}, "english_name": {"type": "text_to_speech", "value": "Name"}},
+  {"hebrew": {"type": "text", "value": "זמן"}, "english_name": {"type": "text_to_speech", "value": "Time"}},
+  {"hebrew": {"type": "text", "value": "נחש"}, "english_name": {"type": "text_to_speech", "value": "Snake"}},
+  {"hebrew": {"type": "text", "value": "שולחן"}, "english_name": {"type": "text_to_speech", "value": "Table"}},
+  {"hebrew": {"type": "text", "value": "מראה"}, "english_name": {"type": "text_to_speech", "value": "Mirror"}},
+  {"hebrew": {"type": "text", "value": "אף"}, "english_name": {"type": "text_to_speech", "value": "Nose"}},
+  {"hebrew": {"type": "text", "value": "דלת"}, "english_name": {"type": "text_to_speech", "value": "Door"}},
+  {"hebrew": {"type": "text", "value": "משחק"}, "english_name": {"type": "text_to_speech", "value": "Game"}},
+  {"hebrew": {"type": "text", "value": "חיוך"}, "english_name": {"type": "text_to_speech", "value": "Smile"}},
+  {"hebrew": {"type": "text", "value": "חליל"}, "english_name": {"type": "text_to_speech", "value": "Flute"}},
+  {"hebrew": {"type": "text", "value": "חוק"}, "english_name": {"type": "text_to_speech", "value": "Rule"}}
+],
+
+ENGLISH_0_28_ALL: [],
+
 ENGLISH_VOCAB_ALL: [],
 
 ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
@@ -6600,6 +6683,17 @@ const ENGLISH_VOCABULARY_LISTS = [
     DATA.ENGLISH_VOCAB_MISC,
 ];
 DATA.ENGLISH_VOCAB_ALL = ENGLISH_VOCABULARY_LISTS.flat();
+
+const ENGLISH_0_28_LISTS = [
+    DATA.ENGLISH_0_28_CLOTHING,
+    DATA.ENGLISH_0_28_FOOD_AND_DRINK,
+    DATA.ENGLISH_0_28_ACTIONS_AND_PHRASES,
+    DATA.ENGLISH_0_28_NUMBERS,
+    DATA.ENGLISH_0_28_DESCRIPTIONS,
+    DATA.ENGLISH_0_28_PLACES_AND_ROOMS,
+    DATA.ENGLISH_0_28_MISC,
+];
+DATA.ENGLISH_0_28_ALL = ENGLISH_0_28_LISTS.flat();
 
 function filterABCByString(lettersStr, abcList) {
     const letterSet = new Set(lettersStr.split("")); // להאיץ את הבדיקה
