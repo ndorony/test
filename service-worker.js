@@ -1,59 +1,68 @@
-const CACHE_NAME = 'my-app-cache-v1';
-const urlsToCache = [
+const CACHE_NAME = 'my-app-cache-v2';
+const CORE_ASSETS = [
   '/',
   '/index.html',
-  'https://fonts.googleapis.com/icon?family=Material+Icons',
-  'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css',
-  'https://unpkg.com/vue@2',
-  'https://unpkg.com/vue-router@2.0.0/dist/vue-router.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js',
-  '/.idea/inspectionProfiles/profiles_settings.xml',
-  '/sounds/letters/a.mp3',
-  '/sounds/letters/b.mp3',
-  '/sounds/letters/c.mp3',
-  '/sounds/letters/d.mp3',
-  '/sounds/letters/e.mp3',
-  '/sounds/letters/f.mp3',
-  '/sounds/letters/g.mp3',
-  '/sounds/letters/h.mp3',
-  '/sounds/letters/i.mp3',
-  '/sounds/letters/j.mp3',
-  '/sounds/letters/k.mp3',
-  '/sounds/letters/l.mp3',
-  '/sounds/letters/m.mp3',
-  '/sounds/letters/n.mp3',
-  '/sounds/letters/o.mp3',
-  '/sounds/letters/p.mp3',
-  '/sounds/letters/q.mp3',
-  '/sounds/letters/r.mp3',
-  '/sounds/letters/s.mp3',
-  '/sounds/letters/t.mp3',
-  '/sounds/letters/u.mp3',
-  '/sounds/letters/v.mp3',
-  '/sounds/letters/w.mp3',
-  '/sounds/letters/x.mp3',
-  '/sounds/letters/y.mp3',
-  '/sounds/letters/z.mp3'
+  '/manifest.json',
+  '/data.js',
+  '/apps.js',
+  '/themes.js',
+  '/storage.js',
+  '/tester.js',
+  '/sounds/success.mp3',
+  '/sounds/failure.mp3'
 ];
+
+const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
+  .split('')
+  .map(letter => `/sounds/letters/${letter}.mp3`);
+
+const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS);
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => Promise.all(
+      cacheNames.map(cacheName => {
+        if (cacheName !== CACHE_NAME) {
+          return caches.delete(cacheName);
+        }
+        return null;
       })
+    ))
   );
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html').then(cached => cached || fetch(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(event.request)
+        .then(networkResponse => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+          return networkResponse;
+        });
+    })
   );
 });
