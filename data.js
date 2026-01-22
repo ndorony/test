@@ -6659,7 +6659,84 @@ ENGLISH_0_28_MISC: [
   {"hebrew": {"type": "text", "value": "חוק"}, "english": {"type": "text", "value": "Rule"}, "english_name": {"type": "text_to_speech", "value": "Rule"}}
 ],
 
+ENGLISH_0_29_TIME_AND_REMINDERS: [
+  {"hebrew": {"type": "text", "value": "אחרי"}, "english": {"type": "text", "value": "After"}, "english_name": {"type": "text_to_speech", "value": "After"}},
+  {"hebrew": {"type": "text", "value": "לפני"}, "english": {"type": "text", "value": "Before"}, "english_name": {"type": "text_to_speech", "value": "Before"}},
+  {"hebrew": {"type": "text", "value": "אל תשכח"}, "english": {"type": "text", "value": "Don't forget"}, "english_name": {"type": "text_to_speech", "value": "Don't forget"}}
+],
+
+ENGLISH_0_29_HEALTH_AND_FITNESS: [
+  {"hebrew": {"type": "text", "value": "אימון"}, "english": {"type": "text", "value": "Exercise"}, "english_name": {"type": "text_to_speech", "value": "Exercise"}},
+  {"hebrew": {"type": "text", "value": "בריא"}, "english": {"type": "text", "value": "Healthy"}, "english_name": {"type": "text_to_speech", "value": "Healthy"}},
+  {"hebrew": {"type": "text", "value": "חיים"}, "english": {"type": "text", "value": "Life"}, "english_name": {"type": "text_to_speech", "value": "Life"}},
+  {"hebrew": {"type": "text", "value": "צריך"}, "english": {"type": "text", "value": "Should"}, "english_name": {"type": "text_to_speech", "value": "Should"}},
+  {"hebrew": {"type": "text", "value": "חזק"}, "english": {"type": "text", "value": "Strong"}, "english_name": {"type": "text_to_speech", "value": "Strong"}},
+  {"hebrew": {"type": "text", "value": "עייף"}, "english": {"type": "text", "value": "Tired"}, "english_name": {"type": "text_to_speech", "value": "Tired"}},
+  {"hebrew": {"type": "text", "value": "לזוז"}, "english": {"type": "text", "value": "Move"}, "english_name": {"type": "text_to_speech", "value": "Move"}}
+],
+
+ENGLISH_0_29_BODY_PARTS: [
+  {"hebrew": {"type": "text", "value": "זרוע"}, "english": {"type": "text", "value": "Arm"}, "english_name": {"type": "text_to_speech", "value": "Arm"}},
+  {"hebrew": {"type": "text", "value": "גוף"}, "english": {"type": "text", "value": "Body"}, "english_name": {"type": "text_to_speech", "value": "Body"}},
+  {"hebrew": {"type": "text", "value": "כף רגל"}, "english": {"type": "text", "value": "Foot"}, "english_name": {"type": "text_to_speech", "value": "Foot"}},
+  {"hebrew": {"type": "text", "value": "ראש"}, "english": {"type": "text", "value": "Head"}, "english_name": {"type": "text_to_speech", "value": "Head"}},
+  {"hebrew": {"type": "text", "value": "לב"}, "english": {"type": "text", "value": "Heart"}, "english_name": {"type": "text_to_speech", "value": "Heart"}},
+  {"hebrew": {"type": "text", "value": "ברך"}, "english": {"type": "text", "value": "Knee"}, "english_name": {"type": "text_to_speech", "value": "Knee"}},
+  {"hebrew": {"type": "text", "value": "רגל"}, "english": {"type": "text", "value": "Leg"}, "english_name": {"type": "text_to_speech", "value": "Leg"}},
+  {"hebrew": {"type": "text", "value": "כתף"}, "english": {"type": "text", "value": "Shoulder"}, "english_name": {"type": "text_to_speech", "value": "Shoulder"}}
+],
+
+ENGLISH_0_29_SPORTS_AND_COMPETITION: [
+  {"hebrew": {"type": "text", "value": "ספורט"}, "english": {"type": "text", "value": "Sports"}, "english_name": {"type": "text_to_speech", "value": "Sports"}},
+  {"hebrew": {"type": "text", "value": "מגרש"}, "english": {"type": "text", "value": "Field"}, "english_name": {"type": "text_to_speech", "value": "Field"}},
+  {"hebrew": {"type": "text", "value": "כדורגל"}, "english": {"type": "text", "value": "Football"}, "english_name": {"type": "text_to_speech", "value": "Football"}},
+  {"hebrew": {"type": "text", "value": "שער"}, "english": {"type": "text", "value": "Goal"}, "english_name": {"type": "text_to_speech", "value": "Goal"}},
+  {"hebrew": {"type": "text", "value": "להפסיד"}, "english": {"type": "text", "value": "Lose"}, "english_name": {"type": "text_to_speech", "value": "Lose"}},
+  {"hebrew": {"type": "text", "value": "למסור"}, "english": {"type": "text", "value": "Pass"}, "english_name": {"type": "text_to_speech", "value": "Pass"}},
+  {"hebrew": {"type": "text", "value": "שחקן"}, "english": {"type": "text", "value": "Player"}, "english_name": {"type": "text_to_speech", "value": "Player"}},
+  {"hebrew": {"type": "text", "value": "טניס"}, "english": {"type": "text", "value": "Tennis"}, "english_name": {"type": "text_to_speech", "value": "Tennis"}},
+  {"hebrew": {"type": "text", "value": "לנצח"}, "english": {"type": "text", "value": "Win"}, "english_name": {"type": "text_to_speech", "value": "Win"}},
+  {"hebrew": {"type": "text", "value": "נגד"}, "english": {"type": "text", "value": "Against"}, "english_name": {"type": "text_to_speech", "value": "Against"}},
+  {"hebrew": {"type": "text", "value": "תחרות"}, "english": {"type": "text", "value": "Competition"}, "english_name": {"type": "text_to_speech", "value": "Competition"}},
+  {"hebrew": {"type": "text", "value": "מנצח"}, "english": {"type": "text", "value": "Winner"}, "english_name": {"type": "text_to_speech", "value": "Winner"}}
+],
+
+ENGLISH_0_29_FOOD: [
+  {"hebrew": {"type": "text", "value": "גלידה"}, "english": {"type": "text", "value": "Ice cream"}, "english_name": {"type": "text_to_speech", "value": "Ice cream"}},
+  {"hebrew": {"type": "text", "value": "ארוחה"}, "english": {"type": "text", "value": "Meal"}, "english_name": {"type": "text_to_speech", "value": "Meal"}},
+  {"hebrew": {"type": "text", "value": "אורז"}, "english": {"type": "text", "value": "Rice"}, "english_name": {"type": "text_to_speech", "value": "Rice"}},
+  {"hebrew": {"type": "text", "value": "חטיף"}, "english": {"type": "text", "value": "Snack"}, "english_name": {"type": "text_to_speech", "value": "Snack"}},
+  {"hebrew": {"type": "text", "value": "מרק"}, "english": {"type": "text", "value": "Soup"}, "english_name": {"type": "text_to_speech", "value": "Soup"}},
+  {"hebrew": {"type": "text", "value": "מתוק"}, "english": {"type": "text", "value": "Sweet"}, "english_name": {"type": "text_to_speech", "value": "Sweet"}},
+  {"hebrew": {"type": "text", "value": "ממתק"}, "english": {"type": "text", "value": "Candy"}, "english_name": {"type": "text_to_speech", "value": "Candy"}},
+  {"hebrew": {"type": "text", "value": "אוכל מהיר"}, "english": {"type": "text", "value": "Fast food"}, "english_name": {"type": "text_to_speech", "value": "Fast food"}}
+],
+
+ENGLISH_0_29_ORDER_AND_DESCRIPTIONS: [
+  {"hebrew": {"type": "text", "value": "שונה"}, "english": {"type": "text", "value": "Different"}, "english_name": {"type": "text_to_speech", "value": "Different"}},
+  {"hebrew": {"type": "text", "value": "קצת"}, "english": {"type": "text", "value": "Some"}, "english_name": {"type": "text_to_speech", "value": "Some"}},
+  {"hebrew": {"type": "text", "value": "ראשון"}, "english": {"type": "text", "value": "First"}, "english_name": {"type": "text_to_speech", "value": "First"}},
+  {"hebrew": {"type": "text", "value": "נהדר"}, "english": {"type": "text", "value": "Great"}, "english_name": {"type": "text_to_speech", "value": "Great"}},
+  {"hebrew": {"type": "text", "value": "שני"}, "english": {"type": "text", "value": "Second"}, "english_name": {"type": "text_to_speech", "value": "Second"}},
+  {"hebrew": {"type": "text", "value": "מיוחד"}, "english": {"type": "text", "value": "Special"}, "english_name": {"type": "text_to_speech", "value": "Special"}},
+  {"hebrew": {"type": "text", "value": "שלישי"}, "english": {"type": "text", "value": "Third"}, "english_name": {"type": "text_to_speech", "value": "Third"}},
+  {"hebrew": {"type": "text", "value": "קשה"}, "english": {"type": "text", "value": "Difficult"}, "english_name": {"type": "text_to_speech", "value": "Difficult"}},
+  {"hebrew": {"type": "text", "value": "קל"}, "english": {"type": "text", "value": "Easy"}, "english_name": {"type": "text_to_speech", "value": "Easy"}},
+  {"hebrew": {"type": "text", "value": "ידידותי"}, "english": {"type": "text", "value": "Friendly"}, "english_name": {"type": "text_to_speech", "value": "Friendly"}},
+  {"hebrew": {"type": "text", "value": "הרבה"}, "english": {"type": "text", "value": "Many"}, "english_name": {"type": "text_to_speech", "value": "Many"}}
+],
+
+ENGLISH_0_29_VERBS_AND_PEOPLE: [
+  {"hebrew": {"type": "text", "value": "לבחור"}, "english": {"type": "text", "value": "Choose"}, "english_name": {"type": "text_to_speech", "value": "Choose"}},
+  {"hebrew": {"type": "text", "value": "לבשל"}, "english": {"type": "text", "value": "Cook"}, "english_name": {"type": "text_to_speech", "value": "Cook"}},
+  {"hebrew": {"type": "text", "value": "ליהנות"}, "english": {"type": "text", "value": "Enjoy"}, "english_name": {"type": "text_to_speech", "value": "Enjoy"}},
+  {"hebrew": {"type": "text", "value": "כולם"}, "english": {"type": "text", "value": "Everyone"}, "english_name": {"type": "text_to_speech", "value": "Everyone"}},
+  {"hebrew": {"type": "text", "value": "לנסות"}, "english": {"type": "text", "value": "Try"}, "english_name": {"type": "text_to_speech", "value": "Try"}}
+],
+
 ENGLISH_0_28_ALL: [],
+
+ENGLISH_0_29_ALL: [],
 
 ENGLISH_VOCAB_ALL: [],
 
@@ -6694,6 +6771,17 @@ const ENGLISH_0_28_LISTS = [
     DATA.ENGLISH_0_28_MISC,
 ];
 DATA.ENGLISH_0_28_ALL = ENGLISH_0_28_LISTS.flat();
+
+const ENGLISH_0_29_LISTS = [
+    DATA.ENGLISH_0_29_TIME_AND_REMINDERS,
+    DATA.ENGLISH_0_29_HEALTH_AND_FITNESS,
+    DATA.ENGLISH_0_29_BODY_PARTS,
+    DATA.ENGLISH_0_29_SPORTS_AND_COMPETITION,
+    DATA.ENGLISH_0_29_FOOD,
+    DATA.ENGLISH_0_29_ORDER_AND_DESCRIPTIONS,
+    DATA.ENGLISH_0_29_VERBS_AND_PEOPLE,
+];
+DATA.ENGLISH_0_29_ALL = ENGLISH_0_29_LISTS.flat();
 
 function filterABCByString(lettersStr, abcList) {
     const letterSet = new Set(lettersStr.split("")); // להאיץ את הבדיקה
