@@ -100,6 +100,40 @@ apps =  {
             },
           ]
         },
+        {
+          name: 'מבחן חדש',
+          type: 'menu',
+          items: [
+            {
+              name: 'אנגלית לעברית',
+              type: 'menu',
+              items: [
+                {icon: 'format_shapes', name:'זמן ותזכורות', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_TIME_AND_REMINDERS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'בריאות וכושר', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_HEALTH_AND_FITNESS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'חלקי גוף', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_BODY_PARTS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'ספורט ותחרות', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_SPORTS_AND_COMPETITION', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'אוכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_FOOD', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'סדר ותיאורים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_ORDER_AND_DESCRIPTIONS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'פעולות ואנשים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_VERBS_AND_PEOPLE', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+                {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
+              ]
+            },
+            {
+              name: 'עברית לאנגלית',
+              type: 'menu',
+              items: [
+                {icon: 'format_shapes', name:'זמן ותזכורות', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_TIME_AND_REMINDERS', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'בריאות וכושר', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_HEALTH_AND_FITNESS', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'חלקי גוף', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_BODY_PARTS', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'ספורט ותחרות', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_SPORTS_AND_COMPETITION', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'אוכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_FOOD', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'סדר ותיאורים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_ORDER_AND_DESCRIPTIONS', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'פעולות ואנשים', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_VERBS_AND_PEOPLE', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+                {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
+              ]
+            },
+          ]
+        },
       ]
     },
     {
