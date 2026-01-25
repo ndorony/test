@@ -34,6 +34,18 @@ apps =  {
         {icon: 'record_voice_over', name: 'אמור את שם האות', type: 'app', appType: 's2t', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase', setItems: 5, title: 'אמור בקול את שם האות'},
 
         {
+          name: 'דקדוק - to be',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'to be – הווה', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_PRESENT', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'to be – שלילה', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_NEGATIVE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'Find and match', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_MATCH', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'Choose: am / is / are', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_CHOOSE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'Complete', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_COMPLETE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+          ]
+        },
+
+        {
           name: 'אוצר מילים לפי נושאים',
           type: 'menu',
           items: [
