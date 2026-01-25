@@ -32,19 +32,6 @@ apps =  {
         {icon: 'format_shapes', name:'מילות יחס', type: 'app', appType: 'mcq', listName: 'PREPOSITIONS', questionIndex: 'english_name', resultIndex:'hebrew', setItems: 3},
         {icon: 'format_shapes', name:'מילים חדשות', type: 'app', appType: 'mcq', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex:'hebrew', setItems: 10},
         {icon: 'record_voice_over', name: 'אמור את שם האות', type: 'app', appType: 's2t', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase', setItems: 5, title: 'אמור בקול את שם האות'},
-
-        {
-          name: 'דקדוק - to be',
-          type: 'menu',
-          items: [
-            {icon: 'format_shapes', name:'to be – הווה', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_PRESENT', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
-            {icon: 'format_shapes', name:'to be – שלילה', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_NEGATIVE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
-            {icon: 'format_shapes', name:'Find and match', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_MATCH', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
-            {icon: 'format_shapes', name:'Choose: am / is / are', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_CHOOSE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
-            {icon: 'format_shapes', name:'Complete', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_COMPLETE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
-          ]
-        },
-
         {
           name: 'אוצר מילים לפי נושאים',
           type: 'menu',
@@ -144,6 +131,18 @@ apps =  {
                 {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_0_29_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
               ]
             },
+         {
+          name: 'דקדוק - to be',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'to be – הווה', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_PRESENT', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'to be – שלילה', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_NEGATIVE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'Find and match', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_MATCH', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'Choose: am / is / are', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_CHOOSE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+            {icon: 'format_shapes', name:'Complete', type: 'app', appType: 'mcq', listName: 'ENGLISH_TO_BE_COMPLETE', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+          ]
+        },
+
           ]
         },
       ]
