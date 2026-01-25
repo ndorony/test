@@ -6734,6 +6734,53 @@ ENGLISH_0_29_VERBS_AND_PEOPLE: [
   {"hebrew": {"type": "text", "value": "לנסות"}, "english": {"type": "text", "value": "Try"}, "english_name": {"type": "text_to_speech", "value": "Try"}}
 ],
 
+ENGLISH_TO_BE_PRESENT: [
+  {"question": {"type": "text", "value": "I"}, "answer": {"type": "text", "value": "am"}},
+  {"question": {"type": "text", "value": "You"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "He"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "She"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "It"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "We"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "They"}, "answer": {"type": "text", "value": "are"}}
+],
+
+ENGLISH_TO_BE_NEGATIVE: [
+  {"question": {"type": "text", "value": "I ___ hungry"}, "answer": {"type": "text", "value": "am not"}},
+  {"question": {"type": "text", "value": "She ___ late"}, "answer": {"type": "text", "value": "is not"}},
+  {"question": {"type": "text", "value": "It ___ noisy"}, "answer": {"type": "text", "value": "is not"}},
+  {"question": {"type": "text", "value": "We ___ cold"}, "answer": {"type": "text", "value": "are not"}},
+  {"question": {"type": "text", "value": "You ___ sleepy"}, "answer": {"type": "text", "value": "are not"}},
+  {"question": {"type": "text", "value": "They ___ ready"}, "answer": {"type": "text", "value": "are not"}}
+],
+
+ENGLISH_TO_BE_MATCH: [
+  {"question": {"type": "text", "value": "She is fast"}, "answer": {"type": "text", "value": "👧"}},
+  {"question": {"type": "text", "value": "He is strong"}, "answer": {"type": "text", "value": "👦"}},
+  {"question": {"type": "text", "value": "It is very slow"}, "answer": {"type": "text", "value": "🐢"}},
+  {"question": {"type": "text", "value": "They are happy"}, "answer": {"type": "text", "value": "👧👦"}},
+  {"question": {"type": "text", "value": "The babies are small"}, "answer": {"type": "text", "value": "👶👶"}},
+  {"question": {"type": "text", "value": "The dog is playful"}, "answer": {"type": "text", "value": "🐶"}}
+],
+
+ENGLISH_TO_BE_CHOOSE: [
+  {"question": {"type": "text", "value": "I ___ early"}, "answer": {"type": "text", "value": "am"}},
+  {"question": {"type": "text", "value": "The cat ___ black"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "You ___ funny"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "We ___ in class"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "She ___ kind"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "The boys ___ loud"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "It ___ cold"}, "answer": {"type": "text", "value": "is"}}
+],
+
+ENGLISH_TO_BE_COMPLETE: [
+  {"question": {"type": "text", "value": "I ___ at home"}, "answer": {"type": "text", "value": "am"}},
+  {"question": {"type": "text", "value": "My brother and I ___ tall"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "You ___ my friend"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "The cow ___ on the grass"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "The teachers ___ here"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "The apple ___ red"}, "answer": {"type": "text", "value": "is"}}
+],
+
 ENGLISH_0_28_ALL: [],
 
 ENGLISH_0_29_ALL: [],
