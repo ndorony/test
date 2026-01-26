@@ -238,10 +238,22 @@ const getWeightedRandomIndex = (list, key, setItems) => {
     return list.length ? Math.floor(Math.random() * list.length) : null;
 }
 
+const shuffleIndexes = (indexes) => {
+    const shuffled = indexes.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
 // Function to select additional random indexes excluding a specific index
 const getRandomIndexesExcluding = (list, resultIndex, answerIndex, count = 3) => {
+    if (!Array.isArray(list) || list.length === 0 || answerIndex === null) {
+        return [];
+    }
 
-    const targetGroups = list[answerIndex].groups;
+    const targetGroups = list[answerIndex]?.groups;
     let filteredIndexes;
 
     if (targetGroups && targetGroups.length > 0) {
@@ -258,19 +270,24 @@ const getRandomIndexesExcluding = (list, resultIndex, answerIndex, count = 3) =>
             .map((item, index) => index)
             .filter(index => index !== answerIndex);
     }
-    const resultsIndexes = [];
-    const results = [];
-    const answerValue = list[answerIndex][resultIndex]['value'];
-    //                                                                           this -1 is the result
-    while (resultsIndexes.length < count && resultsIndexes.length < filteredIndexes.length - 1) {
-        const randomIndex = Math.floor(Math.random() * filteredIndexes.length);
-        randomValue = list[filteredIndexes[randomIndex]][resultIndex]['value'];
-        if (randomValue != answerValue && !results.includes(randomValue)){
-            resultsIndexes.push(filteredIndexes[randomIndex]);
-            results.push(randomValue);
+
+    const answerValue = list[answerIndex]?.[resultIndex]?.value;
+    const uniqueIndexByValue = new Map();
+
+    for (const index of filteredIndexes) {
+        const candidateValue = list[index]?.[resultIndex]?.value;
+        if (candidateValue === undefined || candidateValue === answerValue) {
+            continue;
+        }
+        const key = typeof candidateValue === 'string' ? candidateValue : JSON.stringify(candidateValue);
+        if (!uniqueIndexByValue.has(key)) {
+            uniqueIndexByValue.set(key, index);
         }
     }
-    return resultsIndexes;
+
+    const uniqueIndexes = Array.from(uniqueIndexByValue.values());
+    const targetCount = Math.min(count, uniqueIndexes.length);
+    return shuffleIndexes(uniqueIndexes).slice(0, targetCount);
 }
 
 const generateOptions = (list, resultIndexes, resultFieldIndex) => {
