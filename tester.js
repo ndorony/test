@@ -1511,12 +1511,16 @@ var AppComponent = Vue.component('app',{
         this.score = getScore(this.currentAppId);
         this.progress = getProgress(this.currentAppId, 1);
         this.data = DATA[this.currentApp.listName];
-        displayNames = ["id", "name", "english_name", "englishUpperCase", 'letter'];
+        displayNames = ["id", "name", "english_name", "englishUpperCase", "letter", "question", "hebrew", "english", "answer"];
         for (let i = 0; i < displayNames.length; i++) {
             if(this.data[0].hasOwnProperty(displayNames[i])){
                 this.displayKey = displayNames[i];
                 break;
             }
+        }
+        if (!this.displayKey) {
+            const dataKeys = Object.keys(this.data[0] || {});
+            this.displayKey = dataKeys.length ? dataKeys[0] : null;
         }
 
         this.weights = getWeightsForKey(this.currentAppId, getSetItems(this.currentApp), getDataList(this.currentApp.listName));
