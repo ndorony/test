@@ -6746,11 +6746,11 @@ ENGLISH_TO_BE_PRESENT: [
 
 ENGLISH_TO_BE_NEGATIVE: [
   {"question": {"type": "text", "value": "I ___ hungry"}, "answer": {"type": "text", "value": "am not"}},
+  {"question": {"type": "text", "value": "They ___ hungry"}, "answer": {"type": "text", "value": "are not"}},
   {"question": {"type": "text", "value": "She ___ late"}, "answer": {"type": "text", "value": "is not"}},
+  {"question": {"type": "text", "value": "We ___ late"}, "answer": {"type": "text", "value": "are not"}},
   {"question": {"type": "text", "value": "It ___ noisy"}, "answer": {"type": "text", "value": "is not"}},
-  {"question": {"type": "text", "value": "We ___ cold"}, "answer": {"type": "text", "value": "are not"}},
-  {"question": {"type": "text", "value": "You ___ sleepy"}, "answer": {"type": "text", "value": "are not"}},
-  {"question": {"type": "text", "value": "They ___ ready"}, "answer": {"type": "text", "value": "are not"}}
+  {"question": {"type": "text", "value": "You ___ noisy"}, "answer": {"type": "text", "value": "are not"}}
 ],
 
 ENGLISH_TO_BE_MATCH: [
@@ -6764,20 +6764,20 @@ ENGLISH_TO_BE_MATCH: [
 
 ENGLISH_TO_BE_CHOOSE: [
   {"question": {"type": "text", "value": "I ___ early"}, "answer": {"type": "text", "value": "am"}},
+  {"question": {"type": "text", "value": "They ___ early"}, "answer": {"type": "text", "value": "are"}},
   {"question": {"type": "text", "value": "The cat ___ black"}, "answer": {"type": "text", "value": "is"}},
-  {"question": {"type": "text", "value": "You ___ funny"}, "answer": {"type": "text", "value": "are"}},
-  {"question": {"type": "text", "value": "We ___ in class"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "The dogs ___ black"}, "answer": {"type": "text", "value": "are"}},
   {"question": {"type": "text", "value": "She ___ kind"}, "answer": {"type": "text", "value": "is"}},
-  {"question": {"type": "text", "value": "The boys ___ loud"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "We ___ kind"}, "answer": {"type": "text", "value": "are"}},
   {"question": {"type": "text", "value": "It ___ cold"}, "answer": {"type": "text", "value": "is"}}
 ],
 
 ENGLISH_TO_BE_COMPLETE: [
   {"question": {"type": "text", "value": "I ___ at home"}, "answer": {"type": "text", "value": "am"}},
+  {"question": {"type": "text", "value": "They ___ at home"}, "answer": {"type": "text", "value": "are"}},
   {"question": {"type": "text", "value": "My brother and I ___ tall"}, "answer": {"type": "text", "value": "are"}},
-  {"question": {"type": "text", "value": "You ___ my friend"}, "answer": {"type": "text", "value": "are"}},
-  {"question": {"type": "text", "value": "The cow ___ on the grass"}, "answer": {"type": "text", "value": "is"}},
-  {"question": {"type": "text", "value": "The teachers ___ here"}, "answer": {"type": "text", "value": "are"}},
+  {"question": {"type": "text", "value": "He ___ tall"}, "answer": {"type": "text", "value": "is"}},
+  {"question": {"type": "text", "value": "The apples ___ red"}, "answer": {"type": "text", "value": "are"}},
   {"question": {"type": "text", "value": "The apple ___ red"}, "answer": {"type": "text", "value": "is"}}
 ],
 
