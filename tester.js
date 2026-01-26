@@ -193,29 +193,49 @@ const updateWeightForKey = (key, index, change) => {
 // Function to select a weighted random index
 const getWeightedRandomIndexes = (list, key, setItems, count=1) => {
     const weights = getWeightsForKey(key, setItems, list);
-    indexes = [];
-    totalWeight = weights.filter(number => number >= 0).reduce((acc, weight) => acc + weight, 0);
+    const eligibleIndexes = weights
+        .map((weight, index) => (weight >= 0 ? index : null))
+        .filter(index => index !== null);
+    const totalWeight = eligibleIndexes.reduce((acc, index) => acc + weights[index], 0);
 
-    while (indexes.length < count && totalWeight > 0) {
-        const randomWeight = Math.random() * totalWeight;
+    if (eligibleIndexes.length === 0) {
+        return [];
+    }
+
+    const targetCount = Math.min(count, eligibleIndexes.length);
+
+    if (totalWeight <= 0) {
+        const shuffled = eligibleIndexes.slice().sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, targetCount);
+    }
+
+    const indexes = [];
+    let remainingWeight = totalWeight;
+
+    while (indexes.length < targetCount && remainingWeight > 0) {
+        const randomWeight = Math.random() * remainingWeight;
         let weightSum = 0;
 
         for (let i = 0; i < weights.length; i++) {
-            if (i < 0 || indexes.includes(i)){
-                continue
+            if (weights[i] < 0 || indexes.includes(i)) {
+                continue;
             }
             weightSum += weights[i];
             if (randomWeight < weightSum) {
                 indexes.push(i);
-                totalWeight -= weights[i];
-                break
+                remainingWeight -= weights[i];
+                break;
             }
         }
     }
     return indexes;
 }
 const getWeightedRandomIndex = (list, key, setItems) => {
-    return getWeightedRandomIndexes(list, key, setItems, count=1);
+    const indexes = getWeightedRandomIndexes(list, key, setItems, count=1);
+    if (indexes.length) {
+        return indexes[0];
+    }
+    return list.length ? Math.floor(Math.random() * list.length) : null;
 }
 
 // Function to select additional random indexes excluding a specific index
@@ -1177,6 +1197,15 @@ var DisplayComponent = Vue.component('display',{
         this.displayAll = this.$route.path.startsWith('/display/all');
         this.displayNew = this.$route.path.startsWith('/display/news');
         this.items = this.getItems();
+        if (!this.items || this.items.length === 0) {
+            if (this.displayNew) {
+                setLocalStorage(`${this.currentAppId}_new_items`, []);
+                this.$router.push('/play/' + this.currentAppType + '/' + this.currentAppId);
+                return;
+            }
+            this.$router.push('/app/' + this.currentAppId);
+            return;
+        }
         this.display();
 
     },
