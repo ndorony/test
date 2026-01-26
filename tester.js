@@ -1197,6 +1197,15 @@ var DisplayComponent = Vue.component('display',{
         this.displayAll = this.$route.path.startsWith('/display/all');
         this.displayNew = this.$route.path.startsWith('/display/news');
         this.items = this.getItems();
+        if (!this.items || this.items.length === 0) {
+            if (this.displayNew) {
+                setLocalStorage(`${this.currentAppId}_new_items`, []);
+                this.$router.push('/play/' + this.currentAppType + '/' + this.currentAppId);
+                return;
+            }
+            this.$router.push('/app/' + this.currentAppId);
+            return;
+        }
         this.display();
 
     },
