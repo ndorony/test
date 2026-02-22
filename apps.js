@@ -152,6 +152,34 @@ apps =  {
 
           ]
         },
+        {
+          name: 'משחק חדש',
+          type: 'menu',
+          items: [
+            {
+              name: 'אנגלית לעברית',
+              type: 'menu',
+              items: [
+                {icon: 'format_shapes', name:'כל המילים', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_GAME_VOCAB', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
+              ]
+            },
+            {
+              name: 'עברית לאנגלית',
+              type: 'menu',
+              items: [
+                {icon: 'format_shapes', name:'כל המילים', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_GAME_VOCAB', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
+              ]
+            },
+            {
+              name: 'נושאים נוספים',
+              type: 'menu',
+              items: [
+                {icon: 'record_voice_over', name:'הגייה', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_GAME_PRONUNCIATION', questionIndex: 'question', resultIndex: 'answer', setItems: 5},
+                {icon: 'rule', name:'דקדוק', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_GAME_GRAMMAR', questionIndex: 'question', resultIndex: 'answer', setItems: 4},
+              ]
+            },
+          ]
+        },
       ]
     },
     {
