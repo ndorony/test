@@ -481,7 +481,7 @@ var MCQComponent = Vue.component('msq',Vue.extend({
             <h3 v-html="exercise" :style="{color: theme.colors.text}"></h3>
         </div>
         <div class="row">
-            <a class="waves-effect waves-light btn-large result"
+            <a class="waves-effect waves-light btn-large result answer-option"
                v-for="(result, index) in results"
                v-on:click="check(index)"
                :style="{background: theme.colors.secondary}">{{ result }}</a>
@@ -980,7 +980,7 @@ var FallingAnswersComponent = Vue.component('falling-answers', Vue.extend({
             <div class="game-area" ref="gameArea">
                 <div v-for="answer in fallingAnswers"
                      :key="answer.id"
-                     class="falling-answer"
+                     class="falling-answer answer-option"
                      :style="{top: answer.top + 'px', left: answer.left + 'px'}"
                      @click="checkAnswer(answer)">
                     {{ answer.text }}
