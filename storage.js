@@ -18,7 +18,12 @@ function setLocalStorage(key, value) {
     if (typeof value === "object") { // Check if value is an object/array
         value = JSON.stringify(value); // Convert object/array to JSON string
     }
-    localStorage.setItem(getKey(key), value);
+    var fullKey = getKey(key);
+    localStorage.setItem(fullKey, value);
+    // Cloud sync hook
+    if (typeof firebaseSyncLocalStorageKey === 'function') {
+        firebaseSyncLocalStorageKey(fullKey, value);
+    }
 }
 
 function getLocalStorage(key, defaultValue) {
@@ -77,7 +82,12 @@ function recordAttemptResult(key, index, isSuccess, limit=5){
     const itemHistory = history[index] || [];
     itemHistory.push(isSuccess);
     history[index] = itemHistory.slice(-limit);
-    localStorage.setItem(storageKey, JSON.stringify(history));
+    var value = JSON.stringify(history);
+    localStorage.setItem(storageKey, value);
+    // Cloud sync hook
+    if (typeof firebaseSyncLocalStorageKey === 'function') {
+        firebaseSyncLocalStorageKey(storageKey, value);
+    }
 }
 
 function getAttemptHistory(key){
@@ -87,6 +97,10 @@ function getAttemptHistory(key){
 function setVoice(lang, uri){
     console.log(`Set ${lang} ${uri}`)
     localStorage.setItem(`${lang}_voice`, uri);
+    // Cloud sync hook
+    if (typeof firebaseSyncVoice === 'function') {
+        firebaseSyncVoice(lang, uri);
+    }
 }
 
 let voices = [];

@@ -141,8 +141,10 @@ const getWeightsForKey = (key, setItems, elements) => {
             newWeights = updateWeights(key, weights, setItems);
             if (newWeights) {
                 weights = newWeights;
-                localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
-
+                var wKey = getWeightsKey(key);
+                var wVal = JSON.stringify(weights);
+                localStorage.setItem(wKey, wVal);
+                if (typeof firebaseSyncLocalStorageKey === 'function') firebaseSyncLocalStorageKey(wKey, wVal);
             }
         }
         return weights;
@@ -162,7 +164,10 @@ const getWeightsForKey = (key, setItems, elements) => {
     }
 
     // Store the generated weights in localStorage
-    localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
+    var wKey2 = getWeightsKey(key);
+    var wVal2 = JSON.stringify(weights);
+    localStorage.setItem(wKey2, wVal2);
+    if (typeof firebaseSyncLocalStorageKey === 'function') firebaseSyncLocalStorageKey(wKey2, wVal2);
     setCurrentLevelProgress(key, weights);
 
     return weights;
@@ -183,7 +188,10 @@ const updateWeightForKey = (key, index, change) => {
     weights[index] = Math.max(0, Math.min(weights[index] + change, 15));
 
     // Store the updated weights back in localStorage
-    localStorage.setItem(getWeightsKey(key), JSON.stringify(weights));
+    var uwKey = getWeightsKey(key);
+    var uwVal = JSON.stringify(weights);
+    localStorage.setItem(uwKey, uwVal);
+    if (typeof firebaseSyncLocalStorageKey === 'function') firebaseSyncLocalStorageKey(uwKey, uwVal);
 
     setCurrentLevelProgress(key, weights);
 
@@ -1653,6 +1661,44 @@ var UserComponent = Vue.component('user', {
             <h4>{{ name }}</h4>
           </div>
 
+          <!-- Cloud Sync Section -->
+          <div class="col s8 offset-s2" style="margin-bottom: 20px;">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title" :style="{color: theme.colors.text}">
+                  <i class="material-icons" style="vertical-align: middle;">cloud</i>
+                  סנכרון ענן
+                </span>
+                <div v-if="!cloudConnected">
+                  <p :style="{color: theme.colors.text}">סנכרן את הנתונים שלך בין מכשירים עם חשבון Google</p>
+                  <a class="waves-effect waves-light btn" @click="cloudSignIn" :style="{background: theme.colors.secondary}" style="margin-top: 10px;">
+                    <i class="material-icons left">login</i>
+                    התחבר עם Google
+                  </a>
+                </div>
+                <div v-else>
+                  <p :style="{color: theme.colors.text}">
+                    <i class="material-icons tiny" style="color: #4caf50; vertical-align: middle;">check_circle</i>
+                    מחובר: {{ cloudEmail }}
+                  </p>
+                  <p :style="{color: theme.colors.text}" style="font-size: 0.85em;">
+                    {{ cloudStatus }}
+                  </p>
+                  <div style="margin-top: 10px;">
+                    <a class="waves-effect waves-light btn" @click="cloudSyncNow" :style="{background: theme.colors.secondary}" style="margin-left: 8px;">
+                      <i class="material-icons left">sync</i>
+                      סנכרן עכשיו
+                    </a>
+                    <a class="waves-effect waves-light btn red lighten-1" @click="cloudSignOut" style="margin-left: 8px;">
+                      <i class="material-icons left">logout</i>
+                      נתק
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="input-field col s8 offset-s2">
             <select id="useMode" @change="handleModeChange" v-model="selectedMode">
               <option v-for="mode in modes" :value="mode.key" :key="mode.key">{{ mode.description }}</option>
@@ -1724,27 +1770,101 @@ var UserComponent = Vue.component('user', {
         englishVoices: [],
         selectedHebrewVoice: '',
         selectedEnglishVoice: '',
+        cloudConnected: false,
+        cloudEmail: '',
+        cloudStatus: '',
     }
   },
 
   created: function() {
     this.themes = themeOptions;
     this.name = getUser();
-    userApps = [];
-    appList = getLocalStorage('appList', []);
-    appList.forEach(function(appId, index) {
-      name = getItemById(apps, appId).name
-      score = getScore(appId);
-      progress = getProgress(appId, 1);
-      userApps.push({id: appId,
-                     name: name,
-                     score: score,
-                     progress: progress})
-    });
-    this.apps = userApps;
+    this.loadUserApps();
     this.loadVoices();
+    this.updateCloudState();
+
+    // Listen for Firebase auth changes
+    var self = this;
+    window.addEventListener('firebase-auth-changed', function() {
+        self.updateCloudState();
+        // Reload user apps after sync
+        self.loadUserApps();
+    });
   },
   methods: {
+    loadUserApps: function() {
+      var userApps = [];
+      var appList = getLocalStorage('appList', []);
+      appList.forEach(function(appId) {
+        var item = getItemById(apps, appId);
+        if (item) {
+          userApps.push({
+            id: appId,
+            name: item.name,
+            score: getScore(appId),
+            progress: getProgress(appId, 1)
+          });
+        }
+      });
+      this.apps = userApps;
+    },
+    updateCloudState: function() {
+      if (typeof isFirebaseConnected === 'function' && isFirebaseConnected()) {
+        var user = getFirebaseUser();
+        this.cloudConnected = true;
+        this.cloudEmail = user ? user.email : '';
+        this.cloudStatus = 'מסונכרן';
+      } else {
+        this.cloudConnected = false;
+        this.cloudEmail = '';
+        this.cloudStatus = '';
+      }
+    },
+    cloudSignIn: function() {
+      var self = this;
+      if (typeof firebaseSignIn !== 'function') {
+        alert('Firebase לא מוגדר. יש להגדיר את Firebase config בקובץ firebase.js');
+        return;
+      }
+      self.cloudStatus = 'מתחבר...';
+      firebaseSignIn().then(function(user) {
+        self.cloudConnected = true;
+        self.cloudEmail = user.email;
+        self.cloudStatus = 'מסנכרן...';
+        return syncFromCloud();
+      }).then(function() {
+        self.cloudStatus = 'מסונכרן';
+        self.loadUserApps();
+        self.$forceUpdate();
+      }).catch(function(err) {
+        console.warn('Cloud sign-in failed:', err);
+        self.cloudStatus = 'ההתחברות נכשלה';
+        self.updateCloudState();
+      });
+    },
+    cloudSignOut: function() {
+      var self = this;
+      if (typeof firebaseSignOut !== 'function') return;
+      firebaseSignOut().then(function() {
+        self.cloudConnected = false;
+        self.cloudEmail = '';
+        self.cloudStatus = '';
+      });
+    },
+    cloudSyncNow: function() {
+      var self = this;
+      if (typeof syncToCloud !== 'function') return;
+      self.cloudStatus = 'מסנכרן...';
+      syncFromCloud().then(function() {
+        self.cloudStatus = 'סונכרן בהצלחה!';
+        self.loadUserApps();
+        setTimeout(function() {
+          self.cloudStatus = 'מסונכרן';
+        }, 2000);
+      }).catch(function() {
+        self.cloudStatus = 'הסנכרון נכשל';
+      });
+    },
     handleModeChange: function(){
         setActivityMode(this.selectedMode);
     },
@@ -1848,6 +1968,10 @@ const SignUp = {
         users.push(this.username);
         DATA['NAME'] = getUniqueElements(this.username);
         localStorage.setItem('users', JSON.stringify(removeDuplicates(users)));
+        // Sync users list to cloud if connected
+        if (typeof firebaseSyncUsers === 'function') {
+            firebaseSyncUsers();
+        }
         this.$router.push('/');
       } else {
         alert('הכנס שם משתמש');
