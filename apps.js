@@ -75,6 +75,7 @@ apps =  {
             {icon: 'format_shapes', name:'בית 1', type: 'app', appType: 'mcq', listName: 'MAN_1', questionIndex: 'english_name', resultIndex:'name', setItems: 5},
             {icon: 'format_shapes', name:'בית 2', type: 'app', appType: 'mcq', listName: 'MAN_2', questionIndex: 'english_name', resultIndex:'name', setItems: 5},
             {icon: 'format_shapes', name:'בית 3', type: 'app', appType: 'mcq', listName: 'MAN_3', questionIndex: 'english_name', resultIndex:'name', setItems: 5},
+            {icon: 'format_shapes', name:'בית 4', type: 'app', appType: 'mcq', listName: 'MAN_5', questionIndex: 'english_name', resultIndex:'name', setItems: 5},
             {icon: 'format_shapes', name:'פזמון', type: 'app', appType: 'mcq', listName: 'MAN_4', questionIndex: 'english_name', resultIndex:'name', setItems: 5},
           ]
         },
