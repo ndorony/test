@@ -67,7 +67,17 @@ apps =  {
         {icon: 'format_shapes', name:'חמש קופים קפצו על המיטה', type: 'app', appType: 'mcq', listName: 'FIVE_LITTLE_MONKEYS', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
         {icon: 'format_shapes', name:'קפיצה', type: 'app', appType: 'mcq', listName: 'JUMP', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
         {icon: 'format_shapes', name:'הנסיך', type: 'app', appType: 'mcq', listName: 'PRINCE', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
-        {icon: 'format_shapes', name:'גברים', type: 'app', appType: 'mcq', listName: 'MAN', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+        {
+          name: 'גברים',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'MAN', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+            {icon: 'format_shapes', name:'בית 1', type: 'app', appType: 'mcq', listName: 'MAN_1', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+            {icon: 'format_shapes', name:'בית 2', type: 'app', appType: 'mcq', listName: 'MAN_2', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+            {icon: 'format_shapes', name:'בית 3', type: 'app', appType: 'mcq', listName: 'MAN_3', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+            {icon: 'format_shapes', name:'פזמון', type: 'app', appType: 'mcq', listName: 'MAN_4', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
+          ]
+        },
         {icon: 'format_shapes', name:'החופש הגדול', type: 'app', appType: 'mcq', listName: 'SUMMER_VACATION', questionIndex: 'english_name', resultIndex:'hebrew_english_name', setItems: 3},
         {icon: 'format_shapes', name:'שלג', type: 'app', appType: 'mcq', listName: 'SNOW', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
        ]
