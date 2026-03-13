@@ -221,6 +221,7 @@ apps =  {
       type: 'menu',
       items: [
         {icon: 'format_size', name:'אותיות', type: 'app', appType: 'mcq', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter'},
+        {icon: 'format_list_numbered', name:'מספרים', type: 'app', appType: 'mcq', listName: 'HEBREW_NUMBERS', questionIndex: 'numberName', resultIndex: 'number'},
         {icon: 'format_size', name:'אותיות עם ניקוד', type: 'app', appType: 'mcq', listName: 'HEBREW_LETTERS_WITH_NIKUD', questionIndex: 'letter', resultIndex: 'letter', questionType: 'speech'},
         {icon: 'format_size', name:'השם שלי', type: 'app', appType: 'mcq', listName: 'NAME', questionIndex: 'letterName', resultIndex: 'letter'},
       ]
