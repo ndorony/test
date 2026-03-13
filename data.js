@@ -1821,6 +1821,20 @@ FAMILY: [
   }
 ],
 
+HEBREW_NUMBERS: [
+  {"number": {"type": "text", "value": "0"}, "numberName": {"type": "speech", "value": "אֶפֶס"}},
+  {"number": {"type": "text", "value": "1"}, "numberName": {"type": "speech", "value": "אֶחָד"}},
+  {"number": {"type": "text", "value": "2"}, "numberName": {"type": "speech", "value": "שְׁתַּיִם"}},
+  {"number": {"type": "text", "value": "3"}, "numberName": {"type": "speech", "value": "שָׁלוֹש"}},
+  {"number": {"type": "text", "value": "4"}, "numberName": {"type": "speech", "value": "אַרְבַּע"}},
+  {"number": {"type": "text", "value": "5"}, "numberName": {"type": "speech", "value": "חָמֵש"}},
+  {"number": {"type": "text", "value": "6"}, "numberName": {"type": "speech", "value": "שֵׁש"}},
+  {"number": {"type": "text", "value": "7"}, "numberName": {"type": "speech", "value": "שֶׁבַע"}},
+  {"number": {"type": "text", "value": "8"}, "numberName": {"type": "speech", "value": "שְׁמוֹנֶה"}},
+  {"number": {"type": "text", "value": "9"}, "numberName": {"type": "speech", "value": "תֵּשַׁע"}},
+  {"number": {"type": "text", "value": "10"}, "numberName": {"type": "speech", "value": "עֶשֶׂר"}}
+],
+
 
 NUMBERS: [
     {
