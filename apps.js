@@ -64,6 +64,34 @@ apps =  {
         {icon: 'format_shapes', name:'גברים', type: 'app', appType: 'mcq', listName: 'MAN', questionIndex: 'english_name', resultIndex:'name', setItems: 3},
        ]
       },
+      {
+      name: 'פרק 4',
+      type: 'menu',
+      items: [
+        {
+          name: 'אנגלית לעברית',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'אומנות, מוזיקה ופנאי', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_ART_MUSIC_AND_LEISURE', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+            {icon: 'format_shapes', name:'פעלים ופעולות', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_VERBS_AND_ACTIONS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+            {icon: 'format_shapes', name:'זמן ותדירות', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_TIME_AND_FREQUENCY', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+            {icon: 'format_shapes', name:'מילים נוספות ומיקום', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_OTHER_AND_LOCATION', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
+            {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
+          ]
+        },
+        {
+          name: 'עברית לאנגלית',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'אומנות, מוזיקה ופנאי', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_ART_MUSIC_AND_LEISURE', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+            {icon: 'format_shapes', name:'פעלים ופעולות', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_VERBS_AND_ACTIONS', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+            {icon: 'format_shapes', name:'זמן ותדירות', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_TIME_AND_FREQUENCY', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+            {icon: 'format_shapes', name:'מילים נוספות ומיקום', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_OTHER_AND_LOCATION', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
+            {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
+          ]
+        },
+      ]
+        },
       ]
     },
     {
