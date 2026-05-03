@@ -6931,6 +6931,68 @@ ENGLISH_0_29_VERBS_AND_PEOPLE: [
   {"hebrew": {"type": "text", "value": "לנסות"}, "english": {"type": "text", "value": "Try"}, "english_name": {"type": "text_to_speech", "value": "Try"}}
 ],
 
+ENGLISH_CHAPTER4_ART_MUSIC_AND_LEISURE: [
+  {"hebrew": {"type": "text", "value": "אומנות"}, "english": {"type": "text", "value": "Art"}, "english_name": {"type": "text_to_speech", "value": "Art"}},
+  {"hebrew": {"type": "text", "value": "אומן"}, "english": {"type": "text", "value": "Artist"}, "english_name": {"type": "text_to_speech", "value": "Artist"}},
+  {"hebrew": {"type": "text", "value": "מוזיקה"}, "english": {"type": "text", "value": "Music"}, "english_name": {"type": "text_to_speech", "value": "Music"}},
+  {"hebrew": {"type": "text", "value": "להקה"}, "english": {"type": "text", "value": "Band"}, "english_name": {"type": "text_to_speech", "value": "Band"}},
+  {"hebrew": {"type": "text", "value": "גיטרה"}, "english": {"type": "text", "value": "Guitar"}, "english_name": {"type": "text_to_speech", "value": "Guitar"}},
+  {"hebrew": {"type": "text", "value": "זמר"}, "english": {"type": "text", "value": "Singer"}, "english_name": {"type": "text_to_speech", "value": "Singer"}},
+  {"hebrew": {"type": "text", "value": "רדיו"}, "english": {"type": "text", "value": "Radio"}, "english_name": {"type": "text_to_speech", "value": "Radio"}},
+  {"hebrew": {"type": "text", "value": "קולנוע"}, "english": {"type": "text", "value": "Cinema"}, "english_name": {"type": "text_to_speech", "value": "Cinema"}},
+  {"hebrew": {"type": "text", "value": "תיאטרון"}, "english": {"type": "text", "value": "Theater"}, "english_name": {"type": "text_to_speech", "value": "Theater"}},
+  {"hebrew": {"type": "text", "value": "מוזיאון"}, "english": {"type": "text", "value": "Museum"}, "english_name": {"type": "text_to_speech", "value": "Museum"}},
+  {"hebrew": {"type": "text", "value": "סרט"}, "english": {"type": "text", "value": "Movie / Film"}, "english_name": {"type": "text_to_speech", "value": "Movie film"}},
+  {"hebrew": {"type": "text", "value": "הצגה / מופע"}, "english": {"type": "text", "value": "Show / Performance"}, "english_name": {"type": "text_to_speech", "value": "Show performance"}},
+  {"hebrew": {"type": "text", "value": "כרטיס"}, "english": {"type": "text", "value": "Ticket"}, "english_name": {"type": "text_to_speech", "value": "Ticket"}},
+  {"hebrew": {"type": "text", "value": "מושב"}, "english": {"type": "text", "value": "Seat"}, "english_name": {"type": "text_to_speech", "value": "Seat"}},
+  {"hebrew": {"type": "text", "value": "מצלמה"}, "english": {"type": "text", "value": "Camera"}, "english_name": {"type": "text_to_speech", "value": "Camera"}},
+  {"hebrew": {"type": "text", "value": "מפורסם"}, "english": {"type": "text", "value": "Famous"}, "english_name": {"type": "text_to_speech", "value": "Famous"}}
+],
+
+ENGLISH_CHAPTER4_VERBS_AND_ACTIONS: [
+  {"hebrew": {"type": "text", "value": "לשיר"}, "english": {"type": "text", "value": "Sing"}, "english_name": {"type": "text_to_speech", "value": "Sing"}},
+  {"hebrew": {"type": "text", "value": "לנגן / לשחק"}, "english": {"type": "text", "value": "Play"}, "english_name": {"type": "text_to_speech", "value": "Play"}},
+  {"hebrew": {"type": "text", "value": "לשמוע"}, "english": {"type": "text", "value": "Hear"}, "english_name": {"type": "text_to_speech", "value": "Hear"}},
+  {"hebrew": {"type": "text", "value": "להקשיב"}, "english": {"type": "text", "value": "Listen"}, "english_name": {"type": "text_to_speech", "value": "Listen"}},
+  {"hebrew": {"type": "text", "value": "להתאמן / לתרגל"}, "english": {"type": "text", "value": "Practice"}, "english_name": {"type": "text_to_speech", "value": "Practice"}},
+  {"hebrew": {"type": "text", "value": "לצייר"}, "english": {"type": "text", "value": "Draw"}, "english_name": {"type": "text_to_speech", "value": "Draw"}},
+  {"hebrew": {"type": "text", "value": "לצבוע"}, "english": {"type": "text", "value": "Paint"}, "english_name": {"type": "text_to_speech", "value": "Paint"}},
+  {"hebrew": {"type": "text", "value": "להציג / לשחק"}, "english": {"type": "text", "value": "Act"}, "english_name": {"type": "text_to_speech", "value": "Act"}},
+  {"hebrew": {"type": "text", "value": "לרקוד"}, "english": {"type": "text", "value": "Dance"}, "english_name": {"type": "text_to_speech", "value": "Dance"}},
+  {"hebrew": {"type": "text", "value": "לצפות / לראות"}, "english": {"type": "text", "value": "Watch / See"}, "english_name": {"type": "text_to_speech", "value": "Watch see"}},
+  {"hebrew": {"type": "text", "value": "לצלם"}, "english": {"type": "text", "value": "Take a photo"}, "english_name": {"type": "text_to_speech", "value": "Take a photo"}},
+  {"hebrew": {"type": "text", "value": "ללמוד"}, "english": {"type": "text", "value": "Learn"}, "english_name": {"type": "text_to_speech", "value": "Learn"}},
+  {"hebrew": {"type": "text", "value": "ללמד"}, "english": {"type": "text", "value": "Teach"}, "english_name": {"type": "text_to_speech", "value": "Teach"}}
+],
+
+ENGLISH_CHAPTER4_TIME_AND_FREQUENCY: [
+  {"hebrew": {"type": "text", "value": "תמיד"}, "english": {"type": "text", "value": "Always"}, "english_name": {"type": "text_to_speech", "value": "Always"}},
+  {"hebrew": {"type": "text", "value": "בדרך כלל"}, "english": {"type": "text", "value": "Usually"}, "english_name": {"type": "text_to_speech", "value": "Usually"}},
+  {"hebrew": {"type": "text", "value": "לעיתים קרובות"}, "english": {"type": "text", "value": "Often"}, "english_name": {"type": "text_to_speech", "value": "Often"}},
+  {"hebrew": {"type": "text", "value": "לפעמים"}, "english": {"type": "text", "value": "Sometimes"}, "english_name": {"type": "text_to_speech", "value": "Sometimes"}},
+  {"hebrew": {"type": "text", "value": "אף פעם"}, "english": {"type": "text", "value": "Never"}, "english_name": {"type": "text_to_speech", "value": "Never"}},
+  {"hebrew": {"type": "text", "value": "פעם אחת"}, "english": {"type": "text", "value": "Once"}, "english_name": {"type": "text_to_speech", "value": "Once"}},
+  {"hebrew": {"type": "text", "value": "פעמיים"}, "english": {"type": "text", "value": "Twice"}, "english_name": {"type": "text_to_speech", "value": "Twice"}},
+  {"hebrew": {"type": "text", "value": "ערב"}, "english": {"type": "text", "value": "Evening"}, "english_name": {"type": "text_to_speech", "value": "Evening"}},
+  {"hebrew": {"type": "text", "value": "לילה"}, "english": {"type": "text", "value": "Night"}, "english_name": {"type": "text_to_speech", "value": "Night"}},
+  {"hebrew": {"type": "text", "value": "הלילה / הערב"}, "english": {"type": "text", "value": "Tonight"}, "english_name": {"type": "text_to_speech", "value": "Tonight"}},
+  {"hebrew": {"type": "text", "value": "סוף שבוע"}, "english": {"type": "text", "value": "Weekend"}, "english_name": {"type": "text_to_speech", "value": "Weekend"}}
+],
+
+ENGLISH_CHAPTER4_OTHER_AND_LOCATION: [
+  {"hebrew": {"type": "text", "value": "להבין"}, "english": {"type": "text", "value": "Understand"}, "english_name": {"type": "text_to_speech", "value": "Understand"}},
+  {"hebrew": {"type": "text", "value": "לבקר"}, "english": {"type": "text", "value": "Visit"}, "english_name": {"type": "text_to_speech", "value": "Visit"}},
+  {"hebrew": {"type": "text", "value": "כל מקום"}, "english": {"type": "text", "value": "Everywhere"}, "english_name": {"type": "text_to_speech", "value": "Everywhere"}},
+  {"hebrew": {"type": "text", "value": "בין"}, "english": {"type": "text", "value": "Between"}, "english_name": {"type": "text_to_speech", "value": "Between"}},
+  {"hebrew": {"type": "text", "value": "מעל"}, "english": {"type": "text", "value": "Above"}, "english_name": {"type": "text_to_speech", "value": "Above"}},
+  {"hebrew": {"type": "text", "value": "על / אודות"}, "english": {"type": "text", "value": "About"}, "english_name": {"type": "text_to_speech", "value": "About"}},
+  {"hebrew": {"type": "text", "value": "כאן"}, "english": {"type": "text", "value": "Here"}, "english_name": {"type": "text_to_speech", "value": "Here"}},
+  {"hebrew": {"type": "text", "value": "שיעור"}, "english": {"type": "text", "value": "Lesson"}, "english_name": {"type": "text_to_speech", "value": "Lesson"}},
+  {"hebrew": {"type": "text", "value": "כל דבר"}, "english": {"type": "text", "value": "Anything / Everything"}, "english_name": {"type": "text_to_speech", "value": "Anything everything"}},
+  {"hebrew": {"type": "text", "value": "ברוך הבא"}, "english": {"type": "text", "value": "Welcome"}, "english_name": {"type": "text_to_speech", "value": "Welcome"}}
+],
+
 ENGLISH_TO_BE_PRESENT: [
   {"question": {"type": "text", "value": "I"}, "answer": {"type": "text", "value": "am"}},
   {"question": {"type": "text", "value": "You"}, "answer": {"type": "text", "value": "are"}},
@@ -7050,6 +7112,8 @@ ENGLISH_0_28_ALL: [],
 
 ENGLISH_0_29_ALL: [],
 
+ENGLISH_CHAPTER4_ALL: [],
+
 ENGLISH_VOCAB_ALL: [],
 
 ADDITION: createAsymmetricExercises(10, inverseAddition, "ADDITION"),
@@ -7094,6 +7158,14 @@ const ENGLISH_0_29_LISTS = [
     DATA.ENGLISH_0_29_VERBS_AND_PEOPLE,
 ];
 DATA.ENGLISH_0_29_ALL = ENGLISH_0_29_LISTS.flat();
+
+const ENGLISH_CHAPTER4_LISTS = [
+    DATA.ENGLISH_CHAPTER4_ART_MUSIC_AND_LEISURE,
+    DATA.ENGLISH_CHAPTER4_VERBS_AND_ACTIONS,
+    DATA.ENGLISH_CHAPTER4_TIME_AND_FREQUENCY,
+    DATA.ENGLISH_CHAPTER4_OTHER_AND_LOCATION,
+];
+DATA.ENGLISH_CHAPTER4_ALL = ENGLISH_CHAPTER4_LISTS.flat();
 
 function filterABCByString(lettersStr, abcList) {
     const letterSet = new Set(lettersStr.split("")); // להאיץ את הבדיקה
