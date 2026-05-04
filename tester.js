@@ -177,6 +177,14 @@ const updateWeightForKey = (key, index, change) => {
     // Retrieve the current weights from localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
     recordAttemptResult(key, index, change < 0);
+    if (typeof gtag === 'function') {
+        var _appItem = getItemById(apps, key);
+        gtag('event', 'question_answered', {
+            app_id: key,
+            app_name: _appItem ? _appItem.name : key,
+            is_correct: change < 0
+        });
+    }
     if (!storedWeights) {
         return
     }
@@ -1741,6 +1749,7 @@ var UserComponent = Vue.component('user', {
               <div class="card-content">
                 <span class="card-title"><router-link :to="'/app/' + app.id" style="width: 100%; margin-bottom: 20px;">{{ app.name }}</router-link></span>
                 <p>נקודות: {{ app.score }}</p>
+                <p v-if="app.successRate !== null" :style="{color: theme.colors.text}">הצלחה: {{ app.successRate }}% ({{ app.totalAttempts }} ניסיונות)</p>
                 <progress-bar :title="'התקדמות'" :progress="app.progress" :theme="theme"></progress-bar>
                 </div>
               </div>
@@ -1798,11 +1807,18 @@ var UserComponent = Vue.component('user', {
       appList.forEach(function(appId) {
         var item = getItemById(apps, appId);
         if (item) {
+          var history = getAttemptHistory(appId);
+          var allAttempts = Object.values(history).reduce(function(acc, arr) { return acc.concat(arr); }, []);
+          var successRate = allAttempts.length > 0
+            ? Math.round((allAttempts.filter(Boolean).length / allAttempts.length) * 100)
+            : null;
           userApps.push({
             id: appId,
             name: item.name,
             score: getScore(appId),
-            progress: getProgress(appId, 1)
+            progress: getProgress(appId, 1),
+            successRate: successRate,
+            totalAttempts: allAttempts.length
           });
         }
       });

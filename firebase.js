@@ -24,6 +24,7 @@ let _firebaseReady = false;
 
 try {
     firebaseApp = firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
     firebaseAuth = firebase.auth();
     firebaseDb = firebase.firestore();
     _firebaseReady = true;
