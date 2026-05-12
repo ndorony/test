@@ -7108,11 +7108,67 @@ ENGLISH_NEW_GAME_PRONUNCIATION: [
   {"question": {"type": "text", "value": "סיומת /er/"}, "answer": {"type": "text", "value": "center"}}
 ],
 
+
+ENGLISH_NEW_CHAPTER4_GENERAL_WORDS: [
+  {"hebrew": {"type": "text", "value": "עיר"}, "english": {"type": "text", "value": "City"}, "english_name": {"type": "text_to_speech", "value": "City"}},
+  {"hebrew": {"type": "text", "value": "פנים"}, "english": {"type": "text", "value": "Face"}, "english_name": {"type": "text_to_speech", "value": "Face"}},
+  {"hebrew": {"type": "text", "value": "מיץ"}, "english": {"type": "text", "value": "Juice"}, "english_name": {"type": "text_to_speech", "value": "Juice"}},
+  {"hebrew": {"type": "text", "value": "עיפרון"}, "english": {"type": "text", "value": "Pencil"}, "english_name": {"type": "text_to_speech", "value": "Pencil"}},
+  {"hebrew": {"type": "text", "value": "מקום"}, "english": {"type": "text", "value": "Place"}, "english_name": {"type": "text_to_speech", "value": "Place"}},
+  {"hebrew": {"type": "text", "value": "משטרה"}, "english": {"type": "text", "value": "Police"}, "english_name": {"type": "text_to_speech", "value": "Police"}},
+  {"hebrew": {"type": "text", "value": "נחמד"}, "english": {"type": "text", "value": "Nice"}, "english_name": {"type": "text_to_speech", "value": "Nice"}},
+  {"hebrew": {"type": "text", "value": "תפוז"}, "english": {"type": "text", "value": "Orange"}, "english_name": {"type": "text_to_speech", "value": "Orange"}},
+  {"hebrew": {"type": "text", "value": "ירקות"}, "english": {"type": "text", "value": "Vegetables"}, "english_name": {"type": "text_to_speech", "value": "Vegetables"}},
+  {"hebrew": {"type": "text", "value": "זבל"}, "english": {"type": "text", "value": "Garbage"}, "english_name": {"type": "text_to_speech", "value": "Garbage"}}
+],
+
+ENGLISH_NEW_CHAPTER4_PEOPLE_AND_ACTIONS: [
+  {"hebrew": {"type": "text", "value": "לשנות"}, "english": {"type": "text", "value": "Change"}, "english_name": {"type": "text_to_speech", "value": "Change"}},
+  {"hebrew": {"type": "text", "value": "ענק"}, "english": {"type": "text", "value": "Giant"}, "english_name": {"type": "text_to_speech", "value": "Giant"}},
+  {"hebrew": {"type": "text", "value": "תינוק"}, "english": {"type": "text", "value": "Baby"}, "english_name": {"type": "text_to_speech", "value": "Baby"}},
+  {"hebrew": {"type": "text", "value": "לקנות"}, "english": {"type": "text", "value": "Buy"}, "english_name": {"type": "text_to_speech", "value": "Buy"}},
+  {"hebrew": {"type": "text", "value": "משפחה"}, "english": {"type": "text", "value": "Family"}, "english_name": {"type": "text_to_speech", "value": "Family"}},
+  {"hebrew": {"type": "text", "value": "לעוף"}, "english": {"type": "text", "value": "Fly"}, "english_name": {"type": "text_to_speech", "value": "Fly"}},
+  {"hebrew": {"type": "text", "value": "שמח"}, "english": {"type": "text", "value": "Happy"}, "english_name": {"type": "text_to_speech", "value": "Happy"}},
+  {"hebrew": {"type": "text", "value": "רעב"}, "english": {"type": "text", "value": "Hungry"}, "english_name": {"type": "text_to_speech", "value": "Hungry"}},
+  {"hebrew": {"type": "text", "value": "ספרייה"}, "english": {"type": "text", "value": "Library"}, "english_name": {"type": "text_to_speech", "value": "Library"}},
+  {"hebrew": {"type": "text", "value": "קוף"}, "english": {"type": "text", "value": "Monkey"}, "english_name": {"type": "text_to_speech", "value": "Monkey"}},
+  {"hebrew": {"type": "text", "value": "מסיבה"}, "english": {"type": "text", "value": "Party"}, "english_name": {"type": "text_to_speech", "value": "Party"}},
+  {"hebrew": {"type": "text", "value": "שמיים"}, "english": {"type": "text", "value": "Sky"}, "english_name": {"type": "text_to_speech", "value": "Sky"}},
+  {"hebrew": {"type": "text", "value": "צמא"}, "english": {"type": "text", "value": "Thirsty"}, "english_name": {"type": "text_to_speech", "value": "Thirsty"}}
+],
+
+ENGLISH_NEW_CHAPTER4_SEASONS_AND_WEATHER: [
+  {"hebrew": {"type": "text", "value": "חורף"}, "english": {"type": "text", "value": "Winter"}, "english_name": {"type": "text_to_speech", "value": "Winter"}},
+  {"hebrew": {"type": "text", "value": "אביב"}, "english": {"type": "text", "value": "Spring"}, "english_name": {"type": "text_to_speech", "value": "Spring"}},
+  {"hebrew": {"type": "text", "value": "קיץ"}, "english": {"type": "text", "value": "Summer"}, "english_name": {"type": "text_to_speech", "value": "Summer"}},
+  {"hebrew": {"type": "text", "value": "סתיו"}, "english": {"type": "text", "value": "Fall"}, "english_name": {"type": "text_to_speech", "value": "Fall"}},
+  {"hebrew": {"type": "text", "value": "עלים"}, "english": {"type": "text", "value": "Leaves"}, "english_name": {"type": "text_to_speech", "value": "Leaves"}},
+  {"hebrew": {"type": "text", "value": "מעונן"}, "english": {"type": "text", "value": "Cloudy"}, "english_name": {"type": "text_to_speech", "value": "Cloudy"}},
+  {"hebrew": {"type": "text", "value": "גשום"}, "english": {"type": "text", "value": "Rainy"}, "english_name": {"type": "text_to_speech", "value": "Rainy"}},
+  {"hebrew": {"type": "text", "value": "שלג"}, "english": {"type": "text", "value": "Snow"}, "english_name": {"type": "text_to_speech", "value": "Snow"}},
+  {"hebrew": {"type": "text", "value": "מושלג"}, "english": {"type": "text", "value": "Snowy"}, "english_name": {"type": "text_to_speech", "value": "Snowy"}},
+  {"hebrew": {"type": "text", "value": "שמשי"}, "english": {"type": "text", "value": "Sunny"}, "english_name": {"type": "text_to_speech", "value": "Sunny"}},
+  {"hebrew": {"type": "text", "value": "רוח"}, "english": {"type": "text", "value": "Wind"}, "english_name": {"type": "text_to_speech", "value": "Wind"}},
+  {"hebrew": {"type": "text", "value": "עם רוח"}, "english": {"type": "text", "value": "Windy"}, "english_name": {"type": "text_to_speech", "value": "Windy"}}
+],
+
+ENGLISH_NEW_CHAPTER4_WEATHER_SENTENCES: [
+  {"hebrew": {"type": "text", "value": "מה מזג האוויר היום?"}, "english": {"type": "text", "value": "What's the weather today?"}, "english_name": {"type": "text_to_speech", "value": "What's the weather today?"}},
+  {"hebrew": {"type": "text", "value": "שמשי היום."}, "english": {"type": "text", "value": "It is sunny today."}, "english_name": {"type": "text_to_speech", "value": "It is sunny today."}},
+  {"hebrew": {"type": "text", "value": "מעונן היום."}, "english": {"type": "text", "value": "It is cloudy today."}, "english_name": {"type": "text_to_speech", "value": "It is cloudy today."}},
+  {"hebrew": {"type": "text", "value": "גשום היום."}, "english": {"type": "text", "value": "It is rainy today."}, "english_name": {"type": "text_to_speech", "value": "It is rainy today."}},
+  {"hebrew": {"type": "text", "value": "מושלג היום."}, "english": {"type": "text", "value": "It is snowy today."}, "english_name": {"type": "text_to_speech", "value": "It is snowy today."}},
+  {"hebrew": {"type": "text", "value": "יש רוח היום."}, "english": {"type": "text", "value": "It is windy today."}, "english_name": {"type": "text_to_speech", "value": "It is windy today."}}
+],
+
 ENGLISH_0_28_ALL: [],
 
 ENGLISH_0_29_ALL: [],
 
 ENGLISH_CHAPTER4_ALL: [],
+
+ENGLISH_NEW_CHAPTER4_ALL: [],
 
 ENGLISH_VOCAB_ALL: [],
 
@@ -7166,6 +7222,15 @@ const ENGLISH_CHAPTER4_LISTS = [
     DATA.ENGLISH_CHAPTER4_OTHER_AND_LOCATION,
 ];
 DATA.ENGLISH_CHAPTER4_ALL = ENGLISH_CHAPTER4_LISTS.flat();
+
+const ENGLISH_NEW_CHAPTER4_LISTS = [
+    DATA.ENGLISH_NEW_CHAPTER4_GENERAL_WORDS,
+    DATA.ENGLISH_NEW_CHAPTER4_PEOPLE_AND_ACTIONS,
+    DATA.ENGLISH_NEW_CHAPTER4_SEASONS_AND_WEATHER,
+    DATA.ENGLISH_NEW_CHAPTER4_WEATHER_SENTENCES,
+];
+DATA.ENGLISH_NEW_CHAPTER4_ALL = ENGLISH_NEW_CHAPTER4_LISTS.flat();
+
 
 function filterABCByString(lettersStr, abcList) {
     const letterSet = new Set(lettersStr.split("")); // להאיץ את הבדיקה
