@@ -28,16 +28,20 @@ function getNItmes(number) {
 }
 
 
+function inlineHandlerString(value) {
+    return JSON.stringify(value).replace(/"/g, '&quot;');
+}
+
 function render(object) {
     switch (object.type) {
         case "text":
             return object.value;
         case "audio":
-        return `<a class="brand-logo" onclick="audio('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
+            return `<a class="brand-logo" onclick="audio(${inlineHandlerString(object.value)})"><i class="medium material-icons">play_circle_filled</i></a>`;
         case "text_to_speech":
-            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
+            return `<a class="brand-logo" onclick="text_to_speech(${inlineHandlerString(object.value)})">${object.value}</a>`;
         case "speech":
-            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
+            return `<a class="brand-logo" onclick="text_to_speech(${inlineHandlerString(object.value)})"><i class="medium material-icons">play_circle_filled</i></a>`;
         default:
             return null;
     }

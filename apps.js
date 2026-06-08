@@ -248,6 +248,7 @@ apps =  {
                 },
               ]
             },
+        {icon: 'visibility', name:'מילות Dolch - תרגום', type: 'app', appType: 'mcq', listName: 'DOLCH_SIGHT_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
       ]
     },
     {
