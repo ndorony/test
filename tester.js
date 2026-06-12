@@ -1381,17 +1381,21 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             post.position.set(x, 0.35, z);
             g.scene.add(post);
 
-            group.position.set(x, baseY, z);
-            // New balloons inflate from nothing (animated in animate())
+            // New balloons inflate on the ground next to their post, then
+            // float up to their place like helium (animated in animate())
+            const groundY = 1.15;
+            group.position.set(x, groundY, z);
             group.scale.setScalar(0.01);
             g.scene.add(group);
 
             const rec = {
                 group: group, sphere: sphere, sprite: sprite, string: string, post: post,
                 color: color, text: text, isCorrect: isCorrect,
-                x: x, z: z, baseY: baseY,
+                x: x, z: z, baseY: baseY, groundY: groundY,
                 phase: Math.random() * Math.PI * 2,
                 spawn: 0,
+                rise: 0,
+                settle: 0,
                 spawnDelay: spawnDelay || 0,
                 state: 'idle', vel: null,
             };
@@ -1583,17 +1587,27 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                     if (b.spawnDelay > 0) {
                         b.spawnDelay -= dt;
                     } else if (b.spawn < 1) {
-                        // Inflate with a slight overshoot (easeOutBack), like a real balloon
-                        b.spawn = Math.min(1, b.spawn + dt / 0.35);
+                        // Inflate on the ground with a slight overshoot (easeOutBack)
+                        b.spawn = Math.min(1, b.spawn + dt / 0.4);
                         const k = b.spawn - 1;
                         const scale = Math.max(0.01, 1 + 2.70158 * k * k * k + 1.70158 * k * k);
                         b.group.scale.setScalar(scale);
+                        b.group.position.y = b.groundY;
+                    } else if (b.rise < 1) {
+                        // Float up to place like a helium balloon (easeInOutSine)
+                        b.rise = Math.min(1, b.rise + dt / 1.1);
+                        const e = 0.5 - 0.5 * Math.cos(Math.PI * b.rise);
+                        b.group.position.y = b.groundY + (b.baseY - b.groundY) * e;
+                        b.group.rotation.z = Math.sin(t * 2.2 + b.phase) * 0.04;
+                    } else {
+                        // Hovering in place; bobbing amplitude fades in to avoid a jump
+                        b.settle = Math.min(1, b.settle + dt);
+                        b.group.position.y = b.baseY + Math.sin(t * 1.4 + b.phase) * 0.18 * b.settle;
+                        b.group.rotation.z = Math.sin(t * 1.1 + b.phase) * 0.05;
                     }
-                    b.group.position.y = b.baseY + Math.sin(t * 1.4 + b.phase) * 0.18;
-                    b.group.rotation.z = Math.sin(t * 1.1 + b.phase) * 0.05;
                     const positions = b.string.geometry.attributes.position;
                     // The string endpoint is in local coords; compensate for the
-                    // inflation scale so it stays tied to the post on the ground
+                    // position and inflation scale so it stays tied to the post
                     positions.setY(1, (-b.group.position.y + 0.7) / b.group.scale.y);
                     positions.needsUpdate = true;
                 } else if (b.state === 'flying') {
