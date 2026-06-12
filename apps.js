@@ -233,6 +233,7 @@ apps =  {
                     {icon: 'format_shapes', name:'עונות ומזג אוויר', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_CHAPTER4_SEASONS_AND_WEATHER', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
                     {icon: 'format_shapes', name:'משפטי מזג אוויר', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_CHAPTER4_WEATHER_SENTENCES', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
                     {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
+                    {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'ENGLISH_NEW_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
                   ]
                 },
                 {
@@ -244,6 +245,7 @@ apps =  {
                     {icon: 'format_shapes', name:'עונות ומזג אוויר', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_CHAPTER4_SEASONS_AND_WEATHER', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
                     {icon: 'format_shapes', name:'משפטי מזג אוויר', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_CHAPTER4_WEATHER_SENTENCES', questionIndex: 'hebrew', resultIndex: 'english', setItems: 3},
                     {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_NEW_CHAPTER4_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
+                    {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'ENGLISH_NEW_CHAPTER4_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
                   ]
                 },
               ]
