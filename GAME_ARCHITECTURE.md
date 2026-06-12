@@ -319,6 +319,7 @@ currentAppId, questionIndex, progress`.
 | `falling_answers` | `FallingAnswersComponent` | `listName, questionIndex, resultIndex` | לחיצה על התשובה הנכונה בזמן שהיא נופלת |
 | `s2t` | `SpeechToTextComponent` | `listName, questionIndex, resultIndex, title` | אמירת התשובה בקול (זיהוי דיבור) |
 | `balloon_shooter` | `BalloonShooterComponent` | `listName, questionIndex, resultIndex, title` | מטווח בלונים תלת-ממדי בגוף ראשון (Three.js) — יורים בבלון עם התשובה הנכונה |
+| `treasure_maze` | `TreasureMazeComponent` | `listName, questionIndex, resultIndex, title` | מבוך אוצר תלת-ממדי (Three.js) — 3 שערים, בוחרים את הדלת עם התשובה הנכונה כדי להתקדם |
 
 לאותו `listName` אפשר להגדיר כמה משחקים בכיוונים שונים — למשל `questionIndex:
 'english_name', resultIndex: 'hebrew'` מול ההפך — בלי לשכפל נתונים.
