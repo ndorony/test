@@ -250,6 +250,28 @@ apps =  {
                 },
               ]
             },
+        {
+              name: 'פרק 5',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes', name:'כל המילים', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
+                    {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes', name:'כל המילים', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
+                    {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
+                  ]
+                },
+              ]
+            },
         {icon: 'sports_esports', name:'מטווח בלונים - חיות', type: 'app', appType: 'balloon_shooter', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
       ]
     },
