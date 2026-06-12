@@ -2548,6 +2548,437 @@ var SpeechToTextComponent = Vue.component('s2t', Vue.extend({
 }));
 
 
+// Learning Platformer - 2D side-scroller (Phaser 3), Mario-style "answer blocks".
+// The level is a sequence of themed obstacles (river / clouds / doors / dragon).
+// Each obstacle blocks the path with 4 floating blocks, one per answer option.
+// Jumping into the correct block opens the way; a wrong block just grays out
+// and is eliminated - no falling, no dying - so young kids can always recover.
+var PlatformerComponent = Vue.component('platformer', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="row">
+            <h5 v-html="title" :style="{color: theme.colors.text}"></h5>
+        </div>
+        <div class="row">
+            <h3 v-html="exercise" :style="{color: theme.colors.text}"></h3>
+        </div>
+        <div class="row">
+            <div class="platformer-area" ref="gameArea"></div>
+        </div>
+        <div class="row platformer-controls">
+            <div class="platformer-dpad">
+                <button class="platformer-btn"
+                        @touchstart.prevent="touch.left = true" @touchend.prevent="touch.left = false"
+                        @touchcancel="touch.left = false"
+                        @mousedown="touch.left = true" @mouseup="touch.left = false"
+                        @mouseleave="touch.left = false">◀</button>
+                <button class="platformer-btn"
+                        @touchstart.prevent="touch.right = true" @touchend.prevent="touch.right = false"
+                        @touchcancel="touch.right = false"
+                        @mousedown="touch.right = true" @mouseup="touch.right = false"
+                        @mouseleave="touch.right = false">▶</button>
+            </div>
+            <button class="platformer-btn platformer-jump"
+                    @touchstart.prevent="touch.jump = true"
+                    @mousedown="touch.jump = true">קפוץ ⬆</button>
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
+    </div>
+    `,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            title: '',
+            list: [],
+            game: null,
+            touch: {left: false, right: false, jump: false},
+            destroyed: false,
+        }
+    },
+
+    methods: {
+        create: function() {
+            // The Phaser game starts from mounted(); base created() still calls this.
+        },
+
+        makeQuestion: function(usedIndexes) {
+            let qIndex = getWeightedRandomIndex(this.list, this.currentAppId, getSetItems(this.currentApp));
+            for (let tries = 0; usedIndexes.has(qIndex) && tries < 8; tries++) {
+                qIndex = getWeightedRandomIndex(this.list, this.currentAppId, getSetItems(this.currentApp));
+            }
+            usedIndexes.add(qIndex);
+
+            const wrongIndexes = getRandomIndexesExcluding(this.list, this.currentApp.resultIndex, qIndex);
+            const options = this.shuffle([
+                {text: String(this.list[qIndex][this.currentApp.resultIndex].value), correct: true},
+                ...wrongIndexes.map(i => ({text: String(this.list[i][this.currentApp.resultIndex].value), correct: false})),
+            ]);
+
+            const questionField = { ...this.list[qIndex][this.currentApp.questionIndex] };
+            if (this.currentApp.questionType) {
+                questionField.type = this.currentApp.questionType;
+            }
+            const showText = questionField.type === 'text' || questionField.type === 'text_to_speech';
+            return {
+                questionIndex: qIndex,
+                html: render(questionField),
+                banner: showText ? String(questionField.value) : '🔊 הקשב לשאלה',
+                action: generateQuestion(questionField),
+                options: options,
+            };
+        },
+
+        onCorrect: function(question) {
+            this.message = {value: this.getSuccessMsg(), success: true};
+            successSound.play();
+            updateWeightForKey(this.currentAppId, question.questionIndex, -1);
+            this.score += 1;
+            if (this.reloadProgress()) {
+                this.saveScore();
+            }
+        },
+
+        onWrong: function(question) {
+            failureSound.play();
+            this.score = Math.max(0, this.score - 1);
+            this.saveScore();
+            updateWeightForKey(this.currentAppId, question.questionIndex, 1);
+            this.message = {value: 'נסה שוב :(', error: true};
+            this.reloadProgress();
+        },
+
+        startGame: function() {
+            const vm = this;
+            const W = 900, H = 500, GROUND_H = 60;
+            const SEG = 860, INTRO = 600, OUTRO = 500;
+            const SPEED = 240, JUMP_VELOCITY = 580;
+
+            const BLOCK_TEXTURES = {river: 'pf_stone', clouds: 'pf_cloud', doors: 'pf_door', dragon: 'pf_block'};
+
+            function createTextures(scene) {
+                if (scene.textures.exists('pf_ground')) {
+                    return;
+                }
+                const g = scene.add.graphics();
+                g.fillStyle(0x5d4037); g.fillRect(0, 0, 64, GROUND_H);
+                g.fillStyle(0x7cb342); g.fillRect(0, 0, 64, 16);
+                g.generateTexture('pf_ground', 64, GROUND_H); g.clear();
+                g.fillStyle(0xffc107); g.fillRoundedRect(0, 0, 140, 84, 12);
+                g.lineStyle(5, 0xff8f00); g.strokeRoundedRect(3, 3, 134, 78, 12);
+                g.generateTexture('pf_block', 140, 84); g.clear();
+                g.fillStyle(0xffffff); g.fillRoundedRect(0, 0, 140, 84, 38);
+                g.generateTexture('pf_cloud', 140, 84); g.clear();
+                g.fillStyle(0x90a4ae); g.fillRoundedRect(0, 0, 140, 84, 16);
+                g.lineStyle(5, 0x607d8b); g.strokeRoundedRect(3, 3, 134, 78, 16);
+                g.generateTexture('pf_stone', 140, 84); g.clear();
+                g.fillStyle(0x8d6e63); g.fillRoundedRect(0, 0, 110, 150, {tl: 40, tr: 40, bl: 0, br: 0});
+                g.lineStyle(5, 0x5d4037); g.strokeRoundedRect(3, 3, 104, 144, {tl: 40, tr: 40, bl: 0, br: 0});
+                g.fillStyle(0xffd54f); g.fillCircle(88, 80, 7);
+                g.generateTexture('pf_door', 110, 150); g.clear();
+                g.fillStyle(0x4fc3f7); g.fillRect(0, 0, 64, GROUND_H);
+                g.generateTexture('pf_water', 64, GROUND_H); g.clear();
+                g.fillStyle(0x8d6e63); g.fillRect(0, 0, 64, 18);
+                g.lineStyle(2, 0x5d4037); g.strokeRect(0, 0, 64, 18);
+                g.generateTexture('pf_bridge', 64, 18); g.clear();
+                g.fillStyle(0xffd700); g.fillCircle(12, 12, 12);
+                g.fillStyle(0xfff59d); g.fillCircle(12, 12, 6);
+                g.generateTexture('pf_coin', 24, 24);
+                g.destroy();
+            }
+
+            function coinBurst(scene, x, y) {
+                for (let c = 0; c < 6; c++) {
+                    const coin = scene.add.image(x, y, 'pf_coin').setDepth(8);
+                    scene.tweens.add({
+                        targets: coin,
+                        x: x + (c - 2.5) * 34,
+                        y: y - 110 - Math.random() * 50,
+                        alpha: 0,
+                        duration: 700,
+                        ease: 'Cubic.easeOut',
+                        onComplete: () => coin.destroy(),
+                    });
+                }
+            }
+
+            function solveObstacle(scene, obstacle, chosenBlock) {
+                coinBurst(scene, chosenBlock.img.x, chosenBlock.img.y - 30);
+                chosenBlock.img.setTint(0x81c784);
+                obstacle.blocks.forEach(block => {
+                    scene.tweens.add({
+                        targets: [block.img, block.label],
+                        alpha: 0,
+                        y: '-=40',
+                        delay: block === chosenBlock ? 450 : 0,
+                        duration: 400,
+                        onComplete: () => block.img.disableBody(true, true),
+                    });
+                });
+                obstacle.barrier.destroy();
+                obstacle.deco.forEach(d => scene.tweens.add({targets: d, alpha: 0, duration: 600}));
+                if (obstacle.type === 'river') {
+                    scene.add.tileSprite(obstacle.wallX, H - GROUND_H + 9, 130, 18, 'pf_bridge').setDepth(4);
+                }
+                if (obstacle.dragon) {
+                    scene.tweens.add({
+                        targets: obstacle.dragon,
+                        x: '+=260',
+                        y: '-=330',
+                        alpha: 0,
+                        duration: 1100,
+                        ease: 'Cubic.easeIn',
+                    });
+                }
+            }
+
+            function handleChoice(scene, obstacle, block) {
+                if (vm.destroyed || obstacle.answered || block.disabled) {
+                    return;
+                }
+                if (block.correct) {
+                    obstacle.answered = true;
+                    scene.bannerText.setText('🪙 רוץ קדימה!');
+                    solveObstacle(scene, obstacle, block);
+                    vm.onCorrect(obstacle.q);
+                } else {
+                    block.disabled = true;
+                    block.img.setTint(0x9e9e9e);
+                    block.label.setAlpha(0.4);
+                    scene.cameras.main.shake(150, 0.004);
+                    vm.onWrong(obstacle.q);
+                }
+            }
+
+            function buildObstacle(scene, type, baseX, q, groundTop) {
+                const obstacle = {type: type, q: q, answered: false, activated: false, blocks: [], deco: []};
+                const isDoors = type === 'doors';
+                const blockY = isDoors ? groundTop - 75 : groundTop - 170;
+
+                q.options.forEach((option, idx) => {
+                    const x = baseX + 150 + idx * 190;
+                    const img = scene.physics.add.staticImage(x, blockY, BLOCK_TEXTURES[type]).setDepth(4);
+                    const label = scene.add.text(x, isDoors ? blockY - 105 : blockY, option.text, {
+                        fontSize: '22px', fontFamily: 'Arial', color: '#212121', align: 'center',
+                        wordWrap: {width: 125},
+                    }).setOrigin(0.5).setDepth(5);
+                    const block = {img: img, label: label, correct: option.correct, disabled: false};
+                    scene.physics.add.overlap(scene.player, img, () => handleChoice(scene, obstacle, block));
+                    obstacle.blocks.push(block);
+                });
+
+                // Invisible wall that opens when the obstacle is solved
+                obstacle.wallX = baseX + 815;
+                const wall = scene.add.rectangle(obstacle.wallX, H / 2, 26, H, 0x000000, 0);
+                scene.physics.add.existing(wall, true);
+                scene.physics.add.collider(scene.player, wall);
+                obstacle.barrier = wall;
+
+                // Themed scenery on the blocked passage
+                if (type === 'river') {
+                    obstacle.deco.push(scene.add.tileSprite(obstacle.wallX, H - GROUND_H / 2, 130, GROUND_H, 'pf_water').setDepth(3));
+                    obstacle.deco.push(scene.add.text(obstacle.wallX, groundTop - 36, '🌊', {fontSize: '40px'}).setOrigin(0.5));
+                } else if (type === 'clouds') {
+                    for (let i = 0; i < 3; i++) {
+                        obstacle.deco.push(scene.add.text(obstacle.wallX, groundTop - 40 - i * 86, '☁️', {fontSize: '72px'}).setOrigin(0.5));
+                    }
+                } else if (type === 'doors') {
+                    for (let i = 0; i < 3; i++) {
+                        obstacle.deco.push(scene.add.text(obstacle.wallX, groundTop - 30 - i * 60, '🧱', {fontSize: '56px'}).setOrigin(0.5));
+                    }
+                } else if (type === 'dragon') {
+                    obstacle.dragon = scene.add.text(obstacle.wallX - 20, groundTop - 70, '🐉', {fontSize: '88px'}).setOrigin(0.5).setDepth(4);
+                    scene.tweens.add({
+                        targets: obstacle.dragon,
+                        y: '-=26',
+                        duration: 900,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut',
+                    });
+                }
+
+                // Activation zone: shows + reads the question when the player arrives
+                const trigger = scene.add.rectangle(baseX + 30, H / 2, 30, H, 0x000000, 0);
+                scene.physics.add.existing(trigger, true);
+                scene.physics.add.overlap(scene.player, trigger, () => {
+                    if (vm.destroyed || obstacle.activated) {
+                        return;
+                    }
+                    obstacle.activated = true;
+                    scene.currentQ = q;
+                    scene.lastCheckpointX = baseX + 30;
+                    vm.exercise = q.html;
+                    vm.message = {};
+                    scene.bannerText.setText(q.banner);
+                    try { q.action(); } catch (e) {}
+                });
+
+                return obstacle;
+            }
+
+            function sceneCreate() {
+                const scene = this;
+                createTextures(scene);
+
+                const usedIndexes = new Set();
+                const themes = vm.shuffle(['river', 'clouds', 'doors']).concat(['dragon']);
+                const total = INTRO + themes.length * SEG + OUTRO;
+                const groundTop = H - GROUND_H;
+                scene.groundTop = groundTop;
+                scene.lastCheckpointX = 120;
+                scene.levelDone = false;
+                scene.currentQ = null;
+
+                scene.physics.world.setBounds(0, 0, total, H);
+                scene.cameras.main.setBounds(0, 0, total, H);
+
+                // Background decorations
+                scene.add.text(70, 50, '☀️', {fontSize: '54px'}).setScrollFactor(0);
+                for (let x = 200; x < total; x += 380) {
+                    scene.add.text(x, 80 + (x % 3) * 30, '☁️', {fontSize: '40px'}).setScrollFactor(0.4).setAlpha(0.8);
+                }
+                for (let x = 330; x < total; x += 510) {
+                    scene.add.text(x, groundTop + 6, '🌳', {fontSize: '48px'}).setOrigin(0.5, 1).setDepth(1);
+                }
+
+                const ground = scene.add.tileSprite(total / 2, H - GROUND_H / 2, total, GROUND_H, 'pf_ground').setDepth(2);
+                scene.physics.add.existing(ground, true);
+
+                const player = scene.add.text(120, groundTop - 60, '🏃', {fontSize: '42px'}).setOrigin(0.5).setDepth(6);
+                player.setFlipX(true); // the emoji faces left by default; start facing right
+                scene.physics.add.existing(player);
+                player.body.setSize(34, 44);
+                player.body.setOffset((player.width - 34) / 2, (player.height - 44) / 2);
+                player.body.setCollideWorldBounds(true);
+                scene.physics.add.collider(player, ground);
+                scene.player = player;
+
+                // Fixed question banner on top of the game view; tap to hear again
+                const banner = scene.add.rectangle(W / 2, 38, W - 28, 60, 0x1a237e, 0.55)
+                    .setScrollFactor(0).setDepth(9).setInteractive();
+                scene.bannerText = scene.add.text(W / 2, 38, '➡ רוץ ימינה!', {
+                    fontSize: '28px', fontFamily: 'Arial', color: '#ffffff',
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(10);
+                banner.on('pointerdown', () => {
+                    if (scene.currentQ) {
+                        try { scene.currentQ.action(); } catch (e) {}
+                    }
+                });
+
+                themes.forEach((type, i) => buildObstacle(scene, type, INTRO + i * SEG, vm.makeQuestion(usedIndexes), groundTop));
+
+                // Trophy at the end of the level -> rebuild with fresh questions
+                const trophy = scene.add.text(total - 180, groundTop - 44, '🏆', {fontSize: '58px'}).setOrigin(0.5);
+                scene.physics.add.existing(trophy, true);
+                scene.physics.add.overlap(player, trophy, () => {
+                    if (vm.destroyed || scene.levelDone) {
+                        return;
+                    }
+                    scene.levelDone = true;
+                    vm.message = {value: vm.getSuccessMsg(), success: true};
+                    coinBurst(scene, trophy.x, trophy.y);
+                    scene.time.delayedCall(900, () => {
+                        if (!vm.destroyed && vm.reloadProgress()) {
+                            vm.exercise = '';
+                            scene.scene.restart();
+                        }
+                    });
+                });
+
+                scene.cursors = scene.input.keyboard.createCursorKeys();
+                scene.coyoteUntil = 0;
+                scene.jumpBufferUntil = 0;
+                scene.cameras.main.startFollow(player, true, 0.12, 0.12);
+            }
+
+            function sceneUpdate(time) {
+                const scene = this;
+                const player = scene.player;
+                if (!player || !player.body) {
+                    return;
+                }
+
+                const left = scene.cursors.left.isDown || vm.touch.left;
+                const right = scene.cursors.right.isDown || vm.touch.right;
+                if (left && !right) {
+                    player.body.setVelocityX(-SPEED);
+                    player.setFlipX(false);
+                } else if (right && !left) {
+                    player.body.setVelocityX(SPEED);
+                    player.setFlipX(true);
+                } else {
+                    player.body.setVelocityX(0);
+                }
+
+                // Forgiving jump: coyote time + jump buffering
+                if (player.body.blocked.down || player.body.touching.down) {
+                    scene.coyoteUntil = time + 120;
+                }
+                const jumpPressed = Phaser.Input.Keyboard.JustDown(scene.cursors.up)
+                    || Phaser.Input.Keyboard.JustDown(scene.cursors.space)
+                    || vm.touch.jump;
+                vm.touch.jump = false;
+                if (jumpPressed) {
+                    scene.jumpBufferUntil = time + 140;
+                }
+                if (time < scene.jumpBufferUntil && time < scene.coyoteUntil) {
+                    player.body.setVelocityY(-JUMP_VELOCITY);
+                    scene.jumpBufferUntil = 0;
+                    scene.coyoteUntil = 0;
+                }
+
+                // Safety net: the level has no pits, but recover gracefully anyway
+                if (player.y > H + 80) {
+                    player.setPosition(scene.lastCheckpointX, scene.groundTop - 80);
+                    player.body.setVelocity(0, 0);
+                }
+            }
+
+            this.game = new Phaser.Game({
+                type: Phaser.AUTO,
+                parent: this.$refs.gameArea,
+                width: W,
+                height: H,
+                backgroundColor: '#aee4ff',
+                physics: {default: 'arcade', arcade: {gravity: {y: 1100}, debug: false}},
+                scale: {mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH},
+                scene: {create: sceneCreate, update: sceneUpdate},
+            });
+        },
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId;
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.updateScore();
+        if (!this.reloadProgress()) {
+            return;
+        }
+        this.title = this.currentApp.title || 'רוץ, קפוץ ופגע בתשובה הנכונה!';
+        this.list = getDataList(this.currentApp.listName);
+        if (typeof Phaser === 'undefined') {
+            this.message = {value: 'משחק הפלטפורמה לא נטען - בדוק חיבור לאינטרנט ונסה שוב', error: true};
+            return;
+        }
+        this.startGame();
+    },
+
+    beforeDestroy() {
+        this.destroyed = true;
+        if (this.game) {
+            this.game.destroy(true);
+            this.game = null;
+        }
+    },
+}));
+
+
 var AppComponent = Vue.component('app',{
     template: `<div>
 
@@ -3112,6 +3543,7 @@ const routes = [
     {path: '/play/draw_letter/:currentAppId', component: DrawLetterComponent, props: true },
     {path: '/play/falling_answers/:currentAppId', component: FallingAnswersComponent, props: true },
     {path: '/play/balloon_shooter/:currentAppId', component: BalloonShooterComponent, props: true },
+    {path: '/play/platformer/:currentAppId', component: PlatformerComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },

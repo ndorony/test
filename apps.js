@@ -274,6 +274,8 @@ apps =  {
             },
         {icon: 'sports_esports', name:'מטווח בלונים - חיות', type: 'app', appType: 'balloon_shooter', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
         {icon: 'sports_esports', name:'מטווח בלונים - מילות שאלה', type: 'app', appType: 'balloon_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
+        {icon: 'directions_run', name:'הרפתקת ריצה - חיות', type: 'app', appType: 'platformer', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
+        {icon: 'directions_run', name:'הרפתקת ריצה - מילים חדשות', type: 'app', appType: 'platformer', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
       ]
     },
     {
@@ -286,6 +288,7 @@ apps =  {
         {icon: 'remove_circle_outline', name:'חילוק', type: 'app', appType: 'mcq', listName: 'DIVISION', questionIndex: 'question', resultIndex: 'answer', setItems: 10},
         {icon: 'format_list_numbered', name:'ספירה', type: 'app', appType: 'mcq', listName: 'COUNT', questionIndex: 'question', resultIndex: 'answer'},
         {icon: 'sports_esports', name:'מטווח בלונים - חיבור', type: 'app', appType: 'balloon_shooter', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
+        {icon: 'directions_run', name:'הרפתקת ריצה - חיבור', type: 'app', appType: 'platformer', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
       ]
     },
     {

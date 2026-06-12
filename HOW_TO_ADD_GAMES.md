@@ -142,6 +142,7 @@ There are 2 types of items:
 | `falling_answers` | Falling Answers | Click the right answer as it falls |
 | `s2t` | Speech to Text | Say the answer out loud |
 | `balloon_shooter` | 3D Balloon Range | First-person shooting range (Three.js) - shoot the balloon with the right answer |
+| `platformer` | Learning Platformer | 2D Mario-style level (Phaser 3) - run and jump into the block with the right answer |
 
 ### Key Configuration Fields
 
