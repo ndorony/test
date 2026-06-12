@@ -7162,6 +7162,52 @@ ENGLISH_NEW_CHAPTER4_WEATHER_SENTENCES: [
   {"hebrew": {"type": "text", "value": "יש רוח היום."}, "english": {"type": "text", "value": "It is windy today."}, "english_name": {"type": "text_to_speech", "value": "It is windy today."}}
 ],
 
+ENGLISH_CHAPTER5_ALL: [
+  {"hebrew": {"type": "text", "value": "תשובה"}, "english": {"type": "text", "value": "answer"}, "english_name": {"type": "text_to_speech", "value": "answer"}},
+  {"hebrew": {"type": "text", "value": "אנגלית"}, "english": {"type": "text", "value": "English"}, "english_name": {"type": "text_to_speech", "value": "English"}},
+  {"hebrew": {"type": "text", "value": "שפה"}, "english": {"type": "text", "value": "language"}, "english_name": {"type": "text_to_speech", "value": "language"}},
+  {"hebrew": {"type": "text", "value": "לפגוש"}, "english": {"type": "text", "value": "meet"}, "english_name": {"type": "text_to_speech", "value": "meet"}},
+  {"hebrew": {"type": "text", "value": "שאלה"}, "english": {"type": "text", "value": "question"}, "english_name": {"type": "text_to_speech", "value": "question"}},
+  {"hebrew": {"type": "text", "value": "לדבר"}, "english": {"type": "text", "value": "speak"}, "english_name": {"type": "text_to_speech", "value": "speak"}},
+  {"hebrew": {"type": "text", "value": "בית מלון"}, "english": {"type": "text", "value": "hotel"}, "english_name": {"type": "text_to_speech", "value": "hotel"}},
+  {"hebrew": {"type": "text", "value": "קרח"}, "english": {"type": "text", "value": "ice"}, "english_name": {"type": "text_to_speech", "value": "ice"}},
+  {"hebrew": {"type": "text", "value": "מעניין"}, "english": {"type": "text", "value": "interesting"}, "english_name": {"type": "text_to_speech", "value": "interesting"}},
+  {"hebrew": {"type": "text", "value": "מפתח"}, "english": {"type": "text", "value": "key"}, "english_name": {"type": "text_to_speech", "value": "key"}},
+  {"hebrew": {"type": "text", "value": "להישאר / לשהות"}, "english": {"type": "text", "value": "stay"}, "english_name": {"type": "text_to_speech", "value": "stay"}},
+  {"hebrew": {"type": "text", "value": "מבקר / אורח"}, "english": {"type": "text", "value": "visitor"}, "english_name": {"type": "text_to_speech", "value": "visitor"}},
+  {"hebrew": {"type": "text", "value": "לטלפן / להזמין / להתקשר"}, "english": {"type": "text", "value": "call"}, "english_name": {"type": "text_to_speech", "value": "call"}},
+  {"hebrew": {"type": "text", "value": "קרוב"}, "english": {"type": "text", "value": "close"}, "english_name": {"type": "text_to_speech", "value": "close"}},
+  {"hebrew": {"type": "text", "value": "פינה"}, "english": {"type": "text", "value": "corner"}, "english_name": {"type": "text_to_speech", "value": "corner"}},
+  {"hebrew": {"type": "text", "value": "לחצות"}, "english": {"type": "text", "value": "cross"}, "english_name": {"type": "text_to_speech", "value": "cross"}},
+  {"hebrew": {"type": "text", "value": "נהג"}, "english": {"type": "text", "value": "driver"}, "english_name": {"type": "text_to_speech", "value": "driver"}},
+  {"hebrew": {"type": "text", "value": "סליחה"}, "english": {"type": "text", "value": "excuse me"}, "english_name": {"type": "text_to_speech", "value": "excuse me"}},
+  {"hebrew": {"type": "text", "value": "רחוק"}, "english": {"type": "text", "value": "far"}, "english_name": {"type": "text_to_speech", "value": "far"}},
+  {"hebrew": {"type": "text", "value": "אל תדאג"}, "english": {"type": "text", "value": "don't worry"}, "english_name": {"type": "text_to_speech", "value": "don't worry"}},
+  {"hebrew": {"type": "text", "value": "גבוה"}, "english": {"type": "text", "value": "high"}, "english_name": {"type": "text_to_speech", "value": "high"}},
+  {"hebrew": {"type": "text", "value": "מחשב"}, "english": {"type": "text", "value": "computer"}, "english_name": {"type": "text_to_speech", "value": "computer"}},
+  {"hebrew": {"type": "text", "value": "רעיון"}, "english": {"type": "text", "value": "idea"}, "english_name": {"type": "text_to_speech", "value": "idea"}},
+  {"hebrew": {"type": "text", "value": "מידע"}, "english": {"type": "text", "value": "information"}, "english_name": {"type": "text_to_speech", "value": "information"}},
+  {"hebrew": {"type": "text", "value": "לארוז"}, "english": {"type": "text", "value": "pack"}, "english_name": {"type": "text_to_speech", "value": "pack"}},
+  {"hebrew": {"type": "text", "value": "לתכנן"}, "english": {"type": "text", "value": "plan"}, "english_name": {"type": "text_to_speech", "value": "plan"}},
+  {"hebrew": {"type": "text", "value": "מוכן"}, "english": {"type": "text", "value": "ready"}, "english_name": {"type": "text_to_speech", "value": "ready"}},
+  {"hebrew": {"type": "text", "value": "מזוודה"}, "english": {"type": "text", "value": "suitcase"}, "english_name": {"type": "text_to_speech", "value": "suitcase"}},
+  {"hebrew": {"type": "text", "value": "חופשה"}, "english": {"type": "text", "value": "vacation"}, "english_name": {"type": "text_to_speech", "value": "vacation"}},
+  {"hebrew": {"type": "text", "value": "נמל תעופה"}, "english": {"type": "text", "value": "airport"}, "english_name": {"type": "text_to_speech", "value": "airport"}},
+  {"hebrew": {"type": "text", "value": "להגיע"}, "english": {"type": "text", "value": "arrive"}, "english_name": {"type": "text_to_speech", "value": "arrive"}},
+  {"hebrew": {"type": "text", "value": "לוח"}, "english": {"type": "text", "value": "board"}, "english_name": {"type": "text_to_speech", "value": "board"}},
+  {"hebrew": {"type": "text", "value": "טיסה"}, "english": {"type": "text", "value": "flight"}, "english_name": {"type": "text_to_speech", "value": "flight"}},
+  {"hebrew": {"type": "text", "value": "שער"}, "english": {"type": "text", "value": "gate"}, "english_name": {"type": "text_to_speech", "value": "gate"}},
+  {"hebrew": {"type": "text", "value": "לעזוב"}, "english": {"type": "text", "value": "leave"}, "english_name": {"type": "text_to_speech", "value": "leave"}},
+  {"hebrew": {"type": "text", "value": "תור"}, "english": {"type": "text", "value": "line"}, "english_name": {"type": "text_to_speech", "value": "line"}},
+  {"hebrew": {"type": "text", "value": "לפספס"}, "english": {"type": "text", "value": "miss"}, "english_name": {"type": "text_to_speech", "value": "miss"}},
+  {"hebrew": {"type": "text", "value": "מונית"}, "english": {"type": "text", "value": "taxi"}, "english_name": {"type": "text_to_speech", "value": "taxi"}},
+  {"hebrew": {"type": "text", "value": "דקה"}, "english": {"type": "text", "value": "minute"}, "english_name": {"type": "text_to_speech", "value": "minute"}},
+  {"hebrew": {"type": "text", "value": "בקרוב"}, "english": {"type": "text", "value": "soon"}, "english_name": {"type": "text_to_speech", "value": "soon"}},
+  {"hebrew": {"type": "text", "value": "דרך"}, "english": {"type": "text", "value": "way"}, "english_name": {"type": "text_to_speech", "value": "way"}},
+  {"hebrew": {"type": "text", "value": "ישר"}, "english": {"type": "text", "value": "straight"}, "english_name": {"type": "text_to_speech", "value": "straight"}},
+  {"hebrew": {"type": "text", "value": "לפנות"}, "english": {"type": "text", "value": "turn"}, "english_name": {"type": "text_to_speech", "value": "turn"}}
+],
+
 ENGLISH_0_28_ALL: [],
 
 ENGLISH_0_29_ALL: [],
@@ -7230,6 +7276,7 @@ const ENGLISH_NEW_CHAPTER4_LISTS = [
     DATA.ENGLISH_NEW_CHAPTER4_WEATHER_SENTENCES,
 ];
 DATA.ENGLISH_NEW_CHAPTER4_ALL = ENGLISH_NEW_CHAPTER4_LISTS.flat();
+
 
 
 function filterABCByString(lettersStr, abcList) {
