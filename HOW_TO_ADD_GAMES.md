@@ -141,6 +141,7 @@ There are 2 types of items:
 | `draw_letter` | Draw Letter | Draw a letter on canvas |
 | `falling_answers` | Falling Answers | Click the right answer as it falls |
 | `s2t` | Speech to Text | Say the answer out loud |
+| `balloon_shooter` | 3D Balloon Range | First-person shooting range (Three.js) - shoot the balloon with the right answer |
 
 ### Key Configuration Fields
 

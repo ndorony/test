@@ -318,6 +318,7 @@ currentAppId, questionIndex, progress`.
 | `draw_letter` | `DrawLetterComponent` | `listName, questionIndex, resultIndex, title` | ציור אות על קנבס (זיהוי OCR ב-Tesseract) |
 | `falling_answers` | `FallingAnswersComponent` | `listName, questionIndex, resultIndex` | לחיצה על התשובה הנכונה בזמן שהיא נופלת |
 | `s2t` | `SpeechToTextComponent` | `listName, questionIndex, resultIndex, title` | אמירת התשובה בקול (זיהוי דיבור) |
+| `balloon_shooter` | `BalloonShooterComponent` | `listName, questionIndex, resultIndex, title` | מטווח בלונים תלת-ממדי בגוף ראשון (Three.js) — יורים בבלון עם התשובה הנכונה |
 
 לאותו `listName` אפשר להגדיר כמה משחקים בכיוונים שונים — למשל `questionIndex:
 'english_name', resultIndex: 'hebrew'` מול ההפך — בלי לשכפל נתונים.
