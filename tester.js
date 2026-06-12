@@ -1296,9 +1296,16 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
         initScene: function() {
             const area = this.$refs.shooterArea;
+            // Quality tiers for weak devices: 2 = full (desktop), 1 = medium
+            // (phones/tablets), 0 = low (weak phones). The FPS monitor in
+            // animate() steps the tier down further if rendering is slow.
+            const lowMemory = (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
+                              (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 3);
             const g = this._g = {
                 balloons: [], particles: [],
                 yaw: 0, pitch: 0, raf: null,
+                quality: lowMemory ? 0 : (this.isTouch ? 1 : 2),
+                fpsTime: 0, fpsFrames: 0,
                 clock: new THREE.Clock(),
                 raycaster: new THREE.Raycaster(),
             };
@@ -1311,11 +1318,12 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.camera.rotation.order = 'YXZ';
             g.scene.add(g.camera);
 
-            g.renderer = new THREE.WebGLRenderer({ antialias: true });
-            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            g.renderer = new THREE.WebGLRenderer({
+                antialias: g.quality === 2,
+                powerPreference: 'high-performance',
+            });
             g.renderer.setSize(area.clientWidth, area.clientHeight);
             // Modern look: soft shadows + filmic tone mapping + sRGB output
-            g.renderer.shadowMap.enabled = true;
             g.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             g.renderer.outputEncoding = THREE.sRGBEncoding;
             g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1353,10 +1361,10 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
             // Lights: warm sun with soft shadows + cool sky bounce
             g.scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x6a8f4f, 0.75));
-            const sun = new THREE.DirectionalLight(0xfff1d6, 1.25);
+            const sun = g.sun = new THREE.DirectionalLight(0xfff1d6, 1.25);
             sun.position.set(18, 28, 10);
-            sun.castShadow = true;
-            sun.shadow.mapSize.set(2048, 2048);
+            const shadowMapSize = g.quality === 2 ? 2048 : 1024;
+            sun.shadow.mapSize.set(shadowMapSize, shadowMapSize);
             sun.shadow.camera.left = -25;
             sun.shadow.camera.right = 25;
             sun.shadow.camera.top = 30;
@@ -1542,6 +1550,33 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.recoil = 0;
             gun.position.copy(g.hipPos);
             g.camera.add(gun);
+
+            // Shared geometries: fewer allocations and less GC on weak devices
+            const detail = g.quality === 2 ? [32, 24] : [20, 14];
+            g.balloonGeo = new THREE.SphereGeometry(0.85, detail[0], detail[1]);
+            g.knotGeo = new THREE.ConeGeometry(0.12, 0.18, 10);
+            g.shredGeo = new THREE.SphereGeometry(0.06, 6, 6);
+            g.popFlashGeo = new THREE.SphereGeometry(0.4, 12, 10);
+            g.confettiGeo = new THREE.BoxGeometry(0.09, 0.09, 0.012);
+
+            this.applyQuality();
+        },
+
+        // Pixel ratio and shadows by quality tier; called again by the FPS
+        // monitor when stepping down on slow devices
+        applyQuality: function() {
+            const g = this._g;
+            const maxRatios = [1, 1.5, 2];
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxRatios[g.quality]));
+            const shadows = g.quality > 0;
+            if (g.renderer.shadowMap.enabled !== shadows) {
+                g.renderer.shadowMap.enabled = shadows;
+                g.sun.castShadow = shadows;
+                g.scene.traverse(obj => {
+                    if (obj.material) obj.material.needsUpdate = true;
+                });
+            }
+            this.onResize();
         },
 
         makeLabelSprite: function(text) {
@@ -1591,29 +1626,26 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const colors = [0xe53935, 0x1e88e5, 0xfdd835, 0x43a047, 0x8e24aa, 0xfb8c00];
             const color = colors[Math.floor(Math.random() * colors.length)];
 
-            // Glossy latex look: clearcoat physical material
+            // Glossy latex look: clearcoat physical material on full quality,
+            // a cheaper phong on weaker devices
             if (!g.balloonMats) g.balloonMats = {};
             if (!g.balloonMats[color]) {
-                g.balloonMats[color] = new THREE.MeshPhysicalMaterial({
-                    color: color,
-                    roughness: 0.3,
-                    metalness: 0,
-                    clearcoat: 1,
-                    clearcoatRoughness: 0.12,
-                });
+                g.balloonMats[color] = g.quality === 2
+                    ? new THREE.MeshPhysicalMaterial({
+                        color: color,
+                        roughness: 0.3,
+                        metalness: 0,
+                        clearcoat: 1,
+                        clearcoatRoughness: 0.12,
+                    })
+                    : new THREE.MeshPhongMaterial({ color: color, shininess: 90 });
             }
             const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.85, 32, 24),
-                g.balloonMats[color]
-            );
+            const sphere = new THREE.Mesh(g.balloonGeo, g.balloonMats[color]);
             sphere.scale.y = 1.15;
             sphere.castShadow = true;
             group.add(sphere);
-            const knot = new THREE.Mesh(
-                new THREE.ConeGeometry(0.12, 0.18, 10),
-                g.balloonMats[color]
-            );
+            const knot = new THREE.Mesh(g.knotGeo, g.balloonMats[color]);
             knot.position.y = -1.05;
             group.add(knot);
 
@@ -1661,11 +1693,19 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             return rec;
         },
 
+        // Free GPU resources owned by a single balloon (label texture, string)
+        disposeBalloon: function(rec) {
+            rec.sprite.material.map.dispose();
+            rec.sprite.material.dispose();
+            rec.string.geometry.dispose();
+        },
+
         clearBalloons: function() {
             const g = this._g;
             g.balloons.forEach(b => {
                 g.scene.remove(b.group);
                 g.scene.remove(b.post);
+                this.disposeBalloon(b);
             });
             g.balloons = [];
         },
@@ -1712,11 +1752,13 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         spawnParticles: function(position, color) {
             const g = this._g;
             // Rubber shreds of the popped balloon
-            for (let i = 0; i < 16; i++) {
+            const shredCount = g.quality === 2 ? 16 : 9;
+            for (let i = 0; i < shredCount; i++) {
                 const mesh = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.05 + Math.random() * 0.07, 6, 6),
+                    g.shredGeo,
                     new THREE.MeshBasicMaterial({ color: color, transparent: true })
                 );
+                mesh.scale.setScalar(0.8 + Math.random() * 1.2);
                 mesh.position.copy(position);
                 g.scene.add(mesh);
                 g.particles.push({
@@ -1729,7 +1771,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             }
             // Quick expanding flash at the pop point
             const flash = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 12, 10),
+                g.popFlashGeo,
                 new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
             );
             flash.position.copy(position);
@@ -1747,9 +1789,10 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         spawnConfetti: function(position) {
             const g = this._g;
             const colors = [0xff5252, 0xffd740, 0x69f0ae, 0x40c4ff, 0xe040fb, 0xffab40];
-            for (let i = 0; i < 26; i++) {
+            const confettiCount = g.quality === 2 ? 26 : 14;
+            for (let i = 0; i < confettiCount; i++) {
                 const mesh = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.09, 0.09, 0.012),
+                    g.confettiGeo,
                     new THREE.MeshBasicMaterial({
                         color: colors[i % colors.length],
                         transparent: true,
@@ -1840,6 +1883,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             rec.state = 'popped';
             this.spawnParticles(rec.group.position, rec.color);
             this._g.scene.remove(rec.group);
+            this.disposeBalloon(rec);
         },
 
         onCorrectHit: function() {
@@ -1881,6 +1925,19 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const dt = Math.min(g.clock.getDelta(), 0.05);
             const t = g.clock.elapsedTime;
 
+            // Adaptive quality: step down if the device can't keep up
+            g.fpsTime += dt;
+            g.fpsFrames += 1;
+            if (g.fpsTime > 2) {
+                const fps = g.fpsFrames / g.fpsTime;
+                g.fpsTime = 0;
+                g.fpsFrames = 0;
+                if (fps < 32 && g.quality > 0) {
+                    g.quality -= 1;
+                    this.applyQuality();
+                }
+            }
+
             // Balloons: gentle bobbing / flying away
             for (let i = g.balloons.length - 1; i >= 0; i--) {
                 const b = g.balloons[i];
@@ -1916,6 +1973,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                     b.group.position.addScaledVector(b.vel, dt);
                     if (b.group.position.y > 30) {
                         g.scene.remove(b.group);
+                        this.disposeBalloon(b);
                         b.state = 'gone';
                     }
                 }
@@ -1938,6 +1996,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 p.mesh.material.opacity = Math.max(0, p.life / (p.maxLife || 0.6));
                 if (p.life <= 0) {
                     g.scene.remove(p.mesh);
+                    p.mesh.material.dispose();
                     g.particles.splice(i, 1);
                 }
             }
