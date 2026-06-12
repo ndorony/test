@@ -1192,105 +1192,354 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         // the real setup happens in mounted() (same pattern as falling_answers).
         create: function() {},
 
+        makeCanvasTexture: function(size, draw) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size;
+            draw(canvas.getContext('2d'), size);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            return texture;
+        },
+
+        makeGrassTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#67a04b';
+                ctx.fillRect(0, 0, s, s);
+                const shades = ['#5c9444', '#74b35a', '#609a47', '#7fbd63', '#558a3f'];
+                for (let i = 0; i < 3500; i++) {
+                    ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+                    ctx.fillRect(Math.random() * s, Math.random() * s, 2, 3 + Math.random() * 3);
+                }
+            });
+        },
+
+        makeWoodTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#7a5230';
+                ctx.fillRect(0, 0, s, s);
+                for (let i = 0; i < 40; i++) {
+                    ctx.strokeStyle = `rgba(${60 + Math.random() * 40}, ${35 + Math.random() * 25}, 15, ${0.25 + Math.random() * 0.3})`;
+                    ctx.lineWidth = 1 + Math.random() * 2.5;
+                    const y = Math.random() * s;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.bezierCurveTo(s * 0.3, y + (Math.random() - 0.5) * 14, s * 0.7, y + (Math.random() - 0.5) * 14, s, y);
+                    ctx.stroke();
+                }
+            });
+        },
+
+        makeStripesTexture: function() {
+            return this.makeCanvasTexture(128, (ctx, s) => {
+                ctx.fillStyle = '#f6f2ea';
+                ctx.fillRect(0, 0, s, s);
+                ctx.fillStyle = '#d8342c';
+                ctx.fillRect(0, 0, s / 2, s);
+                const shade = ctx.createLinearGradient(0, 0, s, 0);
+                shade.addColorStop(0, 'rgba(0,0,0,0.16)');
+                shade.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+                shade.addColorStop(1, 'rgba(0,0,0,0.16)');
+                ctx.fillStyle = shade;
+                ctx.fillRect(0, 0, s, s);
+            });
+        },
+
+        makeTargetTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                const c = s / 2;
+                const rings = ['#ffffff', '#d8342c', '#ffffff', '#d8342c', '#ffd54f'];
+                rings.forEach((color, i) => {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(c, c, c * (1 - i * 0.19), 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            });
+        },
+
+        makeRadialTexture: function(inner, outer) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+            gradient.addColorStop(0, inner);
+            gradient.addColorStop(1, outer);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        },
+
+        makeTree: function(x, z, scale) {
+            const g = this._g;
+            const tree = new THREE.Group();
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.14, 0.2, 1.4, 8),
+                g.woodMat
+            );
+            trunk.position.y = 0.7;
+            trunk.castShadow = true;
+            tree.add(trunk);
+            const greens = [0x3e7c3a, 0x4d9446, 0x356b32];
+            for (let i = 0; i < 3; i++) {
+                const puff = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.9 - i * 0.12, 12, 10),
+                    new THREE.MeshStandardMaterial({ color: greens[i % greens.length], roughness: 0.95 })
+                );
+                puff.position.set((Math.random() - 0.5) * 0.5, 1.7 + i * 0.55, (Math.random() - 0.5) * 0.5);
+                puff.castShadow = true;
+                tree.add(puff);
+            }
+            tree.position.set(x, 0, z);
+            tree.scale.setScalar(scale);
+            g.scene.add(tree);
+        },
+
         initScene: function() {
             const area = this.$refs.shooterArea;
+            // Quality tiers for weak devices: 2 = full (desktop), 1 = medium
+            // (phones/tablets), 0 = low (weak phones). The FPS monitor in
+            // animate() steps the tier down further if rendering is slow.
+            const lowMemory = (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
+                              (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 3);
             const g = this._g = {
                 balloons: [], particles: [],
                 yaw: 0, pitch: 0, raf: null,
+                quality: lowMemory ? 0 : (this.isTouch ? 1 : 2),
+                fpsTime: 0, fpsFrames: 0,
                 clock: new THREE.Clock(),
                 raycaster: new THREE.Raycaster(),
             };
 
             g.scene = new THREE.Scene();
-            g.scene.background = new THREE.Color(0x87ceeb);
-            g.scene.fog = new THREE.Fog(0x87ceeb, 40, 120);
+            g.scene.fog = new THREE.Fog(0xcfe4f5, 50, 140);
 
-            g.camera = new THREE.PerspectiveCamera(75, area.clientWidth / area.clientHeight, 0.1, 200);
+            g.camera = new THREE.PerspectiveCamera(75, area.clientWidth / area.clientHeight, 0.1, 300);
             g.camera.position.set(0, 1.6, 0);
             g.camera.rotation.order = 'YXZ';
             g.scene.add(g.camera);
 
-            g.renderer = new THREE.WebGLRenderer({ antialias: true });
-            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            g.renderer = new THREE.WebGLRenderer({
+                antialias: g.quality === 2,
+                powerPreference: 'high-performance',
+            });
             g.renderer.setSize(area.clientWidth, area.clientHeight);
+            // Modern look: soft shadows + filmic tone mapping + sRGB output
+            g.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            g.renderer.outputEncoding = THREE.sRGBEncoding;
+            g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            g.renderer.toneMappingExposure = 1.05;
             area.insertBefore(g.renderer.domElement, area.firstChild);
 
-            // Lights
-            g.scene.add(new THREE.HemisphereLight(0xffffff, 0x88aa66, 0.9));
-            const sun = new THREE.DirectionalLight(0xffffff, 0.7);
-            sun.position.set(10, 20, 5);
+            // Gradient sky dome
+            const sky = new THREE.Mesh(
+                new THREE.SphereGeometry(220, 32, 16),
+                new THREE.ShaderMaterial({
+                    side: THREE.BackSide,
+                    depthWrite: false,
+                    uniforms: {
+                        top: { value: new THREE.Color(0x2f6fd0) },
+                        bottom: { value: new THREE.Color(0xcfe4f5) },
+                    },
+                    vertexShader: 'varying vec3 vP; void main(){ vP = position;' +
+                        ' gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                    fragmentShader: 'uniform vec3 top; uniform vec3 bottom; varying vec3 vP;' +
+                        ' void main(){ float h = normalize(vP).y * 0.5 + 0.5;' +
+                        ' gl_FragColor = vec4(mix(bottom, top, pow(max(h, 0.0), 0.55)), 1.0); }',
+                })
+            );
+            g.scene.add(sky);
+
+            // Sun glow sprite high in the sky
+            const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.makeRadialTexture('rgba(255,250,225,1)', 'rgba(255,236,170,0)'),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            }));
+            sunGlow.scale.set(60, 60, 1);
+            sunGlow.position.set(70, 90, -120);
+            g.scene.add(sunGlow);
+
+            // Lights: warm sun with soft shadows + cool sky bounce
+            g.scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x6a8f4f, 0.75));
+            const sun = g.sun = new THREE.DirectionalLight(0xfff1d6, 1.25);
+            sun.position.set(18, 28, 10);
+            const shadowMapSize = g.quality === 2 ? 2048 : 1024;
+            sun.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+            sun.shadow.camera.left = -25;
+            sun.shadow.camera.right = 25;
+            sun.shadow.camera.top = 30;
+            sun.shadow.camera.bottom = -10;
+            sun.shadow.camera.near = 5;
+            sun.shadow.camera.far = 80;
+            sun.shadow.bias = -0.0005;
             g.scene.add(sun);
 
-            // Ground
+            // Shared materials
+            const woodMat = g.woodMat = new THREE.MeshStandardMaterial({
+                map: this.makeWoodTexture(), roughness: 0.8, metalness: 0,
+            });
+
+            // Grass ground
+            const grassTex = this.makeGrassTexture();
+            grassTex.wrapS = grassTex.wrapT = THREE.RepeatWrapping;
+            grassTex.repeat.set(70, 70);
+            grassTex.anisotropy = g.renderer.capabilities.getMaxAnisotropy();
             const ground = new THREE.Mesh(
-                new THREE.PlaneGeometry(200, 200),
-                new THREE.MeshLambertMaterial({ color: 0x7ec850 })
+                new THREE.PlaneGeometry(300, 300),
+                new THREE.MeshStandardMaterial({ map: grassTex, roughness: 1, metalness: 0 })
             );
             ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
             g.scene.add(ground);
 
-            // Shooting-range booth: counter in front of the player
-            const counter = new THREE.Mesh(
-                new THREE.BoxGeometry(7, 1, 0.7),
-                new THREE.MeshLambertMaterial({ color: 0x8d6e63 })
-            );
+            // Carnival booth around the player: counter, pillars and striped roof beam
+            const counter = new THREE.Mesh(new THREE.BoxGeometry(7.2, 1, 0.7), woodMat);
             counter.position.set(0, 0.5, -1.8);
+            counter.castShadow = true;
+            counter.receiveShadow = true;
             g.scene.add(counter);
+            const stripeTex = this.makeStripesTexture();
+            for (const px of [-3.6, 3.6]) {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.6, 0.25), woodMat);
+                pillar.position.set(px, 1.8, -1.8);
+                pillar.castShadow = true;
+                g.scene.add(pillar);
+            }
+            const boothRoofTex = stripeTex.clone();
+            boothRoofTex.needsUpdate = true;
+            boothRoofTex.wrapS = THREE.RepeatWrapping;
+            boothRoofTex.repeat.set(6, 1);
+            const boothRoof = new THREE.Mesh(
+                new THREE.BoxGeometry(7.6, 0.7, 0.1),
+                new THREE.MeshStandardMaterial({ map: boothRoofTex, roughness: 0.7 })
+            );
+            boothRoof.position.set(0, 3.7, -1.85);
+            boothRoof.rotation.x = 0.25;
+            g.scene.add(boothRoof);
 
-            // Back wall behind the balloons + striped awning on top
+            // Back wall: striped carnival canvas + wooden frame + targets
+            const wallTex = stripeTex.clone();
+            wallTex.needsUpdate = true;
+            wallTex.wrapS = THREE.RepeatWrapping;
+            wallTex.repeat.set(14, 1);
             const wall = new THREE.Mesh(
                 new THREE.BoxGeometry(30, 6, 0.3),
-                new THREE.MeshLambertMaterial({ color: 0xfff3e0 })
+                new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.85 })
             );
             wall.position.set(0, 3, -15);
+            wall.receiveShadow = true;
             g.scene.add(wall);
-            for (let i = 0; i < 10; i++) {
-                const stripe = new THREE.Mesh(
-                    new THREE.BoxGeometry(3, 0.8, 0.5),
-                    new THREE.MeshLambertMaterial({ color: i % 2 ? 0xffffff : 0xe53935 })
+            const wallTop = new THREE.Mesh(new THREE.BoxGeometry(30.6, 0.5, 0.5), woodMat);
+            wallTop.position.set(0, 6.2, -15);
+            wallTop.castShadow = true;
+            g.scene.add(wallTop);
+            const targetTex = this.makeTargetTexture();
+            for (const tx of [-10, 0, 10]) {
+                const target = new THREE.Mesh(
+                    new THREE.CircleGeometry(1.1, 32),
+                    new THREE.MeshStandardMaterial({ map: targetTex, roughness: 0.9 })
                 );
-                stripe.position.set(-13.5 + i * 3, 6.4, -15);
-                g.scene.add(stripe);
+                target.position.set(tx, 4.6, -14.8);
+                g.scene.add(target);
             }
 
-            // A few clouds
-            for (let i = 0; i < 4; i++) {
+            // String lights along the top of the wall
+            const bulbGeo = new THREE.SphereGeometry(0.09, 8, 8);
+            const bulbColors = [0xffd54f, 0xff8a65, 0x81d4fa, 0xaed581];
+            for (let i = 0; i < 17; i++) {
+                const bulb = new THREE.Mesh(
+                    bulbGeo,
+                    new THREE.MeshBasicMaterial({ color: bulbColors[i % bulbColors.length] })
+                );
+                bulb.position.set(-14 + i * 1.75, 5.85 - Math.abs(Math.sin(i * 0.9)) * 0.18, -14.7);
+                g.scene.add(bulb);
+            }
+
+            // Distant mountains fading into the haze
+            for (const m of [[-60, -130, 26], [10, -150, 34], [75, -135, 24], [-15, -160, 40]]) {
+                const mountain = new THREE.Mesh(
+                    new THREE.ConeGeometry(m[2], m[2] * 0.55, 5),
+                    new THREE.MeshLambertMaterial({ color: 0x8fa9c7 })
+                );
+                mountain.position.set(m[0], m[2] * 0.27, m[1]);
+                g.scene.add(mountain);
+            }
+
+            // A few trees on the sides
+            for (const tr of [[-14, -9, 1.2], [14, -10, 1.4], [-19, -13, 1.6], [20, -14, 1.1], [-9, -13.2, 0.9], [9.5, -13.5, 1.0]]) {
+                this.makeTree(tr[0], tr[1], tr[2]);
+            }
+
+            // Soft clouds
+            for (let i = 0; i < 5; i++) {
                 const cloud = new THREE.Group();
-                for (let j = 0; j < 3; j++) {
+                for (let j = 0; j < 4; j++) {
                     const puff = new THREE.Mesh(
-                        new THREE.SphereGeometry(1.5 + Math.random(), 12, 10),
+                        new THREE.SphereGeometry(1.6 + Math.random() * 1.2, 12, 10),
                         new THREE.MeshLambertMaterial({ color: 0xffffff })
                     );
-                    puff.position.set(j * 1.8, Math.random() * 0.5, 0);
+                    puff.position.set(j * 2.0 - 3, Math.random() * 0.6, Math.random() * 0.8);
                     cloud.add(puff);
                 }
-                cloud.position.set(-25 + i * 16, 14 + Math.random() * 4, -35);
+                cloud.position.set(-45 + i * 22, 18 + Math.random() * 8, -60 - Math.random() * 20);
                 g.scene.add(cloud);
             }
 
-            // Rifle attached to the camera (simple boxes)
+            // Rifle attached to the camera
             const gun = g.gun = new THREE.Group();
-            const metal = new THREE.MeshLambertMaterial({ color: 0x37474f });
-            const wood = new THREE.MeshLambertMaterial({ color: 0x6d4c41 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.07, 0.5), metal);
-            body.position.set(0, 0, -0.25);
+            const metal = new THREE.MeshStandardMaterial({ color: 0x2b3137, roughness: 0.45, metalness: 0.85 });
+            const darkMetal = new THREE.MeshStandardMaterial({ color: 0x14181c, roughness: 0.35, metalness: 0.9 });
+            const gunWood = new THREE.MeshStandardMaterial({ map: this.makeWoodTexture(), roughness: 0.6, metalness: 0 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.075, 0.45), metal);
+            body.position.set(0, 0, -0.22);
             gun.add(body);
-            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.3, 10), metal);
+            const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.045, 0.26), gunWood);
+            handguard.position.set(0, -0.022, -0.5);
+            gun.add(handguard);
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.34, 12), darkMetal);
             barrel.rotation.x = Math.PI / 2;
-            barrel.position.set(0, 0.015, -0.6);
+            barrel.position.set(0, 0.015, -0.62);
             gun.add(barrel);
-            const stock = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.1, 0.2), wood);
-            stock.position.set(0, -0.035, 0.05);
+            const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.05, 12), darkMetal);
+            muzzle.rotation.x = Math.PI / 2;
+            muzzle.position.set(0, 0.015, -0.78);
+            gun.add(muzzle);
+            const frontSight = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.03, 0.01), darkMetal);
+            frontSight.position.set(0, 0.04, -0.74);
+            gun.add(frontSight);
+            const magazine = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.07), darkMetal);
+            magazine.position.set(0, -0.09, -0.3);
+            magazine.rotation.x = 0.25;
+            gun.add(magazine);
+            const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.06, 0.05), metal);
+            trigger.position.set(0, -0.06, -0.12);
+            gun.add(trigger);
+            const stock = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.1, 0.22), gunWood);
+            stock.position.set(0, -0.035, 0.08);
             gun.add(stock);
-            const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.14, 12), metal);
-            scope.rotation.x = Math.PI / 2;
-            scope.position.set(0, 0.062, -0.2);
-            gun.add(scope);
-            g.flash = new THREE.Mesh(
-                new THREE.SphereGeometry(0.05, 8, 8),
-                new THREE.MeshBasicMaterial({ color: 0xffe082 })
+            const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.16, 14), darkMetal);
+            scopeTube.rotation.x = Math.PI / 2;
+            scopeTube.position.set(0, 0.062, -0.2);
+            gun.add(scopeTube);
+            const scopeLens = new THREE.Mesh(
+                new THREE.CircleGeometry(0.019, 14),
+                new THREE.MeshStandardMaterial({ color: 0x66ccff, roughness: 0.05, metalness: 0.6 })
             );
-            g.flash.position.set(0, 0.015, -0.78);
+            scopeLens.position.set(0, 0.062, -0.281);
+            gun.add(scopeLens);
+            for (const mz of [-0.13, -0.27]) {
+                const mount = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.03, 0.02), darkMetal);
+                mount.position.set(0, 0.045, mz);
+                gun.add(mount);
+            }
+            // Muzzle flash: additive glow sprite
+            g.flash = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.makeRadialTexture('rgba(255,240,180,1)', 'rgba(255,150,40,0)'),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            }));
+            g.flash.scale.set(0.3, 0.3, 1);
+            g.flash.position.set(0, 0.015, -0.84);
             g.flash.visible = false;
             gun.add(g.flash);
 
@@ -1301,6 +1550,33 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.recoil = 0;
             gun.position.copy(g.hipPos);
             g.camera.add(gun);
+
+            // Shared geometries: fewer allocations and less GC on weak devices
+            const detail = g.quality === 2 ? [32, 24] : [20, 14];
+            g.balloonGeo = new THREE.SphereGeometry(0.85, detail[0], detail[1]);
+            g.knotGeo = new THREE.ConeGeometry(0.12, 0.18, 10);
+            g.shredGeo = new THREE.SphereGeometry(0.06, 6, 6);
+            g.popFlashGeo = new THREE.SphereGeometry(0.4, 12, 10);
+            g.confettiGeo = new THREE.BoxGeometry(0.09, 0.09, 0.012);
+
+            this.applyQuality();
+        },
+
+        // Pixel ratio and shadows by quality tier; called again by the FPS
+        // monitor when stepping down on slow devices
+        applyQuality: function() {
+            const g = this._g;
+            const maxRatios = [1, 1.5, 2];
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxRatios[g.quality]));
+            const shadows = g.quality > 0;
+            if (g.renderer.shadowMap.enabled !== shadows) {
+                g.renderer.shadowMap.enabled = shadows;
+                g.sun.castShadow = shadows;
+                g.scene.traverse(obj => {
+                    if (obj.material) obj.material.needsUpdate = true;
+                });
+            }
+            this.onResize();
         },
 
         makeLabelSprite: function(text) {
@@ -1334,8 +1610,10 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             ctx.textBaseline = 'middle';
             ctx.fillText(text, w / 2, h / 2 + 2);
 
+            const labelTexture = new THREE.CanvasTexture(canvas);
+            labelTexture.encoding = THREE.sRGBEncoding;
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: new THREE.CanvasTexture(canvas),
+                map: labelTexture,
                 depthTest: false,
             }));
             const height = 0.85;
@@ -1348,17 +1626,26 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const colors = [0xe53935, 0x1e88e5, 0xfdd835, 0x43a047, 0x8e24aa, 0xfb8c00];
             const color = colors[Math.floor(Math.random() * colors.length)];
 
+            // Glossy latex look: clearcoat physical material on full quality,
+            // a cheaper phong on weaker devices
+            if (!g.balloonMats) g.balloonMats = {};
+            if (!g.balloonMats[color]) {
+                g.balloonMats[color] = g.quality === 2
+                    ? new THREE.MeshPhysicalMaterial({
+                        color: color,
+                        roughness: 0.3,
+                        metalness: 0,
+                        clearcoat: 1,
+                        clearcoatRoughness: 0.12,
+                    })
+                    : new THREE.MeshPhongMaterial({ color: color, shininess: 90 });
+            }
             const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.85, 24, 18),
-                new THREE.MeshPhongMaterial({ color: color, shininess: 90 })
-            );
+            const sphere = new THREE.Mesh(g.balloonGeo, g.balloonMats[color]);
             sphere.scale.y = 1.15;
+            sphere.castShadow = true;
             group.add(sphere);
-            const knot = new THREE.Mesh(
-                new THREE.ConeGeometry(0.12, 0.18, 8),
-                new THREE.MeshLambertMaterial({ color: color })
-            );
+            const knot = new THREE.Mesh(g.knotGeo, g.balloonMats[color]);
             knot.position.y = -1.05;
             group.add(knot);
 
@@ -1376,9 +1663,10 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
             const post = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.06, 0.08, 0.7, 8),
-                new THREE.MeshLambertMaterial({ color: 0x5d4037 })
+                g.woodMat
             );
             post.position.set(x, 0.35, z);
+            post.castShadow = true;
             g.scene.add(post);
 
             // New balloons inflate on the ground next to their post, then
@@ -1405,11 +1693,19 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             return rec;
         },
 
+        // Free GPU resources owned by a single balloon (label texture, string)
+        disposeBalloon: function(rec) {
+            rec.sprite.material.map.dispose();
+            rec.sprite.material.dispose();
+            rec.string.geometry.dispose();
+        },
+
         clearBalloons: function() {
             const g = this._g;
             g.balloons.forEach(b => {
                 g.scene.remove(b.group);
                 g.scene.remove(b.post);
+                this.disposeBalloon(b);
             });
             g.balloons = [];
         },
@@ -1455,17 +1751,63 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
         spawnParticles: function(position, color) {
             const g = this._g;
-            for (let i = 0; i < 10; i++) {
+            // Rubber shreds of the popped balloon
+            const shredCount = g.quality === 2 ? 16 : 9;
+            for (let i = 0; i < shredCount; i++) {
                 const mesh = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.08, 6, 6),
+                    g.shredGeo,
                     new THREE.MeshBasicMaterial({ color: color, transparent: true })
+                );
+                mesh.scale.setScalar(0.8 + Math.random() * 1.2);
+                mesh.position.copy(position);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 7, Math.random() * 6, (Math.random() - 0.5) * 7),
+                    gravity: 9.8,
+                    maxLife: 0.6,
+                    life: 0.6,
+                });
+            }
+            // Quick expanding flash at the pop point
+            const flash = new THREE.Mesh(
+                g.popFlashGeo,
+                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+            );
+            flash.position.copy(position);
+            g.scene.add(flash);
+            g.particles.push({
+                mesh: flash,
+                vel: new THREE.Vector3(0, 0, 0),
+                gravity: 0,
+                grow: 6,
+                maxLife: 0.18,
+                life: 0.18,
+            });
+        },
+
+        spawnConfetti: function(position) {
+            const g = this._g;
+            const colors = [0xff5252, 0xffd740, 0x69f0ae, 0x40c4ff, 0xe040fb, 0xffab40];
+            const confettiCount = g.quality === 2 ? 26 : 14;
+            for (let i = 0; i < confettiCount; i++) {
+                const mesh = new THREE.Mesh(
+                    g.confettiGeo,
+                    new THREE.MeshBasicMaterial({
+                        color: colors[i % colors.length],
+                        transparent: true,
+                        side: THREE.DoubleSide,
+                    })
                 );
                 mesh.position.copy(position);
                 g.scene.add(mesh);
                 g.particles.push({
                     mesh: mesh,
-                    vel: new THREE.Vector3((Math.random() - 0.5) * 6, Math.random() * 5, (Math.random() - 0.5) * 6),
-                    life: 0.6,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 5, 2 + Math.random() * 4, (Math.random() - 0.5) * 5),
+                    gravity: 3.5,
+                    spin: new THREE.Vector3(Math.random() * 10, Math.random() * 10, Math.random() * 10),
+                    maxLife: 1.7,
+                    life: 1.7,
                 });
             }
         },
@@ -1503,6 +1845,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
             g.recoil = 1;
             g.flash.visible = true;
+            g.flash.material.rotation = Math.random() * Math.PI * 2;
             setTimeout(() => { if (this._g) this._g.flash.visible = false; }, 60);
             this.playShotSound();
 
@@ -1529,6 +1872,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const rec = hits[0].object.userData.rec;
             this.popBalloon(rec);
             if (rec.isCorrect) {
+                this.spawnConfetti(rec.group.position);
                 this.onCorrectHit();
             } else {
                 this.onWrongHit(rec);
@@ -1539,6 +1883,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             rec.state = 'popped';
             this.spawnParticles(rec.group.position, rec.color);
             this._g.scene.remove(rec.group);
+            this.disposeBalloon(rec);
         },
 
         onCorrectHit: function() {
@@ -1580,6 +1925,19 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const dt = Math.min(g.clock.getDelta(), 0.05);
             const t = g.clock.elapsedTime;
 
+            // Adaptive quality: step down if the device can't keep up
+            g.fpsTime += dt;
+            g.fpsFrames += 1;
+            if (g.fpsTime > 2) {
+                const fps = g.fpsFrames / g.fpsTime;
+                g.fpsTime = 0;
+                g.fpsFrames = 0;
+                if (fps < 32 && g.quality > 0) {
+                    g.quality -= 1;
+                    this.applyQuality();
+                }
+            }
+
             // Balloons: gentle bobbing / flying away
             for (let i = g.balloons.length - 1; i >= 0; i--) {
                 const b = g.balloons[i];
@@ -1615,20 +1973,30 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                     b.group.position.addScaledVector(b.vel, dt);
                     if (b.group.position.y > 30) {
                         g.scene.remove(b.group);
+                        this.disposeBalloon(b);
                         b.state = 'gone';
                     }
                 }
             }
 
-            // Pop particles
+            // Pop particles / confetti
             for (let i = g.particles.length - 1; i >= 0; i--) {
                 const p = g.particles[i];
-                p.vel.y -= 9.8 * dt;
+                p.vel.y -= (p.gravity !== undefined ? p.gravity : 9.8) * dt;
                 p.mesh.position.addScaledVector(p.vel, dt);
+                if (p.spin) {
+                    p.mesh.rotation.x += p.spin.x * dt;
+                    p.mesh.rotation.y += p.spin.y * dt;
+                    p.mesh.rotation.z += p.spin.z * dt;
+                }
+                if (p.grow) {
+                    p.mesh.scale.addScalar(p.grow * dt);
+                }
                 p.life -= dt;
-                p.mesh.material.opacity = Math.max(0, p.life / 0.6);
+                p.mesh.material.opacity = Math.max(0, p.life / (p.maxLife || 0.6));
                 if (p.life <= 0) {
                     g.scene.remove(p.mesh);
+                    p.mesh.material.dispose();
                     g.particles.splice(i, 1);
                 }
             }
