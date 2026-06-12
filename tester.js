@@ -2189,6 +2189,803 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 }));
 
 
+// Obstacle themes for the treasure maze. Behind the scenes every obstacle is
+// the same learning question — only the visuals change, so each chamber feels
+// like a new adventure without designing levels.
+const MAZE_SCENARIOS = [
+    { title: '🚪 שערי האבן — איזו דלת מובילה לאוצר?', door: 0x8d5a2b, frame: 0x8d8794, flame: 0xffa726, light: 0xffa14d, rune: 0xffc46b },
+    { title: '✨ השער הקסום — בחר במעבר הנכון', door: 0x6a4fbf, frame: 0xb39ddb, flame: 0xb388ff, light: 0xa37bff, rune: 0xc9a6ff },
+    { title: '🐉 מאורת הדרקון — רק דלת אחת בטוחה!', door: 0x9c2f2f, frame: 0x6d4c41, flame: 0xff7043, light: 0xff6633, rune: 0xff8a5c },
+    { title: '❄️ מבוך הקרח — מצא את השער הנכון', door: 0x3f6fb5, frame: 0xa8d4e8, flame: 0x81d4fa, light: 0x6fc3ff, rune: 0x9fdcff },
+    { title: '🌿 גן הסוד — איזו דלת תוביל הלאה?', door: 0x3f6f33, frame: 0x9e8f6e, flame: 0xaed581, light: 0x9ccc65, rune: 0xc5e1a5 },
+];
+
+var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="row">
+            <div class="shooter-area maze-area" ref="mazeArea">
+                <div class="shooter-hud-top">
+                    <div class="maze-scenario">{{ scenarioTitle }}</div>
+                    <div class="shooter-question" v-html="exercise"></div>
+                    <div class="shooter-hud-message"
+                         v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</div>
+                </div>
+                <div class="shooter-hud-score">🪙 {{ score }}<span class="maze-gems">💎 {{ gems }}</span></div>
+                <a class="shooter-fullscreen-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
+                <div class="shooter-hud-progress" v-if="progress && progress.total">
+                    <div class="shooter-hud-progress-fill"
+                         :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
+                </div>
+                <div class="maze-fade" :style="{opacity: fade}"></div>
+            </div>
+        </div>
+    </div>
+    `,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            list: [],
+            gems: 0,
+            streak: 0,
+            fade: 1,
+            scenarioTitle: '',
+        };
+    },
+
+    methods: {
+        // BaseGameComponent's created() calls create() before the DOM exists;
+        // the real setup happens in mounted() (same pattern as balloon_shooter).
+        create: function() {},
+
+        makeCanvasTexture: function(size, draw) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size;
+            draw(canvas.getContext('2d'), size);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            return texture;
+        },
+
+        makeRadialTexture: function(inner, outer) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+            gradient.addColorStop(0, inner);
+            gradient.addColorStop(1, outer);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        },
+
+        makeWoodTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#9a7950';
+                ctx.fillRect(0, 0, s, s);
+                for (let i = 0; i < 40; i++) {
+                    ctx.strokeStyle = `rgba(${60 + Math.random() * 40}, ${35 + Math.random() * 25}, 15, ${0.25 + Math.random() * 0.3})`;
+                    ctx.lineWidth = 1 + Math.random() * 2.5;
+                    const y = Math.random() * s;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.bezierCurveTo(s * 0.3, y + (Math.random() - 0.5) * 14, s * 0.7, y + (Math.random() - 0.5) * 14, s, y);
+                    ctx.stroke();
+                }
+            });
+        },
+
+        makeStoneTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#36323d';
+                ctx.fillRect(0, 0, s, s);
+                const shades = ['#55505c', '#4a4550', '#5d5866', '#48434e'];
+                const rows = 6, cols = 4;
+                for (let r = 0; r < rows; r++) {
+                    const h = s / rows;
+                    const off = (r % 2) * (s / cols / 2);
+                    for (let c = -1; c <= cols; c++) {
+                        const w = s / cols;
+                        ctx.fillStyle = shades[(r * 3 + c + 4) % shades.length];
+                        ctx.fillRect(c * w - off + 2, r * h + 2, w - 4, h - 4);
+                    }
+                }
+            });
+        },
+
+        makeCobbleTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#26242c';
+                ctx.fillRect(0, 0, s, s);
+                const shades = ['#3a3741', '#433f4a', '#36333d', '#3e3a45'];
+                for (let i = 0; i < 220; i++) {
+                    ctx.fillStyle = shades[i % shades.length];
+                    ctx.beginPath();
+                    ctx.ellipse(Math.random() * s, Math.random() * s,
+                                5 + Math.random() * 10, 4 + Math.random() * 8,
+                                Math.random() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        },
+
+        makeLabelSprite: function(text) {
+            const canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            let fontSize = 48;
+            ctx.font = `bold ${fontSize}px Arial`;
+            let textW = ctx.measureText(text).width;
+            if (textW > 500) {
+                fontSize = Math.max(22, Math.floor(fontSize * 500 / textW));
+            }
+            canvas.width = Math.min(560, Math.max(170, Math.ceil(textW) + 50));
+            canvas.height = 96;
+            ctx = canvas.getContext('2d');
+            // Old parchment scroll look for the maze signs
+            ctx.fillStyle = 'rgba(245, 230, 200, 0.97)';
+            ctx.strokeStyle = '#5d4024';
+            ctx.lineWidth = 5;
+            const r = 18, w = canvas.width, h = canvas.height;
+            ctx.beginPath();
+            ctx.moveTo(r, 3);
+            ctx.arcTo(w - 3, 3, w - 3, h - 3, r);
+            ctx.arcTo(w - 3, h - 3, 3, h - 3, r);
+            ctx.arcTo(3, h - 3, 3, 3, r);
+            ctx.arcTo(3, 3, w - 3, 3, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#2e1f10';
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, w / 2, h / 2 + 2);
+
+            const labelTexture = new THREE.CanvasTexture(canvas);
+            labelTexture.encoding = THREE.sRGBEncoding;
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: labelTexture,
+                depthTest: false,
+            }));
+            const height = 0.8;
+            sprite.scale.set(height * w / h, height, 1);
+            return sprite;
+        },
+
+        initScene: function() {
+            const area = this.$refs.mazeArea;
+            const g = this._g = {
+                gates: [], particles: [], flames: [], torchLights: [],
+                pickMeshes: [],
+                yaw: 0, pitch: 0, lookX: 0.5, lookY: 0.5,
+                mode: 'idle', walkT: 0, walkDelay: 0, walkGate: null,
+                raf: null,
+                clock: new THREE.Clock(),
+                raycaster: new THREE.Raycaster(),
+            };
+
+            g.scene = new THREE.Scene();
+            g.scene.fog = new THREE.Fog(0x0c1024, 8, 46);
+
+            g.camera = new THREE.PerspectiveCamera(70, area.clientWidth / area.clientHeight, 0.1, 300);
+            g.camera.position.set(0, 1.6, 5);
+            g.camera.rotation.order = 'YXZ';
+            g.scene.add(g.camera);
+
+            g.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isTouch ? 1.5 : 2));
+            g.renderer.outputEncoding = THREE.sRGBEncoding;
+            g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            g.renderer.toneMappingExposure = 1.1;
+            area.insertBefore(g.renderer.domElement, area.firstChild);
+
+            // Night sky dome
+            const sky = new THREE.Mesh(
+                new THREE.SphereGeometry(220, 32, 16),
+                new THREE.ShaderMaterial({
+                    side: THREE.BackSide,
+                    depthWrite: false,
+                    uniforms: {
+                        top: { value: new THREE.Color(0x05070f) },
+                        bottom: { value: new THREE.Color(0x232a52) },
+                    },
+                    vertexShader: 'varying vec3 vP; void main(){ vP = position;' +
+                        ' gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                    fragmentShader: 'uniform vec3 top; uniform vec3 bottom; varying vec3 vP;' +
+                        ' void main(){ float h = normalize(vP).y * 0.5 + 0.5;' +
+                        ' gl_FragColor = vec4(mix(bottom, top, pow(max(h, 0.0), 0.6)), 1.0); }',
+                })
+            );
+            g.scene.add(sky);
+
+            // Stars
+            const starPositions = [];
+            for (let i = 0; i < 500; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI * 0.45;
+                starPositions.push(
+                    200 * Math.sin(phi) * Math.cos(theta),
+                    200 * Math.cos(phi) + 5,
+                    200 * Math.sin(phi) * Math.sin(theta)
+                );
+            }
+            const starGeo = new THREE.BufferGeometry();
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+            g.stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+                color: 0xcfdcff, size: 1.4, sizeAttenuation: false,
+                transparent: true, opacity: 0.9,
+            }));
+            g.scene.add(g.stars);
+
+            // Moon
+            const moon = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.makeRadialTexture('rgba(235,240,255,1)', 'rgba(160,180,255,0)'),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            }));
+            moon.scale.set(34, 34, 1);
+            moon.position.set(-55, 75, -130);
+            g.scene.add(moon);
+
+            // Lights: cold moonlight + warm torches (added per gate)
+            g.scene.add(new THREE.HemisphereLight(0x32406e, 0x14100c, 0.55));
+            const moonLight = new THREE.DirectionalLight(0x8fa6e8, 0.5);
+            moonLight.position.set(-12, 22, 8);
+            g.scene.add(moonLight);
+
+            // Cobblestone floor
+            const cobbleTex = this.makeCobbleTexture();
+            cobbleTex.wrapS = cobbleTex.wrapT = THREE.RepeatWrapping;
+            cobbleTex.repeat.set(14, 14);
+            cobbleTex.anisotropy = g.renderer.capabilities.getMaxAnisotropy();
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(80, 80),
+                new THREE.MeshStandardMaterial({ map: cobbleTex, roughness: 1, metalness: 0 })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            g.scene.add(floor);
+
+            // Pulsing magic rune circle on the floor in front of the gates
+            g.rune = new THREE.Mesh(
+                new THREE.RingGeometry(1.5, 1.85, 48),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffc46b, transparent: true, opacity: 0.3,
+                    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+                })
+            );
+            g.rune.rotation.x = -Math.PI / 2;
+            g.rune.position.set(0, 0.02, -1);
+            g.scene.add(g.rune);
+
+            // Maze walls
+            const stoneTex = this.makeStoneTexture();
+            stoneTex.wrapS = stoneTex.wrapT = THREE.RepeatWrapping;
+            const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.95, metalness: 0 });
+
+            const addWall = (w, h, x, y, z, rotY) => {
+                const tex = stoneTex.clone();
+                tex.needsUpdate = true;
+                tex.repeat.set(Math.max(1, w / 3.5), Math.max(1, h / 3.5));
+                const wall = new THREE.Mesh(
+                    new THREE.BoxGeometry(w, h, 0.6),
+                    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 })
+                );
+                wall.position.set(x, y, z);
+                if (rotY) wall.rotation.y = rotY;
+                g.scene.add(wall);
+            };
+
+            // Front wall with 3 gate openings at x = -4, 0, 4 (opening width 2.2, height 3)
+            addWall(11, 5, -10.6, 2.5, -6);
+            addWall(1.8, 5, -2, 2.5, -6);
+            addWall(1.8, 5, 2, 2.5, -6);
+            addWall(11, 5, 10.6, 2.5, -6);
+            for (const gx of [-4, 0, 4]) {
+                addWall(2.6, 2, gx, 4, -6);   // lintel above each opening
+            }
+            // Side walls and a wall behind the player close off the chamber
+            addWall(14, 5, -16, 2.5, 0, Math.PI / 2);
+            addWall(14, 5, 16, 2.5, 0, Math.PI / 2);
+            addWall(32.6, 5, 0, 2.5, 7);
+
+            // Shared materials for the gates, tinted by the current scenario
+            g.doorMat = new THREE.MeshStandardMaterial({
+                map: this.makeWoodTexture(), color: 0x8d5a2b, roughness: 0.7, metalness: 0,
+            });
+            g.frameMat = new THREE.MeshStandardMaterial({ color: 0x8d8794, roughness: 0.85, metalness: 0 });
+            g.flameTex = this.makeRadialTexture('rgba(255,235,170,1)', 'rgba(255,140,30,0)');
+            const goldMat = g.goldMat = new THREE.MeshStandardMaterial({
+                color: 0xffc94d, roughness: 0.35, metalness: 0.8,
+            });
+
+            for (const gx of [-4, 0, 4]) {
+                this.makeGate(gx, goldMat);
+            }
+
+            // Fireflies drifting through the chamber
+            g.fireflyBase = [];
+            const fireflyPositions = [];
+            for (let i = 0; i < 40; i++) {
+                const p = [(Math.random() - 0.5) * 24, 0.6 + Math.random() * 3.2, 5 - Math.random() * 10];
+                g.fireflyBase.push(p);
+                fireflyPositions.push(p[0], p[1], p[2]);
+            }
+            const fireflyGeo = new THREE.BufferGeometry();
+            fireflyGeo.setAttribute('position', new THREE.Float32BufferAttribute(fireflyPositions, 3));
+            g.fireflies = new THREE.Points(fireflyGeo, new THREE.PointsMaterial({
+                color: 0xd6e88a, size: 0.09, transparent: true, opacity: 0.85,
+                blending: THREE.AdditiveBlending, depthWrite: false,
+            }));
+            g.scene.add(g.fireflies);
+
+            // Shared geometries for reward particles
+            g.coinGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.022, 12);
+            g.puffGeo = new THREE.SphereGeometry(0.09, 6, 6);
+            g.flashGeo = new THREE.SphereGeometry(0.4, 12, 10);
+        },
+
+        makeGate: function(x, goldMat) {
+            const g = this._g;
+            const group = new THREE.Group();
+            group.position.set(x, 0, -6);
+
+            // Dark corridor behind the doors, with a faint treasure glow
+            const back = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.3, 3.2),
+                new THREE.MeshBasicMaterial({ color: 0x03040a })
+            );
+            back.position.set(0, 1.5, -0.65);
+            group.add(back);
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: g.flameTex,
+                blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.35,
+            }));
+            glow.scale.set(1.7, 1.7, 1);
+            glow.position.set(0, 1.1, -0.6);
+            group.add(glow);
+
+            // Stone frame pillars + top trim
+            for (const sx of [-1.25, 1.25]) {
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 3.5, 10), g.frameMat);
+                pillar.position.set(sx, 1.75, 0.1);
+                group.add(pillar);
+            }
+            const trim = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.35, 0.5), g.frameMat);
+            trim.position.set(0, 3.35, 0.1);
+            group.add(trim);
+
+            // Double wooden doors hinged on the outer edges
+            const rec = {
+                group: group, baseX: x, openT: 0, openTarget: 0,
+                shake: 0, hoverT: 0, label: null, entry: null, active: false,
+                panels: [],
+            };
+            const makePanel = (hingeX, dir) => {
+                const pivot = new THREE.Group();
+                pivot.position.set(hingeX, 0, 0);
+                const panel = new THREE.Mesh(new THREE.BoxGeometry(1.06, 2.9, 0.09), g.doorMat);
+                panel.position.set(dir * 0.53, 1.45, 0);
+                panel.userData.rec = rec;
+                pivot.add(panel);
+                const knob = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 8, 14), goldMat);
+                knob.position.set(dir * 0.92, 1.42, 0.09);
+                pivot.add(knob);
+                group.add(pivot);
+                rec.panels.push(panel);
+                return pivot;
+            };
+            rec.pivotL = makePanel(-1.1, 1);
+            rec.pivotR = makePanel(1.1, -1);
+
+            // Torches on both sides of the gate + one warm light per gate
+            for (const sx of [-1.8, 1.8]) {
+                const stick = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.035, 0.045, 0.55, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 })
+                );
+                stick.position.set(sx, 2.25, 0.35);
+                stick.rotation.x = 0.5;
+                group.add(stick);
+                const flame = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: g.flameTex, color: 0xffa726,
+                    blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                flame.scale.set(0.55, 0.75, 1);
+                flame.position.set(sx, 2.65, 0.5);
+                group.add(flame);
+                g.flames.push(flame);
+            }
+            const torchLight = new THREE.PointLight(0xffa14d, 1.1, 11, 2);
+            torchLight.position.set(x, 2.7, -5.2);
+            g.scene.add(torchLight);
+            g.torchLights.push(torchLight);
+
+            g.scene.add(group);
+            g.gates.push(rec);
+        },
+
+        applyScenario: function() {
+            const g = this._g;
+            let pick;
+            do {
+                pick = MAZE_SCENARIOS[Math.floor(Math.random() * MAZE_SCENARIOS.length)];
+            } while (MAZE_SCENARIOS.length > 1 && pick === g.lastScenario);
+            g.lastScenario = pick;
+            this.scenarioTitle = pick.title;
+            g.doorMat.color.set(pick.door);
+            g.frameMat.color.set(pick.frame);
+            g.rune.material.color.set(pick.rune);
+            g.flames.forEach(f => f.material.color.set(pick.flame));
+            g.torchLights.forEach(l => l.color.set(pick.light));
+        },
+
+        createNewQuestion: function() {
+            const g = this._g;
+            if (!g) return;
+            const weightedRandomIndex = getWeightedRandomIndex(this.list,
+                                                               this.currentAppId,
+                                                               getSetItems(this.currentApp));
+            this.questionIndex = weightedRandomIndex;
+            this.result = this.list[weightedRandomIndex][this.currentApp.resultIndex].value;
+            const questionItem = { ...this.list[weightedRandomIndex][this.currentApp.questionIndex] };
+            if (this.currentApp.questionType) {
+                questionItem['type'] = this.currentApp.questionType;
+            }
+            this.exercise = render(questionItem);
+            const action = generateQuestion(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            action();
+
+            // 3 doors, one correct — the maze concept uses 3 options, not 4
+            const wrongIndexes = getRandomIndexesExcluding(this.list, this.currentApp.resultIndex, weightedRandomIndex, 2);
+            const entries = this.shuffle(
+                [{ text: this.result, isCorrect: true }].concat(
+                    wrongIndexes.map(i => ({
+                        text: this.list[i][this.currentApp.resultIndex].value,
+                        isCorrect: false,
+                    }))
+                )
+            );
+
+            this.applyScenario();
+            g.pickMeshes = [];
+            g.gates.forEach((gate, i) => {
+                gate.openT = 0;
+                gate.openTarget = 0;
+                gate.shake = 0;
+                gate.hoverT = 0;
+                gate.pivotL.rotation.y = 0;
+                gate.pivotR.rotation.y = 0;
+                gate.group.position.x = gate.baseX;
+                if (gate.label) {
+                    gate.group.remove(gate.label);
+                    gate.label.material.map.dispose();
+                    gate.label.material.dispose();
+                    gate.label = null;
+                }
+                gate.entry = entries[i] || null;
+                gate.active = !!gate.entry;
+                if (gate.entry) {
+                    gate.label = this.makeLabelSprite(gate.entry.text);
+                    gate.label.position.set(0, 3.95, 0.6);
+                    gate.label.userData.rec = gate;
+                    gate.group.add(gate.label);
+                    g.pickMeshes.push(gate.label);
+                    gate.panels.forEach(p => g.pickMeshes.push(p));
+                }
+            });
+
+            g.mode = 'idle';
+            g.walkGate = null;
+            this.message = {};
+            this.ended = false;
+        },
+
+        spawnCoins: function(position) {
+            const g = this._g;
+            for (let i = 0; i < 26; i++) {
+                const mesh = new THREE.Mesh(
+                    g.coinGeo,
+                    new THREE.MeshBasicMaterial({ color: i % 3 ? 0xffd54f : 0xffe082, transparent: true })
+                );
+                mesh.position.copy(position);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 4.5, 3 + Math.random() * 4, 1 + Math.random() * 2.5),
+                    gravity: 8,
+                    spin: new THREE.Vector3(Math.random() * 12, Math.random() * 12, Math.random() * 12),
+                    maxLife: 1.6,
+                    life: 1.6,
+                });
+            }
+            const flash = new THREE.Mesh(
+                g.flashGeo,
+                new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.85 })
+            );
+            flash.position.copy(position);
+            g.scene.add(flash);
+            g.particles.push({ mesh: flash, vel: new THREE.Vector3(), gravity: 0, grow: 7, maxLife: 0.22, life: 0.22 });
+        },
+
+        spawnPuff: function(position) {
+            const g = this._g;
+            for (let i = 0; i < 12; i++) {
+                const mesh = new THREE.Mesh(
+                    g.puffGeo,
+                    new THREE.MeshBasicMaterial({ color: i % 2 ? 0x6b2222 : 0x3a3a3a, transparent: true })
+                );
+                mesh.scale.setScalar(0.8 + Math.random() * 1.4);
+                mesh.position.copy(position);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 2.5, 1 + Math.random() * 1.5),
+                    gravity: 1.5,
+                    maxLife: 0.7,
+                    life: 0.7,
+                });
+            }
+        },
+
+        pickGate: function(event) {
+            const g = this._g;
+            const rect = g.renderer.domElement.getBoundingClientRect();
+            const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const ny = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            g.raycaster.setFromCamera(new THREE.Vector2(nx, ny), g.camera);
+            const hits = g.raycaster.intersectObjects(g.pickMeshes, false);
+            return hits.length ? hits[0].object.userData.rec : null;
+        },
+
+        onCanvasClick: function(event) {
+            const g = this._g;
+            if (!g || g.mode !== 'idle' || this.ended) return;
+            const rec = this.pickGate(event);
+            if (rec && rec.active) {
+                this.choose(rec);
+            }
+        },
+
+        onCanvasMouseMove: function(event) {
+            const g = this._g;
+            if (!g) return;
+            const rect = g.renderer.domElement.getBoundingClientRect();
+            g.lookX = (event.clientX - rect.left) / rect.width;
+            g.lookY = (event.clientY - rect.top) / rect.height;
+            if (g.mode === 'idle' && !this.ended) {
+                const rec = this.pickGate(event);
+                g.hovered = rec;
+                g.renderer.domElement.style.cursor = rec ? 'pointer' : 'default';
+            } else {
+                g.hovered = null;
+            }
+        },
+
+        choose: function(rec) {
+            const g = this._g;
+            const gatePos = new THREE.Vector3(rec.baseX, 1.5, -5.3);
+            if (rec.entry.isCorrect) {
+                this.ended = true;
+                this.message = { value: this.getSuccessMsg(), success: true };
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                this.score += 1;
+                this.streak += 1;
+                if (this.streak % 3 === 0) {
+                    this.gems += 1;
+                }
+                rec.openTarget = 1;
+                this.spawnCoins(gatePos);
+                if (this.reloadProgress()) {
+                    this.saveScore();
+                    g.mode = 'opening';
+                    g.walkGate = rec;
+                    g.walkDelay = 0.8;
+                    g.walkT = 0;
+                }
+            } else {
+                failureSound.play();
+                this.score = Math.max(0, this.score - 1);
+                this.streak = 0;
+                this.saveScore();
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                this.message = { value: 'מבוי סתום! נסה דלת אחרת', error: true };
+                rec.shake = 1;
+                this.spawnPuff(gatePos);
+                this.reloadProgress();
+            }
+        },
+
+        animate: function() {
+            const g = this._g;
+            if (!g) return;
+            g.raf = requestAnimationFrame(this.animate);
+            const dt = Math.min(g.clock.getDelta(), 0.05);
+            const t = g.clock.elapsedTime;
+
+            // Torch flames flicker, the rune circle breathes, stars drift
+            g.flames.forEach((flame, i) => {
+                const flicker = 1 + Math.sin(t * 11 + i * 2.1) * 0.13 + Math.sin(t * 23 + i) * 0.06;
+                flame.scale.set(0.55 * flicker, 0.75 * flicker, 1);
+            });
+            g.torchLights.forEach((light, i) => {
+                light.intensity = 1.1 + Math.sin(t * 13 + i * 1.7) * 0.22 + Math.sin(t * 29 + i) * 0.08;
+            });
+            g.rune.material.opacity = 0.22 + 0.14 * Math.sin(t * 1.6);
+            g.rune.rotation.z = t * 0.15;
+            g.stars.rotation.y = t * 0.004;
+
+            // Fireflies wander
+            const fireflyPos = g.fireflies.geometry.attributes.position;
+            for (let i = 0; i < g.fireflyBase.length; i++) {
+                const base = g.fireflyBase[i];
+                fireflyPos.setX(i, base[0] + Math.sin(t * 0.5 + i * 1.3) * 0.8);
+                fireflyPos.setY(i, base[1] + Math.sin(t * 0.8 + i * 2.7) * 0.35);
+            }
+            fireflyPos.needsUpdate = true;
+
+            // Gates: doors swing, wrong gates shake, hovered signs grow
+            g.gates.forEach(gate => {
+                gate.openT += (gate.openTarget - gate.openT) * Math.min(1, dt * 2.2);
+                gate.pivotL.rotation.y = gate.openT * 1.85;
+                gate.pivotR.rotation.y = -gate.openT * 1.85;
+                if (gate.shake > 0) {
+                    gate.group.position.x = gate.baseX + Math.sin(t * 55) * 0.07 * gate.shake;
+                    gate.shake = Math.max(0, gate.shake - dt * 2.2);
+                    if (gate.shake === 0) gate.group.position.x = gate.baseX;
+                }
+                const hoverTarget = (g.hovered === gate && g.mode === 'idle' && !this.ended) ? 1 : 0;
+                gate.hoverT += (hoverTarget - gate.hoverT) * Math.min(1, dt * 10);
+                if (gate.label) {
+                    const s = 1 + gate.hoverT * 0.2;
+                    const baseW = gate.label.scale.x / (gate.label.userData.s || 1);
+                    gate.label.userData.s = s;
+                    gate.label.scale.set(baseW * s, 0.8 * s, 1);
+                }
+            });
+
+            // Reward particles (coins / smoke / flash)
+            for (let i = g.particles.length - 1; i >= 0; i--) {
+                const p = g.particles[i];
+                p.vel.y -= (p.gravity !== undefined ? p.gravity : 9.8) * dt;
+                p.mesh.position.addScaledVector(p.vel, dt);
+                if (p.spin) {
+                    p.mesh.rotation.x += p.spin.x * dt;
+                    p.mesh.rotation.y += p.spin.y * dt;
+                    p.mesh.rotation.z += p.spin.z * dt;
+                }
+                if (p.grow) {
+                    p.mesh.scale.addScalar(p.grow * dt);
+                }
+                p.life -= dt;
+                p.mesh.material.opacity = Math.max(0, p.life / (p.maxLife || 0.6));
+                if (p.life <= 0) {
+                    g.scene.remove(p.mesh);
+                    p.mesh.material.dispose();
+                    g.particles.splice(i, 1);
+                }
+            }
+
+            // Camera: parallax look in idle, cinematic walk through the open gate
+            if (g.mode === 'idle') {
+                const targetYaw = (0.5 - g.lookX) * 0.16;
+                const targetPitch = (0.5 - g.lookY) * 0.08;
+                g.yaw += (targetYaw - g.yaw) * Math.min(1, dt * 4);
+                g.pitch += (targetPitch - g.pitch) * Math.min(1, dt * 4);
+                g.camera.position.y = 1.6 + Math.sin(t * 1.3) * 0.025;
+                this.fade = Math.max(0, this.fade - dt * 1.2);
+            } else if (g.mode === 'opening') {
+                g.walkDelay -= dt;
+                if (g.walkDelay <= 0) {
+                    g.mode = 'walk';
+                }
+            } else if (g.mode === 'walk') {
+                g.walkT = Math.min(1, g.walkT + dt / 2.1);
+                const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);  // easeInOutSine
+                const gate = g.walkGate;
+                g.camera.position.set(gate.baseX * 0.9 * e, 1.6 + Math.sin(t * 6) * 0.02 * e, 5 - 12.6 * e);
+                const dirX = gate.baseX * 0.95 - g.camera.position.x;
+                const dirZ = -11 - g.camera.position.z;
+                const targetYaw = Math.atan2(-dirX, -dirZ);
+                g.yaw += (targetYaw - g.yaw) * Math.min(1, dt * 5);
+                this.fade = Math.max(this.fade, Math.min(1, (g.walkT - 0.6) / 0.35));
+                if (g.walkT >= 1) {
+                    g.camera.position.set(0, 1.6, 5);
+                    g.yaw = 0;
+                    g.pitch = 0;
+                    this.createNewQuestion();
+                }
+            }
+
+            g.camera.rotation.y = g.yaw;
+            g.camera.rotation.x = g.pitch;
+            g.renderer.render(g.scene, g.camera);
+        },
+
+        enterFullscreen: function() {
+            const area = this.$refs.mazeArea;
+            const request = area.requestFullscreen || area.webkitRequestFullscreen;
+            if (request) {
+                try { request.call(area); } catch (e) {}
+            }
+        },
+
+        toggleFullscreen: function() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) {
+                    try { exit.call(document); } catch (e) {}
+                }
+            } else {
+                this.enterFullscreen();
+            }
+        },
+
+        onFullscreenChange: function() {
+            // The element gets its new size only after the transition
+            setTimeout(this.onResize, 100);
+        },
+
+        onResize: function() {
+            const g = this._g;
+            const area = this.$refs.mazeArea;
+            if (!g || !area) return;
+            g.camera.aspect = area.clientWidth / area.clientHeight;
+            g.camera.updateProjectionMatrix();
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+        },
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId;
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
+        this.updateScore();
+        this.list = getDataList(this.currentApp.listName);
+        this.isTouch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        if (typeof THREE === 'undefined') {
+            this.message = { value: 'מנוע התלת-ממד לא נטען. בדוק חיבור לאינטרנט ורענן.', error: true };
+            return;
+        }
+
+        this.initScene();
+        this.createNewQuestion();
+        this.animate();
+
+        const canvas = this._g.renderer.domElement;
+        canvas.addEventListener('click', this.onCanvasClick);
+        canvas.addEventListener('mousemove', this.onCanvasMouseMove);
+        document.addEventListener('fullscreenchange', this.onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', this.onFullscreenChange);
+        window.addEventListener('resize', this.onResize);
+    },
+
+    beforeDestroy() {
+        if (this._g) {
+            cancelAnimationFrame(this._g.raf);
+            const canvas = this._g.renderer.domElement;
+            canvas.removeEventListener('click', this.onCanvasClick);
+            canvas.removeEventListener('mousemove', this.onCanvasMouseMove);
+            this._g.renderer.dispose();
+            if (canvas.parentNode) {
+                canvas.parentNode.removeChild(canvas);
+            }
+            this._g = null;
+        }
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+        document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', this.onFullscreenChange);
+        window.removeEventListener('resize', this.onResize);
+    }
+}));
+
+
 var DisplayComponent = Vue.component('display',{
     template: `
     <div class="container">
@@ -3112,6 +3909,7 @@ const routes = [
     {path: '/play/draw_letter/:currentAppId', component: DrawLetterComponent, props: true },
     {path: '/play/falling_answers/:currentAppId', component: FallingAnswersComponent, props: true },
     {path: '/play/balloon_shooter/:currentAppId', component: BalloonShooterComponent, props: true },
+    {path: '/play/treasure_maze/:currentAppId', component: TreasureMazeComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },
