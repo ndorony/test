@@ -187,6 +187,124 @@
       opacity: 0.6;
     }
 
+    /* Balloon shooter (3D) */
+    .shooter-area {
+        position: relative;
+        width: 100%;
+        height: 65vh;
+        min-height: 340px;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #87ceeb;
+        direction: ltr;
+        touch-action: none;
+    }
+
+    .shooter-area canvas {
+        border: none;
+        display: block;
+    }
+
+    .shooter-crosshair {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 26px;
+        height: 26px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .shooter-crosshair::before,
+    .shooter-crosshair::after {
+        content: '';
+        position: absolute;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .shooter-crosshair::before {
+        left: 50%;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        transform: translateX(-50%);
+    }
+
+    .shooter-crosshair::after {
+        top: 50%;
+        left: 0;
+        height: 2px;
+        width: 100%;
+        transform: translateY(-50%);
+    }
+
+    .shooter-scope {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 5;
+        background: radial-gradient(circle at center, transparent 27%, rgba(0, 0, 0, 0.93) 29%);
+    }
+
+    .shooter-scope::before,
+    .shooter-scope::after {
+        content: '';
+        position: absolute;
+        background: rgba(0, 0, 0, 0.75);
+    }
+
+    .shooter-scope::before {
+        left: 50%;
+        top: 0;
+        width: 1px;
+        height: 100%;
+    }
+
+    .shooter-scope::after {
+        top: 50%;
+        left: 0;
+        height: 1px;
+        width: 100%;
+    }
+
+    .shooter-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        direction: rtl;
+        padding: 0 16px;
+    }
+
+    .shooter-touch-controls {
+        position: absolute;
+        bottom: 14px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 18px;
+        z-index: 10;
+    }
+
+    .shooter-touch-btn {
+        opacity: 0.88;
+    }
+
     </style>
 </head>
 <body dir="rtl">
@@ -213,6 +331,7 @@
 
 <!-- Material -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js"></script>
 <script src="./data.js?v=2"></script>
 <script src="./apps.js"></script>
 <script src="./themes.js"></script>

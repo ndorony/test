@@ -1134,6 +1134,617 @@ var FallingAnswersComponent = Vue.component('falling-answers', Vue.extend({
 }));
 
 
+// Balloon Shooter - 3D first-person shooting range (Three.js).
+// The question is shown above the game area; the answers hang on balloons.
+// Hit the right balloon to pop it - the rest fly away. Wrong balloon pops
+// and respawns. Right mouse button (or the touch button) zooms in (ADS).
+var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="row" style="margin-bottom: 0;">
+            <h5 v-if="title" v-html="title" :style="{color: theme.colors.text}"></h5>
+            <h4 v-html="exercise" :style="{color: theme.colors.text}"></h4>
+        </div>
+        <div class="row">
+            <div class="shooter-area" ref="shooterArea">
+                <div class="shooter-crosshair" v-show="!ads"></div>
+                <div class="shooter-scope" v-show="ads"></div>
+                <div class="shooter-overlay" v-show="!locked && !isTouch" @click="requestLock">
+                    <div>
+                        <h5>לחץ כאן כדי לאחוז ברובה</h5>
+                        <p>הזז את העכבר כדי לכוון | קליק שמאלי — ירי | קליק ימני (החזק) — כוונת</p>
+                        <p>ESC — שחרור העכבר</p>
+                    </div>
+                </div>
+                <div v-if="isTouch" class="shooter-touch-controls">
+                    <a class="btn-large shooter-touch-btn red" @touchstart.prevent="shoot">🔫 ירי</a>
+                    <a class="btn-large shooter-touch-btn blue" @touchstart.prevent="toggleAds">🎯 זום</a>
+                </div>
+            </div>
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
+    </div>
+    `,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            title: '',
+            list: [],
+            locked: false,
+            ads: false,
+            isTouch: false,
+        };
+    },
+
+    methods: {
+        // BaseGameComponent's created() calls create() before the DOM exists;
+        // the real setup happens in mounted() (same pattern as falling_answers).
+        create: function() {},
+
+        initScene: function() {
+            const area = this.$refs.shooterArea;
+            const g = this._g = {
+                balloons: [], particles: [], qToken: 0,
+                yaw: 0, pitch: 0, raf: null,
+                clock: new THREE.Clock(),
+                raycaster: new THREE.Raycaster(),
+            };
+
+            g.scene = new THREE.Scene();
+            g.scene.background = new THREE.Color(0x87ceeb);
+            g.scene.fog = new THREE.Fog(0x87ceeb, 40, 120);
+
+            g.camera = new THREE.PerspectiveCamera(75, area.clientWidth / area.clientHeight, 0.1, 200);
+            g.camera.position.set(0, 1.6, 0);
+            g.camera.rotation.order = 'YXZ';
+            g.scene.add(g.camera);
+
+            g.renderer = new THREE.WebGLRenderer({ antialias: true });
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+            area.insertBefore(g.renderer.domElement, area.firstChild);
+
+            // Lights
+            g.scene.add(new THREE.HemisphereLight(0xffffff, 0x88aa66, 0.9));
+            const sun = new THREE.DirectionalLight(0xffffff, 0.7);
+            sun.position.set(10, 20, 5);
+            g.scene.add(sun);
+
+            // Ground
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshLambertMaterial({ color: 0x7ec850 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            g.scene.add(ground);
+
+            // Shooting-range booth: counter in front of the player
+            const counter = new THREE.Mesh(
+                new THREE.BoxGeometry(7, 1, 0.7),
+                new THREE.MeshLambertMaterial({ color: 0x8d6e63 })
+            );
+            counter.position.set(0, 0.5, -1.8);
+            g.scene.add(counter);
+
+            // Back wall behind the balloons + striped awning on top
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(30, 6, 0.3),
+                new THREE.MeshLambertMaterial({ color: 0xfff3e0 })
+            );
+            wall.position.set(0, 3, -15);
+            g.scene.add(wall);
+            for (let i = 0; i < 10; i++) {
+                const stripe = new THREE.Mesh(
+                    new THREE.BoxGeometry(3, 0.8, 0.5),
+                    new THREE.MeshLambertMaterial({ color: i % 2 ? 0xffffff : 0xe53935 })
+                );
+                stripe.position.set(-13.5 + i * 3, 6.4, -15);
+                g.scene.add(stripe);
+            }
+
+            // A few clouds
+            for (let i = 0; i < 4; i++) {
+                const cloud = new THREE.Group();
+                for (let j = 0; j < 3; j++) {
+                    const puff = new THREE.Mesh(
+                        new THREE.SphereGeometry(1.5 + Math.random(), 12, 10),
+                        new THREE.MeshLambertMaterial({ color: 0xffffff })
+                    );
+                    puff.position.set(j * 1.8, Math.random() * 0.5, 0);
+                    cloud.add(puff);
+                }
+                cloud.position.set(-25 + i * 16, 14 + Math.random() * 4, -35);
+                g.scene.add(cloud);
+            }
+
+            // Rifle attached to the camera (simple boxes)
+            const gun = g.gun = new THREE.Group();
+            const metal = new THREE.MeshLambertMaterial({ color: 0x37474f });
+            const wood = new THREE.MeshLambertMaterial({ color: 0x6d4c41 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.07, 0.5), metal);
+            body.position.set(0, 0, -0.25);
+            gun.add(body);
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.3, 10), metal);
+            barrel.rotation.x = Math.PI / 2;
+            barrel.position.set(0, 0.015, -0.6);
+            gun.add(barrel);
+            const stock = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.1, 0.2), wood);
+            stock.position.set(0, -0.035, 0.05);
+            gun.add(stock);
+            const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.14, 12), metal);
+            scope.rotation.x = Math.PI / 2;
+            scope.position.set(0, 0.062, -0.2);
+            gun.add(scope);
+            g.flash = new THREE.Mesh(
+                new THREE.SphereGeometry(0.05, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0xffe082 })
+            );
+            g.flash.position.set(0, 0.015, -0.78);
+            g.flash.visible = false;
+            gun.add(g.flash);
+
+            g.hipPos = new THREE.Vector3(0.22, -0.18, -0.35);
+            // In ADS the scope (+0.062 above the gun origin) sits at screen center
+            g.adsPos = new THREE.Vector3(0, -0.062, -0.3);
+            g.gunBase = g.hipPos.clone();
+            g.recoil = 0;
+            gun.position.copy(g.hipPos);
+            g.camera.add(gun);
+        },
+
+        makeLabelSprite: function(text) {
+            const canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            let fontSize = 48;
+            ctx.font = `bold ${fontSize}px Arial`;
+            let textW = ctx.measureText(text).width;
+            if (textW > 500) {
+                fontSize = Math.max(22, Math.floor(fontSize * 500 / textW));
+            }
+            canvas.width = Math.min(560, Math.max(170, Math.ceil(textW) + 50));
+            canvas.height = 96;
+            ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.strokeStyle = '#37474f';
+            ctx.lineWidth = 5;
+            const r = 18, w = canvas.width, h = canvas.height;
+            ctx.beginPath();
+            ctx.moveTo(r, 3);
+            ctx.arcTo(w - 3, 3, w - 3, h - 3, r);
+            ctx.arcTo(w - 3, h - 3, 3, h - 3, r);
+            ctx.arcTo(3, h - 3, 3, 3, r);
+            ctx.arcTo(3, 3, w - 3, 3, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#212121';
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, w / 2, h / 2 + 2);
+
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: new THREE.CanvasTexture(canvas),
+                depthTest: false,
+            }));
+            const height = 0.85;
+            sprite.scale.set(height * w / h, height, 1);
+            return sprite;
+        },
+
+        makeBalloon: function(text, isCorrect, x, z, baseY) {
+            const g = this._g;
+            const colors = [0xe53935, 0x1e88e5, 0xfdd835, 0x43a047, 0x8e24aa, 0xfb8c00];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            const group = new THREE.Group();
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.85, 24, 18),
+                new THREE.MeshPhongMaterial({ color: color, shininess: 90 })
+            );
+            sphere.scale.y = 1.15;
+            group.add(sphere);
+            const knot = new THREE.Mesh(
+                new THREE.ConeGeometry(0.12, 0.18, 8),
+                new THREE.MeshLambertMaterial({ color: color })
+            );
+            knot.position.y = -1.05;
+            group.add(knot);
+
+            const sprite = this.makeLabelSprite(text);
+            sprite.position.set(0, 0, 0.95);
+            group.add(sprite);
+
+            // String tied to a post on the ground (the post stays behind)
+            const stringGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, -1.1, 0),
+                new THREE.Vector3(0, -baseY + 0.7, 0),
+            ]);
+            const string = new THREE.Line(stringGeo, new THREE.LineBasicMaterial({ color: 0x444444 }));
+            group.add(string);
+
+            const post = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.06, 0.08, 0.7, 8),
+                new THREE.MeshLambertMaterial({ color: 0x5d4037 })
+            );
+            post.position.set(x, 0.35, z);
+            g.scene.add(post);
+
+            group.position.set(x, baseY, z);
+            g.scene.add(group);
+
+            const rec = {
+                group: group, sphere: sphere, sprite: sprite, string: string, post: post,
+                color: color, text: text, isCorrect: isCorrect,
+                x: x, z: z, baseY: baseY,
+                phase: Math.random() * Math.PI * 2,
+                state: 'idle', vel: null,
+            };
+            sphere.userData.rec = rec;
+            sprite.userData.rec = rec;
+            g.balloons.push(rec);
+            return rec;
+        },
+
+        clearBalloons: function() {
+            const g = this._g;
+            g.balloons.forEach(b => {
+                g.scene.remove(b.group);
+                g.scene.remove(b.post);
+            });
+            g.balloons = [];
+        },
+
+        createNewQuestion: function() {
+            const g = this._g;
+            if (!g) return; // component may have been destroyed while a timeout was pending
+            g.qToken += 1;
+            const weightedRandomIndex = getWeightedRandomIndex(this.list,
+                                                               this.currentAppId,
+                                                               getSetItems(this.currentApp));
+            this.title = this.currentApp.title || '';
+            this.questionIndex = weightedRandomIndex;
+            this.result = this.list[weightedRandomIndex][this.currentApp.resultIndex].value;
+            const questionItem = { ...this.list[weightedRandomIndex][this.currentApp.questionIndex] };
+            if (this.currentApp.questionType) {
+                questionItem['type'] = this.currentApp.questionType;
+            }
+            this.exercise = render(questionItem);
+            const action = generateQuestion(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            action();
+
+            const wrongIndexes = getRandomIndexesExcluding(this.list, this.currentApp.resultIndex, weightedRandomIndex, 3);
+            const entries = this.shuffle(
+                [{ text: this.result, isCorrect: true }].concat(
+                    wrongIndexes.map(i => ({
+                        text: this.list[i][this.currentApp.resultIndex].value,
+                        isCorrect: false,
+                    }))
+                )
+            );
+
+            this.clearBalloons();
+            const n = entries.length;
+            entries.forEach((entry, i) => {
+                const x = (i - (n - 1) / 2) * 3.4;
+                const z = -11 - Math.random() * 1.5;
+                const y = 2.6 + Math.random() * 1.6;
+                this.makeBalloon(entry.text, entry.isCorrect, x, z, y);
+            });
+            this.message = {};
+            this.ended = false;
+        },
+
+        spawnParticles: function(position, color) {
+            const g = this._g;
+            for (let i = 0; i < 10; i++) {
+                const mesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.08, 6, 6),
+                    new THREE.MeshBasicMaterial({ color: color, transparent: true })
+                );
+                mesh.position.copy(position);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 6, Math.random() * 5, (Math.random() - 0.5) * 6),
+                    life: 0.6,
+                });
+            }
+        },
+
+        playShotSound: function() {
+            try {
+                if (!this._audioCtx) {
+                    this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const ctx = this._audioCtx;
+                const duration = 0.12;
+                const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+                }
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 900;
+                const gain = ctx.createGain();
+                gain.gain.value = 0.35;
+                source.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+                source.start();
+            } catch (e) {}
+        },
+
+        shoot: function() {
+            const g = this._g;
+            if (!g) return;
+            if (!this.isTouch && !this.locked) return;
+
+            g.recoil = 1;
+            g.flash.visible = true;
+            setTimeout(() => { if (this._g) this._g.flash.visible = false; }, 60);
+            this.playShotSound();
+
+            if (this.ended) return;
+
+            g.raycaster.setFromCamera(new THREE.Vector2(0, 0), g.camera);
+            const targets = [];
+            g.balloons.forEach(b => {
+                if (b.state === 'idle') {
+                    targets.push(b.sphere, b.sprite);
+                }
+            });
+            const hits = g.raycaster.intersectObjects(targets, false);
+            if (!hits.length) return;
+
+            const rec = hits[0].object.userData.rec;
+            this.popBalloon(rec);
+            if (rec.isCorrect) {
+                this.onCorrectHit();
+            } else {
+                this.onWrongHit(rec);
+            }
+        },
+
+        popBalloon: function(rec) {
+            rec.state = 'popped';
+            this.spawnParticles(rec.group.position, rec.color);
+            this._g.scene.remove(rec.group);
+        },
+
+        onCorrectHit: function() {
+            this.ended = true;
+            this.message = { value: this.getSuccessMsg(), success: true };
+            successSound.play();
+            updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+            this.score += 1;
+            // The remaining balloons fly away
+            this._g.balloons.forEach(b => {
+                if (b.state === 'idle') {
+                    b.state = 'flying';
+                    b.vel = new THREE.Vector3((Math.random() - 0.5) * 1.5, 3.5 + Math.random() * 2, 0);
+                    // The string dangles below the balloon instead of stretching to the ground
+                    const positions = b.string.geometry.attributes.position;
+                    positions.setY(1, -2.4);
+                    positions.needsUpdate = true;
+                }
+            });
+            if (this.reloadProgress()) {
+                this.saveScore();
+                setTimeout(this.createNewQuestion, 1800);
+            }
+        },
+
+        onWrongHit: function(rec) {
+            failureSound.play();
+            this.score = Math.max(0, this.score - 1);
+            this.saveScore();
+            updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+            this.message = { value: 'נסה שוב :(', error: true };
+            this.reloadProgress();
+            // Bring the wrong balloon back so the right one can still be found
+            const token = this._g.qToken;
+            setTimeout(() => {
+                if (this._g && this._g.qToken === token && !this.ended) {
+                    this.makeBalloon(rec.text, false, rec.x, rec.z, rec.baseY);
+                }
+            }, 1200);
+        },
+
+        animate: function() {
+            const g = this._g;
+            if (!g) return;
+            g.raf = requestAnimationFrame(this.animate);
+            const dt = Math.min(g.clock.getDelta(), 0.05);
+            const t = g.clock.elapsedTime;
+
+            // Balloons: gentle bobbing / flying away
+            for (let i = g.balloons.length - 1; i >= 0; i--) {
+                const b = g.balloons[i];
+                if (b.state === 'idle') {
+                    b.group.position.y = b.baseY + Math.sin(t * 1.4 + b.phase) * 0.18;
+                    b.group.rotation.z = Math.sin(t * 1.1 + b.phase) * 0.05;
+                    const positions = b.string.geometry.attributes.position;
+                    positions.setY(1, -b.group.position.y + 0.7);
+                    positions.needsUpdate = true;
+                } else if (b.state === 'flying') {
+                    b.vel.y += 2 * dt;
+                    b.group.position.addScaledVector(b.vel, dt);
+                    if (b.group.position.y > 30) {
+                        g.scene.remove(b.group);
+                        b.state = 'gone';
+                    }
+                }
+            }
+
+            // Pop particles
+            for (let i = g.particles.length - 1; i >= 0; i--) {
+                const p = g.particles[i];
+                p.vel.y -= 9.8 * dt;
+                p.mesh.position.addScaledVector(p.vel, dt);
+                p.life -= dt;
+                p.mesh.material.opacity = Math.max(0, p.life / 0.6);
+                if (p.life <= 0) {
+                    g.scene.remove(p.mesh);
+                    g.particles.splice(i, 1);
+                }
+            }
+
+            // ADS zoom (FOV) and gun position
+            const targetFov = this.ads ? 30 : 75;
+            g.camera.fov += (targetFov - g.camera.fov) * Math.min(1, dt * 10);
+            g.camera.updateProjectionMatrix();
+            g.gunBase.lerp(this.ads ? g.adsPos : g.hipPos, Math.min(1, dt * 12));
+            g.recoil = Math.max(0, g.recoil - dt * 6);
+            g.gun.position.copy(g.gunBase);
+            g.gun.position.z += g.recoil * 0.06;
+            g.gun.rotation.x = g.recoil * 0.1;
+
+            g.camera.rotation.y = g.yaw;
+            g.camera.rotation.x = g.pitch;
+            g.renderer.render(g.scene, g.camera);
+        },
+
+        requestLock: function() {
+            const g = this._g;
+            if (g && g.renderer.domElement.requestPointerLock) {
+                g.renderer.domElement.requestPointerLock();
+            }
+        },
+
+        toggleAds: function() {
+            this.ads = !this.ads;
+        },
+
+        onPointerLockChange: function() {
+            this.locked = !!(this._g && document.pointerLockElement === this._g.renderer.domElement);
+            if (!this.locked) {
+                this.ads = false;
+            }
+        },
+
+        applyLook: function(dx, dy) {
+            const g = this._g;
+            const sensitivity = this.ads ? 0.0009 : 0.0022;
+            g.yaw -= dx * sensitivity;
+            g.pitch -= dy * sensitivity;
+            g.pitch = Math.max(-1.2, Math.min(1.2, g.pitch));
+        },
+
+        onMouseMove: function(event) {
+            if (!this.locked) return;
+            this.applyLook(event.movementX, event.movementY);
+        },
+
+        onMouseDown: function(event) {
+            if (!this.locked) return;
+            if (event.button === 0) {
+                this.shoot();
+            } else if (event.button === 2) {
+                this.ads = true;
+            }
+        },
+
+        onMouseUp: function(event) {
+            if (event.button === 2) {
+                this.ads = false;
+            }
+        },
+
+        onContextMenu: function(event) {
+            event.preventDefault();
+        },
+
+        onTouchStart: function(event) {
+            if (event.touches.length) {
+                this._lastTouch = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+            }
+        },
+
+        onTouchMove: function(event) {
+            if (!event.touches.length || !this._lastTouch) return;
+            event.preventDefault();
+            const touch = event.touches[0];
+            this.applyLook((touch.clientX - this._lastTouch.x) * 2.5, (touch.clientY - this._lastTouch.y) * 2.5);
+            this._lastTouch = { x: touch.clientX, y: touch.clientY };
+        },
+
+        onResize: function() {
+            const g = this._g;
+            const area = this.$refs.shooterArea;
+            if (!g || !area) return;
+            g.camera.aspect = area.clientWidth / area.clientHeight;
+            g.camera.updateProjectionMatrix();
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+        },
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId;
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
+        this.updateScore();
+        this.list = getDataList(this.currentApp.listName);
+        this.isTouch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        if (typeof THREE === 'undefined') {
+            this.message = { value: 'מנוע התלת-ממד לא נטען. בדוק חיבור לאינטרנט ורענן.', error: true };
+            return;
+        }
+
+        this.initScene();
+        this.createNewQuestion();
+        this.animate();
+
+        const canvas = this._g.renderer.domElement;
+        document.addEventListener('pointerlockchange', this.onPointerLockChange);
+        document.addEventListener('mousemove', this.onMouseMove);
+        document.addEventListener('mousedown', this.onMouseDown);
+        document.addEventListener('mouseup', this.onMouseUp);
+        canvas.addEventListener('contextmenu', this.onContextMenu);
+        canvas.addEventListener('touchstart', this.onTouchStart, { passive: true });
+        canvas.addEventListener('touchmove', this.onTouchMove, { passive: false });
+        window.addEventListener('resize', this.onResize);
+    },
+
+    beforeDestroy() {
+        if (this._g) {
+            cancelAnimationFrame(this._g.raf);
+            if (document.pointerLockElement === this._g.renderer.domElement && document.exitPointerLock) {
+                document.exitPointerLock();
+            }
+            const canvas = this._g.renderer.domElement;
+            canvas.removeEventListener('contextmenu', this.onContextMenu);
+            canvas.removeEventListener('touchstart', this.onTouchStart);
+            canvas.removeEventListener('touchmove', this.onTouchMove);
+            this._g.renderer.dispose();
+            if (canvas.parentNode) {
+                canvas.parentNode.removeChild(canvas);
+            }
+            this._g = null;
+        }
+        document.removeEventListener('pointerlockchange', this.onPointerLockChange);
+        document.removeEventListener('mousemove', this.onMouseMove);
+        document.removeEventListener('mousedown', this.onMouseDown);
+        document.removeEventListener('mouseup', this.onMouseUp);
+        window.removeEventListener('resize', this.onResize);
+        if (this._audioCtx) {
+            this._audioCtx.close();
+            this._audioCtx = null;
+        }
+    }
+}));
+
+
 var DisplayComponent = Vue.component('display',{
     template: `
     <div class="container">
@@ -2056,6 +2667,7 @@ const routes = [
     {path: '/play/common/:currentAppId', component: CommonComponent, props: true },
     {path: '/play/draw_letter/:currentAppId', component: DrawLetterComponent, props: true },
     {path: '/play/falling_answers/:currentAppId', component: FallingAnswersComponent, props: true },
+    {path: '/play/balloon_shooter/:currentAppId', component: BalloonShooterComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },
