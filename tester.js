@@ -2213,13 +2213,17 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 // Obstacle themes for the treasure maze. Behind the scenes every obstacle is
 // the same learning question — only the visuals change, so each chamber feels
 // like a new adventure without designing levels.
-// Each room type also defines how a WRONG choice plays out: the wrong door
-// opens too and the player walks in, but the trap is revealed at the doorway
-// and the character flees back to the chamber.
-//   fail: 'block'    — a wall/obstacle is suddenly revealed, the way is blocked
-//   fail: 'monster'  — a creature with glowing eyes lunges from the dark
-//   fail: 'collapse' — the passage caves in (planks/rocks rain down)
-//   fail: 'bounce'   — a magic flash hurls the player straight back
+// Room types. `layout` picks the chamber structure:
+//   'doors'   — 3 gates with wooden doors; behind a wrong door there is a
+//               real dead-end room: the player walks in, the trap is revealed
+//               inside, and the character flees back.
+//   'bridges' — a chasm crossed by 3 bridges; a wrong bridge collapses
+//               mid-crossing and the character escapes back.
+// `fail` styles the dead-end room of 'doors' layouts:
+//   'block'    — the room is blocked by rubble/ice/thorns
+//   'monster'  — a creature with glowing eyes lunges at the player
+//   'collapse' — the room caves in (beams and rocks rain down)
+//   'bounce'   — a magic circle hurls the player straight back
 const MAZE_SCENARIOS = [
     { title: '🚪 שערי האבן — איזו דלת מובילה לאוצר?', door: 0x8d5a2b, frame: 0x8d8794, flame: 0xffa726, light: 0xffa14d, rune: 0xffc46b,
       fail: 'block', failColor: 0x6e6675, failMsg: 'המעבר חסום בסלעים! נסה דלת אחרת' },
@@ -2231,12 +2235,12 @@ const MAZE_SCENARIOS = [
       fail: 'block', failColor: 0x9fd8f5, failMsg: 'קיר קרח חוסם את הדרך!' },
     { title: '🌿 גן הסוד — איזו דלת תוביל הלאה?', door: 0x3f6f33, frame: 0x9e8f6e, flame: 0xaed581, light: 0x9ccc65, rune: 0xc5e1a5,
       fail: 'block', failColor: 0x33581f, failMsg: 'קוצים סבוכים חוסמים את הדרך!' },
-    { title: '🌉 גשר התהום — איזה גשר יחזיק?', door: 0x7a6a4f, frame: 0x5d4a36, flame: 0xffb74d, light: 0xffa14d, rune: 0xffe0b2,
+    { title: '🌉 גשר התהום — איזה גשר יחזיק?', layout: 'bridges', pit: 'dark', door: 0x7a6a4f, frame: 0x5d4a36, flame: 0xffb74d, light: 0xffa14d, rune: 0xffe0b2,
       fail: 'collapse', failColor: 0x8d6e63, failMsg: 'הגשר קרס! ברחת ברגע האחרון!' },
     { title: '🕷️ מאורת העכביש — בחר מעבר זהיר', door: 0x4a3f5c, frame: 0x6e6680, flame: 0x9fa8da, light: 0x8c9eff, rune: 0xb39ddb,
       fail: 'monster', failColor: 0x76608a, eyes: 0xff1744, failMsg: 'עכביש ענק! ברח!' },
-    { title: '🌋 מערת הלבה — רק דרך אחת בטוחה', door: 0x5d4037, frame: 0x4e342e, flame: 0xff8a65, light: 0xff7043, rune: 0xffab91,
-      fail: 'block', failColor: 0xff5722, failMsg: 'נהר לבה חוסם את הדרך!' },
+    { title: '🌋 נהר הלבה — איזה גשר בטוח?', layout: 'bridges', pit: 'lava', door: 0x5d4037, frame: 0x4e342e, flame: 0xff8a65, light: 0xff7043, rune: 0xffab91,
+      fail: 'collapse', failColor: 0x8d6e63, failMsg: 'הגשר קרס לתוך הלבה! ברחת ברגע האחרון!' },
     { title: '⛏️ המכרה הנטוש — איזו מנהרה פתוחה?', door: 0x6d5843, frame: 0x55483a, flame: 0xffcc80, light: 0xffb74d, rune: 0xd7ccc8,
       fail: 'collapse', failColor: 0x5d5048, failMsg: 'המנהרה התמוטטה! ברחת בזמן!' },
     { title: '🏰 חצר הטירה — איזה שער פתוח?', door: 0x8c7048, frame: 0xa099a8, flame: 0xfff176, light: 0xffe082, rune: 0xfff59d,
@@ -2509,6 +2513,14 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 color: 0xffc94d, roughness: 0.35, metalness: 0.8,
             });
 
+            // Shared geometries for bridges and reward particles
+            g.coinGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.022, 12);
+            g.puffGeo = new THREE.SphereGeometry(0.09, 6, 6);
+            g.flashGeo = new THREE.SphereGeometry(0.4, 12, 10);
+            g.plankGeo = new THREE.BoxGeometry(0.55, 0.07, 0.18);
+            g.bridgePlankGeo = new THREE.BoxGeometry(1.7, 0.08, 0.42);
+            g.trapRoom = null;
+
             // The maze is built chamber by chamber: the current one sits at
             // the origin, and on a correct answer the next chamber is built
             // beyond the chosen gate so the camera walks straight into it
@@ -2532,11 +2544,6 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             }));
             g.scene.add(g.fireflies);
 
-            // Shared geometries for reward particles
-            g.coinGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.022, 12);
-            g.puffGeo = new THREE.SphereGeometry(0.09, 6, 6);
-            g.flashGeo = new THREE.SphereGeometry(0.4, 12, 10);
-            g.plankGeo = new THREE.BoxGeometry(0.55, 0.07, 0.18);
         },
 
         buildChamber: function(ox, oz) {
@@ -2586,7 +2593,8 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             addWall(14.9, 5, 8.55, 2.5, 7);
             addWall(2.6, 2, 0, 4, 7);
 
-            // Pulsing magic rune circle on the floor in front of the gates
+            // Pulsing magic rune circle on the floor (in front of the chasm
+            // when the room is bridge-based)
             chamber.rune = new THREE.Mesh(
                 new THREE.RingGeometry(1.5, 1.85, 48),
                 new THREE.MeshBasicMaterial({
@@ -2595,9 +2603,27 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 })
             );
             chamber.rune.rotation.x = -Math.PI / 2;
-            chamber.rune.position.set(0, 0.02, -1);
+            chamber.rune.position.set(0, 0.02, scenario.layout === 'bridges' ? 1.8 : -1);
             group.add(chamber.rune);
             chamber.disposables.push(chamber.rune.material);
+
+            // Bridge rooms get a chasm (or a glowing lava river) across the floor
+            if (scenario.layout === 'bridges') {
+                const pit = new THREE.Mesh(
+                    new THREE.PlaneGeometry(31, 4.2),
+                    new THREE.MeshBasicMaterial({ color: scenario.pit === 'lava' ? 0xff5a1f : 0x04050a })
+                );
+                pit.rotation.x = -Math.PI / 2;
+                pit.position.set(0, 0.04, -3.2);
+                group.add(pit);
+                chamber.disposables.push(pit.material);
+                if (scenario.pit === 'lava') {
+                    const lavaLight = new THREE.PointLight(0xff6a2a, 1.1, 16, 2);
+                    lavaLight.position.set(0, 1, -3.2);
+                    group.add(lavaLight);
+                    chamber.torchLights.push(lavaLight);
+                }
+            }
 
             for (const gx of [-4, 0, 4]) {
                 this.makeGate(chamber, gx);
@@ -2610,7 +2636,6 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
         disposeChamber: function(chamber) {
             const g = this._g;
             chamber.gates.forEach(gate => {
-                this.removeBlocker(gate);
                 if (gate.label) {
                     gate.label.material.map.dispose();
                     gate.label.material.dispose();
@@ -2651,28 +2676,38 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             trim.position.set(0, 3.35, 0.1);
             group.add(trim);
 
-            // Double wooden doors hinged on the outer edges
             const rec = {
                 chamber: chamber, group: group, baseX: x, openT: 0, openTarget: 0,
                 shake: 0, hoverT: 0, label: null, entry: null, active: false,
-                panels: [], blocker: null,
+                panels: [], back: back, glow: glow, pivotL: null, pivotR: null,
+                bridge: null, planks: [],
+                // where the answer sign hangs: above the door, or floating at
+                // the near end of the bridge
+                labelPos: chamber.scenario.layout === 'bridges' ? [0, 2.3, 4.9] : [0, 3.95, 0.6],
             };
-            const makePanel = (hingeX, dir) => {
-                const pivot = new THREE.Group();
-                pivot.position.set(hingeX, 0, 0);
-                const panel = new THREE.Mesh(new THREE.BoxGeometry(1.06, 2.9, 0.09), chamber.doorMat);
-                panel.position.set(dir * 0.53, 1.45, 0);
-                panel.userData.rec = rec;
-                pivot.add(panel);
-                const knob = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 8, 14), g.goldMat);
-                knob.position.set(dir * 0.92, 1.42, 0.09);
-                pivot.add(knob);
-                group.add(pivot);
-                rec.panels.push(panel);
-                return pivot;
-            };
-            rec.pivotL = makePanel(-1.1, 1);
-            rec.pivotR = makePanel(1.1, -1);
+
+            if (chamber.scenario.layout === 'bridges') {
+                // Open archway across the chasm — the bridge is the choice
+                this.makeBridge(chamber, rec);
+            } else {
+                // Double wooden doors hinged on the outer edges
+                const makePanel = (hingeX, dir) => {
+                    const pivot = new THREE.Group();
+                    pivot.position.set(hingeX, 0, 0);
+                    const panel = new THREE.Mesh(new THREE.BoxGeometry(1.06, 2.9, 0.09), chamber.doorMat);
+                    panel.position.set(dir * 0.53, 1.45, 0);
+                    panel.userData.rec = rec;
+                    pivot.add(panel);
+                    const knob = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 8, 14), g.goldMat);
+                    knob.position.set(dir * 0.92, 1.42, 0.09);
+                    pivot.add(knob);
+                    group.add(pivot);
+                    rec.panels.push(panel);
+                    return pivot;
+                };
+                rec.pivotL = makePanel(-1.1, 1);
+                rec.pivotR = makePanel(1.1, -1);
+            }
 
             // Torches on both sides of the gate + one warm light per gate
             for (const sx of [-1.8, 1.8]) {
@@ -2701,91 +2736,240 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             chamber.gates.push(rec);
         },
 
-        // The trap revealed behind a wrong door, styled by the room type
-        spawnBlocker: function(gate) {
+        // A rope bridge crossing the chasm toward the gate's archway
+        makeBridge: function(chamber, rec) {
+            const g = this._g;
+            const bridge = new THREE.Group();
+            rec.planks = [];
+            for (let i = 0; i < 9; i++) {
+                const plank = new THREE.Mesh(g.bridgePlankGeo, chamber.doorMat);
+                plank.position.set(
+                    (Math.random() - 0.5) * 0.06,
+                    0.16 + Math.sin((i / 8) * Math.PI) * 0.22,
+                    0.8 + i * 0.5
+                );
+                plank.rotation.y = (Math.random() - 0.5) * 0.05;
+                plank.userData.rec = rec;
+                bridge.add(plank);
+                rec.planks.push(plank);
+            }
+            for (const sx of [-0.85, 0.85]) {
+                const rope = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.05, 0.05, 4.4),
+                    new THREE.MeshStandardMaterial({ color: 0x3e2f23, roughness: 1 })
+                );
+                rope.position.set(sx, 0.85, 2.8);
+                bridge.add(rope);
+                for (const pz of [0.7, 4.9]) {
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.9, 8), chamber.frameMat);
+                    post.position.set(sx, 0.45, pz);
+                    bridge.add(post);
+                }
+            }
+            rec.bridge = bridge;
+            rec.panels = rec.planks;
+            rec.group.add(bridge);
+        },
+
+        // The wrong bridge gives way: its planks drop into the pit
+        collapseBridge: function(rec) {
+            const g = this._g;
+            const world = new THREE.Vector3();
+            rec.planks.forEach(plank => {
+                plank.getWorldPosition(world);
+                const mesh = new THREE.Mesh(
+                    g.bridgePlankGeo,
+                    new THREE.MeshBasicMaterial({ color: 0x6d5132, transparent: true })
+                );
+                mesh.position.copy(world);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 1.2, -0.5 - Math.random() * 1.5, (Math.random() - 0.5) * 0.8),
+                    gravity: 7,
+                    spin: new THREE.Vector3(Math.random() * 7, Math.random() * 7, Math.random() * 7),
+                    maxLife: 1.0,
+                    life: 1.0,
+                });
+            });
+            rec.group.remove(rec.bridge);
+            rec.bridge = null;
+            rec.planks = [];
+            rec.panels = [];
+        },
+
+        makeMonster: function(s) {
+            const g = this._g;
+            const monster = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.SphereGeometry(0.95, 14, 12),
+                new THREE.MeshStandardMaterial({ color: 0x140f1b, roughness: 0.9 })
+            );
+            body.scale.set(1.25, 1.5, 0.8);
+            body.position.y = 1.35;
+            monster.add(body);
+            for (const ex of [-0.34, 0.34]) {
+                const eye = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: g.flameTex, color: s.eyes,
+                    blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                eye.scale.set(0.4, 0.5, 1);
+                eye.position.set(ex, 1.95, 0.6);
+                monster.add(eye);
+            }
+            return monster;
+        },
+
+        // A real dead-end room built behind a wrong door, in the same slot
+        // the next chamber would occupy — the player genuinely walks into it
+        buildTrapRoom: function(gate) {
             const g = this._g;
             const s = gate.chamber.scenario;
             const group = new THREE.Group();
-            group.position.set(0, 0, -0.35);
+            group.position.set(gate.baseX, 0, -13.3);
+            const room = { group: group, disposables: [], monster: null, rubble: null, lunge: false };
+
+            const addWall = (w, h, x, y, z, rotY) => {
+                const tex = g.stoneTex.clone();
+                tex.needsUpdate = true;
+                tex.repeat.set(Math.max(1, w / 3.5), Math.max(1, h / 3.5));
+                const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 });
+                room.disposables.push(tex, mat);
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.6), mat);
+                wall.position.set(x, y, z);
+                if (rotY) wall.rotation.y = rotY;
+                group.add(wall);
+            };
+
+            // Entry wall with the doorway, far wall and side walls
+            addWall(2.9, 5, -2.55, 2.5, 7);
+            addWall(2.9, 5, 2.55, 2.5, 7);
+            addWall(2.6, 2, 0, 4, 7);
+            addWall(8.6, 5, 0, 2.5, 2.4);
+            addWall(5.2, 5, -4, 2.5, 4.7, Math.PI / 2);
+            addWall(5.2, 5, 4, 2.5, 4.7, Math.PI / 2);
+            const lamp = new THREE.PointLight(s.light, 0.9, 10, 2);
+            lamp.position.set(0, 2.6, 4.6);
+            group.add(lamp);
 
             if (s.fail === 'monster') {
-                const body = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.85, 14, 12),
-                    new THREE.MeshStandardMaterial({ color: 0x15101c, roughness: 0.9 })
-                );
-                body.scale.set(1.2, 1.45, 0.7);
-                body.position.y = 1.25;
-                group.add(body);
-                for (const ex of [-0.3, 0.3]) {
-                    const eye = new THREE.Sprite(new THREE.SpriteMaterial({
-                        map: g.flameTex, color: s.eyes,
-                        blending: THREE.AdditiveBlending, depthWrite: false,
-                    }));
-                    eye.scale.set(0.34, 0.42, 1);
-                    eye.position.set(ex, 1.75, 0.45);
-                    group.add(eye);
+                room.monster = this.makeMonster(s);
+                room.monster.position.set(0, 0, 3.6);
+                group.add(room.monster);
+            } else if (s.fail === 'block' || s.fail === 'collapse') {
+                // A rubble pile blocking the room — already there for 'block',
+                // appears with the cave-in for 'collapse'
+                room.rubble = new THREE.Group();
+                const mat = new THREE.MeshStandardMaterial({ color: s.failColor, roughness: 0.95 });
+                room.disposables.push(mat);
+                for (let i = 0; i < 12; i++) {
+                    const rock = new THREE.Mesh(new THREE.SphereGeometry(0.45 + Math.random() * 0.5, 7, 6), mat);
+                    rock.position.set((Math.random() - 0.5) * 3.4, 0.3 + Math.random() * 1.6, 3 + Math.random() * 1.2);
+                    rock.scale.y = 0.7 + Math.random() * 0.4;
+                    room.rubble.add(rock);
                 }
-                group.userData.lunge = true;
+                room.rubble.visible = s.fail === 'block';
+                group.add(room.rubble);
+            } else if (s.fail === 'bounce') {
+                const ring = new THREE.Mesh(
+                    new THREE.RingGeometry(1.0, 1.3, 40),
+                    new THREE.MeshBasicMaterial({
+                        color: s.failColor, transparent: true, opacity: 0.5,
+                        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+                    })
+                );
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.set(0, 0.04, 4.4);
+                group.add(ring);
+            }
+
+            g.scene.add(group);
+            return room;
+        },
+
+        disposeTrapRoom: function() {
+            const g = this._g;
+            if (!g.trapRoom) return;
+            g.trapRoom.disposables.forEach(d => d.dispose());
+            g.scene.remove(g.trapRoom.group);
+            g.trapRoom = null;
+        },
+
+        // The moment the trap springs, styled by the room type
+        triggerTrap: function(gate) {
+            const g = this._g;
+            const s = gate.chamber.scenario;
+            failureSound.play();
+            this.message = { value: s.failMsg, error: true };
+            g.camShake = 1;
+
+            if (s.layout === 'bridges') {
+                this.collapseBridge(gate);
+            } else if (s.fail === 'monster') {
+                g.trapRoom.lunge = true;
             } else if (s.fail === 'collapse') {
-                // The passage caves in: planks and rocks rain down in the doorway
-                const gateWorld = new THREE.Vector3(gate.baseX, 0, -6).add(gate.chamber.group.position);
+                g.trapRoom.rubble.visible = true;
+                // Beams and rocks rain down inside the room
                 for (let i = 0; i < 14; i++) {
-                    const isPlank = i % 2 === 0;
+                    const isBeam = i % 2 === 0;
                     const mesh = new THREE.Mesh(
-                        isPlank ? g.plankGeo : g.puffGeo,
-                        new THREE.MeshBasicMaterial({ color: isPlank ? s.failColor : 0x4a4038, transparent: true })
+                        isBeam ? g.plankGeo : g.puffGeo,
+                        new THREE.MeshBasicMaterial({ color: isBeam ? s.failColor : 0x4a4038, transparent: true })
                     );
-                    if (!isPlank) mesh.scale.setScalar(1.2 + Math.random() * 1.6);
+                    if (!isBeam) mesh.scale.setScalar(1.4 + Math.random() * 1.8);
                     mesh.position.set(
-                        gateWorld.x + (Math.random() - 0.5) * 1.8,
-                        2.6 + Math.random() * 1.2,
-                        gateWorld.z - 0.2 - Math.random() * 0.6
+                        gate.baseX + (Math.random() - 0.5) * 3,
+                        3 + Math.random() * 1.5,
+                        -9.6 + (Math.random() - 0.5) * 2
                     );
                     g.scene.add(mesh);
                     g.particles.push({
                         mesh: mesh,
-                        vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, -1 - Math.random() * 2, 0.4),
+                        vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, -1 - Math.random() * 2, 0),
                         gravity: 9,
                         spin: new THREE.Vector3(Math.random() * 8, Math.random() * 8, Math.random() * 8),
                         maxLife: 1.1,
                         life: 1.1,
                     });
                 }
-                const pile = new THREE.Mesh(
-                    new THREE.PlaneGeometry(2.2, 3),
-                    new THREE.MeshStandardMaterial({ color: s.failColor, roughness: 0.95 })
-                );
-                pile.position.set(0, 1.5, 0);
-                group.add(pile);
-            } else {
-                // 'block' and 'bounce': a wall suddenly revealed behind the door
-                const block = new THREE.Mesh(
-                    new THREE.PlaneGeometry(2.2, 3),
-                    new THREE.MeshStandardMaterial({ color: s.failColor, roughness: 0.9 })
-                );
-                block.position.set(0, 1.5, 0);
-                group.add(block);
+            } else if (s.fail === 'block') {
+                // A burst of dust by the rubble
+                for (let i = 0; i < 8; i++) {
+                    const mesh = new THREE.Mesh(
+                        g.puffGeo,
+                        new THREE.MeshBasicMaterial({ color: 0x5c5248, transparent: true })
+                    );
+                    mesh.scale.setScalar(1.5 + Math.random() * 2);
+                    mesh.position.set(gate.baseX + (Math.random() - 0.5) * 3, 0.5 + Math.random() * 1.5, -9.3);
+                    g.scene.add(mesh);
+                    g.particles.push({
+                        mesh: mesh,
+                        vel: new THREE.Vector3((Math.random() - 0.5) * 2, 0.5 + Math.random(), 0.5),
+                        gravity: 0.8,
+                        maxLife: 0.8,
+                        life: 0.8,
+                    });
+                }
             }
 
-            // Colored flash at the doorway at the moment of the reveal
-            const flashWorld = new THREE.Vector3(gate.baseX, 1.6, -5.6).add(gate.chamber.group.position);
+            // Colored flash right in front of the camera
             const flash = new THREE.Mesh(
                 g.flashGeo,
                 new THREE.MeshBasicMaterial({ color: s.failColor, transparent: true, opacity: 0.8 })
             );
-            flash.position.copy(flashWorld);
+            flash.position.set(g.camera.position.x, 1.6, g.camera.position.z - 1.5);
             g.scene.add(flash);
-            g.particles.push({ mesh: flash, vel: new THREE.Vector3(), gravity: 0, grow: 8, maxLife: 0.25, life: 0.25 });
-
-            gate.group.add(group);
-            gate.blocker = group;
+            g.particles.push({ mesh: flash, vel: new THREE.Vector3(), gravity: 0, grow: 9, maxLife: 0.25, life: 0.25 });
         },
 
-        removeBlocker: function(gate) {
-            if (gate.blocker) {
-                gate.group.remove(gate.blocker);
-                gate.blocker = null;
-            }
+        refreshPickMeshes: function() {
+            const g = this._g;
+            g.pickMeshes = [];
+            g.chamber.gates.forEach(gate => {
+                if (!gate.active) return;
+                if (gate.label) g.pickMeshes.push(gate.label);
+                gate.panels.forEach(p => g.pickMeshes.push(p));
+            });
         },
 
         createNewQuestion: function() {
@@ -2816,14 +3000,15 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             );
 
             this.scenarioTitle = g.chamber.scenario.title;
-            g.pickMeshes = [];
             g.chamber.gates.forEach((gate, i) => {
                 gate.openT = 0;
                 gate.openTarget = 0;
                 gate.shake = 0;
                 gate.hoverT = 0;
-                gate.pivotL.rotation.y = 0;
-                gate.pivotR.rotation.y = 0;
+                if (gate.pivotL) {
+                    gate.pivotL.rotation.y = 0;
+                    gate.pivotR.rotation.y = 0;
+                }
                 gate.group.position.x = gate.baseX;
                 if (gate.label) {
                     gate.group.remove(gate.label);
@@ -2835,13 +3020,12 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 gate.active = !!gate.entry;
                 if (gate.entry) {
                     gate.label = this.makeLabelSprite(gate.entry.text);
-                    gate.label.position.set(0, 3.95, 0.6);
+                    gate.label.position.set(gate.labelPos[0], gate.labelPos[1], gate.labelPos[2]);
                     gate.label.userData.rec = gate;
                     gate.group.add(gate.label);
-                    g.pickMeshes.push(gate.label);
-                    gate.panels.forEach(p => g.pickMeshes.push(p));
                 }
             });
+            this.refreshPickMeshes();
 
             g.mode = 'idle';
             g.walkGate = null;
@@ -2912,9 +3096,11 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
 
         choose: function(rec) {
             const g = this._g;
+            const s = rec.chamber.scenario;
             const gatePos = new THREE.Vector3(rec.baseX, 1.5, -5.3);
-            // Either way the chosen door opens and the player walks in — a
-            // wrong choice only reveals itself at the doorway (per room type)
+            // Either way the chosen passage opens and the player walks in —
+            // there is always a real room behind it: the next chamber, or a
+            // dead end that sends the player back
             rec.openTarget = 1;
             if (rec.entry.isCorrect) {
                 this.ended = true;
@@ -2929,12 +3115,15 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 this.spawnCoins(gatePos);
                 if (this.reloadProgress()) {
                     this.saveScore();
-                    // Build the next chamber beyond the chosen gate so the
-                    // camera can walk straight into it without a cut
+                    // Build the next chamber beyond the chosen gate, then
+                    // uncover the passage so it is visible through the
+                    // opening doors / archway
                     g.nextChamber = this.buildChamber(rec.baseX, -13.3);
+                    rec.back.visible = false;
+                    rec.glow.visible = false;
                     g.mode = 'opening';
                     g.walkGate = rec;
-                    g.modeDelay = 0.7;
+                    g.modeDelay = s.layout === 'bridges' ? 0.25 : 0.7;
                     g.walkT = 0;
                 }
             } else {
@@ -2942,6 +3131,12 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 this.score = Math.max(0, this.score - 1);
                 this.streak = 0;
                 this.saveScore();
+                if (s.layout !== 'bridges') {
+                    // A real dead-end room appears behind the wrong door too
+                    g.trapRoom = this.buildTrapRoom(rec);
+                    rec.back.visible = false;
+                    rec.glow.visible = false;
+                }
                 g.mode = 'failWalk';
                 g.walkGate = rec;
                 g.walkT = 0;
@@ -2983,8 +3178,10 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             // Gates: doors swing, wrong gates shake, hovered signs grow
             chambers.forEach(chamber => chamber.gates.forEach(gate => {
                 gate.openT += (gate.openTarget - gate.openT) * Math.min(1, dt * 2.2);
-                gate.pivotL.rotation.y = gate.openT * 1.85;
-                gate.pivotR.rotation.y = -gate.openT * 1.85;
+                if (gate.pivotL) {
+                    gate.pivotL.rotation.y = gate.openT * 1.85;
+                    gate.pivotR.rotation.y = -gate.openT * 1.85;
+                }
                 if (gate.shake > 0) {
                     gate.group.position.x = gate.baseX + Math.sin(t * 55) * 0.07 * gate.shake;
                     gate.shake = Math.max(0, gate.shake - dt * 2.2);
@@ -3065,38 +3262,43 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                     this.createNewQuestion();
                 }
             } else if (g.mode === 'failWalk') {
-                // The wrong door opened too — walk in as if it were right...
-                g.walkT = Math.min(1, g.walkT + dt / 1.1);
-                const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);
+                // The wrong passage opened too — walk in as if it were right:
+                // fully into the dead-end room, or out to the middle of the bridge
                 const gate = g.walkGate;
+                const s = gate.chamber.scenario;
+                const bridges = s.layout === 'bridges';
+                g.walkT = Math.min(1, g.walkT + dt / (bridges ? 1.2 : 2.0));
+                const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);
                 const ex = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, g.walkT * 1.6));
-                g.camera.position.set(gate.baseX * ex, 1.6, 5 - 9.6 * e);
+                g.camera.position.set(gate.baseX * ex, 1.6, 5 - (bridges ? 8.4 : 14.0) * e);
                 g.pitch *= Math.max(0, 1 - dt * 3);
                 yawToward(gate.baseX, -25, 5);
                 if (g.walkT >= 1) {
-                    // ...and the trap is revealed at the doorway
-                    const s = gate.chamber.scenario;
-                    this.spawnBlocker(gate);
-                    failureSound.play();
-                    this.message = { value: s.failMsg, error: true };
-                    g.camShake = 1;
+                    // ...and only then the trap springs
+                    this.triggerTrap(gate);
                     g.mode = 'failEvent';
-                    g.modeDelay = s.fail === 'bounce' ? 0.25 : 0.85;
+                    g.modeDelay = s.fail === 'bounce' ? 0.3 : 0.9;
                     g.walkT = 0;
                 }
             } else if (g.mode === 'failEvent') {
                 g.modeDelay -= dt;
-                const blocker = g.walkGate.blocker;
-                if (blocker && blocker.userData.lunge) {
+                const gate = g.walkGate;
+                const room = g.trapRoom;
+                if (room && room.lunge && room.monster) {
                     // The monster lunges toward the player
-                    blocker.position.z = Math.min(0.55, blocker.position.z + dt * 1.7);
-                    blocker.scale.addScalar(dt * 0.4);
+                    room.monster.position.z = Math.min(4.0, room.monster.position.z + dt * 2.4);
+                    room.monster.scale.addScalar(dt * 0.3);
+                }
+                if (gate.chamber.scenario.layout === 'bridges') {
+                    // Look down at the planks tumbling into the pit
+                    g.pitch = Math.max(-0.45, g.pitch - dt * 0.9);
                 }
                 if (g.modeDelay <= 0) {
                     g.mode = 'failReturn';
                     g.walkT = 0;
                     g.returnFrom = g.camera.position.clone();
                     g.returnYaw = g.yaw;
+                    g.returnPitch = g.pitch;
                 }
             } else if (g.mode === 'failReturn') {
                 // The character flees back to the chamber
@@ -3104,10 +3306,19 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 const e = 1 - Math.pow(1 - g.walkT, 2);  // fast escape, ease-out
                 g.camera.position.lerpVectors(g.returnFrom, new THREE.Vector3(0, 1.6, 5), e);
                 g.yaw = g.returnYaw * (1 - e);
+                g.pitch = g.returnPitch * (1 - e);
                 if (g.walkT >= 1) {
                     const gate = g.walkGate;
-                    this.removeBlocker(gate);
-                    gate.openTarget = 0;
+                    this.disposeTrapRoom();
+                    if (gate.chamber.scenario.layout === 'bridges') {
+                        // The bridge magically reassembles for another try
+                        this.makeBridge(gate.chamber, gate);
+                        this.refreshPickMeshes();
+                    } else {
+                        gate.openTarget = 0;
+                        gate.back.visible = true;
+                        gate.glow.visible = true;
+                    }
                     gate.shake = 0.7;
                     g.camShake = 0;
                     g.mode = 'idle';
