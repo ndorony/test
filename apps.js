@@ -273,6 +273,7 @@ apps =  {
               ]
             },
         {icon: 'sports_esports', name:'מטווח בלונים - חיות', type: 'app', appType: 'balloon_shooter', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
+        {icon: 'sports_esports', name:'מטווח בלונים - מילות שאלה', type: 'app', appType: 'balloon_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
       ]
     },
     {

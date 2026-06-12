@@ -205,31 +205,39 @@
         display: block;
     }
 
+    .shooter-area:fullscreen {
+        border-radius: 0;
+        height: 100vh;
+    }
+
     .shooter-crosshair {
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 26px;
-        height: 26px;
+        width: 30px;
+        height: 30px;
         transform: translate(-50%, -50%);
         pointer-events: none;
         z-index: 5;
+        filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
     }
 
     .shooter-crosshair::before,
     .shooter-crosshair::after {
         content: '';
         position: absolute;
-        background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
     }
 
+    /* Call of Duty style crosshair: 4 ticks with a center gap */
     .shooter-crosshair::before {
         left: 50%;
         top: 0;
         width: 2px;
         height: 100%;
         transform: translateX(-50%);
+        background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.95) 0 30%, transparent 30% 70%,
+            rgba(255, 255, 255, 0.95) 70% 100%);
     }
 
     .shooter-crosshair::after {
@@ -238,6 +246,103 @@
         height: 2px;
         width: 100%;
         transform: translateY(-50%);
+        background: linear-gradient(to right,
+            rgba(255, 255, 255, 0.95) 0 30%, transparent 30% 70%,
+            rgba(255, 255, 255, 0.95) 70% 100%);
+    }
+
+    .shooter-hitmarker {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 6;
+        color: #fff;
+        font-size: 34px;
+        font-weight: bold;
+        line-height: 1;
+        text-shadow: 0 0 4px #000;
+        pointer-events: none;
+    }
+
+    .shooter-hud-top {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 6;
+        text-align: center;
+        direction: rtl;
+        max-width: 92%;
+        pointer-events: none;
+    }
+
+    .shooter-question {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        padding: 8px 24px;
+        border-radius: 10px;
+        font-size: 1.7rem;
+        pointer-events: auto;
+    }
+
+    .shooter-question a {
+        color: #fff;
+    }
+
+    .shooter-hud-message {
+        margin-top: 8px;
+        font-size: 1.6rem;
+        font-weight: bold;
+        min-height: 1.8rem;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .shooter-hud-score {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        z-index: 6;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.45);
+        padding: 4px 16px;
+        border-radius: 8px;
+        font-size: 1.4rem;
+        pointer-events: none;
+    }
+
+    .shooter-fullscreen-btn {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 11;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.45);
+        border-radius: 8px;
+        padding: 5px 6px;
+        cursor: pointer;
+        display: flex;
+    }
+
+    .shooter-hud-progress {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 42%;
+        height: 10px;
+        background: rgba(0, 0, 0, 0.45);
+        border-radius: 5px;
+        overflow: hidden;
+        z-index: 6;
+        pointer-events: none;
+    }
+
+    .shooter-hud-progress-fill {
+        height: 100%;
+        background: #64dd17;
+        transition: width 0.4s ease;
     }
 
     .shooter-scope {
@@ -331,7 +436,7 @@
 
 <!-- Material -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script src="./data.js?v=2"></script>
 <script src="./apps.js"></script>
 <script src="./themes.js"></script>

@@ -1141,18 +1141,27 @@ var FallingAnswersComponent = Vue.component('falling-answers', Vue.extend({
 var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
     template: `
     <div class="container">
-        <div class="row" style="margin-bottom: 0;">
-            <h5 v-if="title" v-html="title" :style="{color: theme.colors.text}"></h5>
-            <h4 v-html="exercise" :style="{color: theme.colors.text}"></h4>
-        </div>
         <div class="row">
             <div class="shooter-area" ref="shooterArea">
+                <div class="shooter-hud-top">
+                    <div class="shooter-question" v-html="exercise"></div>
+                    <div class="shooter-hud-message"
+                         v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</div>
+                </div>
+                <div class="shooter-hud-score">⭐ {{ score }}</div>
+                <a class="shooter-fullscreen-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
+                <div class="shooter-hud-progress" v-if="progress && progress.total">
+                    <div class="shooter-hud-progress-fill"
+                         :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
+                </div>
                 <div class="shooter-crosshair" v-show="!ads"></div>
                 <div class="shooter-scope" v-show="ads"></div>
+                <div class="shooter-hitmarker" v-show="hitMarker">✕</div>
                 <div class="shooter-overlay" v-show="!locked && !isTouch" @click="requestLock">
                     <div>
                         <h5>לחץ כאן כדי לאחוז ברובה</h5>
-                        <p>הזז את העכבר כדי לכוון | קליק שמאלי — ירי | קליק ימני (החזק) — כוונת</p>
+                        <p>המשחק יעבור למסך מלא | הזז את העכבר כדי לכוון</p>
+                        <p>קליק שמאלי — ירי | קליק ימני (החזק) — כוונת</p>
                         <p>ESC — שחרור העכבר</p>
                     </div>
                 </div>
@@ -1162,11 +1171,6 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 </div>
             </div>
         </div>
-        <div class="row" dir="rtl">
-            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
-        </div>
-        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
-        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
     </div>
     `,
 
@@ -1179,6 +1183,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             locked: false,
             ads: false,
             isTouch: false,
+            hitMarker: false,
         };
     },
 
@@ -1190,7 +1195,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         initScene: function() {
             const area = this.$refs.shooterArea;
             const g = this._g = {
-                balloons: [], particles: [], qToken: 0,
+                balloons: [], particles: [],
                 yaw: 0, pitch: 0, raf: null,
                 clock: new THREE.Clock(),
                 raycaster: new THREE.Raycaster(),
@@ -1338,7 +1343,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             return sprite;
         },
 
-        makeBalloon: function(text, isCorrect, x, z, baseY) {
+        makeBalloon: function(text, isCorrect, x, z, baseY, spawnDelay) {
             const g = this._g;
             const colors = [0xe53935, 0x1e88e5, 0xfdd835, 0x43a047, 0x8e24aa, 0xfb8c00];
             const color = colors[Math.floor(Math.random() * colors.length)];
@@ -1376,14 +1381,22 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             post.position.set(x, 0.35, z);
             g.scene.add(post);
 
-            group.position.set(x, baseY, z);
+            // New balloons inflate on the ground next to their post, then
+            // float up to their place like helium (animated in animate())
+            const groundY = 1.15;
+            group.position.set(x, groundY, z);
+            group.scale.setScalar(0.01);
             g.scene.add(group);
 
             const rec = {
                 group: group, sphere: sphere, sprite: sprite, string: string, post: post,
                 color: color, text: text, isCorrect: isCorrect,
-                x: x, z: z, baseY: baseY,
+                x: x, z: z, baseY: baseY, groundY: groundY,
                 phase: Math.random() * Math.PI * 2,
+                spawn: 0,
+                rise: 0,
+                settle: 0,
+                spawnDelay: spawnDelay || 0,
                 state: 'idle', vel: null,
             };
             sphere.userData.rec = rec;
@@ -1404,7 +1417,6 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         createNewQuestion: function() {
             const g = this._g;
             if (!g) return; // component may have been destroyed while a timeout was pending
-            g.qToken += 1;
             const weightedRandomIndex = getWeightedRandomIndex(this.list,
                                                                this.currentAppId,
                                                                getSetItems(this.currentApp));
@@ -1435,7 +1447,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 const x = (i - (n - 1) / 2) * 3.4;
                 const z = -11 - Math.random() * 1.5;
                 const y = 2.6 + Math.random() * 1.6;
-                this.makeBalloon(entry.text, entry.isCorrect, x, z, y);
+                this.makeBalloon(entry.text, entry.isCorrect, x, z, y, i * 0.12);
             });
             this.message = {};
             this.ended = false;
@@ -1496,6 +1508,9 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
             if (this.ended) return;
 
+            // Camera kick upwards, like a real rifle
+            g.pitch = Math.min(1.2, g.pitch + (this.ads ? 0.004 : 0.012));
+
             g.raycaster.setFromCamera(new THREE.Vector2(0, 0), g.camera);
             const targets = [];
             g.balloons.forEach(b => {
@@ -1505,6 +1520,11 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             });
             const hits = g.raycaster.intersectObjects(targets, false);
             if (!hits.length) return;
+
+            // Hit marker flash at the crosshair
+            this.hitMarker = true;
+            clearTimeout(this._hitMarkerTimer);
+            this._hitMarkerTimer = setTimeout(() => { this.hitMarker = false; }, 130);
 
             const rec = hits[0].object.userData.rec;
             this.popBalloon(rec);
@@ -1551,13 +1571,6 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             updateWeightForKey(this.currentAppId, this.questionIndex, 1);
             this.message = { value: 'נסה שוב :(', error: true };
             this.reloadProgress();
-            // Bring the wrong balloon back so the right one can still be found
-            const token = this._g.qToken;
-            setTimeout(() => {
-                if (this._g && this._g.qToken === token && !this.ended) {
-                    this.makeBalloon(rec.text, false, rec.x, rec.z, rec.baseY);
-                }
-            }, 1200);
         },
 
         animate: function() {
@@ -1571,10 +1584,31 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             for (let i = g.balloons.length - 1; i >= 0; i--) {
                 const b = g.balloons[i];
                 if (b.state === 'idle') {
-                    b.group.position.y = b.baseY + Math.sin(t * 1.4 + b.phase) * 0.18;
-                    b.group.rotation.z = Math.sin(t * 1.1 + b.phase) * 0.05;
+                    if (b.spawnDelay > 0) {
+                        b.spawnDelay -= dt;
+                    } else if (b.spawn < 1) {
+                        // Inflate on the ground with a slight overshoot (easeOutBack)
+                        b.spawn = Math.min(1, b.spawn + dt / 0.4);
+                        const k = b.spawn - 1;
+                        const scale = Math.max(0.01, 1 + 2.70158 * k * k * k + 1.70158 * k * k);
+                        b.group.scale.setScalar(scale);
+                        b.group.position.y = b.groundY;
+                    } else if (b.rise < 1) {
+                        // Float up to place like a helium balloon (easeInOutSine)
+                        b.rise = Math.min(1, b.rise + dt / 1.1);
+                        const e = 0.5 - 0.5 * Math.cos(Math.PI * b.rise);
+                        b.group.position.y = b.groundY + (b.baseY - b.groundY) * e;
+                        b.group.rotation.z = Math.sin(t * 2.2 + b.phase) * 0.04;
+                    } else {
+                        // Hovering in place; bobbing amplitude fades in to avoid a jump
+                        b.settle = Math.min(1, b.settle + dt);
+                        b.group.position.y = b.baseY + Math.sin(t * 1.4 + b.phase) * 0.18 * b.settle;
+                        b.group.rotation.z = Math.sin(t * 1.1 + b.phase) * 0.05;
+                    }
                     const positions = b.string.geometry.attributes.position;
-                    positions.setY(1, -b.group.position.y + 0.7);
+                    // The string endpoint is in local coords; compensate for the
+                    // position and inflation scale so it stays tied to the post
+                    positions.setY(1, (-b.group.position.y + 0.7) / b.group.scale.y);
                     positions.needsUpdate = true;
                 } else if (b.state === 'flying') {
                     b.vel.y += 2 * dt;
@@ -1607,7 +1641,14 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.recoil = Math.max(0, g.recoil - dt * 6);
             g.gun.position.copy(g.gunBase);
             g.gun.position.z += g.recoil * 0.06;
-            g.gun.rotation.x = g.recoil * 0.1;
+            // Gun sway lags behind the camera and settles back
+            const swayDecay = Math.max(0, 1 - 8 * dt);
+            g.swayX = (g.swayX || 0) * swayDecay;
+            g.swayY = (g.swayY || 0) * swayDecay;
+            g.gun.rotation.x = g.recoil * 0.1 + g.swayY;
+            g.gun.rotation.y = g.swayX;
+            // Subtle idle breathing motion
+            g.gun.position.y += Math.sin(t * 1.8) * (this.ads ? 0.0008 : 0.003);
 
             g.camera.rotation.y = g.yaw;
             g.camera.rotation.x = g.pitch;
@@ -1615,10 +1656,35 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         },
 
         requestLock: function() {
+            this.enterFullscreen();
             const g = this._g;
             if (g && g.renderer.domElement.requestPointerLock) {
                 g.renderer.domElement.requestPointerLock();
             }
+        },
+
+        enterFullscreen: function() {
+            const area = this.$refs.shooterArea;
+            const request = area.requestFullscreen || area.webkitRequestFullscreen;
+            if (request) {
+                try { request.call(area); } catch (e) {}
+            }
+        },
+
+        toggleFullscreen: function() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) {
+                    try { exit.call(document); } catch (e) {}
+                }
+            } else {
+                this.enterFullscreen();
+            }
+        },
+
+        onFullscreenChange: function() {
+            // The element gets its new size only after the transition
+            setTimeout(this.onResize, 100);
         },
 
         toggleAds: function() {
@@ -1638,6 +1704,8 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.yaw -= dx * sensitivity;
             g.pitch -= dy * sensitivity;
             g.pitch = Math.max(-1.2, Math.min(1.2, g.pitch));
+            g.swayX = Math.max(-0.04, Math.min(0.04, (g.swayX || 0) + dx * 0.0004));
+            g.swayY = Math.max(-0.04, Math.min(0.04, (g.swayY || 0) + dy * 0.0004));
         },
 
         onMouseMove: function(event) {
@@ -1707,6 +1775,8 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 
         const canvas = this._g.renderer.domElement;
         document.addEventListener('pointerlockchange', this.onPointerLockChange);
+        document.addEventListener('fullscreenchange', this.onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', this.onFullscreenChange);
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mousedown', this.onMouseDown);
         document.addEventListener('mouseup', this.onMouseUp);
@@ -1732,11 +1802,17 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             }
             this._g = null;
         }
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen();
+        }
         document.removeEventListener('pointerlockchange', this.onPointerLockChange);
+        document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', this.onFullscreenChange);
         document.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mousedown', this.onMouseDown);
         document.removeEventListener('mouseup', this.onMouseUp);
         window.removeEventListener('resize', this.onResize);
+        clearTimeout(this._hitMarkerTimer);
         if (this._audioCtx) {
             this._audioCtx.close();
             this._audioCtx = null;
