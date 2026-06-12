@@ -1195,7 +1195,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         initScene: function() {
             const area = this.$refs.shooterArea;
             const g = this._g = {
-                balloons: [], particles: [], qToken: 0,
+                balloons: [], particles: [],
                 yaw: 0, pitch: 0, raf: null,
                 clock: new THREE.Clock(),
                 raycaster: new THREE.Raycaster(),
@@ -1343,7 +1343,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             return sprite;
         },
 
-        makeBalloon: function(text, isCorrect, x, z, baseY) {
+        makeBalloon: function(text, isCorrect, x, z, baseY, spawnDelay) {
             const g = this._g;
             const colors = [0xe53935, 0x1e88e5, 0xfdd835, 0x43a047, 0x8e24aa, 0xfb8c00];
             const color = colors[Math.floor(Math.random() * colors.length)];
@@ -1382,6 +1382,8 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.scene.add(post);
 
             group.position.set(x, baseY, z);
+            // New balloons inflate from nothing (animated in animate())
+            group.scale.setScalar(0.01);
             g.scene.add(group);
 
             const rec = {
@@ -1389,6 +1391,8 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 color: color, text: text, isCorrect: isCorrect,
                 x: x, z: z, baseY: baseY,
                 phase: Math.random() * Math.PI * 2,
+                spawn: 0,
+                spawnDelay: spawnDelay || 0,
                 state: 'idle', vel: null,
             };
             sphere.userData.rec = rec;
@@ -1409,7 +1413,6 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         createNewQuestion: function() {
             const g = this._g;
             if (!g) return; // component may have been destroyed while a timeout was pending
-            g.qToken += 1;
             const weightedRandomIndex = getWeightedRandomIndex(this.list,
                                                                this.currentAppId,
                                                                getSetItems(this.currentApp));
@@ -1440,7 +1443,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 const x = (i - (n - 1) / 2) * 3.4;
                 const z = -11 - Math.random() * 1.5;
                 const y = 2.6 + Math.random() * 1.6;
-                this.makeBalloon(entry.text, entry.isCorrect, x, z, y);
+                this.makeBalloon(entry.text, entry.isCorrect, x, z, y, i * 0.12);
             });
             this.message = {};
             this.ended = false;
@@ -1564,13 +1567,6 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             updateWeightForKey(this.currentAppId, this.questionIndex, 1);
             this.message = { value: 'נסה שוב :(', error: true };
             this.reloadProgress();
-            // Bring the wrong balloon back so the right one can still be found
-            const token = this._g.qToken;
-            setTimeout(() => {
-                if (this._g && this._g.qToken === token && !this.ended) {
-                    this.makeBalloon(rec.text, false, rec.x, rec.z, rec.baseY);
-                }
-            }, 1200);
         },
 
         animate: function() {
@@ -1584,10 +1580,21 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             for (let i = g.balloons.length - 1; i >= 0; i--) {
                 const b = g.balloons[i];
                 if (b.state === 'idle') {
+                    if (b.spawnDelay > 0) {
+                        b.spawnDelay -= dt;
+                    } else if (b.spawn < 1) {
+                        // Inflate with a slight overshoot (easeOutBack), like a real balloon
+                        b.spawn = Math.min(1, b.spawn + dt / 0.35);
+                        const k = b.spawn - 1;
+                        const scale = Math.max(0.01, 1 + 2.70158 * k * k * k + 1.70158 * k * k);
+                        b.group.scale.setScalar(scale);
+                    }
                     b.group.position.y = b.baseY + Math.sin(t * 1.4 + b.phase) * 0.18;
                     b.group.rotation.z = Math.sin(t * 1.1 + b.phase) * 0.05;
                     const positions = b.string.geometry.attributes.position;
-                    positions.setY(1, -b.group.position.y + 0.7);
+                    // The string endpoint is in local coords; compensate for the
+                    // inflation scale so it stays tied to the post on the ground
+                    positions.setY(1, (-b.group.position.y + 0.7) / b.group.scale.y);
                     positions.needsUpdate = true;
                 } else if (b.state === 'flying') {
                     b.vel.y += 2 * dt;
