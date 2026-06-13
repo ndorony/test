@@ -187,6 +187,61 @@
       opacity: 0.6;
     }
 
+    /* Learning platformer (2D, Phaser) */
+    .platformer-area {
+        position: relative;
+        width: 100%;
+        height: 60vh;
+        min-height: 320px;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #aee4ff;
+        direction: ltr;
+        touch-action: none;
+    }
+
+    .platformer-area canvas {
+        border: none;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .platformer-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        direction: ltr;
+        gap: 12px;
+        padding: 0 8px;
+    }
+
+    .platformer-dpad {
+        display: flex;
+        gap: 12px;
+    }
+
+    .platformer-btn {
+        font-size: 28px;
+        padding: 14px 26px;
+        border-radius: 16px;
+        border: none;
+        background: #ffc107;
+        box-shadow: 0 3px 0 #ff8f00;
+        cursor: pointer;
+        user-select: none;
+        touch-action: none;
+    }
+
+    .platformer-btn:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 #ff8f00;
+    }
+
+    .platformer-jump {
+        background: #81d4fa;
+        box-shadow: 0 3px 0 #0288d1;
+    }
+
     /* Balloon shooter (3D) */
     .shooter-area {
         position: relative;
@@ -480,6 +535,7 @@
 <!-- Material -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.85.2/dist/phaser.min.js"></script>
 <script src="./data.js?v=2"></script>
 <script src="./apps.js"></script>
 <script src="./themes.js"></script>
