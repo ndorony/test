@@ -249,8 +249,9 @@
         height: 65vh;
         min-height: 340px;
         overflow: hidden;
-        border-radius: 12px;
+        border-radius: 10px;
         background: #87ceeb;
+        box-shadow: 0 16px 42px rgba(10, 22, 34, 0.28);
         direction: ltr;
         touch-action: none;
     }
@@ -270,7 +271,9 @@
         height: 100%;
         pointer-events: none;
         z-index: 4;
-        background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.28) 100%);
+        background:
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.08), transparent 20%, transparent 72%, rgba(7, 12, 18, 0.18)),
+            radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, 0.36) 100%);
     }
 
     .shooter-area:fullscreen {
@@ -287,7 +290,9 @@
         transform: translate(-50%, -50%);
         pointer-events: none;
         z-index: 5;
-        filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 50%;
+        filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
     }
 
     .shooter-crosshair::before,
@@ -347,11 +352,13 @@
 
     .shooter-question {
         display: inline-block;
-        background: rgba(0, 0, 0, 0.45);
+        background: linear-gradient(180deg, rgba(10, 18, 28, 0.76), rgba(5, 8, 14, 0.58));
         color: #fff;
         padding: 8px 24px;
-        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
         font-size: 1.7rem;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
         pointer-events: auto;
     }
 
@@ -373,11 +380,93 @@
         right: 14px;
         z-index: 6;
         color: #fff;
-        background: rgba(0, 0, 0, 0.45);
+        background: linear-gradient(180deg, rgba(10, 18, 28, 0.78), rgba(5, 8, 14, 0.62));
         padding: 4px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 8px;
         font-size: 1.4rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
         pointer-events: none;
+    }
+
+    .shooter-hud-ammo {
+        position: absolute;
+        right: 14px;
+        bottom: 32px;
+        z-index: 6;
+        min-width: 118px;
+        padding: 7px 12px 6px;
+        color: #fff;
+        background: linear-gradient(180deg, rgba(10, 18, 28, 0.82), rgba(5, 8, 14, 0.68));
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+        pointer-events: none;
+        text-align: left;
+        direction: ltr;
+        font-family: Arial, sans-serif;
+    }
+
+    .shooter-ammo-current {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .shooter-ammo-separator,
+    .shooter-ammo-mag {
+        font-size: 1rem;
+        opacity: 0.78;
+    }
+
+    .shooter-ammo-reserve {
+        float: right;
+        margin-top: 6px;
+        padding-left: 10px;
+        color: #ffd54f;
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    .shooter-ammo-state {
+        display: block;
+        margin-top: 2px;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 0.72rem;
+        letter-spacing: 0;
+    }
+
+    .shooter-hud-ammo.empty .shooter-ammo-current {
+        color: #ff5252;
+    }
+
+    .shooter-hud-ammo.reloading .shooter-ammo-current,
+    .shooter-hud-ammo.reloading .shooter-ammo-state {
+        color: #ffd54f;
+    }
+
+    .shooter-hud-gun {
+        position: absolute;
+        left: 14px;
+        bottom: 32px;
+        z-index: 6;
+        color: #fff;
+        background: linear-gradient(180deg, rgba(10, 18, 28, 0.82), rgba(5, 8, 14, 0.68));
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+        cursor: pointer;
+        direction: rtl;
+    }
+
+    .shooter-gun-hint {
+        margin-right: 8px;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.72rem;
+        font-weight: 400;
     }
 
     .shooter-fullscreen-btn {
@@ -386,11 +475,13 @@
         left: 12px;
         z-index: 11;
         color: #fff;
-        background: rgba(0, 0, 0, 0.45);
+        background: linear-gradient(180deg, rgba(10, 18, 28, 0.78), rgba(5, 8, 14, 0.62));
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 8px;
         padding: 5px 6px;
         cursor: pointer;
         display: flex;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
     }
 
     .shooter-hud-progress {
@@ -400,7 +491,8 @@
         transform: translateX(-50%);
         width: 42%;
         height: 10px;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(5, 8, 14, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 5px;
         overflow: hidden;
         z-index: 6;
@@ -409,7 +501,8 @@
 
     .shooter-hud-progress-fill {
         height: 100%;
-        background: #64dd17;
+        background: linear-gradient(90deg, #64dd17, #ffd54f);
+        box-shadow: 0 0 12px rgba(100, 221, 23, 0.75);
         transition: width 0.4s ease;
     }
 
@@ -421,7 +514,9 @@
         height: 100%;
         pointer-events: none;
         z-index: 5;
-        background: radial-gradient(circle at center, transparent 27%, rgba(0, 0, 0, 0.93) 29%);
+        background:
+            radial-gradient(circle at center, transparent 24%, rgba(255, 255, 255, 0.12) 24.5%, transparent 25.5%),
+            radial-gradient(circle at center, transparent 27%, rgba(0, 0, 0, 0.94) 29%);
     }
 
     .shooter-scope::before,
@@ -452,7 +547,9 @@
         width: 100%;
         height: 100%;
         z-index: 10;
-        background: rgba(0, 0, 0, 0.55);
+        background:
+            radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 38%),
+            rgba(3, 8, 13, 0.72);
         color: #fff;
         display: flex;
         align-items: center;
@@ -461,6 +558,7 @@
         cursor: pointer;
         direction: rtl;
         padding: 0 16px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
     }
 
     .shooter-touch-controls {
@@ -535,7 +633,9 @@
 <!-- Material -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.85.2/dist/phaser.min.js"></script>
+<script src="./assets/models/shooter/shooter_models.js"></script>
 <script src="./data.js?v=2"></script>
 <script src="./apps.js"></script>
 <script src="./themes.js"></script>

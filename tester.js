@@ -1149,13 +1149,21 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                          v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</div>
                 </div>
                 <div class="shooter-hud-score">⭐ {{ score }}</div>
+                <div class="shooter-hud-ammo" v-bind:class="{ reloading: reloading, empty: ammoInMag === 0 }">
+                    <span class="shooter-ammo-current">{{ ammoInMag }}</span>
+                    <span class="shooter-ammo-separator">/</span>
+                    <span class="shooter-ammo-mag">{{ magazineSize }}</span>
+                    <span class="shooter-ammo-reserve">∞</span>
+                    <span class="shooter-ammo-state">{{ reloading ? 'LOADING' : magazineState }}</span>
+                </div>
+                <div class="shooter-hud-gun" v-if="gunCount > 1" @click="switchGun">🔫 {{ gunName }}<span class="shooter-gun-hint" v-if="!isTouch">G — החלף</span></div>
                 <a class="shooter-fullscreen-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
                 <div class="shooter-hud-progress" v-if="progress && progress.total">
                     <div class="shooter-hud-progress-fill"
                          :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
                 </div>
-                <div class="shooter-crosshair" v-show="!ads"></div>
-                <div class="shooter-scope" v-show="ads"></div>
+                <div class="shooter-crosshair" v-show="!scoped"></div>
+                <div class="shooter-scope" v-show="scoped"></div>
                 <div class="shooter-hitmarker" v-show="hitMarker">✕</div>
                 <div class="shooter-overlay" v-show="(!isTouch && !locked) || (isTouch && !started)" @click="startGame">
                     <div v-if="!isTouch">
@@ -1170,6 +1178,8 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                     </div>
                 </div>
                 <div v-if="isTouch" class="shooter-touch-controls">
+                    <a class="btn-large shooter-touch-btn green darken-1" v-if="gunCount > 1" @touchstart.prevent="switchGun">🔁</a>
+                    <a class="btn-large shooter-touch-btn amber darken-2" @touchstart.prevent="reloadMagazine">R</a>
                     <a class="btn-large shooter-touch-btn red" @touchstart.prevent="shoot">🔫 ירי</a>
                     <a class="btn-large shooter-touch-btn blue" @touchstart.prevent="toggleAds">🎯 זום</a>
                 </div>
@@ -1186,9 +1196,19 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             list: [],
             locked: false,
             ads: false,
+            // scoped = the ADS raise + zoom animation has finished. For weapons with
+            // a scope we then hide the gun and show a full "through the scope" overlay.
+            scoped: false,
+            gunHasScope: false,
             isTouch: false,
             started: false,
             hitMarker: false,
+            magazineSize: 8,
+            ammoInMag: 8,
+            reloading: false,
+            magazineState: 'READY',
+            gunName: 'רובה קלאסי',
+            gunCount: 1,
         };
     },
 
@@ -1262,6 +1282,28 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             });
         },
 
+        makeBalloonTexture: function(color) {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                const base = new THREE.Color(color);
+                const light = base.clone().lerp(new THREE.Color(0xffffff), 0.45).getStyle();
+                const dark = base.clone().lerp(new THREE.Color(0x0b1020), 0.35).getStyle();
+                const grad = ctx.createRadialGradient(s * 0.34, s * 0.28, s * 0.03, s * 0.55, s * 0.58, s * 0.72);
+                grad.addColorStop(0, light);
+                grad.addColorStop(0.28, base.getStyle());
+                grad.addColorStop(1, dark);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, s, s);
+                ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                ctx.beginPath();
+                ctx.ellipse(s * 0.34, s * 0.29, s * 0.12, s * 0.2, -0.6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(s * 0.43, s * 0.43, s * 0.04, s * 0.08, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        },
+
         makeRadialTexture: function(inner, outer) {
             const canvas = document.createElement('canvas');
             canvas.width = canvas.height = 128;
@@ -1299,6 +1341,209 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.scene.add(tree);
         },
 
+        makePrizeCrate: function(x, z, scale) {
+            const g = this._g;
+            const crate = new THREE.Group();
+            const box = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 0.75), g.woodMat);
+            box.position.y = 0.4;
+            box.castShadow = true;
+            box.receiveShadow = true;
+            crate.add(box);
+            const bandMat = new THREE.MeshStandardMaterial({ color: 0x2d3a3f, roughness: 0.55, metalness: 0.15 });
+            for (const by of [0.24, 0.56]) {
+                const band = new THREE.Mesh(new THREE.BoxGeometry(1.16, 0.05, 0.8), bandMat);
+                band.position.y = by;
+                crate.add(band);
+            }
+            crate.position.set(x, 0, z);
+            crate.rotation.y = (Math.random() - 0.5) * 0.45;
+            crate.scale.setScalar(scale);
+            g.scene.add(crate);
+            if (g.crateAnchors) {
+                g.crateAnchors.push({
+                    fallback: crate,
+                    position: crate.position.clone(),
+                    rotation: crate.rotation.clone(),
+                    scale: scale,
+                });
+            }
+            return crate;
+        },
+
+        normalizeLoadedModel: function(root, targetSize) {
+            const box = new THREE.Box3().setFromObject(root);
+            const size = new THREE.Vector3();
+            const center = new THREE.Vector3();
+            box.getSize(size);
+            box.getCenter(center);
+            const maxAxis = Math.max(size.x, size.y, size.z) || 1;
+            const wrapper = new THREE.Group();
+            root.position.sub(center);
+            root.scale.multiplyScalar(targetSize / maxAxis);
+            wrapper.add(root);
+            return wrapper;
+        },
+
+        prepareLoadedModel: function(root) {
+            root.traverse(obj => {
+                if (obj.isMesh) {
+                    obj.castShadow = true;
+                    obj.receiveShadow = true;
+                    if (obj.material) {
+                        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                        materials.forEach(mat => {
+                            mat.side = THREE.FrontSide;
+                            mat.needsUpdate = true;
+                        });
+                    }
+                }
+            });
+        },
+
+        cloneLoadedModel: function(model) {
+            const clone = model.clone(true);
+            this.prepareLoadedModel(clone);
+            return clone;
+        },
+
+        applyGun: function(index) {
+            const g = this._g;
+            if (!g || !g.gunOptions.length) return;
+            const n = g.gunOptions.length;
+            g.gunIndex = ((index % n) + n) % n;
+            const active = g.gunOptions[g.gunIndex];
+            g.proceduralGunParts.forEach(part => { part.visible = !active.mesh; });
+            g.gunOptions.forEach(opt => { if (opt.mesh) opt.mesh.visible = (opt === active); });
+            if (g.flash) {
+                g.flash.position.copy(active.flashPos);
+                g.flash.scale.set(active.flashScale, active.flashScale, 1);
+            }
+            this.gunName = active.label;
+            this.gunCount = n;
+            this.gunHasScope = !!active.scope;
+        },
+
+        switchGun: function() {
+            const g = this._g;
+            if (!g || g.gunOptions.length < 2) return;
+            g.gunManual = true;
+            this.applyGun(g.gunIndex + 1);
+        },
+
+        loadShooterAssets: function() {
+            const g = this._g;
+            if (!g || typeof THREE.GLTFLoader === 'undefined') return;
+
+            const loader = new THREE.GLTFLoader();
+            const base64ToArrayBuffer = data => {
+                const binary = atob(data);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return bytes.buffer;
+            };
+            const load = (key, url, onReady, onError) => {
+                if (window.SHOOTER_MODEL_DATA && window.SHOOTER_MODEL_DATA[key]) {
+                    loader.parse(base64ToArrayBuffer(window.SHOOTER_MODEL_DATA[key]), '', gltf => {
+                        const model = gltf.scene;
+                        this.prepareLoadedModel(model);
+                        g.assets[key] = model;
+                        onReady(model);
+                    }, () => {
+                        if (onError) onError();
+                    });
+                    return;
+                }
+                loader.load(url, gltf => {
+                    const model = gltf.scene;
+                    this.prepareLoadedModel(model);
+                    g.assets[key] = model;
+                    onReady(model);
+                }, undefined, () => {
+                    if (onError) onError();
+                });
+            };
+
+            const registerGun = (model, name, label, cfg) => {
+                if (!this._g || !g.gun) return;
+                cfg = cfg || {};
+                const imported = this.normalizeLoadedModel(this.cloneLoadedModel(model), cfg.size || 0.9);
+                imported.name = name;
+                // Quaternius Ultimate Guns Pack: the barrel lies along the model's
+                // X axis. Yaw +90° aims the muzzle forward (-Z, toward the targets)
+                // with the gun upright — matching the procedural rifle's pose.
+                imported.rotation.set(0.05, Math.PI / 2, 0);
+
+                // normalizeLoadedModel centres each model on its bounding box, so its
+                // origin is the bbox centre. Each gun has a different shape, so every
+                // one gets a hand-tuned size + position (the bbox centre lands at
+                // cfg.pos) that frames it big in the lower-right with the stock cropped
+                // off-screen, like an FPS view model.
+                const pos = cfg.pos || [0, -0.04, -0.34];
+                imported.position.set(pos[0], pos[1], pos[2]);
+                imported.visible = false;
+                // Muzzle-flash anchor: front of the barrel, computed in gun-group
+                // space before the model is parented to the camera-mounted gun group.
+                imported.updateMatrixWorld(true);
+                const box = new THREE.Box3().setFromObject(imported);
+                g.gun.add(imported);
+                g.gunOptions.push({
+                    name: name,
+                    label: label,
+                    mesh: imported,
+                    flashPos: new THREE.Vector3(0, (box.min.y + box.max.y) / 2 + 0.02, box.min.z - 0.04),
+                    flashScale: 0.38,
+                    // Scoped guns get a through-scope view. Iron-sight guns instead
+                    // aim "between the sights": the model's bbox centre (= pos) is
+                    // re-centred on the reticle (x→0) and dropped slightly so the gun
+                    // sits low while the barrel/sights lead up to the centre.
+                    scope: !!cfg.scope,
+                    adsPos: new THREE.Vector3(...(cfg.adsPos || [-pos[0], -pos[1] - 0.10, -0.32])),
+                });
+                this.gunCount = g.gunOptions.length;
+                // Auto-equip the first imported gun (nicer than the procedural
+                // placeholder) unless the player has already picked one.
+                if (!g.gunManual && g.gunOptions.length === 2) {
+                    this.applyGun(g.gunOptions.length - 1);
+                }
+            };
+
+            // Per-gun size + [x, y, z] position (the model's bbox centre lands at
+            // pos). Each weapon has a different shape, so each gets its own hip pose,
+            // framed big in the lower-right with the stock cropped like an FPS game.
+            load('newPistol', 'assets/models/shooter/new-pistol.glb',
+                model => registerGun(model, 'ImportedPistol', 'אקדח', { size: 0.75, pos: [0, 0.083, -0.833] }));
+            load('assaultRifle', 'assets/models/shooter/assault-rifle.glb',
+                model => registerGun(model, 'ImportedAssaultRifle', 'רובה סער', { size: 1.35, pos: [0, 0.082, -1.155] }));
+            load('bullpup', 'assets/models/shooter/bullpup.glb',
+                model => registerGun(model, 'ImportedBullpup', 'רובה בולפאפ', { size: 1.275, pos: [0, 0.187, -0.356] }));
+            load('sniperRifle', 'assets/models/shooter/sniper-rifle.glb',
+                model => registerGun(model, 'ImportedSniperRifle', 'רובה צלפים', { size: 1.4, pos: [0, -0.044, -1.023], scope: true, adsPos: [0, -0.062, -0.3] }));
+
+            load('target', 'assets/models/shooter/target.glb', model => {
+                if (!this._g) return;
+                g.targetAnchors.forEach(anchor => {
+                    const target = this.normalizeLoadedModel(this.cloneLoadedModel(model), 2.25);
+                    target.position.copy(anchor.position);
+                    target.rotation.copy(anchor.rotation);
+                    g.scene.add(target);
+                    anchor.fallback.visible = false;
+                });
+            });
+
+            load('crate', 'assets/models/shooter/crate.glb', model => {
+                if (!this._g) return;
+                g.crateAnchors.forEach(anchor => {
+                    const crate = this.normalizeLoadedModel(this.cloneLoadedModel(model), anchor.scale * 1.35);
+                    crate.position.copy(anchor.position);
+                    crate.rotation.copy(anchor.rotation);
+                    g.scene.add(crate);
+                    anchor.fallback.visible = false;
+                });
+            });
+        },
+
         initScene: function() {
             const area = this.$refs.shooterArea;
             // Quality tiers for weak devices: 2 = full (desktop), 1 = medium
@@ -1313,6 +1558,13 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 fpsTime: 0, fpsFrames: 0,
                 clock: new THREE.Clock(),
                 raycaster: new THREE.Raycaster(),
+                assets: {},
+                targetAnchors: [],
+                crateAnchors: [],
+                proceduralGunParts: [],
+                gunOptions: [],
+                gunIndex: 0,
+                gunManual: false,
             };
 
             g.scene = new THREE.Scene();
@@ -1438,6 +1690,17 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             wallTop.position.set(0, 6.2, -15);
             wallTop.castShadow = true;
             g.scene.add(wallTop);
+            const wallBottom = new THREE.Mesh(new THREE.BoxGeometry(30.6, 0.4, 0.5), woodMat);
+            wallBottom.position.set(0, 0.25, -14.8);
+            wallBottom.castShadow = true;
+            wallBottom.receiveShadow = true;
+            g.scene.add(wallBottom);
+            for (const sx of [-14.5, 14.5]) {
+                const sidePost = new THREE.Mesh(new THREE.BoxGeometry(0.55, 6.6, 0.55), woodMat);
+                sidePost.position.set(sx, 3.15, -14.75);
+                sidePost.castShadow = true;
+                g.scene.add(sidePost);
+            }
             const targetTex = this.makeTargetTexture();
             for (const tx of [-10, 0, 10]) {
                 const target = new THREE.Mesh(
@@ -1446,18 +1709,47 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 );
                 target.position.set(tx, 4.6, -14.8);
                 g.scene.add(target);
+                g.targetAnchors.push({
+                    fallback: target,
+                    position: target.position.clone(),
+                    rotation: target.rotation.clone(),
+                });
             }
 
             // String lights along the top of the wall
             const bulbGeo = new THREE.SphereGeometry(0.09, 8, 8);
             const bulbColors = [0xffd54f, 0xff8a65, 0x81d4fa, 0xaed581];
             for (let i = 0; i < 17; i++) {
+                const color = bulbColors[i % bulbColors.length];
                 const bulb = new THREE.Mesh(
                     bulbGeo,
-                    new THREE.MeshBasicMaterial({ color: bulbColors[i % bulbColors.length] })
+                    new THREE.MeshBasicMaterial({ color: color })
                 );
                 bulb.position.set(-14 + i * 1.75, 5.85 - Math.abs(Math.sin(i * 0.9)) * 0.18, -14.7);
                 g.scene.add(bulb);
+                if (g.quality === 2 && i % 4 === 0) {
+                    const light = new THREE.PointLight(color, 0.35, 6);
+                    light.position.copy(bulb.position);
+                    g.scene.add(light);
+                }
+            }
+
+            // Foreground booth dressing helps the range feel like a real game scene.
+            for (const crate of [[-3.25, -3.05, 0.75], [3.05, -3.18, 0.65], [-4.55, -5.1, 0.55], [4.7, -5.35, 0.6]]) {
+                this.makePrizeCrate(crate[0], crate[1], crate[2]);
+            }
+            const railMat = new THREE.MeshStandardMaterial({ color: 0x253238, roughness: 0.7, metalness: 0.25 });
+            for (const rx of [-4.2, 4.2]) {
+                const rail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 6), railMat);
+                rail.position.set(rx, 1.0, -6.2);
+                rail.castShadow = true;
+                g.scene.add(rail);
+                for (const rz of [-3.7, -6.2, -8.7]) {
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.95, 8), railMat);
+                    post.position.set(rx, 0.48, rz);
+                    post.castShadow = true;
+                    g.scene.add(post);
+                }
             }
 
             // Distant mountains fading into the haze
@@ -1498,44 +1790,55 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.075, 0.45), metal);
             body.position.set(0, 0, -0.22);
             gun.add(body);
+            g.proceduralGunParts.push(body);
             const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.045, 0.26), gunWood);
             handguard.position.set(0, -0.022, -0.5);
             gun.add(handguard);
+            g.proceduralGunParts.push(handguard);
             const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.34, 12), darkMetal);
             barrel.rotation.x = Math.PI / 2;
             barrel.position.set(0, 0.015, -0.62);
             gun.add(barrel);
+            g.proceduralGunParts.push(barrel);
             const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.05, 12), darkMetal);
             muzzle.rotation.x = Math.PI / 2;
             muzzle.position.set(0, 0.015, -0.78);
             gun.add(muzzle);
+            g.proceduralGunParts.push(muzzle);
             const frontSight = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.03, 0.01), darkMetal);
             frontSight.position.set(0, 0.04, -0.74);
             gun.add(frontSight);
+            g.proceduralGunParts.push(frontSight);
             const magazine = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.07), darkMetal);
             magazine.position.set(0, -0.09, -0.3);
             magazine.rotation.x = 0.25;
             gun.add(magazine);
+            g.proceduralGunParts.push(magazine);
             const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.06, 0.05), metal);
             trigger.position.set(0, -0.06, -0.12);
             gun.add(trigger);
+            g.proceduralGunParts.push(trigger);
             const stock = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.1, 0.22), gunWood);
             stock.position.set(0, -0.035, 0.08);
             gun.add(stock);
+            g.proceduralGunParts.push(stock);
             const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.16, 14), darkMetal);
             scopeTube.rotation.x = Math.PI / 2;
             scopeTube.position.set(0, 0.062, -0.2);
             gun.add(scopeTube);
+            g.proceduralGunParts.push(scopeTube);
             const scopeLens = new THREE.Mesh(
                 new THREE.CircleGeometry(0.019, 14),
                 new THREE.MeshStandardMaterial({ color: 0x66ccff, roughness: 0.05, metalness: 0.6 })
             );
             scopeLens.position.set(0, 0.062, -0.281);
             gun.add(scopeLens);
+            g.proceduralGunParts.push(scopeLens);
             for (const mz of [-0.13, -0.27]) {
                 const mount = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.03, 0.02), darkMetal);
                 mount.position.set(0, 0.045, mz);
                 gun.add(mount);
+                g.proceduralGunParts.push(mount);
             }
             // Muzzle flash: additive glow sprite
             g.flash = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -1556,6 +1859,20 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             gun.position.copy(g.hipPos);
             g.camera.add(gun);
 
+            // The procedural rifle is the first selectable gun; imported GLB
+            // models register themselves as extra options once they load.
+            g.gunOptions.push({
+                name: 'classic',
+                label: 'רובה קלאסי',
+                mesh: null,
+                flashPos: new THREE.Vector3(0, 0.015, -0.84),
+                flashScale: 0.3,
+                // Has a scope: ADS centres it, then we switch to a through-scope view.
+                scope: true,
+                adsPos: new THREE.Vector3(0, -0.062, -0.3),
+            });
+            this.applyGun(0);
+
             // Shared geometries: fewer allocations and less GC on weak devices
             const detail = g.quality === 2 ? [32, 24] : [20, 14];
             g.balloonGeo = new THREE.SphereGeometry(0.85, detail[0], detail[1]);
@@ -1563,8 +1880,16 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.shredGeo = new THREE.SphereGeometry(0.06, 6, 6);
             g.popFlashGeo = new THREE.SphereGeometry(0.4, 12, 10);
             g.confettiGeo = new THREE.BoxGeometry(0.09, 0.09, 0.012);
+            g.shadowGeo = new THREE.CircleGeometry(0.7, 24);
+            g.shadowMat = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.18,
+                depthWrite: false,
+            });
 
             this.applyQuality();
+            this.loadShooterAssets();
         },
 
         // Pixel ratio and shadows by quality tier; called again by the FPS
@@ -1638,12 +1963,13 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 g.balloonMats[color] = g.quality === 2
                     ? new THREE.MeshPhysicalMaterial({
                         color: color,
+                        map: this.makeBalloonTexture(color),
                         roughness: 0.3,
                         metalness: 0,
                         clearcoat: 1,
                         clearcoatRoughness: 0.12,
                     })
-                    : new THREE.MeshPhongMaterial({ color: color, shininess: 90 });
+                    : new THREE.MeshPhongMaterial({ color: color, map: this.makeBalloonTexture(color), shininess: 90 });
             }
             const group = new THREE.Group();
             const sphere = new THREE.Mesh(g.balloonGeo, g.balloonMats[color]);
@@ -1666,6 +1992,11 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             const string = new THREE.Line(stringGeo, new THREE.LineBasicMaterial({ color: 0x444444 }));
             group.add(string);
 
+            const shadow = new THREE.Mesh(g.shadowGeo, g.shadowMat.clone());
+            shadow.rotation.x = -Math.PI / 2;
+            shadow.position.set(x, 0.012, z);
+            g.scene.add(shadow);
+
             const post = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.06, 0.08, 0.7, 8),
                 g.woodMat
@@ -1682,7 +2013,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.scene.add(group);
 
             const rec = {
-                group: group, sphere: sphere, sprite: sprite, string: string, post: post,
+                group: group, sphere: sphere, sprite: sprite, string: string, post: post, shadow: shadow,
                 color: color, text: text, isCorrect: isCorrect,
                 x: x, z: z, baseY: baseY, groundY: groundY,
                 phase: Math.random() * Math.PI * 2,
@@ -1703,6 +2034,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             rec.sprite.material.map.dispose();
             rec.sprite.material.dispose();
             rec.string.geometry.dispose();
+            if (rec.shadow) rec.shadow.material.dispose();
         },
 
         clearBalloons: function() {
@@ -1710,6 +2042,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             g.balloons.forEach(b => {
                 g.scene.remove(b.group);
                 g.scene.remove(b.post);
+                if (b.shadow) g.scene.remove(b.shadow);
                 this.disposeBalloon(b);
             });
             g.balloons = [];
@@ -1843,11 +2176,70 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             } catch (e) {}
         },
 
+        playEmptySound: function() {
+            try {
+                if (!this._audioCtx) {
+                    this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const ctx = this._audioCtx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(180, ctx.currentTime);
+                gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch (e) {}
+        },
+
+        updateMagazineState: function() {
+            if (this.reloading) {
+                this.magazineState = 'LOAD';
+            } else if (this.ammoInMag === 0) {
+                this.magazineState = 'EMPTY';
+            } else if (this.ammoInMag <= 2) {
+                this.magazineState = 'LOW';
+            } else {
+                this.magazineState = 'READY';
+            }
+        },
+
+        reloadMagazine: function() {
+            // Magazine reload only — reserve ammo is unlimited, so a reload
+            // always tops the magazine back up to its full size.
+            if (this.reloading || this.ammoInMag === this.magazineSize) return;
+            this.reloading = true;
+            this.ads = false;
+            this.updateMagazineState();
+            const g = this._g;
+            if (g) {
+                g.reloadKick = 1;
+            }
+            clearTimeout(this._reloadTimer);
+            this._reloadTimer = setTimeout(() => {
+                this.ammoInMag = this.magazineSize;
+                this.reloading = false;
+                this.updateMagazineState();
+            }, 900);
+        },
+
         shoot: function() {
             const g = this._g;
             if (!g) return;
             if (!this.isTouch && !this.locked) return;
+            if (this.reloading) return;
+            if (this.ammoInMag <= 0) {
+                this.playEmptySound();
+                this.updateMagazineState();
+                this.reloadMagazine();
+                return;
+            }
 
+            this.ammoInMag -= 1;
+            this.updateMagazineState();
             g.recoil = 1;
             g.flash.visible = true;
             g.flash.material.rotation = Math.random() * Math.PI * 2;
@@ -1888,6 +2280,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             rec.state = 'popped';
             this.spawnParticles(rec.group.position, rec.color);
             this._g.scene.remove(rec.group);
+            if (rec.shadow) this._g.scene.remove(rec.shadow);
             this.disposeBalloon(rec);
         },
 
@@ -1973,11 +2366,18 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                     // position and inflation scale so it stays tied to the post
                     positions.setY(1, (-b.group.position.y + 0.7) / b.group.scale.y);
                     positions.needsUpdate = true;
+                    if (b.shadow) {
+                        const heightFactor = Math.max(0.28, 1 - (b.group.position.y - b.groundY) / 5.5);
+                        b.shadow.scale.setScalar((0.45 + heightFactor * 0.55) * b.group.scale.x);
+                        b.shadow.material.opacity = 0.08 + heightFactor * 0.13;
+                    }
                 } else if (b.state === 'flying') {
                     b.vel.y += 2 * dt;
                     b.group.position.addScaledVector(b.vel, dt);
+                    if (b.shadow) b.shadow.material.opacity = Math.max(0, b.shadow.material.opacity - dt * 0.5);
                     if (b.group.position.y > 30) {
                         g.scene.remove(b.group);
+                        if (b.shadow) g.scene.remove(b.shadow);
                         this.disposeBalloon(b);
                         b.state = 'gone';
                     }
@@ -2007,19 +2407,32 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             }
 
             // ADS zoom (FOV) and gun position
+            const activeGun = g.gunOptions[g.gunIndex];
+            const adsPos = (activeGun && activeGun.adsPos) || g.adsPos;
             const targetFov = this.ads ? 30 : 75;
             g.camera.fov += (targetFov - g.camera.fov) * Math.min(1, dt * 10);
             g.camera.updateProjectionMatrix();
-            g.gunBase.lerp(this.ads ? g.adsPos : g.hipPos, Math.min(1, dt * 12));
+            g.gunBase.lerp(this.ads ? adsPos : g.hipPos, Math.min(1, dt * 12));
+            // Once the raise + zoom animation has settled, a scoped weapon switches
+            // to a clean "through the scope" view: hide the gun and show the scope
+            // overlay so the 3D scope model never obscures the picture.
+            const raiseDone = this.ads &&
+                g.gunBase.distanceToSquared(adsPos) < 0.0004 &&
+                Math.abs(g.camera.fov - targetFov) < 1.5;
+            this.scoped = !!(raiseDone && this.gunHasScope);
+            g.gun.visible = !this.scoped;
             g.recoil = Math.max(0, g.recoil - dt * 6);
+            g.reloadKick = Math.max(0, (g.reloadKick || 0) - dt * 1.8);
             g.gun.position.copy(g.gunBase);
             g.gun.position.z += g.recoil * 0.06;
+            g.gun.position.y -= (g.reloadKick || 0) * 0.09;
+            g.gun.position.x += (g.reloadKick || 0) * 0.03;
             // Gun sway lags behind the camera and settles back
             const swayDecay = Math.max(0, 1 - 8 * dt);
             g.swayX = (g.swayX || 0) * swayDecay;
             g.swayY = (g.swayY || 0) * swayDecay;
-            g.gun.rotation.x = g.recoil * 0.1 + g.swayY;
-            g.gun.rotation.y = g.swayX;
+            g.gun.rotation.x = g.recoil * 0.1 + g.swayY - (g.reloadKick || 0) * 0.32;
+            g.gun.rotation.y = g.swayX + (g.reloadKick || 0) * 0.12;
             // Subtle idle breathing motion
             g.gun.position.y += Math.sin(t * 1.8) * (this.ads ? 0.0008 : 0.003);
 
@@ -2114,6 +2527,16 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             }
         },
 
+        onKeyDown: function(event) {
+            if (!event.key) return;
+            const key = event.key.toLowerCase();
+            if (key === 'r') {
+                this.reloadMagazine();
+            } else if (key === 'g') {
+                this.switchGun();
+            }
+        },
+
         onContextMenu: function(event) {
             event.preventDefault();
         },
@@ -2166,6 +2589,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mousedown', this.onMouseDown);
         document.addEventListener('mouseup', this.onMouseUp);
+        document.addEventListener('keydown', this.onKeyDown);
         canvas.addEventListener('contextmenu', this.onContextMenu);
         canvas.addEventListener('touchstart', this.onTouchStart, { passive: true });
         canvas.addEventListener('touchmove', this.onTouchMove, { passive: false });
@@ -2197,8 +2621,10 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         document.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mousedown', this.onMouseDown);
         document.removeEventListener('mouseup', this.onMouseUp);
+        document.removeEventListener('keydown', this.onKeyDown);
         window.removeEventListener('resize', this.onResize);
         clearTimeout(this._hitMarkerTimer);
+        clearTimeout(this._reloadTimer);
         if (screen.orientation && screen.orientation.unlock) {
             try { screen.orientation.unlock(); } catch (e) {}
         }
@@ -4145,11 +4571,15 @@ var SpeechToTextComponent = Vue.component('s2t', Vue.extend({
 }));
 
 
-// Learning Platformer - 2D side-scroller (Phaser 3), Mario-style "answer blocks".
-// The level is a sequence of themed obstacles (river / clouds / doors / dragon).
-// Each obstacle blocks the path with 4 floating blocks, one per answer option.
-// Jumping into the correct block opens the way; a wrong block just grays out
-// and is eliminated - no falling, no dying - so young kids can always recover.
+// Learning Platformer - 2D side-scroller (Phaser 3), Mario-style answer picking.
+// The level is a sequence of themed obstacles, each with one answer per option:
+//   river / clouds / dragon - blocks float overhead, jump up to hit one
+//   pipes    - Mario warp pipes: hop into one; right warps you forward, wrong
+//              warps you back to the start of the obstacle
+//   platform - jump up and land on the floating platform with the right answer
+//   tree     - jump up and grab the one right fruit (Dangerous Dave style)
+// Picking right opens the gate; a wrong pick just grays out - no falling, no
+// dying - so young kids can always recover.
 var PlatformerComponent = Vue.component('platformer', Vue.extend({
     template: `
     <div class="container">
@@ -4252,33 +4682,85 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
 
         startGame: function() {
             const vm = this;
-            const W = 900, H = 500, GROUND_H = 60;
-            const SEG = 860, INTRO = 600, OUTRO = 500;
-            const SPEED = 240, JUMP_VELOCITY = 580;
+            const W = 900, H = 500, GROUND_H = 64;
+            const SEG = 900, INTRO = 620, OUTRO = 520;
+            const SPEED = 240, JUMP_VELOCITY = 590;
 
-            const BLOCK_TEXTURES = {river: 'pf_stone', clouds: 'pf_cloud', doors: 'pf_door', dragon: 'pf_block'};
+            const BLOCK_TEXTURES = {river: 'pf_stone', clouds: 'pf_cloud', dragon: 'pf_block'};
 
             function createTextures(scene) {
                 if (scene.textures.exists('pf_ground')) {
                     return;
                 }
                 const g = scene.add.graphics();
-                g.fillStyle(0x5d4037); g.fillRect(0, 0, 64, GROUND_H);
-                g.fillStyle(0x7cb342); g.fillRect(0, 0, 64, 16);
+
+                // Sky gradient (sits behind everything as a fixed backdrop)
+                g.fillGradientStyle(0x4aa6e0, 0x4aa6e0, 0xcdeafe, 0xcdeafe, 1);
+                g.fillRect(0, 0, W, H);
+                g.generateTexture('pf_sky', W, H); g.clear();
+
+                // Grassy ground: dirt, pebbles, grass blades on top
+                g.fillStyle(0x6d4c41); g.fillRect(0, 0, 64, GROUND_H);
+                g.fillStyle(0x5d4037);
+                g.fillCircle(12, 42, 4); g.fillCircle(42, 54, 5); g.fillCircle(54, 34, 3);
+                g.fillStyle(0x7cb342); g.fillRect(0, 0, 64, 18);
+                g.fillStyle(0x9ccc65); g.fillRect(0, 0, 64, 7);
+                g.fillStyle(0x7cb342);
+                for (let i = 0; i < 64; i += 8) { g.fillTriangle(i, 18, i + 4, 8, i + 8, 18); }
                 g.generateTexture('pf_ground', 64, GROUND_H); g.clear();
-                g.fillStyle(0xffc107); g.fillRoundedRect(0, 0, 140, 84, 12);
-                g.lineStyle(5, 0xff8f00); g.strokeRoundedRect(3, 3, 134, 78, 12);
+
+                // Golden answer block (dragon / generic) with shine
+                g.fillGradientStyle(0xffe082, 0xffca28, 0xffb300, 0xffa000, 1);
+                g.fillRoundedRect(0, 0, 140, 84, 14);
+                g.lineStyle(5, 0xff8f00); g.strokeRoundedRect(3, 3, 134, 78, 14);
+                g.fillStyle(0xffffff, 0.35); g.fillRoundedRect(12, 10, 116, 18, 8);
                 g.generateTexture('pf_block', 140, 84); g.clear();
-                g.fillStyle(0xffffff); g.fillRoundedRect(0, 0, 140, 84, 38);
+
+                // Cloud block
+                g.fillStyle(0xffffff); g.fillRoundedRect(0, 0, 140, 84, 40);
+                g.fillStyle(0xe3f2fd); g.fillRoundedRect(0, 46, 140, 38, {tl: 0, tr: 0, bl: 40, br: 40});
                 g.generateTexture('pf_cloud', 140, 84); g.clear();
-                g.fillStyle(0x90a4ae); g.fillRoundedRect(0, 0, 140, 84, 16);
-                g.lineStyle(5, 0x607d8b); g.strokeRoundedRect(3, 3, 134, 78, 16);
+
+                // Stepping stone (river)
+                g.fillGradientStyle(0xb0bec5, 0x90a4ae, 0x78909c, 0x607d8b, 1);
+                g.fillRoundedRect(0, 0, 140, 84, 16);
+                g.lineStyle(5, 0x546e7a); g.strokeRoundedRect(3, 3, 134, 78, 16);
+                g.fillStyle(0xffffff, 0.25); g.fillRoundedRect(12, 10, 116, 16, 8);
                 g.generateTexture('pf_stone', 140, 84); g.clear();
-                g.fillStyle(0x8d6e63); g.fillRoundedRect(0, 0, 110, 150, {tl: 40, tr: 40, bl: 0, br: 0});
-                g.lineStyle(5, 0x5d4037); g.strokeRoundedRect(3, 3, 104, 144, {tl: 40, tr: 40, bl: 0, br: 0});
-                g.fillStyle(0xffd54f); g.fillCircle(88, 80, 7);
-                g.generateTexture('pf_door', 110, 150); g.clear();
-                g.fillStyle(0x4fc3f7); g.fillRect(0, 0, 64, GROUND_H);
+
+                // Mario-style warp pipe: shaded body + wide lip + dark mouth
+                const PW = 96, PH = 112;
+                g.fillGradientStyle(0x66bb6a, 0x2e7d32, 0x66bb6a, 0x2e7d32, 1);
+                g.fillRect(12, 26, PW - 24, PH - 26);
+                g.fillStyle(0xa5d6a7, 0.7); g.fillRect(20, 30, 10, PH - 34);
+                g.fillStyle(0x1b5e20); g.fillRect(8, 26, 6, PH - 26);
+                g.fillGradientStyle(0x81c784, 0x2e7d32, 0x81c784, 0x2e7d32, 1);
+                g.fillRoundedRect(0, 0, PW, 30, 8);
+                g.fillStyle(0x103810); g.fillRect(10, 6, PW - 20, 18);
+                g.fillStyle(0x000000, 0.55); g.fillRect(16, 9, PW - 32, 12);
+                g.generateTexture('pf_pipe', PW, PH); g.clear();
+
+                // Floating one-way platform: grass cap on a dirt slab + drop shadow
+                const LW = 140, LH = 40;
+                g.fillStyle(0x000000, 0.15); g.fillRoundedRect(6, 12, LW - 12, LH - 8, 10);
+                g.fillGradientStyle(0x8d6e63, 0x6d4c41, 0x5d4037, 0x4e342e, 1);
+                g.fillRoundedRect(0, 8, LW, LH - 8, 10);
+                g.fillStyle(0x7cb342); g.fillRoundedRect(0, 0, LW, 16, {tl: 10, tr: 10, bl: 0, br: 0});
+                g.fillStyle(0x9ccc65); g.fillRect(0, 0, LW, 6);
+                g.generateTexture('pf_platform', LW, LH); g.clear();
+
+                // Apple (tree fruit) with stem, leaf and highlight
+                const AW = 46, AH = 50;
+                g.fillStyle(0x6d4c41); g.fillRect(AW / 2 - 2, 2, 4, 12);
+                g.fillStyle(0x43a047); g.fillEllipse(AW / 2 + 9, 9, 18, 10);
+                g.fillStyle(0xe53935); g.fillCircle(AW / 2, AH / 2 + 7, 17);
+                g.fillStyle(0xc62828); g.fillCircle(AW / 2 + 6, AH / 2 + 11, 12);
+                g.fillStyle(0xff8a80, 0.85); g.fillCircle(AW / 2 - 6, AH / 2 + 1, 5);
+                g.generateTexture('pf_apple', AW, AH); g.clear();
+
+                // Water, bridge, coin
+                g.fillGradientStyle(0x4fc3f7, 0x29b6f6, 0x0288d1, 0x0277bd, 1);
+                g.fillRect(0, 0, 64, GROUND_H);
                 g.generateTexture('pf_water', 64, GROUND_H); g.clear();
                 g.fillStyle(0x8d6e63); g.fillRect(0, 0, 64, 18);
                 g.lineStyle(2, 0x5d4037); g.strokeRect(0, 0, 64, 18);
@@ -4304,8 +4786,33 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 }
             }
 
+            function markWrong(scene, block) {
+                block.disabled = true;
+                block.img.setTint(0x9e9e9e);
+                block.label.setAlpha(0.4);
+            }
+
+            function sparkleBurst(scene, x, y) {
+                for (let i = 0; i < 8; i++) {
+                    const star = scene.add.text(x, y, '✨', {fontSize: '20px'}).setOrigin(0.5).setDepth(8);
+                    const a = (i / 8) * Math.PI * 2;
+                    scene.tweens.add({
+                        targets: star,
+                        x: x + Math.cos(a) * 60,
+                        y: y + Math.sin(a) * 60,
+                        alpha: 0,
+                        duration: 700,
+                        onComplete: () => star.destroy(),
+                    });
+                }
+            }
+
             function solveObstacle(scene, obstacle, chosenBlock) {
-                coinBurst(scene, chosenBlock.img.x, chosenBlock.img.y - 30);
+                if (obstacle.type === 'tree' || obstacle.type === 'platform') {
+                    sparkleBurst(scene, chosenBlock.img.x, chosenBlock.img.y);
+                } else {
+                    coinBurst(scene, chosenBlock.img.x, chosenBlock.img.y - 30);
+                }
                 chosenBlock.img.setTint(0x81c784);
                 obstacle.blocks.forEach(block => {
                     scene.tweens.add({
@@ -4335,7 +4842,11 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
             }
 
             function handleChoice(scene, obstacle, block) {
-                if (vm.destroyed || obstacle.answered || block.disabled) {
+                if (vm.destroyed || obstacle.answered || block.disabled || scene.warping) {
+                    return;
+                }
+                if (obstacle.type === 'pipes') {
+                    handlePipeChoice(scene, obstacle, block);
                     return;
                 }
                 if (block.correct) {
@@ -4344,60 +4855,210 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     solveObstacle(scene, obstacle, block);
                     vm.onCorrect(obstacle.q);
                 } else {
-                    block.disabled = true;
-                    block.img.setTint(0x9e9e9e);
-                    block.label.setAlpha(0.4);
+                    markWrong(scene, block);
                     scene.cameras.main.shake(150, 0.004);
                     vm.onWrong(obstacle.q);
                 }
             }
 
-            function buildObstacle(scene, type, baseX, q, groundTop) {
-                const obstacle = {type: type, q: q, answered: false, activated: false, blocks: [], deco: []};
-                const isDoors = type === 'doors';
-                const blockY = isDoors ? groundTop - 75 : groundTop - 170;
+            // Mario warp pipes: entering a pipe drops the player down and out
+            // somewhere else - forward past the gate if right, back to the start
+            // of the obstacle if wrong (still no falling, no dying).
+            function handlePipeChoice(scene, obstacle, pipe) {
+                scene.warping = true;
+                const goRight = pipe.correct;
+                const destX = goRight ? obstacle.wallX + 70 : obstacle.startX;
+                warpPlayer(scene, pipe.img.x, pipe.img.y, destX, () => {
+                    if (goRight) {
+                        obstacle.answered = true;
+                        scene.bannerText.setText('🪙 רוץ קדימה!');
+                        solveObstacle(scene, obstacle, pipe);
+                        vm.onCorrect(obstacle.q);
+                    } else {
+                        markWrong(scene, pipe);
+                        scene.cameras.main.shake(150, 0.004);
+                        vm.onWrong(obstacle.q);
+                    }
+                });
+            }
 
+            function warpPlayer(scene, pipeX, pipeY, destX, onArrive) {
+                const player = scene.player;
+                player.body.setVelocity(0, 0);
+                player.body.moves = false;
+                player.setAngle(0);
+                scene.tweens.add({
+                    targets: player, x: pipeX, duration: 130,
+                    onComplete: () => scene.tweens.add({
+                        targets: player, y: pipeY + 22, scale: 0.3, duration: 300, ease: 'Quad.easeIn',
+                        onComplete: () => {
+                            player.setPosition(destX, scene.groundTop - 60);
+                            scene.tweens.add({
+                                targets: player, scale: 1, duration: 240, ease: 'Back.easeOut',
+                                onComplete: () => {
+                                    player.body.reset(destX, scene.groundTop - 60);
+                                    player.body.moves = true;
+                                    scene.warping = false;
+                                    onArrive();
+                                },
+                            });
+                        },
+                    }),
+                });
+            }
+
+            // Readable label: dark text with a white halo so it shows on any texture
+            function makeLabel(scene, x, y, text, opts) {
+                return scene.add.text(x, y, text, Object.assign({
+                    fontSize: '22px', fontFamily: 'Arial', color: '#1a1a1a', align: 'center',
+                    fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 5,
+                    wordWrap: {width: 130},
+                }, opts || {})).setOrigin(0.5).setDepth(5);
+            }
+
+            // river / clouds / dragon: blocks float overhead, jump up to pick one
+            function buildFloatingBlocks(scene, obstacle, baseX, q, groundTop, texKey) {
+                const blockY = groundTop - 170;
                 q.options.forEach((option, idx) => {
                     const x = baseX + 150 + idx * 190;
-                    const img = scene.physics.add.staticImage(x, blockY, BLOCK_TEXTURES[type]).setDepth(4);
-                    const label = scene.add.text(x, isDoors ? blockY - 105 : blockY, option.text, {
-                        fontSize: '22px', fontFamily: 'Arial', color: '#212121', align: 'center',
-                        wordWrap: {width: 125},
-                    }).setOrigin(0.5).setDepth(5);
+                    const img = scene.physics.add.staticImage(x, blockY, texKey).setDepth(4);
+                    const label = makeLabel(scene, x, blockY, option.text, {wordWrap: {width: 125}});
                     const block = {img: img, label: label, correct: option.correct, disabled: false};
                     scene.physics.add.overlap(scene.player, img, () => handleChoice(scene, obstacle, block));
                     obstacle.blocks.push(block);
                 });
+            }
 
-                // Invisible wall that opens when the obstacle is solved
+            // pipes: jump into the mouth of the pipe you choose to warp through it
+            function buildPipes(scene, obstacle, baseX, q, groundTop) {
+                q.options.forEach((option, idx) => {
+                    const x = baseX + 150 + idx * 190;
+                    const pipe = scene.physics.add.staticImage(x, groundTop - 56, 'pf_pipe').setDepth(4);
+                    const label = makeLabel(scene, x, groundTop - 134, option.text, {color: '#1b5e20'});
+                    const block = {img: pipe, label: label, correct: option.correct, disabled: false};
+                    // Trigger only at the pipe's mouth, above standing height, so the
+                    // player must hop into it (running past on the ground does nothing).
+                    const mouth = scene.add.rectangle(x, groundTop - 98, 60, 26, 0x000000, 0);
+                    scene.physics.add.existing(mouth, true);
+                    scene.physics.add.overlap(scene.player, mouth, () => handleChoice(scene, obstacle, block));
+                    obstacle.blocks.push(block);
+                });
+            }
+
+            // platform: jump up and land on the floating platform with the right answer
+            function buildPlatform(scene, obstacle, baseX, q, groundTop) {
+                q.options.forEach((option, idx) => {
+                    const x = baseX + 150 + idx * 190;
+                    const y = groundTop - (idx % 2 === 0 ? 90 : 116);
+                    const plat = scene.physics.add.staticImage(x, y, 'pf_platform').setDepth(4);
+                    // One-way: the player can jump up through it and land on top
+                    plat.body.checkCollision.down = false;
+                    plat.body.checkCollision.left = false;
+                    plat.body.checkCollision.right = false;
+                    scene.physics.add.collider(scene.player, plat);
+                    const label = makeLabel(scene, x, y - 2, option.text, {
+                        fontSize: '20px', color: '#3e2723', wordWrap: {width: 130},
+                    });
+                    const block = {img: plat, label: label, correct: option.correct, disabled: false};
+                    const zone = scene.add.rectangle(x, y - 18, 132, 24, 0x000000, 0);
+                    scene.physics.add.existing(zone, true);
+                    scene.physics.add.overlap(scene.player, zone, () => {
+                        if (scene.player.body.velocity.y < -10) {
+                            return; // ignore the upward pass-through; count the landing
+                        }
+                        handleChoice(scene, obstacle, block);
+                    });
+                    obstacle.blocks.push(block);
+                });
+            }
+
+            // tree: jump up and grab the one right fruit (Dangerous Dave style)
+            function buildTree(scene, obstacle, baseX, q, groundTop) {
+                const cx = baseX + 430;
+                drawTree(scene, cx, groundTop);
+                q.options.forEach((option, idx) => {
+                    const x = cx - 150 + idx * 100;
+                    const y = groundTop - (idx % 2 === 0 ? 140 : 172);
+                    const fruit = scene.physics.add.staticImage(x, y, 'pf_apple').setDepth(5);
+                    const label = makeLabel(scene, x, y + 32, option.text, {
+                        color: '#ffffff', stroke: '#2e7d32', strokeThickness: 5, fontSize: '20px',
+                        wordWrap: {width: 120},
+                    }).setDepth(6);
+                    const block = {img: fruit, label: label, correct: option.correct, disabled: false};
+                    scene.physics.add.overlap(scene.player, fruit, () => handleChoice(scene, obstacle, block));
+                    obstacle.blocks.push(block);
+                });
+            }
+
+            function drawTree(scene, cx, groundTop) {
+                const g = scene.add.graphics().setDepth(3);
+                g.fillStyle(0x6d4c41); g.fillRoundedRect(cx - 26, groundTop - 150, 52, 156, {tl: 8, tr: 8, bl: 0, br: 0});
+                g.fillStyle(0x8d6e63); g.fillRect(cx - 22, groundTop - 148, 9, 150);
+                const blobs = [[0, -205, 118], [-95, -165, 88], [95, -165, 88], [-55, -240, 78], [55, -240, 78], [0, -265, 78]];
+                g.fillStyle(0x2e7d32);
+                blobs.forEach(b => g.fillCircle(cx + b[0], groundTop + b[1], b[2]));
+                g.fillStyle(0x43a047);
+                blobs.forEach(b => g.fillCircle(cx + b[0] - 14, groundTop + b[1] - 14, b[2] * 0.66));
+            }
+
+            // Themed scenery sitting on the blocked passage; it fades when solved
+            function addDeco(scene, obstacle, groundTop, type) {
+                const wx = obstacle.wallX;
+                if (type === 'river') {
+                    obstacle.deco.push(scene.add.tileSprite(wx, H - GROUND_H / 2, 130, GROUND_H, 'pf_water').setDepth(3));
+                    obstacle.deco.push(scene.add.text(wx, groundTop - 36, '🌊', {fontSize: '40px'}).setOrigin(0.5));
+                } else if (type === 'clouds') {
+                    for (let i = 0; i < 3; i++) {
+                        obstacle.deco.push(scene.add.text(wx, groundTop - 40 - i * 86, '☁️', {fontSize: '72px'}).setOrigin(0.5));
+                    }
+                } else if (type === 'pipes') {
+                    for (let i = 0; i < 3; i++) {
+                        obstacle.deco.push(scene.add.text(wx, groundTop - 30 - i * 60, '🧱', {fontSize: '56px'}).setOrigin(0.5));
+                    }
+                } else if (type === 'platform') {
+                    for (let i = 0; i < 3; i++) {
+                        obstacle.deco.push(scene.add.text(wx, groundTop - 32 - i * 64, '🪨', {fontSize: '58px'}).setOrigin(0.5));
+                    }
+                } else if (type === 'tree') {
+                    for (let i = 0; i < 3; i++) {
+                        obstacle.deco.push(scene.add.text(wx, groundTop - 34 - i * 54, '🌿', {fontSize: '54px'}).setOrigin(0.5));
+                    }
+                }
+            }
+
+            function addDragon(scene, obstacle, groundTop) {
+                obstacle.dragon = scene.add.text(obstacle.wallX - 20, groundTop - 70, '🐉', {fontSize: '88px'}).setOrigin(0.5).setDepth(4);
+                scene.tweens.add({
+                    targets: obstacle.dragon,
+                    y: '-=26', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+                });
+            }
+
+            function buildObstacle(scene, type, baseX, q, groundTop) {
+                const obstacle = {type: type, q: q, answered: false, activated: false, blocks: [], deco: []};
+
+                // Invisible gate that opens when the obstacle is solved, plus the
+                // warp-back checkpoint used by the pipes.
+                obstacle.startX = baseX + 60;
                 obstacle.wallX = baseX + 815;
                 const wall = scene.add.rectangle(obstacle.wallX, H / 2, 26, H, 0x000000, 0);
                 scene.physics.add.existing(wall, true);
                 scene.physics.add.collider(scene.player, wall);
                 obstacle.barrier = wall;
 
-                // Themed scenery on the blocked passage
-                if (type === 'river') {
-                    obstacle.deco.push(scene.add.tileSprite(obstacle.wallX, H - GROUND_H / 2, 130, GROUND_H, 'pf_water').setDepth(3));
-                    obstacle.deco.push(scene.add.text(obstacle.wallX, groundTop - 36, '🌊', {fontSize: '40px'}).setOrigin(0.5));
-                } else if (type === 'clouds') {
-                    for (let i = 0; i < 3; i++) {
-                        obstacle.deco.push(scene.add.text(obstacle.wallX, groundTop - 40 - i * 86, '☁️', {fontSize: '72px'}).setOrigin(0.5));
-                    }
-                } else if (type === 'doors') {
-                    for (let i = 0; i < 3; i++) {
-                        obstacle.deco.push(scene.add.text(obstacle.wallX, groundTop - 30 - i * 60, '🧱', {fontSize: '56px'}).setOrigin(0.5));
-                    }
-                } else if (type === 'dragon') {
-                    obstacle.dragon = scene.add.text(obstacle.wallX - 20, groundTop - 70, '🐉', {fontSize: '88px'}).setOrigin(0.5).setDepth(4);
-                    scene.tweens.add({
-                        targets: obstacle.dragon,
-                        y: '-=26',
-                        duration: 900,
-                        yoyo: true,
-                        repeat: -1,
-                        ease: 'Sine.easeInOut',
-                    });
+                if (type === 'pipes') {
+                    buildPipes(scene, obstacle, baseX, q, groundTop);
+                } else if (type === 'platform') {
+                    buildPlatform(scene, obstacle, baseX, q, groundTop);
+                } else if (type === 'tree') {
+                    buildTree(scene, obstacle, baseX, q, groundTop);
+                } else {
+                    buildFloatingBlocks(scene, obstacle, baseX, q, groundTop, BLOCK_TEXTURES[type]);
+                }
+
+                addDeco(scene, obstacle, groundTop, type);
+                if (type === 'dragon') {
+                    addDragon(scene, obstacle, groundTop);
                 }
 
                 // Activation zone: shows + reads the question when the player arrives
@@ -4424,24 +5085,33 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 createTextures(scene);
 
                 const usedIndexes = new Set();
-                const themes = vm.shuffle(['river', 'clouds', 'doors']).concat(['dragon']);
+                const pool = vm.shuffle(['river', 'clouds', 'pipes', 'platform', 'tree']);
+                const themes = pool.slice(0, 4).concat(['dragon']);
                 const total = INTRO + themes.length * SEG + OUTRO;
                 const groundTop = H - GROUND_H;
                 scene.groundTop = groundTop;
                 scene.lastCheckpointX = 120;
                 scene.levelDone = false;
                 scene.currentQ = null;
+                scene.warping = false;
 
                 scene.physics.world.setBounds(0, 0, total, H);
                 scene.cameras.main.setBounds(0, 0, total, H);
 
-                // Background decorations
-                scene.add.text(70, 50, '☀️', {fontSize: '54px'}).setScrollFactor(0);
-                for (let x = 200; x < total; x += 380) {
-                    scene.add.text(x, 80 + (x % 3) * 30, '☁️', {fontSize: '40px'}).setScrollFactor(0.4).setAlpha(0.8);
+                // Layered, parallax background -> reads like a real side-scroller
+                scene.add.image(0, 0, 'pf_sky').setOrigin(0).setScrollFactor(0).setDepth(-20);
+                scene.add.text(70, 54, '☀️', {fontSize: '58px'}).setScrollFactor(0).setDepth(-19);
+                for (let x = 0; x < total; x += 300) {
+                    scene.add.ellipse(x, groundTop + 30, 360, 240, 0x81c784).setScrollFactor(0.25).setDepth(-12).setAlpha(0.85);
                 }
-                for (let x = 330; x < total; x += 510) {
-                    scene.add.text(x, groundTop + 6, '🌳', {fontSize: '48px'}).setOrigin(0.5, 1).setDepth(1);
+                for (let x = 200; x < total; x += 380) {
+                    scene.add.text(x, 80 + (x % 3) * 30, '☁️', {fontSize: '44px'}).setScrollFactor(0.4).setDepth(-11).setAlpha(0.9);
+                }
+                for (let x = 150; x < total; x += 260) {
+                    scene.add.ellipse(x, groundTop + 44, 240, 180, 0x66bb6a).setScrollFactor(0.55).setDepth(-10).setAlpha(0.9);
+                }
+                for (let x = 330; x < total; x += 520) {
+                    scene.add.text(x, groundTop + 6, '🌳', {fontSize: '46px'}).setOrigin(0.5, 1).setScrollFactor(0.8).setDepth(1).setAlpha(0.9);
                 }
 
                 const ground = scene.add.tileSprite(total / 2, H - GROUND_H / 2, total, GROUND_H, 'pf_ground').setDepth(2);
@@ -4455,9 +5125,16 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 player.body.setCollideWorldBounds(true);
                 scene.physics.add.collider(player, ground);
                 scene.player = player;
+                // The physics body stays an unscaled upright box (scaling it would
+                // resize the collider and drop him through the floor). A separate
+                // sprite rides on top and carries all the run / jump animation.
+                player.setAlpha(0);
+                scene.playerArt = scene.add.text(player.x, player.y, '🏃', {fontSize: '42px'})
+                    .setOrigin(0.5).setDepth(6).setFlipX(true);
+                scene.playerShadow = scene.add.ellipse(player.x, groundTop + 2, 40, 12, 0x000000, 0.25).setDepth(3);
 
                 // Fixed question banner on top of the game view; tap to hear again
-                const banner = scene.add.rectangle(W / 2, 38, W - 28, 60, 0x1a237e, 0.55)
+                const banner = scene.add.rectangle(W / 2, 38, W - 28, 60, 0x1a237e, 0.6)
                     .setScrollFactor(0).setDepth(9).setInteractive();
                 scene.bannerText = scene.add.text(W / 2, 38, '➡ רוץ ימינה!', {
                     fontSize: '28px', fontFamily: 'Arial', color: '#ffffff',
@@ -4501,14 +5178,36 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     return;
                 }
 
+                // The visible sprite always rides on the (invisible) physics body
+                const art = scene.playerArt;
+                art.x = player.x;
+                art.y = player.y;
+
+                // Soft shadow that shrinks/fades as the player rises
+                const sh = scene.playerShadow;
+                if (sh) {
+                    const air = Phaser.Math.Clamp((scene.groundTop - player.y) / 220, 0, 1);
+                    sh.x = player.x;
+                    sh.y = scene.groundTop + 2;
+                    sh.setScale(1 - air * 0.5);
+                    sh.setAlpha(0.28 * (1 - air * 0.6));
+                }
+
+                // Controls are frozen mid pipe-warp; keep the sprite matched to the
+                // warp tween (which scales/moves the body) while we wait.
+                if (scene.warping) {
+                    art.setScale(player.scaleX, player.scaleY).setAngle(player.angle);
+                    return;
+                }
+
                 const left = scene.cursors.left.isDown || vm.touch.left;
                 const right = scene.cursors.right.isDown || vm.touch.right;
                 if (left && !right) {
                     player.body.setVelocityX(-SPEED);
-                    player.setFlipX(false);
+                    art.setFlipX(false);
                 } else if (right && !left) {
                     player.body.setVelocityX(SPEED);
-                    player.setFlipX(true);
+                    art.setFlipX(true);
                 } else {
                     player.body.setVelocityX(0);
                 }
@@ -4528,6 +5227,25 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     player.body.setVelocityY(-JUMP_VELOCITY);
                     scene.jumpBufferUntil = 0;
                     scene.coyoteUntil = 0;
+                }
+
+                // Make him *look* like he's running / jumping. Applied to the
+                // sprite only, never the physics body, so he can't sink.
+                const grounded = player.body.blocked.down || player.body.touching.down;
+                const lean = art.flipX ? 1 : -1; // flipX = facing right
+                if (!grounded) {
+                    // airborne: stretch up when rising, squash when falling, tilt forward
+                    const s = Phaser.Math.Clamp(-player.body.velocity.y / 700, -0.28, 0.28);
+                    art.setScale(1 - s * 0.6, 1 + s);
+                    art.setAngle(lean * 16);
+                } else if (Math.abs(player.body.velocity.x) > 10) {
+                    // running: quick bob + back-and-forth stride sway
+                    art.setScale(1, 1 + Math.abs(Math.sin(time * 0.05)) * 0.08);
+                    art.setAngle(lean * 7 + Math.sin(time * 0.025) * 9);
+                } else {
+                    // idle: settle upright with a gentle breathing pulse
+                    art.setAngle(art.angle * 0.7);
+                    art.setScale(1, 1 + Math.sin(time * 0.004) * 0.03);
                 }
 
                 // Safety net: the level has no pits, but recover gracefully anyway
