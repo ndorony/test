@@ -478,6 +478,36 @@
         opacity: 0.88;
     }
 
+    /* Treasure maze (3D) — builds on the shooter-* HUD classes */
+    .maze-area {
+        background: #0a0e1f;
+    }
+
+    .maze-fade {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        pointer-events: none;
+        z-index: 7;
+    }
+
+    .maze-scenario {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.45);
+        color: #ffd54f;
+        padding: 2px 16px;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        font-size: 1.15rem;
+    }
+
+    .maze-gems {
+        margin-right: 14px;
+    }
+
     </style>
 </head>
 <body dir="rtl">

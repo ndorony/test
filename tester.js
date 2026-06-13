@@ -1157,12 +1157,16 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 <div class="shooter-crosshair" v-show="!ads"></div>
                 <div class="shooter-scope" v-show="ads"></div>
                 <div class="shooter-hitmarker" v-show="hitMarker">✕</div>
-                <div class="shooter-overlay" v-show="!locked && !isTouch" @click="requestLock">
-                    <div>
+                <div class="shooter-overlay" v-show="(!isTouch && !locked) || (isTouch && !started)" @click="startGame">
+                    <div v-if="!isTouch">
                         <h5>לחץ כאן כדי לאחוז ברובה</h5>
                         <p>המשחק יעבור למסך מלא | הזז את העכבר כדי לכוון</p>
                         <p>קליק שמאלי — ירי | קליק ימני (החזק) — כוונת</p>
                         <p>ESC — שחרור העכבר</p>
+                    </div>
+                    <div v-else>
+                        <h5>הקש כדי לשחק במסך מלא</h5>
+                        <p>גרור כדי לכוון | 🔫 ירי | 🎯 זום</p>
                     </div>
                 </div>
                 <div v-if="isTouch" class="shooter-touch-controls">
@@ -1183,6 +1187,7 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             locked: false,
             ads: false,
             isTouch: false,
+            started: false,
             hitMarker: false,
         };
     },
@@ -2031,11 +2036,24 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
             }
         },
 
+        // On phones the game starts in fullscreen locked to landscape
+        startGame: function() {
+            if (this.isTouch) {
+                this.started = true;
+                this.enterFullscreen();
+            } else {
+                this.requestLock();
+            }
+        },
+
         enterFullscreen: function() {
             const area = this.$refs.shooterArea;
             const request = area.requestFullscreen || area.webkitRequestFullscreen;
             if (request) {
                 try { request.call(area); } catch (e) {}
+            }
+            if (this.isTouch && screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(function() {});
             }
         },
 
@@ -2181,9 +2199,1588 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
         document.removeEventListener('mouseup', this.onMouseUp);
         window.removeEventListener('resize', this.onResize);
         clearTimeout(this._hitMarkerTimer);
+        if (screen.orientation && screen.orientation.unlock) {
+            try { screen.orientation.unlock(); } catch (e) {}
+        }
         if (this._audioCtx) {
             this._audioCtx.close();
             this._audioCtx = null;
+        }
+    }
+}));
+
+
+// Obstacle themes for the treasure maze. Behind the scenes every obstacle is
+// the same learning question — only the visuals change, so each chamber feels
+// like a new adventure without designing levels.
+// Room types. `layout` picks the chamber structure:
+//   'doors'   — 3 gates with wooden doors; behind a wrong door there is a
+//               real dead-end room: the player walks in, the trap is revealed
+//               inside, and the character flees back.
+//   'bridges' — a chasm crossed by 3 bridges; a wrong bridge collapses
+//               mid-crossing and the character escapes back.
+//   'stones'  — a river crossed by 3 paths of stepping stones; the wrong
+//               path sinks underfoot.
+//   'chests'  — a small treasure room with 3 chests and one exit door; the
+//               right answer opens the real chest, a fake one belches smoke.
+//   'keys'    — 3 keys on pedestals and one locked door; the chosen key
+//               flies to the lock, and only the right one opens it.
+// `fail` styles the dead-end room of 'doors' layouts:
+//   'block'    — the room is blocked by rubble/ice/thorns
+//   'monster'  — a creature with glowing eyes lunges at the player
+//   'collapse' — the room caves in (beams and rocks rain down)
+//   'bounce'   — a magic circle hurls the player straight back
+const MAZE_SCENARIOS = [
+    { title: '🚪 שערי האבן — איזו דלת מובילה לאוצר?', door: 0x8d5a2b, frame: 0x8d8794, flame: 0xffa726, light: 0xffa14d, rune: 0xffc46b,
+      fail: 'block', failColor: 0x6e6675, failMsg: 'המעבר חסום בסלעים! נסה דלת אחרת' },
+    { title: '✨ השער הקסום — בחר במעבר הנכון', door: 0x6a4fbf, frame: 0xb39ddb, flame: 0xb388ff, light: 0xa37bff, rune: 0xc9a6ff,
+      fail: 'bounce', failColor: 0xb388ff, failMsg: 'השער הקסום הדף אותך אחורה!' },
+    { title: '🐉 מאורת הדרקון — רק דלת אחת בטוחה!', door: 0x9c2f2f, frame: 0x6d4c41, flame: 0xff7043, light: 0xff6633, rune: 0xff8a5c,
+      fail: 'monster', failColor: 0xff5722, eyes: 0xffd740, failMsg: 'דרקון! ברח מהר!' },
+    { title: '❄️ מבוך הקרח — מצא את השער הנכון', door: 0x3f6fb5, frame: 0xa8d4e8, flame: 0x81d4fa, light: 0x6fc3ff, rune: 0x9fdcff,
+      fail: 'block', failColor: 0x9fd8f5, failMsg: 'קיר קרח חוסם את הדרך!' },
+    { title: '🌿 גן הסוד — איזו דלת תוביל הלאה?', door: 0x3f6f33, frame: 0x9e8f6e, flame: 0xaed581, light: 0x9ccc65, rune: 0xc5e1a5,
+      fail: 'block', failColor: 0x33581f, failMsg: 'קוצים סבוכים חוסמים את הדרך!' },
+    { title: '🌉 גשר התהום — איזה גשר יחזיק?', layout: 'bridges', pit: 'dark', door: 0x7a6a4f, frame: 0x5d4a36, flame: 0xffb74d, light: 0xffa14d, rune: 0xffe0b2,
+      fail: 'collapse', failColor: 0x8d6e63, failMsg: 'הגשר קרס! ברחת ברגע האחרון!' },
+    { title: '🕷️ מאורת העכביש — בחר מעבר זהיר', door: 0x4a3f5c, frame: 0x6e6680, flame: 0x9fa8da, light: 0x8c9eff, rune: 0xb39ddb,
+      fail: 'monster', failColor: 0x76608a, eyes: 0xff1744, failMsg: 'עכביש ענק! ברח!' },
+    { title: '🌋 נהר הלבה — איזה גשר בטוח?', layout: 'bridges', pit: 'lava', door: 0x5d4037, frame: 0x4e342e, flame: 0xff8a65, light: 0xff7043, rune: 0xffab91,
+      fail: 'collapse', failColor: 0x8d6e63, failMsg: 'הגשר קרס לתוך הלבה! ברחת ברגע האחרון!' },
+    { title: '⛏️ המכרה הנטוש — איזו מנהרה פתוחה?', door: 0x6d5843, frame: 0x55483a, flame: 0xffcc80, light: 0xffb74d, rune: 0xd7ccc8,
+      fail: 'collapse', failColor: 0x5d5048, failMsg: 'המנהרה התמוטטה! ברחת בזמן!' },
+    { title: '🏰 חצר הטירה — איזה שער פתוח?', door: 0x8c7048, frame: 0xa099a8, flame: 0xfff176, light: 0xffe082, rune: 0xfff59d,
+      fail: 'monster', failColor: 0x90a4ae, eyes: 0x80d8ff, failMsg: 'שומר הטירה תפס אותך! ברח!' },
+    { title: '🪨 נהר אבני הדריכה — איזה שביל בטוח?', layout: 'stones', pit: 'water', door: 0x8a8578, frame: 0x78838f, flame: 0x90caf9, light: 0x86b8e8, rune: 0xb3d6f2,
+      fail: 'collapse', failColor: 0x9aa6b0, failMsg: 'האבנים שקעו במים! ברחת בזמן!' },
+    { title: '💰 חדר האוצר — איזו תיבה אמיתית?', layout: 'chests', door: 0x7a5a2e, frame: 0x9c8c6e, flame: 0xffd54f, light: 0xffca5e, rune: 0xffe082,
+      fail: 'smoke', failColor: 0x4a3d52, failMsg: 'תיבה מזויפת! ענן עשן שחור!' },
+    { title: '🗝️ חדר המפתחות — איזה מפתח פותח את הדלת?', layout: 'keys', door: 0x6b4f86, frame: 0x8a7f9c, flame: 0xce93d8, light: 0xb68fd6, rune: 0xd1b3e8,
+      fail: 'shatter', failColor: 0xffd740, failMsg: 'המפתח הלא נכון נשבר במנעול!' },
+];
+
+var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="row">
+            <div class="shooter-area maze-area" ref="mazeArea">
+                <div class="shooter-hud-top">
+                    <div class="maze-scenario">{{ scenarioTitle }}</div>
+                    <div class="shooter-question" v-html="exercise"></div>
+                    <div class="shooter-hud-message"
+                         v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</div>
+                </div>
+                <div class="shooter-hud-score">🪙 {{ score }}<span class="maze-gems">💎 {{ gems }}</span></div>
+                <a class="shooter-fullscreen-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
+                <div class="shooter-hud-progress" v-if="progress && progress.total">
+                    <div class="shooter-hud-progress-fill"
+                         :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
+                </div>
+                <div class="shooter-overlay" v-show="isTouch && !started" @click="startGame">
+                    <div>
+                        <h5>הקש כדי לשחק במסך מלא</h5>
+                        <p>הקש על הדלת עם התשובה הנכונה</p>
+                    </div>
+                </div>
+                <div class="maze-fade" :style="{opacity: fade}"></div>
+            </div>
+        </div>
+    </div>
+    `,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            list: [],
+            gems: 0,
+            streak: 0,
+            fade: 1,
+            isTouch: false,
+            started: false,
+            scenarioTitle: '',
+        };
+    },
+
+    methods: {
+        // BaseGameComponent's created() calls create() before the DOM exists;
+        // the real setup happens in mounted() (same pattern as balloon_shooter).
+        create: function() {},
+
+        makeCanvasTexture: function(size, draw) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size;
+            draw(canvas.getContext('2d'), size);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            return texture;
+        },
+
+        makeRadialTexture: function(inner, outer) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+            gradient.addColorStop(0, inner);
+            gradient.addColorStop(1, outer);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        },
+
+        makeWoodTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#9a7950';
+                ctx.fillRect(0, 0, s, s);
+                for (let i = 0; i < 40; i++) {
+                    ctx.strokeStyle = `rgba(${60 + Math.random() * 40}, ${35 + Math.random() * 25}, 15, ${0.25 + Math.random() * 0.3})`;
+                    ctx.lineWidth = 1 + Math.random() * 2.5;
+                    const y = Math.random() * s;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.bezierCurveTo(s * 0.3, y + (Math.random() - 0.5) * 14, s * 0.7, y + (Math.random() - 0.5) * 14, s, y);
+                    ctx.stroke();
+                }
+            });
+        },
+
+        makeStoneTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#36323d';
+                ctx.fillRect(0, 0, s, s);
+                const shades = ['#55505c', '#4a4550', '#5d5866', '#48434e'];
+                const rows = 6, cols = 4;
+                for (let r = 0; r < rows; r++) {
+                    const h = s / rows;
+                    const off = (r % 2) * (s / cols / 2);
+                    for (let c = -1; c <= cols; c++) {
+                        const w = s / cols;
+                        ctx.fillStyle = shades[(r * 3 + c + 4) % shades.length];
+                        ctx.fillRect(c * w - off + 2, r * h + 2, w - 4, h - 4);
+                    }
+                }
+            });
+        },
+
+        makeCobbleTexture: function() {
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = '#26242c';
+                ctx.fillRect(0, 0, s, s);
+                const shades = ['#3a3741', '#433f4a', '#36333d', '#3e3a45'];
+                for (let i = 0; i < 220; i++) {
+                    ctx.fillStyle = shades[i % shades.length];
+                    ctx.beginPath();
+                    ctx.ellipse(Math.random() * s, Math.random() * s,
+                                5 + Math.random() * 10, 4 + Math.random() * 8,
+                                Math.random() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        },
+
+        makeLabelSprite: function(text) {
+            const canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            let fontSize = 48;
+            ctx.font = `bold ${fontSize}px Arial`;
+            let textW = ctx.measureText(text).width;
+            if (textW > 500) {
+                fontSize = Math.max(22, Math.floor(fontSize * 500 / textW));
+            }
+            canvas.width = Math.min(560, Math.max(170, Math.ceil(textW) + 50));
+            canvas.height = 96;
+            ctx = canvas.getContext('2d');
+            // Old parchment scroll look for the maze signs
+            ctx.fillStyle = 'rgba(245, 230, 200, 0.97)';
+            ctx.strokeStyle = '#5d4024';
+            ctx.lineWidth = 5;
+            const r = 18, w = canvas.width, h = canvas.height;
+            ctx.beginPath();
+            ctx.moveTo(r, 3);
+            ctx.arcTo(w - 3, 3, w - 3, h - 3, r);
+            ctx.arcTo(w - 3, h - 3, 3, h - 3, r);
+            ctx.arcTo(3, h - 3, 3, 3, r);
+            ctx.arcTo(3, 3, w - 3, 3, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#2e1f10';
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, w / 2, h / 2 + 2);
+
+            const labelTexture = new THREE.CanvasTexture(canvas);
+            labelTexture.encoding = THREE.sRGBEncoding;
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: labelTexture,
+                depthTest: false,
+            }));
+            const height = 0.8;
+            sprite.scale.set(height * w / h, height, 1);
+            return sprite;
+        },
+
+        initScene: function() {
+            const area = this.$refs.mazeArea;
+            const g = this._g = {
+                particles: [],
+                pickMeshes: [],
+                yaw: 0, pitch: 0, lookX: 0.5, lookY: 0.5,
+                mode: 'idle', walkT: 0, modeDelay: 0, walkGate: null,
+                camShake: 0,
+                raf: null,
+                clock: new THREE.Clock(),
+                raycaster: new THREE.Raycaster(),
+            };
+
+            g.scene = new THREE.Scene();
+            g.scene.fog = new THREE.Fog(0x0c1024, 8, 46);
+
+            g.camera = new THREE.PerspectiveCamera(70, area.clientWidth / area.clientHeight, 0.1, 300);
+            g.camera.position.set(0, 1.6, 5);
+            g.camera.rotation.order = 'YXZ';
+            g.scene.add(g.camera);
+
+            g.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isTouch ? 1.5 : 2));
+            g.renderer.outputEncoding = THREE.sRGBEncoding;
+            g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            g.renderer.toneMappingExposure = 1.1;
+            area.insertBefore(g.renderer.domElement, area.firstChild);
+
+            // Night sky dome
+            const sky = new THREE.Mesh(
+                new THREE.SphereGeometry(220, 32, 16),
+                new THREE.ShaderMaterial({
+                    side: THREE.BackSide,
+                    depthWrite: false,
+                    uniforms: {
+                        top: { value: new THREE.Color(0x05070f) },
+                        bottom: { value: new THREE.Color(0x232a52) },
+                    },
+                    vertexShader: 'varying vec3 vP; void main(){ vP = position;' +
+                        ' gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                    fragmentShader: 'uniform vec3 top; uniform vec3 bottom; varying vec3 vP;' +
+                        ' void main(){ float h = normalize(vP).y * 0.5 + 0.5;' +
+                        ' gl_FragColor = vec4(mix(bottom, top, pow(max(h, 0.0), 0.6)), 1.0); }',
+                })
+            );
+            g.scene.add(sky);
+
+            // Stars
+            const starPositions = [];
+            for (let i = 0; i < 500; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI * 0.45;
+                starPositions.push(
+                    200 * Math.sin(phi) * Math.cos(theta),
+                    200 * Math.cos(phi) + 5,
+                    200 * Math.sin(phi) * Math.sin(theta)
+                );
+            }
+            const starGeo = new THREE.BufferGeometry();
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+            g.stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+                color: 0xcfdcff, size: 1.4, sizeAttenuation: false,
+                transparent: true, opacity: 0.9,
+            }));
+            g.scene.add(g.stars);
+
+            // Moon
+            const moon = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.makeRadialTexture('rgba(235,240,255,1)', 'rgba(160,180,255,0)'),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            }));
+            moon.scale.set(34, 34, 1);
+            moon.position.set(-55, 75, -130);
+            g.scene.add(moon);
+
+            // Lights: cold moonlight + warm torches (added per gate)
+            g.scene.add(new THREE.HemisphereLight(0x32406e, 0x14100c, 0.55));
+            const moonLight = new THREE.DirectionalLight(0x8fa6e8, 0.5);
+            moonLight.position.set(-12, 22, 8);
+            g.scene.add(moonLight);
+
+            // Cobblestone floor
+            const cobbleTex = this.makeCobbleTexture();
+            cobbleTex.wrapS = cobbleTex.wrapT = THREE.RepeatWrapping;
+            cobbleTex.repeat.set(14, 14);
+            cobbleTex.anisotropy = g.renderer.capabilities.getMaxAnisotropy();
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(80, 80),
+                new THREE.MeshStandardMaterial({ map: cobbleTex, roughness: 1, metalness: 0 })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            g.scene.add(floor);
+
+            // Shared resources for building chambers
+            g.stoneTex = this.makeStoneTexture();
+            g.stoneTex.wrapS = g.stoneTex.wrapT = THREE.RepeatWrapping;
+            g.woodTex = this.makeWoodTexture();
+            g.flameTex = this.makeRadialTexture('rgba(255,235,170,1)', 'rgba(255,140,30,0)');
+            g.goldMat = new THREE.MeshStandardMaterial({
+                color: 0xffc94d, roughness: 0.35, metalness: 0.8,
+            });
+
+            // Shared geometries for bridges and reward particles
+            g.coinGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.022, 12);
+            g.puffGeo = new THREE.SphereGeometry(0.09, 6, 6);
+            g.flashGeo = new THREE.SphereGeometry(0.4, 12, 10);
+            g.plankGeo = new THREE.BoxGeometry(0.55, 0.07, 0.18);
+            g.bridgePlankGeo = new THREE.BoxGeometry(1.7, 0.08, 0.42);
+            g.stoneStepGeo = new THREE.CylinderGeometry(0.55, 0.65, 0.22, 9);
+            g.trapRooms = [];
+
+            // The maze is built chamber by chamber: the current one sits at
+            // the origin, and on a correct answer the next chamber is built
+            // beyond the chosen gate so the camera walks straight into it
+            // with no cut.
+            g.chamber = this.buildChamber(0, 0);
+            g.nextChamber = null;
+
+            // Fireflies drifting through the chamber
+            g.fireflyBase = [];
+            const fireflyPositions = [];
+            for (let i = 0; i < 40; i++) {
+                const p = [(Math.random() - 0.5) * 24, 0.6 + Math.random() * 3.2, 5 - Math.random() * 10];
+                g.fireflyBase.push(p);
+                fireflyPositions.push(p[0], p[1], p[2]);
+            }
+            const fireflyGeo = new THREE.BufferGeometry();
+            fireflyGeo.setAttribute('position', new THREE.Float32BufferAttribute(fireflyPositions, 3));
+            g.fireflies = new THREE.Points(fireflyGeo, new THREE.PointsMaterial({
+                color: 0xd6e88a, size: 0.09, transparent: true, opacity: 0.85,
+                blending: THREE.AdditiveBlending, depthWrite: false,
+            }));
+            g.scene.add(g.fireflies);
+
+        },
+
+        buildChamber: function(ox, oz) {
+            const g = this._g;
+            let scenario;
+            do {
+                scenario = MAZE_SCENARIOS[Math.floor(Math.random() * MAZE_SCENARIOS.length)];
+            } while (MAZE_SCENARIOS.length > 1 && scenario === g.lastScenario);
+            g.lastScenario = scenario;
+
+            const group = new THREE.Group();
+            group.position.set(ox, 0, oz);
+            const chamber = {
+                group: group, scenario: scenario,
+                gates: [], flames: [], torchLights: [], disposables: [], exit: null,
+                doorMat: new THREE.MeshStandardMaterial({ map: g.woodTex, color: scenario.door, roughness: 0.7, metalness: 0 }),
+                frameMat: new THREE.MeshStandardMaterial({ color: scenario.frame, roughness: 0.85, metalness: 0 }),
+            };
+            chamber.disposables.push(chamber.doorMat, chamber.frameMat);
+
+            const addWall = (w, h, x, y, z, rotY) => {
+                const tex = g.stoneTex.clone();
+                tex.needsUpdate = true;
+                tex.repeat.set(Math.max(1, w / 3.5), Math.max(1, h / 3.5));
+                const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 });
+                chamber.disposables.push(tex, mat);
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.6), mat);
+                wall.position.set(x, y, z);
+                if (rotY) wall.rotation.y = rotY;
+                group.add(wall);
+            };
+
+            const selector = scenario.layout === 'chests' || scenario.layout === 'keys';
+            if (selector) {
+                // Chest/key rooms have a single exit doorway in the middle
+                addWall(14.9, 5, -8.55, 2.5, -6);
+                addWall(14.9, 5, 8.55, 2.5, -6);
+                addWall(2.6, 2, 0, 4, -6);
+            } else {
+                // Front wall with 3 gate openings at x = -4, 0, 4 (opening width 2.2, height 3)
+                addWall(11, 5, -10.6, 2.5, -6);
+                addWall(1.8, 5, -2, 2.5, -6);
+                addWall(1.8, 5, 2, 2.5, -6);
+                addWall(11, 5, 10.6, 2.5, -6);
+                for (const gx of [-4, 0, 4]) {
+                    addWall(2.6, 2, gx, 4, -6);   // lintel above each opening
+                }
+            }
+            // Side walls
+            addWall(14, 5, -16, 2.5, 0, Math.PI / 2);
+            addWall(14, 5, 16, 2.5, 0, Math.PI / 2);
+            // Back wall with a center opening — the doorway the player enters
+            // through, aligned with the gate chosen in the previous chamber
+            addWall(14.9, 5, -8.55, 2.5, 7);
+            addWall(14.9, 5, 8.55, 2.5, 7);
+            addWall(2.6, 2, 0, 4, 7);
+
+            // Pulsing magic rune circle on the floor (in front of the chasm
+            // when the room is bridge-based)
+            chamber.rune = new THREE.Mesh(
+                new THREE.RingGeometry(1.5, 1.85, 48),
+                new THREE.MeshBasicMaterial({
+                    color: scenario.rune, transparent: true, opacity: 0.3,
+                    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+                })
+            );
+            chamber.rune.rotation.x = -Math.PI / 2;
+            chamber.rune.position.set(0, 0.02, this.isCrossing(scenario) ? 1.8 : -1);
+            group.add(chamber.rune);
+            chamber.disposables.push(chamber.rune.material);
+
+            // Crossing rooms get a chasm / lava river / water across the floor
+            if (this.isCrossing(scenario)) {
+                const pitColors = { lava: 0xff5a1f, water: 0x1c4f7e, dark: 0x04050a };
+                const pit = new THREE.Mesh(
+                    new THREE.PlaneGeometry(31, 4.2),
+                    new THREE.MeshBasicMaterial({ color: pitColors[scenario.pit] || pitColors.dark })
+                );
+                pit.rotation.x = -Math.PI / 2;
+                pit.position.set(0, 0.04, -3.2);
+                group.add(pit);
+                chamber.disposables.push(pit.material);
+                if (scenario.pit === 'lava') {
+                    const lavaLight = new THREE.PointLight(0xff6a2a, 1.1, 16, 2);
+                    lavaLight.position.set(0, 1, -3.2);
+                    group.add(lavaLight);
+                    chamber.torchLights.push(lavaLight);
+                }
+            }
+
+            if (scenario.layout === 'chests') {
+                chamber.exit = this.makeGate(chamber, 0, true);
+                for (const gx of [-4, 0, 4]) {
+                    this.makeChest(chamber, gx);
+                }
+            } else if (scenario.layout === 'keys') {
+                chamber.exit = this.makeGate(chamber, 0, true);
+                // A golden lock on the exit door
+                const lock = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.12), g.goldMat);
+                lock.position.set(0, 1.7, 0.12);
+                chamber.exit.group.add(lock);
+                for (const gx of [-4, 0, 4]) {
+                    this.makeKeyStand(chamber, gx);
+                }
+            } else {
+                for (const gx of [-4, 0, 4]) {
+                    this.makeGate(chamber, gx);
+                }
+            }
+
+            g.scene.add(group);
+            return chamber;
+        },
+
+        disposeChamber: function(chamber) {
+            const g = this._g;
+            chamber.gates.forEach(gate => {
+                if (gate.label) {
+                    gate.label.material.map.dispose();
+                    gate.label.material.dispose();
+                    gate.label = null;
+                }
+            });
+            chamber.disposables.forEach(d => d.dispose());
+            g.scene.remove(chamber.group);
+        },
+
+        isCrossing: function(scenario) {
+            return scenario.layout === 'bridges' || scenario.layout === 'stones';
+        },
+
+        // asExit builds a plain doors-gate that is not a choice (the single
+        // exit of chest/key rooms); it is returned instead of joining gates
+        makeGate: function(chamber, x, asExit) {
+            const g = this._g;
+            const group = new THREE.Group();
+            group.position.set(x, 0, -6);
+
+            // Dark corridor behind the doors, with a faint treasure glow
+            const back = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.3, 3.2),
+                new THREE.MeshBasicMaterial({ color: 0x03040a })
+            );
+            back.position.set(0, 1.5, -0.65);
+            group.add(back);
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: g.flameTex,
+                blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.35,
+            }));
+            glow.scale.set(1.7, 1.7, 1);
+            glow.position.set(0, 1.1, -0.6);
+            group.add(glow);
+
+            // Stone frame pillars + top trim
+            for (const sx of [-1.25, 1.25]) {
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 3.5, 10), chamber.frameMat);
+                pillar.position.set(sx, 1.75, 0.1);
+                group.add(pillar);
+            }
+            const trim = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.35, 0.5), chamber.frameMat);
+            trim.position.set(0, 3.35, 0.1);
+            group.add(trim);
+
+            const rec = {
+                chamber: chamber, group: group, baseX: x, openT: 0, openTarget: 0,
+                shake: 0, hoverT: 0, label: null, entry: null, active: false,
+                panels: [], back: back, glow: glow, pivotL: null, pivotR: null,
+                bridge: null, planks: [],
+                // where the answer sign hangs: above the door, or floating at
+                // the near end of the bridge
+                labelPos: this.isCrossing(chamber.scenario) ? [0, 2.3, 4.9] : [0, 3.95, 0.6],
+            };
+
+            if (!asExit && this.isCrossing(chamber.scenario)) {
+                // Open archway across the chasm — the crossing is the choice
+                this.makeCrossing(chamber, rec);
+            } else {
+                // Double wooden doors hinged on the outer edges
+                const makePanel = (hingeX, dir) => {
+                    const pivot = new THREE.Group();
+                    pivot.position.set(hingeX, 0, 0);
+                    const panel = new THREE.Mesh(new THREE.BoxGeometry(1.06, 2.9, 0.09), chamber.doorMat);
+                    panel.position.set(dir * 0.53, 1.45, 0);
+                    panel.userData.rec = rec;
+                    pivot.add(panel);
+                    const knob = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 8, 14), g.goldMat);
+                    knob.position.set(dir * 0.92, 1.42, 0.09);
+                    pivot.add(knob);
+                    group.add(pivot);
+                    rec.panels.push(panel);
+                    return pivot;
+                };
+                rec.pivotL = makePanel(-1.1, 1);
+                rec.pivotR = makePanel(1.1, -1);
+            }
+
+            // Torches on both sides of the gate + one warm light per gate
+            for (const sx of [-1.8, 1.8]) {
+                const stick = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.035, 0.045, 0.55, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 })
+                );
+                stick.position.set(sx, 2.25, 0.35);
+                stick.rotation.x = 0.5;
+                group.add(stick);
+                const flame = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: g.flameTex, color: chamber.scenario.flame,
+                    blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                flame.scale.set(0.55, 0.75, 1);
+                flame.position.set(sx, 2.65, 0.5);
+                group.add(flame);
+                chamber.flames.push(flame);
+            }
+            const torchLight = new THREE.PointLight(chamber.scenario.light, 1.1, 11, 2);
+            torchLight.position.set(x, 2.7, -5.2);
+            chamber.group.add(torchLight);
+            chamber.torchLights.push(torchLight);
+
+            chamber.group.add(group);
+            if (asExit) {
+                return rec;
+            }
+            chamber.gates.push(rec);
+        },
+
+        // A rope bridge or a path of stepping stones crossing toward the archway
+        makeCrossing: function(chamber, rec) {
+            const g = this._g;
+            const bridge = new THREE.Group();
+            rec.planks = [];
+            if (chamber.scenario.layout === 'stones') {
+                for (let i = 0; i < 5; i++) {
+                    const stone = new THREE.Mesh(g.stoneStepGeo, chamber.frameMat);
+                    stone.position.set(
+                        (Math.random() - 0.5) * 0.3,
+                        0.1,
+                        0.9 + i * 0.95
+                    );
+                    stone.rotation.y = Math.random() * Math.PI;
+                    stone.userData.rec = rec;
+                    bridge.add(stone);
+                    rec.planks.push(stone);
+                }
+            } else {
+                for (let i = 0; i < 9; i++) {
+                    const plank = new THREE.Mesh(g.bridgePlankGeo, chamber.doorMat);
+                    plank.position.set(
+                        (Math.random() - 0.5) * 0.06,
+                        0.16 + Math.sin((i / 8) * Math.PI) * 0.22,
+                        0.8 + i * 0.5
+                    );
+                    plank.rotation.y = (Math.random() - 0.5) * 0.05;
+                    plank.userData.rec = rec;
+                    bridge.add(plank);
+                    rec.planks.push(plank);
+                }
+                for (const sx of [-0.85, 0.85]) {
+                    const rope = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.05, 0.05, 4.4),
+                        new THREE.MeshStandardMaterial({ color: 0x3e2f23, roughness: 1 })
+                    );
+                    rope.position.set(sx, 0.85, 2.8);
+                    bridge.add(rope);
+                    for (const pz of [0.7, 4.9]) {
+                        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.9, 8), chamber.frameMat);
+                        post.position.set(sx, 0.45, pz);
+                        bridge.add(post);
+                    }
+                }
+            }
+            rec.bridge = bridge;
+            rec.panels = rec.planks;
+            rec.group.add(bridge);
+        },
+
+        // The wrong crossing gives way: planks drop into the pit / stones sink
+        collapseCrossing: function(rec) {
+            const g = this._g;
+            const stones = rec.chamber.scenario.layout === 'stones';
+            const world = new THREE.Vector3();
+            rec.planks.forEach(plank => {
+                plank.getWorldPosition(world);
+                const mesh = new THREE.Mesh(
+                    stones ? g.stoneStepGeo : g.bridgePlankGeo,
+                    new THREE.MeshBasicMaterial({ color: stones ? 0x8a96a0 : 0x6d5132, transparent: true })
+                );
+                mesh.position.copy(world);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 1.2, stones ? -1.5 : -0.5 - Math.random() * 1.5, (Math.random() - 0.5) * 0.8),
+                    gravity: stones ? 4 : 7,
+                    spin: stones ? null : new THREE.Vector3(Math.random() * 7, Math.random() * 7, Math.random() * 7),
+                    maxLife: stones ? 0.7 : 1.0,
+                    life: stones ? 0.7 : 1.0,
+                });
+                if (stones) {
+                    // Splash where each stone goes under
+                    for (let i = 0; i < 3; i++) {
+                        const drop = new THREE.Mesh(
+                            g.puffGeo,
+                            new THREE.MeshBasicMaterial({ color: 0x9fd4f5, transparent: true })
+                        );
+                        drop.scale.setScalar(0.9 + Math.random());
+                        drop.position.copy(world);
+                        g.scene.add(drop);
+                        g.particles.push({
+                            mesh: drop,
+                            vel: new THREE.Vector3((Math.random() - 0.5) * 2.5, 1.5 + Math.random() * 2, (Math.random() - 0.5) * 2),
+                            gravity: 8,
+                            maxLife: 0.6,
+                            life: 0.6,
+                        });
+                    }
+                }
+            });
+            rec.group.remove(rec.bridge);
+            rec.bridge = null;
+            rec.planks = [];
+            rec.panels = [];
+        },
+
+        // A treasure chest standing in the room — one of the three choices
+        makeChest: function(chamber, x) {
+            const g = this._g;
+            const group = new THREE.Group();
+            group.position.set(x, 0, -3);
+            const rec = {
+                chamber: chamber, group: group, baseX: x, type: 'chest',
+                openT: 0, openTarget: 0, lidT: 0, lidTarget: 0, shake: 0, hoverT: 0,
+                label: null, entry: null, active: false, panels: [],
+                back: null, glow: null, pivotL: null, pivotR: null, bridge: null, planks: [],
+                labelPos: [0, 2.0, 0],
+            };
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.62, 0.7), chamber.doorMat);
+            base.position.y = 0.31;
+            base.userData.rec = rec;
+            group.add(base);
+            rec.panels.push(base);
+            const lidPivot = new THREE.Group();
+            lidPivot.position.set(0, 0.62, -0.35);
+            const lid = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.2, 0.74), chamber.doorMat);
+            lid.position.set(0, 0.1, 0.35);
+            lid.userData.rec = rec;
+            lidPivot.add(lid);
+            group.add(lidPivot);
+            rec.panels.push(lid);
+            rec.lidPivot = lidPivot;
+            const lock = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.06), g.goldMat);
+            lock.position.set(0, 0.55, 0.36);
+            group.add(lock);
+            const band = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.08, 0.74), g.goldMat);
+            band.position.y = 0.25;
+            group.add(band);
+            // Inner golden glow revealed when the real chest opens
+            rec.innerGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: g.flameTex, color: 0xffd54f,
+                blending: THREE.AdditiveBlending, depthWrite: false,
+            }));
+            rec.innerGlow.scale.set(1.5, 1.5, 1);
+            rec.innerGlow.position.set(0, 0.85, 0);
+            rec.innerGlow.visible = false;
+            group.add(rec.innerGlow);
+            chamber.group.add(group);
+            chamber.gates.push(rec);
+        },
+
+        // A golden key floating above a pedestal — one of the three choices
+        makeKeyStand: function(chamber, x) {
+            const g = this._g;
+            const group = new THREE.Group();
+            group.position.set(x, 0, -2);
+            const rec = {
+                chamber: chamber, group: group, baseX: x, type: 'key',
+                openT: 0, openTarget: 0, shake: 0, hoverT: 0, flying: false,
+                label: null, entry: null, active: false, panels: [],
+                back: null, glow: null, pivotL: null, pivotR: null, bridge: null, planks: [],
+                labelPos: [0, 2.5, 0],
+            };
+            const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 1.05, 10), chamber.frameMat);
+            pedestal.position.y = 0.52;
+            group.add(pedestal);
+            const key = new THREE.Group();
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.04, 8, 16), g.goldMat);
+            ring.userData.rec = rec;
+            key.add(ring);
+            const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.36, 0.05), g.goldMat);
+            shaft.position.y = -0.28;
+            shaft.userData.rec = rec;
+            key.add(shaft);
+            for (const ty of [-0.4, -0.31]) {
+                const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.05, 0.05), g.goldMat);
+                tooth.position.set(0.07, ty, 0);
+                tooth.userData.rec = rec;
+                key.add(tooth);
+            }
+            key.position.set(0, 1.6, 0);
+            group.add(key);
+            rec.key = key;
+            rec.keyHome = key.position.clone();
+            rec.panels = key.children.slice();
+            chamber.group.add(group);
+            chamber.gates.push(rec);
+        },
+
+        makeMonster: function(s) {
+            const g = this._g;
+            const monster = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.SphereGeometry(0.95, 14, 12),
+                new THREE.MeshStandardMaterial({ color: 0x140f1b, roughness: 0.9 })
+            );
+            body.scale.set(1.25, 1.5, 0.8);
+            body.position.y = 1.35;
+            monster.add(body);
+            for (const ex of [-0.34, 0.34]) {
+                const eye = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: g.flameTex, color: s.eyes,
+                    blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                eye.scale.set(0.4, 0.5, 1);
+                eye.position.set(ex, 1.95, 0.6);
+                monster.add(eye);
+            }
+            return monster;
+        },
+
+        // A real dead-end room built behind a wrong door, in the same slot
+        // the next chamber would occupy — the player genuinely walks into it
+        buildTrapRoom: function(gate) {
+            const g = this._g;
+            const s = gate.chamber.scenario;
+            const group = new THREE.Group();
+            group.position.set(gate.baseX, 0, -13.3);
+            const room = { group: group, disposables: [], monster: null, rubble: null, lunge: false };
+
+            const addWall = (w, h, x, y, z, rotY) => {
+                const tex = g.stoneTex.clone();
+                tex.needsUpdate = true;
+                tex.repeat.set(Math.max(1, w / 3.5), Math.max(1, h / 3.5));
+                const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 });
+                room.disposables.push(tex, mat);
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.6), mat);
+                wall.position.set(x, y, z);
+                if (rotY) wall.rotation.y = rotY;
+                group.add(wall);
+            };
+
+            // A narrow dead-end corridor (so traps behind adjacent doors
+            // can stand side by side without overlapping)
+            addWall(0.6, 5, -1.4, 2.5, 7);
+            addWall(0.6, 5, 1.4, 2.5, 7);
+            addWall(2.6, 2, 0, 4, 7);
+            addWall(4.0, 5, 0, 2.5, 2.6);
+            addWall(4.4, 5, -1.7, 2.5, 4.8, Math.PI / 2);
+            addWall(4.4, 5, 1.7, 2.5, 4.8, Math.PI / 2);
+            const lamp = new THREE.PointLight(s.light, 0.9, 10, 2);
+            lamp.position.set(0, 2.6, 4.8);
+            group.add(lamp);
+
+            if (s.fail === 'monster') {
+                room.monster = this.makeMonster(s);
+                room.monster.position.set(0, 0, 3.8);
+                group.add(room.monster);
+            } else if (s.fail === 'block' || s.fail === 'collapse') {
+                // A rubble pile blocking the room — already there for 'block',
+                // appears with the cave-in for 'collapse'
+                room.rubble = new THREE.Group();
+                const mat = new THREE.MeshStandardMaterial({ color: s.failColor, roughness: 0.95 });
+                room.disposables.push(mat);
+                for (let i = 0; i < 10; i++) {
+                    const rock = new THREE.Mesh(new THREE.SphereGeometry(0.4 + Math.random() * 0.45, 7, 6), mat);
+                    rock.position.set((Math.random() - 0.5) * 2.4, 0.3 + Math.random() * 1.5, 3.4 + Math.random());
+                    rock.scale.y = 0.7 + Math.random() * 0.4;
+                    room.rubble.add(rock);
+                }
+                room.rubble.visible = s.fail === 'block';
+                group.add(room.rubble);
+            } else if (s.fail === 'bounce') {
+                const ring = new THREE.Mesh(
+                    new THREE.RingGeometry(1.0, 1.3, 40),
+                    new THREE.MeshBasicMaterial({
+                        color: s.failColor, transparent: true, opacity: 0.5,
+                        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+                    })
+                );
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.set(0, 0.04, 4.4);
+                group.add(ring);
+            }
+
+            g.scene.add(group);
+            g.trapRooms.push(room);
+            return room;
+        },
+
+        disposeTrapRooms: function() {
+            const g = this._g;
+            g.trapRooms.forEach(room => {
+                room.disposables.forEach(d => d.dispose());
+                g.scene.remove(room.group);
+            });
+            g.trapRooms = [];
+        },
+
+        // Remove leftover dead-end rooms before walking on — they occupy the
+        // slots where the next chamber is about to be built
+        clearTraps: function(chamber) {
+            chamber.gates.forEach(gate => {
+                if (gate.trapRoom) {
+                    gate.trapRoom = null;
+                    if (gate.back) gate.back.visible = true;
+                }
+            });
+            this.disposeTrapRooms();
+        },
+
+        // The moment the trap springs, styled by the room type
+        triggerTrap: function(gate) {
+            const g = this._g;
+            const s = gate.chamber.scenario;
+            failureSound.play();
+            this.message = { value: s.failMsg, error: true };
+            g.camShake = 1;
+
+            if (this.isCrossing(s)) {
+                this.collapseCrossing(gate);
+            } else if (s.fail === 'monster') {
+                gate.trapRoom.lunge = true;
+            } else if (s.fail === 'collapse') {
+                gate.trapRoom.rubble.visible = true;
+                // Beams and rocks rain down inside the room
+                for (let i = 0; i < 14; i++) {
+                    const isBeam = i % 2 === 0;
+                    const mesh = new THREE.Mesh(
+                        isBeam ? g.plankGeo : g.puffGeo,
+                        new THREE.MeshBasicMaterial({ color: isBeam ? s.failColor : 0x4a4038, transparent: true })
+                    );
+                    if (!isBeam) mesh.scale.setScalar(1.4 + Math.random() * 1.8);
+                    mesh.position.set(
+                        gate.baseX + (Math.random() - 0.5) * 3,
+                        3 + Math.random() * 1.5,
+                        -9.6 + (Math.random() - 0.5) * 2
+                    );
+                    g.scene.add(mesh);
+                    g.particles.push({
+                        mesh: mesh,
+                        vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, -1 - Math.random() * 2, 0),
+                        gravity: 9,
+                        spin: new THREE.Vector3(Math.random() * 8, Math.random() * 8, Math.random() * 8),
+                        maxLife: 1.1,
+                        life: 1.1,
+                    });
+                }
+            } else if (s.fail === 'block') {
+                // A burst of dust by the rubble
+                for (let i = 0; i < 8; i++) {
+                    const mesh = new THREE.Mesh(
+                        g.puffGeo,
+                        new THREE.MeshBasicMaterial({ color: 0x5c5248, transparent: true })
+                    );
+                    mesh.scale.setScalar(1.5 + Math.random() * 2);
+                    mesh.position.set(gate.baseX + (Math.random() - 0.5) * 3, 0.5 + Math.random() * 1.5, -9.3);
+                    g.scene.add(mesh);
+                    g.particles.push({
+                        mesh: mesh,
+                        vel: new THREE.Vector3((Math.random() - 0.5) * 2, 0.5 + Math.random(), 0.5),
+                        gravity: 0.8,
+                        maxLife: 0.8,
+                        life: 0.8,
+                    });
+                }
+            }
+
+            // Colored flash right in front of the camera
+            const flash = new THREE.Mesh(
+                g.flashGeo,
+                new THREE.MeshBasicMaterial({ color: s.failColor, transparent: true, opacity: 0.8 })
+            );
+            flash.position.set(g.camera.position.x, 1.6, g.camera.position.z - 1.5);
+            g.scene.add(flash);
+            g.particles.push({ mesh: flash, vel: new THREE.Vector3(), gravity: 0, grow: 9, maxLife: 0.25, life: 0.25 });
+        },
+
+        refreshPickMeshes: function() {
+            const g = this._g;
+            g.pickMeshes = [];
+            g.chamber.gates.forEach(gate => {
+                if (!gate.active) return;
+                if (gate.label) g.pickMeshes.push(gate.label);
+                gate.panels.forEach(p => g.pickMeshes.push(p));
+            });
+        },
+
+        createNewQuestion: function() {
+            const g = this._g;
+            if (!g) return;
+            const weightedRandomIndex = getWeightedRandomIndex(this.list,
+                                                               this.currentAppId,
+                                                               getSetItems(this.currentApp));
+            this.questionIndex = weightedRandomIndex;
+            this.result = this.list[weightedRandomIndex][this.currentApp.resultIndex].value;
+            const questionItem = { ...this.list[weightedRandomIndex][this.currentApp.questionIndex] };
+            if (this.currentApp.questionType) {
+                questionItem['type'] = this.currentApp.questionType;
+            }
+            this.exercise = render(questionItem);
+            const action = generateQuestion(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            action();
+
+            // 3 doors, one correct — the maze concept uses 3 options, not 4
+            const wrongIndexes = getRandomIndexesExcluding(this.list, this.currentApp.resultIndex, weightedRandomIndex, 2);
+            const entries = this.shuffle(
+                [{ text: this.result, isCorrect: true }].concat(
+                    wrongIndexes.map(i => ({
+                        text: this.list[i][this.currentApp.resultIndex].value,
+                        isCorrect: false,
+                    }))
+                )
+            );
+
+            this.scenarioTitle = g.chamber.scenario.title;
+            g.chamber.gates.forEach((gate, i) => {
+                gate.openT = 0;
+                gate.openTarget = 0;
+                gate.shake = 0;
+                gate.hoverT = 0;
+                if (gate.pivotL) {
+                    gate.pivotL.rotation.y = 0;
+                    gate.pivotR.rotation.y = 0;
+                }
+                gate.group.position.x = gate.baseX;
+                if (gate.label) {
+                    gate.group.remove(gate.label);
+                    gate.label.material.map.dispose();
+                    gate.label.material.dispose();
+                    gate.label = null;
+                }
+                gate.entry = entries[i] || null;
+                gate.active = !!gate.entry;
+                if (gate.entry) {
+                    gate.label = this.makeLabelSprite(gate.entry.text);
+                    gate.label.position.set(gate.labelPos[0], gate.labelPos[1], gate.labelPos[2]);
+                    gate.label.userData.rec = gate;
+                    gate.group.add(gate.label);
+                }
+            });
+            this.refreshPickMeshes();
+
+            g.mode = 'idle';
+            g.walkGate = null;
+            this.message = {};
+            this.ended = false;
+        },
+
+        spawnCoins: function(position) {
+            const g = this._g;
+            for (let i = 0; i < 26; i++) {
+                const mesh = new THREE.Mesh(
+                    g.coinGeo,
+                    new THREE.MeshBasicMaterial({ color: i % 3 ? 0xffd54f : 0xffe082, transparent: true })
+                );
+                mesh.position.copy(position);
+                g.scene.add(mesh);
+                g.particles.push({
+                    mesh: mesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 4.5, 3 + Math.random() * 4, 1 + Math.random() * 2.5),
+                    gravity: 8,
+                    spin: new THREE.Vector3(Math.random() * 12, Math.random() * 12, Math.random() * 12),
+                    maxLife: 1.6,
+                    life: 1.6,
+                });
+            }
+            const flash = new THREE.Mesh(
+                g.flashGeo,
+                new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.85 })
+            );
+            flash.position.copy(position);
+            g.scene.add(flash);
+            g.particles.push({ mesh: flash, vel: new THREE.Vector3(), gravity: 0, grow: 7, maxLife: 0.22, life: 0.22 });
+        },
+
+        pickGate: function(event) {
+            const g = this._g;
+            const rect = g.renderer.domElement.getBoundingClientRect();
+            const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const ny = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            g.raycaster.setFromCamera(new THREE.Vector2(nx, ny), g.camera);
+            const hits = g.raycaster.intersectObjects(g.pickMeshes, false);
+            return hits.length ? hits[0].object.userData.rec : null;
+        },
+
+        onCanvasClick: function(event) {
+            const g = this._g;
+            if (!g || g.mode !== 'idle' || this.ended) return;
+            const rec = this.pickGate(event);
+            if (rec && rec.active) {
+                this.choose(rec);
+            }
+        },
+
+        onCanvasMouseMove: function(event) {
+            const g = this._g;
+            if (!g) return;
+            const rect = g.renderer.domElement.getBoundingClientRect();
+            g.lookX = (event.clientX - rect.left) / rect.width;
+            g.lookY = (event.clientY - rect.top) / rect.height;
+            if (g.mode === 'idle' && !this.ended) {
+                const rec = this.pickGate(event);
+                g.hovered = rec;
+                g.renderer.domElement.style.cursor = rec ? 'pointer' : 'default';
+            } else {
+                g.hovered = null;
+            }
+        },
+
+        choose: function(rec) {
+            const g = this._g;
+            const s = rec.chamber.scenario;
+            if (s.layout === 'chests') {
+                return this.chooseChest(rec);
+            }
+            if (s.layout === 'keys') {
+                return this.chooseKey(rec);
+            }
+            const gatePos = new THREE.Vector3(rec.baseX, 1.5, -5.3);
+            // Either way the chosen passage opens and the player walks in —
+            // there is always a real room behind it: the next chamber, or a
+            // dead end that sends the player back
+            rec.openTarget = 1;
+            if (rec.entry.isCorrect) {
+                this.ended = true;
+                this.message = { value: this.getSuccessMsg(), success: true };
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                this.score += 1;
+                this.streak += 1;
+                if (this.streak % 3 === 0) {
+                    this.gems += 1;
+                }
+                this.spawnCoins(gatePos);
+                if (this.reloadProgress()) {
+                    this.saveScore();
+                    // Build the next chamber beyond the chosen gate, then
+                    // uncover the passage so it is visible through the
+                    // opening doors / archway
+                    this.clearTraps(g.chamber);
+                    g.nextChamber = this.buildChamber(rec.baseX, -13.3);
+                    rec.back.visible = false;
+                    rec.glow.visible = false;
+                    g.mode = 'opening';
+                    g.walkGate = rec;
+                    g.modeDelay = this.isCrossing(s) ? 0.25 : 0.7;
+                    g.walkT = 0;
+                }
+            } else {
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                this.score = Math.max(0, this.score - 1);
+                this.streak = 0;
+                this.saveScore();
+                if (!this.isCrossing(s)) {
+                    // A real dead-end room appears behind the wrong door too
+                    rec.trapRoom = this.buildTrapRoom(rec);
+                    rec.back.visible = false;
+                    rec.glow.visible = false;
+                }
+                g.mode = 'failWalk';
+                g.walkGate = rec;
+                g.walkT = 0;
+                this.reloadProgress();
+            }
+        },
+
+        chooseChest: function(rec) {
+            const g = this._g;
+            if (rec.entry.isCorrect) {
+                this.ended = true;
+                this.message = { value: this.getSuccessMsg(), success: true };
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                this.score += 1;
+                this.streak += 1;
+                if (this.streak % 3 === 0) {
+                    this.gems += 1;
+                }
+                rec.lidTarget = 1;
+                this.spawnCoins(new THREE.Vector3(rec.baseX, 1.1, -2.7));
+                if (this.reloadProgress()) {
+                    this.saveScore();
+                    this.clearTraps(g.chamber);
+                    g.nextChamber = this.buildChamber(0, -13.3);
+                    const exit = g.chamber.exit;
+                    exit.openTarget = 1;
+                    exit.back.visible = false;
+                    exit.glow.visible = false;
+                    g.mode = 'opening';
+                    g.walkGate = exit;
+                    g.modeDelay = 1.2;
+                    g.walkT = 0;
+                }
+            } else {
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                this.score = Math.max(0, this.score - 1);
+                this.streak = 0;
+                this.saveScore();
+                rec.lidTarget = 0.35;
+                g.mode = 'chestFail';
+                g.walkGate = rec;
+                g.failPhase = 0;
+                g.modeDelay = 0.45;
+                this.reloadProgress();
+            }
+        },
+
+        chooseKey: function(rec) {
+            const g = this._g;
+            const correct = rec.entry.isCorrect;
+            if (correct) {
+                this.ended = true;
+                this.message = { value: this.getSuccessMsg(), success: true };
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                this.score += 1;
+                this.streak += 1;
+                if (this.streak % 3 === 0) {
+                    this.gems += 1;
+                }
+                if (!this.reloadProgress()) return;
+                this.saveScore();
+                this.clearTraps(g.chamber);
+                g.nextChamber = this.buildChamber(0, -13.3);
+            } else {
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                this.score = Math.max(0, this.score - 1);
+                this.streak = 0;
+                this.saveScore();
+                this.reloadProgress();
+            }
+            // The chosen key flies to the lock — only the right one opens the door
+            rec.flying = true;
+            g.walkGate = rec;
+            g.keyCorrect = correct;
+            g.mode = 'keyFly';
+            g.walkT = 0;
+            g.keyFrom = rec.key.position.clone();
+            // The lock in the rec's local space (its group sits at (x, 0, -2))
+            g.keyTo = new THREE.Vector3(-rec.baseX, 1.7, -3.75);
+        },
+
+        animate: function() {
+            const g = this._g;
+            if (!g) return;
+            g.raf = requestAnimationFrame(this.animate);
+            const dt = Math.min(g.clock.getDelta(), 0.05);
+            const t = g.clock.elapsedTime;
+
+            // Torch flames flicker, the rune circles breathe, stars drift
+            const chambers = g.nextChamber ? [g.chamber, g.nextChamber] : [g.chamber];
+            chambers.forEach(chamber => {
+                chamber.flames.forEach((flame, i) => {
+                    const flicker = 1 + Math.sin(t * 11 + i * 2.1) * 0.13 + Math.sin(t * 23 + i) * 0.06;
+                    flame.scale.set(0.55 * flicker, 0.75 * flicker, 1);
+                });
+                chamber.torchLights.forEach((light, i) => {
+                    light.intensity = 1.1 + Math.sin(t * 13 + i * 1.7) * 0.22 + Math.sin(t * 29 + i) * 0.08;
+                });
+                chamber.rune.material.opacity = 0.22 + 0.14 * Math.sin(t * 1.6);
+                chamber.rune.rotation.z = t * 0.15;
+            });
+            g.stars.rotation.y = t * 0.004;
+
+            // Fireflies wander
+            const fireflyPos = g.fireflies.geometry.attributes.position;
+            for (let i = 0; i < g.fireflyBase.length; i++) {
+                const base = g.fireflyBase[i];
+                fireflyPos.setX(i, base[0] + Math.sin(t * 0.5 + i * 1.3) * 0.8);
+                fireflyPos.setY(i, base[1] + Math.sin(t * 0.8 + i * 2.7) * 0.35);
+            }
+            fireflyPos.needsUpdate = true;
+
+            // Gates and props: doors swing, chest lids open, keys hover,
+            // wrong picks shake, hovered signs grow
+            chambers.forEach(chamber => {
+                const gateList = chamber.exit ? chamber.gates.concat([chamber.exit]) : chamber.gates;
+                gateList.forEach(gate => {
+                    gate.openT += (gate.openTarget - gate.openT) * Math.min(1, dt * 2.2);
+                    if (gate.pivotL) {
+                        gate.pivotL.rotation.y = gate.openT * 1.85;
+                        gate.pivotR.rotation.y = -gate.openT * 1.85;
+                    }
+                    if (gate.lidPivot) {
+                        gate.lidT += (gate.lidTarget - gate.lidT) * Math.min(1, dt * 3);
+                        gate.lidPivot.rotation.x = -gate.lidT * 1.6;
+                        if (gate.innerGlow) gate.innerGlow.visible = gate.lidT > 0.45;
+                    }
+                    if (gate.key && gate.key.visible && !gate.flying) {
+                        gate.key.rotation.y += dt * 1.2;
+                        gate.key.position.y = gate.keyHome.y + Math.sin(t * 1.7 + gate.baseX) * 0.07;
+                    }
+                    if (gate.shake > 0) {
+                        gate.group.position.x = gate.baseX + Math.sin(t * 55) * 0.07 * gate.shake;
+                        gate.shake = Math.max(0, gate.shake - dt * 2.2);
+                        if (gate.shake === 0) gate.group.position.x = gate.baseX;
+                    }
+                    const hoverTarget = (g.hovered === gate && g.mode === 'idle' && !this.ended) ? 1 : 0;
+                    gate.hoverT += (hoverTarget - gate.hoverT) * Math.min(1, dt * 10);
+                    if (gate.label) {
+                        const s = 1 + gate.hoverT * 0.2;
+                        const baseW = gate.label.scale.x / (gate.label.userData.s || 1);
+                        gate.label.userData.s = s;
+                        gate.label.scale.set(baseW * s, 0.8 * s, 1);
+                    }
+                });
+            });
+
+            // Reward particles (coins / smoke / flash)
+            for (let i = g.particles.length - 1; i >= 0; i--) {
+                const p = g.particles[i];
+                p.vel.y -= (p.gravity !== undefined ? p.gravity : 9.8) * dt;
+                p.mesh.position.addScaledVector(p.vel, dt);
+                if (p.spin) {
+                    p.mesh.rotation.x += p.spin.x * dt;
+                    p.mesh.rotation.y += p.spin.y * dt;
+                    p.mesh.rotation.z += p.spin.z * dt;
+                }
+                if (p.grow) {
+                    p.mesh.scale.addScalar(p.grow * dt);
+                }
+                p.life -= dt;
+                p.mesh.material.opacity = Math.max(0, p.life / (p.maxLife || 0.6));
+                if (p.life <= 0) {
+                    g.scene.remove(p.mesh);
+                    p.mesh.material.dispose();
+                    g.particles.splice(i, 1);
+                }
+            }
+
+            // Camera: parallax look in idle, a continuous walk into the next
+            // chamber on success, and a walk-in / trap-reveal / flee-back
+            // sequence on a wrong choice
+            const yawToward = (x, z, speed) => {
+                const targetYaw = Math.atan2(-(x - g.camera.position.x), -(z - g.camera.position.z));
+                g.yaw += (targetYaw - g.yaw) * Math.min(1, dt * speed);
+            };
+            if (g.mode === 'idle') {
+                const targetYaw = (0.5 - g.lookX) * 0.16;
+                const targetPitch = (0.5 - g.lookY) * 0.08;
+                g.yaw += (targetYaw - g.yaw) * Math.min(1, dt * 4);
+                g.pitch += (targetPitch - g.pitch) * Math.min(1, dt * 4);
+                g.camera.position.y = 1.6 + Math.sin(t * 1.3) * 0.025;
+                this.fade = Math.max(0, this.fade - dt * 1.2);
+            } else if (g.mode === 'opening') {
+                g.modeDelay -= dt;
+                if (g.modeDelay <= 0) {
+                    g.mode = 'walk';
+                }
+            } else if (g.mode === 'walk') {
+                // Walk through the open gate straight into the next chamber
+                g.walkT = Math.min(1, g.walkT + dt / 2.2);
+                const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);  // easeInOutSine
+                const gate = g.walkGate;
+                // x lines up with the gate early so we pass cleanly through the opening
+                const ex = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, g.walkT * 1.8));
+                g.camera.position.set(gate.baseX * ex, 1.6 + Math.sin(t * 6) * 0.02, 5 - 13.3 * e);
+                g.pitch *= Math.max(0, 1 - dt * 3);
+                yawToward(gate.baseX, -25, 5);
+                if (g.walkT >= 1) {
+                    // Seamless hand-off: drop the previous chamber and rebase
+                    // the new one to the origin in the same frame the camera
+                    // lands on its start point — nothing visibly jumps.
+                    this.disposeChamber(g.chamber);
+                    g.chamber = g.nextChamber;
+                    g.nextChamber = null;
+                    g.chamber.group.position.set(0, 0, 0);
+                    g.camera.position.set(0, 1.6, 5);
+                    g.yaw = 0;
+                    g.pitch = 0;
+                    this.createNewQuestion();
+                }
+            } else if (g.mode === 'failWalk') {
+                // The wrong passage opened too — walk in as if it were right:
+                // fully into the dead-end room, or out to the middle of the crossing
+                const gate = g.walkGate;
+                const s = gate.chamber.scenario;
+                const crossing = this.isCrossing(s);
+                g.walkT = Math.min(1, g.walkT + dt / (crossing ? 1.2 : 2.0));
+                const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);
+                const ex = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, g.walkT * 1.6));
+                g.camera.position.set(gate.baseX * ex, 1.6, 5 - (crossing ? 8.4 : 14.0) * e);
+                g.pitch *= Math.max(0, 1 - dt * 3);
+                yawToward(gate.baseX, -25, 5);
+                if (g.walkT >= 1) {
+                    // ...and only then the trap springs
+                    this.triggerTrap(gate);
+                    g.mode = 'failEvent';
+                    g.modeDelay = s.fail === 'bounce' ? 0.3 : 0.9;
+                    g.walkT = 0;
+                }
+            } else if (g.mode === 'failEvent') {
+                g.modeDelay -= dt;
+                const gate = g.walkGate;
+                const room = gate.trapRoom;
+                if (room && room.lunge && room.monster) {
+                    // The monster lunges toward the player
+                    room.monster.position.z = Math.min(4.0, room.monster.position.z + dt * 2.4);
+                    room.monster.scale.addScalar(dt * 0.3);
+                }
+                if (this.isCrossing(gate.chamber.scenario)) {
+                    // Look down at the planks/stones tumbling into the pit
+                    g.pitch = Math.max(-0.45, g.pitch - dt * 0.9);
+                }
+                if (g.modeDelay <= 0) {
+                    g.mode = 'failReturn';
+                    g.walkT = 0;
+                    g.returnFrom = g.camera.position.clone();
+                    g.returnYaw = g.yaw;
+                    g.returnPitch = g.pitch;
+                }
+            } else if (g.mode === 'failReturn') {
+                // The character flees back to the chamber. What collapsed or
+                // opened stays that way — that path can no longer be chosen.
+                g.walkT = Math.min(1, g.walkT + dt / 0.55);
+                const e = 1 - Math.pow(1 - g.walkT, 2);  // fast escape, ease-out
+                g.camera.position.lerpVectors(g.returnFrom, new THREE.Vector3(0, 1.6, 5), e);
+                g.yaw = g.returnYaw * (1 - e);
+                g.pitch = g.returnPitch * (1 - e);
+                if (g.walkT >= 1) {
+                    const gate = g.walkGate;
+                    gate.active = false;
+                    this.refreshPickMeshes();
+                    gate.shake = 0.7;
+                    g.camShake = 0;
+                    g.mode = 'idle';
+                }
+            } else if (g.mode === 'chestFail') {
+                g.modeDelay -= dt;
+                if (g.modeDelay <= 0) {
+                    const rec = g.walkGate;
+                    if (g.failPhase === 0) {
+                        // The fake chest belches dark smoke and is spent
+                        const s = rec.chamber.scenario;
+                        failureSound.play();
+                        this.message = { value: s.failMsg, error: true };
+                        g.camShake = 0.7;
+                        rec.shake = 0.7;
+                        for (let i = 0; i < 10; i++) {
+                            const puff = new THREE.Mesh(
+                                g.puffGeo,
+                                new THREE.MeshBasicMaterial({ color: i % 2 ? s.failColor : 0x222028, transparent: true })
+                            );
+                            puff.scale.setScalar(1.5 + Math.random() * 2);
+                            puff.position.set(rec.baseX + (Math.random() - 0.5) * 0.8, 1 + Math.random() * 0.5, -2.8);
+                            g.scene.add(puff);
+                            g.particles.push({
+                                mesh: puff,
+                                vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, 1 + Math.random() * 1.5, 0.5),
+                                gravity: 0.5,
+                                maxLife: 0.9,
+                                life: 0.9,
+                            });
+                        }
+                        g.failPhase = 1;
+                        g.modeDelay = 0.9;
+                    } else {
+                        rec.active = false;
+                        this.refreshPickMeshes();
+                        g.mode = 'idle';
+                    }
+                }
+            } else if (g.mode === 'keyFly') {
+                // The chosen key flies toward the lock on the exit door
+                g.walkT = Math.min(1, g.walkT + dt / 0.9);
+                const rec = g.walkGate;
+                const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);
+                rec.key.position.lerpVectors(g.keyFrom, g.keyTo, e);
+                rec.key.rotation.y += dt * 7;
+                if (g.walkT >= 1) {
+                    rec.flying = false;
+                    rec.key.visible = false;
+                    if (g.keyCorrect) {
+                        const exit = g.chamber.exit;
+                        exit.openTarget = 1;
+                        exit.back.visible = false;
+                        exit.glow.visible = false;
+                        this.spawnCoins(new THREE.Vector3(0, 1.6, -5.2));
+                        g.walkGate = exit;
+                        g.mode = 'opening';
+                        g.modeDelay = 0.8;
+                        g.walkT = 0;
+                    } else {
+                        // The wrong key shatters in the lock — and is gone
+                        failureSound.play();
+                        this.message = { value: rec.chamber.scenario.failMsg, error: true };
+                        g.camShake = 0.6;
+                        for (let i = 0; i < 12; i++) {
+                            const shard = new THREE.Mesh(
+                                g.puffGeo,
+                                new THREE.MeshBasicMaterial({ color: 0xffd740, transparent: true })
+                            );
+                            shard.scale.setScalar(0.5 + Math.random() * 0.8);
+                            shard.position.set(0, 1.7, -5.7);
+                            g.scene.add(shard);
+                            g.particles.push({
+                                mesh: shard,
+                                vel: new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 3, 1 + Math.random() * 2),
+                                gravity: 8,
+                                maxLife: 0.8,
+                                life: 0.8,
+                            });
+                        }
+                        g.mode = 'keyFail';
+                        g.modeDelay = 0.7;
+                    }
+                }
+            } else if (g.mode === 'keyFail') {
+                g.modeDelay -= dt;
+                if (g.modeDelay <= 0) {
+                    g.walkGate.active = false;
+                    this.refreshPickMeshes();
+                    g.mode = 'idle';
+                }
+            }
+
+            // Trembling camera right after a trap is sprung
+            if (g.camShake > 0) {
+                g.camera.position.x += (Math.random() - 0.5) * 0.06 * g.camShake;
+                g.camera.position.y += (Math.random() - 0.5) * 0.05 * g.camShake;
+                g.camShake = Math.max(0, g.camShake - dt * 1.1);
+            }
+
+            g.camera.rotation.y = g.yaw;
+            g.camera.rotation.x = g.pitch;
+            g.renderer.render(g.scene, g.camera);
+        },
+
+        // On phones the game starts in fullscreen locked to landscape
+        startGame: function() {
+            this.started = true;
+            this.enterFullscreen();
+        },
+
+        enterFullscreen: function() {
+            const area = this.$refs.mazeArea;
+            const request = area.requestFullscreen || area.webkitRequestFullscreen;
+            if (request) {
+                try { request.call(area); } catch (e) {}
+            }
+            if (this.isTouch && screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(function() {});
+            }
+        },
+
+        toggleFullscreen: function() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) {
+                    try { exit.call(document); } catch (e) {}
+                }
+            } else {
+                this.enterFullscreen();
+            }
+        },
+
+        onFullscreenChange: function() {
+            // The element gets its new size only after the transition
+            setTimeout(this.onResize, 100);
+        },
+
+        onResize: function() {
+            const g = this._g;
+            const area = this.$refs.mazeArea;
+            if (!g || !area) return;
+            g.camera.aspect = area.clientWidth / area.clientHeight;
+            g.camera.updateProjectionMatrix();
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+        },
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId;
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.reloadProgress();
+        this.updateScore();
+        this.list = getDataList(this.currentApp.listName);
+        this.isTouch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        if (typeof THREE === 'undefined') {
+            this.message = { value: 'מנוע התלת-ממד לא נטען. בדוק חיבור לאינטרנט ורענן.', error: true };
+            return;
+        }
+
+        this.initScene();
+        this.createNewQuestion();
+        this.animate();
+
+        const canvas = this._g.renderer.domElement;
+        canvas.addEventListener('click', this.onCanvasClick);
+        canvas.addEventListener('mousemove', this.onCanvasMouseMove);
+        document.addEventListener('fullscreenchange', this.onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', this.onFullscreenChange);
+        window.addEventListener('resize', this.onResize);
+    },
+
+    beforeDestroy() {
+        if (this._g) {
+            cancelAnimationFrame(this._g.raf);
+            const canvas = this._g.renderer.domElement;
+            canvas.removeEventListener('click', this.onCanvasClick);
+            canvas.removeEventListener('mousemove', this.onCanvasMouseMove);
+            this._g.renderer.dispose();
+            if (canvas.parentNode) {
+                canvas.parentNode.removeChild(canvas);
+            }
+            this._g = null;
+        }
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+        document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', this.onFullscreenChange);
+        window.removeEventListener('resize', this.onResize);
+        if (screen.orientation && screen.orientation.unlock) {
+            try { screen.orientation.unlock(); } catch (e) {}
         }
     }
 }));
@@ -3544,6 +5141,7 @@ const routes = [
     {path: '/play/falling_answers/:currentAppId', component: FallingAnswersComponent, props: true },
     {path: '/play/balloon_shooter/:currentAppId', component: BalloonShooterComponent, props: true },
     {path: '/play/platformer/:currentAppId', component: PlatformerComponent, props: true },
+    {path: '/play/treasure_maze/:currentAppId', component: TreasureMazeComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },

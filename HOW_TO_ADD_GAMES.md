@@ -143,6 +143,7 @@ There are 2 types of items:
 | `s2t` | Speech to Text | Say the answer out loud |
 | `balloon_shooter` | 3D Balloon Range | First-person shooting range (Three.js) - shoot the balloon with the right answer |
 | `platformer` | Learning Platformer | 2D Mario-style level (Phaser 3) - run and jump into the block with the right answer |
+| `treasure_maze` | 3D Treasure Maze | First-person night maze (Three.js) - 3 gates, pick the door with the right answer to advance |
 
 ### Key Configuration Fields
 
