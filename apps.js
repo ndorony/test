@@ -260,6 +260,7 @@ apps =  {
                   items: [
                     {icon: 'format_shapes', name:'כל המילים', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
                     {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
+                    {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', appType: 'platformer', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
                   ]
                 },
                 {
@@ -268,6 +269,7 @@ apps =  {
                   items: [
                     {icon: 'format_shapes', name:'כל המילים', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10},
                     {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
+                    {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', appType: 'platformer', listName: 'ENGLISH_CHAPTER5_ALL', questionIndex: 'hebrew', resultIndex: 'english', setItems: 10, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
                   ]
                 },
               ]
