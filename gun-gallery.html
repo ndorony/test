@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Gun Models — Pick One</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #0f1115;
+    color: #e8eaed;
+  }
+  header {
+    padding: 28px 24px 12px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 26px; }
+  header p { margin: 0; color: #9aa0a6; font-size: 14px; }
+  header a { color: #8ab4f8; }
+  .toolbar {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    padding: 16px; position: sticky; top: 0; z-index: 5;
+    background: rgba(15,17,21,0.92); backdrop-filter: blur(6px);
+  }
+  .toolbar button {
+    background: #1f2128; color: #e8eaed; border: 1px solid #333;
+    padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 13px;
+  }
+  .toolbar button.active { background: #8ab4f8; color: #0f1115; border-color: #8ab4f8; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px; padding: 0 24px 48px; max-width: 1400px; margin: 0 auto;
+  }
+  .card {
+    background: #181a20; border: 1px solid #262932; border-radius: 14px;
+    overflow: hidden; display: flex; flex-direction: column;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: #8ab4f8; transform: translateY(-2px); }
+  model-viewer {
+    width: 100%; height: 230px; background: #20232b;
+    --poster-color: transparent;
+  }
+  .meta { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .tag {
+    font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: #262b36; color: #9aa0a6; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .num { color: #5f6368; font-size: 12px; margin-left: auto; }
+  .links { display: flex; gap: 10px; }
+  .links a {
+    flex: 1; text-align: center; text-decoration: none; font-size: 13px;
+    padding: 7px; border-radius: 8px; border: 1px solid #333; color: #e8eaed;
+  }
+  .links a.dl { background: #8ab4f8; color: #0f1115; border-color: #8ab4f8; }
+  .links a:hover { border-color: #8ab4f8; }
+  footer { text-align: center; color: #5f6368; padding: 24px; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔫 Free Gun Models — 20 Options</h1>
+  <p>All models by <strong>Quaternius</strong> (Ultimate Guns Pack), license <strong>CC0 / Public Domain</strong> — free for any use, no attribution required.<br>
+  Source: <a href="https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F" target="_blank">poly.pizza</a>. Drag to rotate · scroll to zoom.</p>
+</header>
+
+<div class="toolbar" id="toolbar"></div>
+<div class="grid" id="grid"></div>
+
+<footer>Click <strong>Download .glb</strong> to grab a model, or <strong>View</strong> to open its poly.pizza page.</footer>
+
+<script>
+const MODELS = [
+  { name: "Pistol",            type: "Pistol",  id: "52kQzphmeF", glb: "https://static.poly.pizza/7a31b522-5632-41d9-8274-031795af5d8d.glb" },
+  { name: "Pistol (alt)",      type: "Pistol",  id: "J3i9KDQ3kt", glb: "https://static.poly.pizza/f5a88c73-af97-49ca-8650-4bde579d2f80.glb" },
+  { name: "Pistol (compact)",  type: "Pistol",  id: "Jyn9qex4ba", glb: "https://static.poly.pizza/3b53f0fe-f86e-451c-816d-6ab9bd265cdc.glb" },
+  { name: "Pistol (heavy)",    type: "Pistol",  id: "Z7aOjJu583", glb: "https://static.poly.pizza/b0e55406-4b7b-486b-8af7-2d71c681791b.glb" },
+  { name: "Revolver",          type: "Pistol",  id: "9C26wSpMS0", glb: "https://static.poly.pizza/9e728565-67a3-44db-9567-982320abff09.glb" },
+  { name: "Revolver (alt)",    type: "Pistol",  id: "E7IaG9TptR", glb: "https://static.poly.pizza/27246319-d573-413d-821a-ad9244bcdb6e.glb" },
+  { name: "Revolver (long)",   type: "Pistol",  id: "XrnLUz6kQj", glb: "https://static.poly.pizza/7951b3b9-d3a5-4ec8-81b7-11111f1c8e88.glb" },
+  { name: "Submachine Gun",    type: "SMG",     id: "7ehatxr7FY", glb: "https://static.poly.pizza/fb8ae707-d5b9-4eb8-ab8c-1c78d3c1f710.glb" },
+  { name: "Submachine Gun 2",  type: "SMG",     id: "nsP3JukU73", glb: "https://static.poly.pizza/100fd5db-d5e8-4db7-8ad3-9a96cc217e56.glb" },
+  { name: "Assault Rifle",     type: "Rifle",   id: "Bgvuu4CUMV", glb: "https://static.poly.pizza/9a0e478c-de82-4773-9b70-a0219bb0057c.glb" },
+  { name: "Assault Rifle 2",   type: "Rifle",   id: "K2lXTYFSLC", glb: "https://static.poly.pizza/b3e6be61-0299-4866-a227-58f5f3fe610b.glb" },
+  { name: "Assault Rifle 3",   type: "Rifle",   id: "fpLucho45C", glb: "https://static.poly.pizza/db2d564c-63b2-4316-a89e-0f7d7a2416c9.glb" },
+  { name: "Bullpup Rifle",     type: "Rifle",   id: "iKAlIbHUFD", glb: "https://static.poly.pizza/44e99086-b803-4f8f-b1e4-302068cff16a.glb" },
+  { name: "Sniper Rifle",      type: "Sniper",  id: "ASOMZIErq3", glb: "https://static.poly.pizza/f03e21b7-e3b7-49fd-b47d-d1908649fcee.glb" },
+  { name: "Sniper Rifle 2",    type: "Sniper",  id: "TKaBjAEofL", glb: "https://static.poly.pizza/d9962f20-fdce-42a5-81c8-2847a4487447.glb" },
+  { name: "Sniper Rifle 3",    type: "Sniper",  id: "XCIC2Ae4Rb", glb: "https://static.poly.pizza/701c17ec-1b9b-4091-8c8b-54ed125078b9.glb" },
+  { name: "Sniper Rifle 4",    type: "Sniper",  id: "i65hEldsw6", glb: "https://static.poly.pizza/2def4aa0-1f3a-40dd-aa92-0661ce39ae50.glb" },
+  { name: "Shotgun",           type: "Shotgun", id: "DcNE0HVdW8", glb: "https://static.poly.pizza/032e6589-3188-41bc-b92b-e25528344275.glb" },
+  { name: "Shotgun (pump)",    type: "Shotgun", id: "ZmPTnh7njL", glb: "https://static.poly.pizza/f71d6771-f512-4374-bd23-ba00b564db68.glb" },
+  { name: "Shotgun Sawed-Off", type: "Shotgun", id: "29FXKu7G91", glb: "https://static.poly.pizza/9a6ee0ee-068b-4774-8b0f-679c3cef0b6e.glb" },
+];
+
+const grid = document.getElementById('grid');
+const toolbar = document.getElementById('toolbar');
+const types = ['All', ...new Set(MODELS.map(m => m.type))];
+
+function render(filter) {
+  grid.innerHTML = '';
+  MODELS.filter(m => filter === 'All' || m.type === filter).forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <model-viewer src="${m.glb}" alt="${m.name}" camera-controls auto-rotate
+        shadow-intensity="1" exposure="1" environment-image="neutral"
+        loading="lazy" reveal="auto"></model-viewer>
+      <div class="meta">
+        <div class="name">${m.name} <span class="tag">${m.type}</span><span class="num">#${i + 1}</span></div>
+        <div class="links">
+          <a class="dl" href="${m.glb}" download>Download .glb</a>
+          <a href="https://poly.pizza/m/${m.id}" target="_blank">View</a>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+types.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.textContent = t;
+  if (i === 0) b.classList.add('active');
+  b.onclick = () => {
+    document.querySelectorAll('.toolbar button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    render(t);
+  };
+  toolbar.appendChild(b);
+});
+
+render('All');
+</script>
+</body>
+</html>

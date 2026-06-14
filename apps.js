@@ -17,7 +17,16 @@ apps =  {
         {icon: 'format_shapes', name:'פעולות', type: 'app', appType: 'mcq', listName: 'VERBS', questionIndex: 'english_name', resultIndex: 'verb_hebrew'},
         {icon: 'format_shapes', name:'רגשות', type: 'app', appType: 'mcq', listName: 'FEELING', questionIndex: 'english_name', resultIndex: 'emoji'},
         {icon: 'format_shapes', name:'רגשות', type: 'app', appType: 'mcq', listName: 'FEELING', questionIndex: 'name', resultIndex: 'hebrew_english_name'},
-        {icon: 'format_shapes', name:'מילות שאלה', type: 'app', appType: 'mcq', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew' },
+        {
+          name: 'מילות שאלה',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'בחירה מרובה', type: 'app', appType: 'mcq', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew' },
+            {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
+            {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', appType: 'platformer', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
+            {icon: 'sports_esports', name:'מבוך האוצר', type: 'app', appType: 'treasure_maze', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'בחר את הדלת הנכונה'},
+          ]
+        },
         {icon: 'format_shapes', name:'שם לאות', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
         {icon: 'format_shapes', name:'אות לשם', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'hebrewTransliteration' },
         {icon: 'volume_up', name:'שמע לאות גדולה', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'audio', resultIndex: 'englishUpperCase' },
@@ -273,7 +282,6 @@ apps =  {
               ]
             },
         {icon: 'sports_esports', name:'מטווח בלונים - חיות', type: 'app', appType: 'balloon_shooter', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
-        {icon: 'sports_esports', name:'מטווח בלונים - מילות שאלה', type: 'app', appType: 'balloon_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
         {icon: 'directions_run', name:'הרפתקת ריצה - חיות', type: 'app', appType: 'platformer', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
         {icon: 'directions_run', name:'הרפתקת ריצה - מילים חדשות', type: 'app', appType: 'platformer', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
         {icon: 'sports_esports', name:'מבוך האוצר - חיות', type: 'app', appType: 'treasure_maze', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'בחר את הדלת הנכונה'},
