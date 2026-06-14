@@ -319,7 +319,7 @@ currentAppId, questionIndex, progress`.
 | `falling_answers` | `FallingAnswersComponent` | `listName, questionIndex, resultIndex` | לחיצה על התשובה הנכונה בזמן שהיא נופלת |
 | `s2t` | `SpeechToTextComponent` | `listName, questionIndex, resultIndex, title` | אמירת התשובה בקול (זיהוי דיבור) |
 | `balloon_shooter` | `BalloonShooterComponent` | `listName, questionIndex, resultIndex, title` | מטווח בלונים תלת-ממדי בגוף ראשון (Three.js) — יורים בבלון עם התשובה הנכונה |
-| `platformer` | `PlatformerComponent` | `listName, questionIndex, resultIndex, title` | פלטפורמר דו-ממדי בסגנון מריו (Phaser 3) — רצים וקופצים אל בלוק התשובה הנכון; מכשולים בנושאי נהר, עננים, דלתות ודרקון |
+| `platformer` | `PlatformerComponent` | `listName, questionIndex, resultIndex, title` | פלטפורמר דו-ממדי בסגנון מריו (Phaser 3) — רצים וקופצים אל בלוק התשובה הנכון; מכשולים בנושאי נהר, עננים, צינורות (וארפ בסגנון מריו), פלטפורמות, עץ פירות ודרקון |
 | `treasure_maze` | `TreasureMazeComponent` | `listName, questionIndex, resultIndex, title` | מבוך אוצר תלת-ממדי (Three.js) — 3 שערים, בוחרים את הדלת עם התשובה הנכונה כדי להתקדם |
 
 לאותו `listName` אפשר להגדיר כמה משחקים בכיוונים שונים — למשל `questionIndex:

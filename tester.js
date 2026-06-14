@@ -2658,25 +2658,25 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
 //   'bounce'   — a magic circle hurls the player straight back
 const MAZE_SCENARIOS = [
     { title: '🚪 שערי האבן — איזו דלת מובילה לאוצר?', door: 0x8d5a2b, frame: 0x8d8794, flame: 0xffa726, light: 0xffa14d, rune: 0xffc46b,
-      fail: 'block', failColor: 0x6e6675, failMsg: 'המעבר חסום בסלעים! נסה דלת אחרת' },
+      fail: 'block', obstacle: 'rocks', failColor: 0x6e6675, failMsg: 'המעבר חסום בסלעים! נסה דלת אחרת' },
     { title: '✨ השער הקסום — בחר במעבר הנכון', door: 0x6a4fbf, frame: 0xb39ddb, flame: 0xb388ff, light: 0xa37bff, rune: 0xc9a6ff,
       fail: 'bounce', failColor: 0xb388ff, failMsg: 'השער הקסום הדף אותך אחורה!' },
     { title: '🐉 מאורת הדרקון — רק דלת אחת בטוחה!', door: 0x9c2f2f, frame: 0x6d4c41, flame: 0xff7043, light: 0xff6633, rune: 0xff8a5c,
-      fail: 'monster', failColor: 0xff5722, eyes: 0xffd740, failMsg: 'דרקון! ברח מהר!' },
+      fail: 'monster', creature: 'dragon', failColor: 0xff5722, eyes: 0xffd740, failMsg: 'יש כאן דרקון! עדיף לחזור' },
     { title: '❄️ מבוך הקרח — מצא את השער הנכון', door: 0x3f6fb5, frame: 0xa8d4e8, flame: 0x81d4fa, light: 0x6fc3ff, rune: 0x9fdcff,
-      fail: 'block', failColor: 0x9fd8f5, failMsg: 'קיר קרח חוסם את הדרך!' },
+      fail: 'block', obstacle: 'ice', failColor: 0x9fd8f5, failMsg: 'קיר קרח חוסם את הדרך!' },
     { title: '🌿 גן הסוד — איזו דלת תוביל הלאה?', door: 0x3f6f33, frame: 0x9e8f6e, flame: 0xaed581, light: 0x9ccc65, rune: 0xc5e1a5,
-      fail: 'block', failColor: 0x33581f, failMsg: 'קוצים סבוכים חוסמים את הדרך!' },
+      fail: 'block', obstacle: 'thorns', failColor: 0x33581f, failMsg: 'קוצים סבוכים חוסמים את הדרך!' },
     { title: '🌉 גשר התהום — איזה גשר יחזיק?', layout: 'bridges', pit: 'dark', door: 0x7a6a4f, frame: 0x5d4a36, flame: 0xffb74d, light: 0xffa14d, rune: 0xffe0b2,
       fail: 'collapse', failColor: 0x8d6e63, failMsg: 'הגשר קרס! ברחת ברגע האחרון!' },
-    { title: '🕷️ מאורת העכביש — בחר מעבר זהיר', door: 0x4a3f5c, frame: 0x6e6680, flame: 0x9fa8da, light: 0x8c9eff, rune: 0xb39ddb,
-      fail: 'monster', failColor: 0x76608a, eyes: 0xff1744, failMsg: 'עכביש ענק! ברח!' },
+    { title: '👻 אולם הרפאים — בחר מעבר זהיר', door: 0x4a3f5c, frame: 0x6e6680, flame: 0x9fa8da, light: 0x8c9eff, rune: 0xb39ddb,
+      fail: 'monster', creature: 'ghost', failColor: 0x76608a, eyes: 0xff1744, failMsg: 'רוח רפאים שומרת כאן! עדיף לחזור' },
     { title: '🌋 נהר הלבה — איזה גשר בטוח?', layout: 'bridges', pit: 'lava', door: 0x5d4037, frame: 0x4e342e, flame: 0xff8a65, light: 0xff7043, rune: 0xffab91,
       fail: 'collapse', failColor: 0x8d6e63, failMsg: 'הגשר קרס לתוך הלבה! ברחת ברגע האחרון!' },
     { title: '⛏️ המכרה הנטוש — איזו מנהרה פתוחה?', door: 0x6d5843, frame: 0x55483a, flame: 0xffcc80, light: 0xffb74d, rune: 0xd7ccc8,
-      fail: 'collapse', failColor: 0x5d5048, failMsg: 'המנהרה התמוטטה! ברחת בזמן!' },
+      fail: 'collapse', obstacle: 'rocks', failColor: 0x5d5048, failMsg: 'המנהרה חסומה בסלעים! עדיף לחזור' },
     { title: '🏰 חצר הטירה — איזה שער פתוח?', door: 0x8c7048, frame: 0xa099a8, flame: 0xfff176, light: 0xffe082, rune: 0xfff59d,
-      fail: 'monster', failColor: 0x90a4ae, eyes: 0x80d8ff, failMsg: 'שומר הטירה תפס אותך! ברח!' },
+      fail: 'monster', creature: 'orc', failColor: 0x90a4ae, eyes: 0x80d8ff, failMsg: 'שומר הטירה כאן! עדיף לחזור' },
     { title: '🪨 נהר אבני הדריכה — איזה שביל בטוח?', layout: 'stones', pit: 'water', door: 0x8a8578, frame: 0x78838f, flame: 0x90caf9, light: 0x86b8e8, rune: 0xb3d6f2,
       fail: 'collapse', failColor: 0x9aa6b0, failMsg: 'האבנים שקעו במים! ברחת בזמן!' },
     { title: '💰 חדר האוצר — איזו תיבה אמיתית?', layout: 'chests', door: 0x7a5a2e, frame: 0x9c8c6e, flame: 0xffd54f, light: 0xffca5e, rune: 0xffe082,
@@ -2684,6 +2684,35 @@ const MAZE_SCENARIOS = [
     { title: '🗝️ חדר המפתחות — איזה מפתח פותח את הדלת?', layout: 'keys', door: 0x6b4f86, frame: 0x8a7f9c, flame: 0xce93d8, light: 0xb68fd6, rune: 0xd1b3e8,
       fail: 'shatter', failColor: 0xffd740, failMsg: 'המפתח הלא נכון נשבר במנעול!' },
 ];
+
+// Swappable companion characters for the maze. All are CC0/free rigged models
+// from the three.js examples, served with CORS over jsDelivr so they load
+// straight from a URL. `clips` maps the game's states to each model's own clip
+// names; `once` lists the non-looping clips. The in-game button cycles through
+// these plus the hand-built procedural figure for easy side-by-side comparison.
+const HERO_MODELS = [
+    {
+        name: '🤖 רובוט', height: 1.5, yawOffset: Math.PI,
+        url: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+        clips: { idle: 'idle', run: 'running', flee: 'running', scared: 'no', cheer: 'thumbsup' },
+        once: ['jump', 'thumbsup', 'no', 'yes', 'wave', 'punch', 'death'],
+    },
+    {
+        name: '🪖 חייל', height: 1.7, yawOffset: 0,
+        url: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/Soldier.glb',
+        clips: { idle: 'idle', run: 'run', flee: 'run', scared: 'idle', cheer: 'walk' },
+        once: [],
+    },
+];
+
+// The creatures that occupy a "wrong" room. CC0 Quaternius models (downloaded
+// to assets/models/maze). `idle` is the clip they stand in; `notice` plays once
+// when the player walks in and spots them. `yaw` orients them toward the door.
+const CREATURE_MODELS = {
+    dragon:  { url: 'assets/models/maze/dragon.glb',  height: 2.6, yaw: 0, y: 0.5, idle: 'flying_idle', notice: 'headbutt' },
+    orc:     { url: 'assets/models/maze/orc.glb',     height: 2.1, yaw: 0, y: 0,   idle: 'idle',        notice: 'wave' },
+    ghost:   { url: 'assets/models/maze/ghost.glb',   height: 2.0, yaw: 0, y: 0.5, idle: 'flying_idle', notice: 'headbutt' },
+};
 
 var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
     template: `
@@ -2698,6 +2727,10 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 </div>
                 <div class="shooter-hud-score">🪙 {{ score }}<span class="maze-gems">💎 {{ gems }}</span></div>
                 <a class="shooter-fullscreen-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
+                <a @click="cycleHero" :style="{position:'absolute', left:'10px', bottom:'10px', zIndex:5,
+                       background:'rgba(20,16,30,0.72)', color:'#fff', padding:'6px 12px',
+                       borderRadius:'18px', cursor:'pointer', fontSize:'14px', userSelect:'none'}">
+                    🔁 דמות: {{ heroName }}</a>
                 <div class="shooter-hud-progress" v-if="progress && progress.total">
                     <div class="shooter-hud-progress-fill"
                          :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
@@ -2725,6 +2758,7 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             isTouch: false,
             started: false,
             scenarioTitle: '',
+            heroName: 'טוען…',
         };
     },
 
@@ -2983,6 +3017,352 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             }));
             g.scene.add(g.fireflies);
 
+            // The little adventurer that runs ahead of the player (Temple-Run
+            // style). It lives in world space so it carries across chambers.
+            this.buildHero();
+            // Start on the first rigged model; the in-game button cycles to the
+            // others (and to the procedural figure). If loading fails, the
+            // procedural figure stays as the fallback.
+            g.heroIndex = 0;
+            this.loadHeroModel(0);
+            // Preload the wrong-room creatures so they're ready the instant a
+            // wrong door is opened (only one is ever shown at a time).
+            this.loadCreatures();
+        },
+
+        // Preloads every creature once into a cache. Since only one trap room
+        // exists at a time we can reuse the single instance, no cloning needed.
+        loadCreatures: function() {
+            const g = this._g;
+            g.creatures = {};
+            if (typeof THREE.GLTFLoader === 'undefined' || typeof THREE.AnimationMixer === 'undefined') return;
+            const loader = new THREE.GLTFLoader();
+            Object.keys(CREATURE_MODELS).forEach(key => {
+                const spec = CREATURE_MODELS[key];
+                loader.load(spec.url, gltf => {
+                    if (!this._g || this._g !== g) return;
+                    const scene = gltf.scene;
+                    scene.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+                    let box = new THREE.Box3().setFromObject(scene);
+                    const size = new THREE.Vector3(); box.getSize(size);
+                    scene.scale.setScalar(spec.height / (size.y || 1));
+                    box = new THREE.Box3().setFromObject(scene);
+                    scene.position.y -= box.min.y;                     // feet on floor
+                    scene.position.x -= (box.min.x + box.max.x) / 2;   // centered
+                    scene.position.z -= (box.min.z + box.max.z) / 2;
+                    const pivot = new THREE.Group();
+                    pivot.add(scene);
+                    const mixer = new THREE.AnimationMixer(scene);
+                    const actions = {};
+                    gltf.animations.forEach(clip => {
+                        actions[clip.name.split('|').pop().toLowerCase()] = mixer.clipAction(clip);
+                    });
+                    g.creatures[key] = { pivot: pivot, mixer: mixer, actions: actions, spec: spec, current: null, inUse: false };
+                }, undefined, err => { console.warn('Maze creature failed to load: ' + key, err); });
+            });
+        },
+
+        // Places a cached creature in the room, standing in its idle clip
+        attachCreature: function(room, key) {
+            const g = this._g;
+            const c = g.creatures && g.creatures[key];
+            if (!c || c.inUse) return null;
+            c.inUse = true;
+            c.pivot.position.set(0, c.spec.y, 1.6);   // a bit inside the room, facing the door
+            c.pivot.rotation.y = c.spec.yaw;
+            room.group.add(c.pivot);
+            this.playCreatureClip(c, c.spec.idle, true);
+            return c;
+        },
+
+        playCreatureClip: function(c, name, loop) {
+            name = (name || '').toLowerCase();
+            let action = c.actions[name] || c.actions['idle'] || c.actions[Object.keys(c.actions)[0]];
+            if (!action || c.current === action) return;
+            if (c.current) c.current.fadeOut(0.25);
+            action.reset();
+            action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce);
+            action.clampWhenFinished = !loop;
+            action.fadeIn(0.25).play();
+            c.current = action;
+        },
+
+        // A low-poly explorer companion. Built facing -Z (into the maze), so by
+        // default the player sees its back as it leads the way. Limbs hang from
+        // shoulder/hip pivots so they can swing for a run cycle.
+        buildHero: function() {
+            const g = this._g;
+            const hero = new THREE.Group();
+            const mats = {
+                skin:  new THREE.MeshStandardMaterial({ color: 0xe8b88a, roughness: 0.8 }),
+                coat:  new THREE.MeshStandardMaterial({ color: 0x3f8f5a, roughness: 0.7 }),
+                pants: new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 0.85 }),
+                hat:   new THREE.MeshStandardMaterial({ color: 0x7a5a32, roughness: 0.8 }),
+                pack:  new THREE.MeshStandardMaterial({ color: 0x6b4a2a, roughness: 0.85 }),
+                dark:  new THREE.MeshStandardMaterial({ color: 0x2a2118, roughness: 0.9 }),
+            };
+            g.heroDisposables = Object.keys(mats).map(k => mats[k]);
+
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.26), mats.coat);
+            torso.position.y = 0.87;
+            hero.add(torso);
+            const belt = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.1, 0.28), mats.dark);
+            belt.position.y = 0.62;
+            hero.add(belt);
+            // Backpack on the back (+Z, since the figure faces -Z)
+            const pack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.4, 0.18), mats.pack);
+            pack.position.set(0, 0.9, 0.2);
+            hero.add(pack);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.32), mats.skin);
+            head.position.y = 1.29;
+            hero.add(head);
+            const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 14), mats.hat);
+            brim.position.y = 1.47;
+            hero.add(brim);
+            const cap = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.26, 14), mats.hat);
+            cap.position.y = 1.61;
+            hero.add(cap);
+            // Eyes on the -Z face so the front is readable when it turns to flee
+            for (const ex of [-0.08, 0.08]) {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), mats.dark);
+                eye.position.set(ex, 1.31, -0.16);
+                hero.add(eye);
+            }
+
+            const makeLimb = (w, h, d, mat) => {
+                const pivot = new THREE.Group();
+                const limb = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                limb.position.y = -h / 2;     // hangs below the pivot point
+                pivot.add(limb);
+                hero.add(pivot);
+                return pivot;
+            };
+            const armL = makeLimb(0.12, 0.42, 0.14, mats.coat);  armL.position.set(-0.28, 1.06, 0);
+            const armR = makeLimb(0.12, 0.42, 0.14, mats.coat);  armR.position.set( 0.28, 1.06, 0);
+            const legL = makeLimb(0.15, 0.6, 0.16, mats.pants);  legL.position.set(-0.11, 0.62, 0);
+            const legR = makeLimb(0.15, 0.6, 0.16, mats.pants);  legR.position.set( 0.11, 0.62, 0);
+
+            hero.scale.setScalar(0.85);
+            hero.position.set(0, 0, 2.3);
+            g.scene.add(hero);
+
+            g.hero = {
+                group: hero, head: head, armL: armL, armR: armR, legL: legL, legR: legR,
+                phase: 0, yaw: 0, prevMode: 'idle',
+                armLX: 0.12, armRX: 0.12, legLX: 0, legRX: 0, bodyPitch: 0,
+            };
+        },
+
+        // Drives the companion every frame from the current game mode: it runs
+        // ahead through the chosen door, recoils when a trap springs, sprints
+        // back when it fails, points at doors while idle, cheers on success.
+        updateHero: function(dt, t) {
+            const g = this._g;
+            const h = g.hero;
+            if (!h) return;
+            const cam = g.camera.position;
+            const mode = g.mode;
+            const gate = g.walkGate;
+
+            // Target world position, heading and pose archetype for this mode
+            let tx = cam.x, tz = cam.z - 2.7;
+            let faceX = 0, faceZ = -1;
+            let state = 'idle';
+            let snap = false;
+
+            if (mode === 'idle' || mode === 'keyFly') {
+                const hov = (g.hovered && g.hovered.active) ? g.hovered.baseX : 0;
+                tx = cam.x + hov * 0.18;
+            } else if (mode === 'opening') {
+                state = 'cheer';
+                tx = cam.x + (gate ? gate.baseX * 0.3 : 0);
+            } else if (mode === 'walk' || mode === 'failWalk') {
+                state = 'run';
+                const bx = gate ? gate.baseX : cam.x;
+                tx = cam.x + (bx - cam.x) * 0.6;
+                tz = cam.z - (mode === 'walk' ? 2.9 : 2.4);
+                faceX = (bx - h.group.position.x) * 0.5;
+            } else if (mode === 'failEvent') {
+                state = 'scared';
+                tx = cam.x;
+                tz = cam.z - 1.7;
+            } else if (mode === 'failReturn') {
+                state = 'flee';
+                tx = cam.x;
+                tz = cam.z - 1.9;
+                faceZ = 1;                 // turned around, sprinting toward us
+            } else if (mode === 'chestFail' || mode === 'keyFail') {
+                state = 'scared';
+            }
+
+            // Snap to rest the frame a chamber rebases (avoids a long slide)
+            if (mode === 'idle' && (h.prevMode === 'walk' || h.prevMode === 'failReturn')) snap = true;
+            h.prevMode = mode;
+
+            const moveK = snap ? 1 : Math.min(1, dt * (state === 'idle' || state === 'cheer' ? 6 : 12));
+            h.group.position.x += (tx - h.group.position.x) * moveK;
+            h.group.position.z += (tz - h.group.position.z) * moveK;
+
+            // Pose targets
+            let tArmL = 0.12, tArmR = 0.12, tLegL = 0, tLegR = 0, tPitch = 0, tremble = 0, bob = 0;
+            if (state === 'run' || state === 'flee') {
+                h.phase += dt * (state === 'flee' ? 17 : 14);
+                const sw = Math.sin(h.phase);
+                tLegL = sw; tLegR = -sw;
+                tArmL = -sw * 0.85; tArmR = sw * 0.85;
+                tPitch = state === 'flee' ? 0.04 : 0.16;
+                bob = Math.abs(sw) * 0.07;
+                if (state === 'flee') { tArmL -= 0.6; tArmR -= 0.6; }
+            } else if (state === 'scared') {
+                h.phase += dt * 30;
+                tArmL = -2.2; tArmR = -2.2;
+                tLegL = 0.2; tLegR = -0.2;
+                tPitch = -0.18;
+                tremble = Math.sin(h.phase) * 0.05;
+            } else if (state === 'cheer') {
+                tArmL = -2.4; tArmR = -2.4;
+                bob = Math.abs(Math.sin(t * 9)) * 0.12;
+            } else {
+                const breathe = Math.sin(t * 1.6) * 0.05;
+                tArmL = 0.12 + breathe; tArmR = 0.12 - breathe;
+                bob = Math.sin(t * 1.5) * 0.02;
+                if (mode === 'idle' && g.hovered && g.hovered.active) {
+                    if (g.hovered.baseX > h.group.position.x) tArmR = -1.3; else tArmL = -1.3;
+                } else if (mode === 'keyFly') {
+                    tArmR = -1.5;          // gesture toward the flying key
+                }
+            }
+
+            h.group.position.y = bob;
+
+            const poseK = Math.min(1, dt * 12);
+            h.armLX += (tArmL - h.armLX) * poseK;  h.armL.rotation.x = h.armLX + tremble;
+            h.armRX += (tArmR - h.armRX) * poseK;  h.armR.rotation.x = h.armRX - tremble;
+            h.legLX += (tLegL - h.legLX) * poseK;  h.legL.rotation.x = h.legLX;
+            h.legRX += (tLegR - h.legRX) * poseK;  h.legR.rotation.x = h.legRX;
+            h.bodyPitch += (tPitch - h.bodyPitch) * poseK;
+
+            // Smoothly face the heading direction (shortest way around)
+            const targetYaw = Math.atan2(-faceX, -faceZ);
+            let dyaw = targetYaw - h.yaw;
+            while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+            while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+            h.yaw += dyaw * (snap ? 1 : Math.min(1, dt * 8));
+            h.group.rotation.y = h.yaw;
+            h.group.rotation.x = h.bodyPitch;
+
+            // If a rigged model loaded, it follows the same transform and plays
+            // a baked clip per state; otherwise the procedural limbs above show.
+            const m = h.model;
+            if (m) {
+                m.group.position.copy(h.group.position);
+                m.group.rotation.set(0, h.yaw + m.yawOffset, 0);
+                this.setHeroClip(state, m);
+                m.mixer.update(dt);
+                return;
+            }
+
+            // Idle glance around (procedural figure only)
+            h.head.rotation.y = state === 'idle' ? Math.sin(t * 0.7) * 0.3 : 0;
+        },
+
+        // Tap the in-game button to cycle: each rigged model in turn, then the
+        // hand-built procedural figure, then back around — easy to compare live.
+        cycleHero: function() {
+            const g = this._g;
+            if (!g || !g.hero) return;
+            g.heroIndex = ((g.heroIndex == null ? 0 : g.heroIndex) + 1) % (HERO_MODELS.length + 1);
+            if (g.heroIndex === HERO_MODELS.length) {
+                this.disposeHeroModel();
+                g.hero.group.visible = true;
+                this.heroName = '🧍 פרוצדורלי';
+            } else {
+                this.loadHeroModel(g.heroIndex);
+            }
+        },
+
+        disposeHeroModel: function() {
+            const g = this._g;
+            const m = g && g.hero && g.hero.model;
+            if (!m) return;
+            m.mixer.stopAllAction();
+            g.scene.remove(m.group);
+            m.group.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) [].concat(o.material).forEach(mat => mat.dispose());
+            });
+            g.hero.model = null;
+        },
+
+        // Loads rigged character HERO_MODELS[index] with its baked animation
+        // clips. On any failure (no loader, offline, CORS) the procedural
+        // companion simply stays.
+        loadHeroModel: function(index) {
+            const g = this._g;
+            const spec = HERO_MODELS[index];
+            if (!spec) return;
+            if (typeof THREE.GLTFLoader === 'undefined' || typeof THREE.AnimationMixer === 'undefined') {
+                g.hero.group.visible = true;
+                this.heroName = '🧍 פרוצדורלי';
+                return;
+            }
+            this.heroName = 'טוען ' + spec.name + '…';
+            new THREE.GLTFLoader().load(spec.url, gltf => {
+                if (!this._g || this._g !== g || !g.hero || g.heroIndex !== index) return;
+                this.disposeHeroModel();                 // drop the previous model
+                const model = gltf.scene;
+                // Skinned meshes can vanish when their precomputed bounds fall
+                // outside the view as they animate — turn off frustum culling.
+                model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+                // Normalize: target height, feet on the floor, centered
+                let box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3(); box.getSize(size);
+                model.scale.setScalar(spec.height / (size.y || 1));
+                box = new THREE.Box3().setFromObject(model);
+                model.position.y -= box.min.y;
+                model.position.x -= (box.min.x + box.max.x) / 2;
+                model.position.z -= (box.min.z + box.max.z) / 2;
+
+                const root = new THREE.Group();
+                root.add(model);
+                g.scene.add(root);
+
+                const mixer = new THREE.AnimationMixer(model);
+                const actions = {};
+                gltf.animations.forEach(clip => { actions[clip.name.toLowerCase()] = mixer.clipAction(clip); });
+
+                g.hero.group.visible = false;            // hide the procedural fallback
+                g.hero.model = {
+                    scene: model, group: root, mixer: mixer, actions: actions, current: null,
+                    yawOffset: spec.yawOffset, clips: spec.clips, once: spec.once,
+                };
+                this.heroName = spec.name;
+            }, undefined, err => {
+                console.warn('Maze hero model failed to load — using the procedural companion.', err);
+                if (this._g === g && g.hero && !g.hero.model) {
+                    g.hero.group.visible = true;
+                    this.heroName = '🧍 פרוצדורלי';
+                }
+            });
+        },
+
+        // Crossfades the model to the clip that matches the current state
+        setHeroClip: function(state, m) {
+            let name = (m.clips && m.clips[state]) || 'idle';
+            if (!m.actions[name]) name = m.actions['idle'] ? 'idle' : Object.keys(m.actions)[0];
+            if (!name || !m.actions[name]) return;
+            const action = m.actions[name];
+            const speed = state === 'flee' ? 1.5 : (state === 'run' ? 1.25 : 1);
+            if (m.current === name) { action.timeScale = speed; return; }
+            const prev = m.current && m.actions[m.current];
+            const loopOnce = m.once && m.once.indexOf(name) >= 0;
+            action.reset();
+            action.timeScale = speed;
+            action.setLoop(loopOnce ? THREE.LoopOnce : THREE.LoopRepeat);
+            action.clampWhenFinished = !!loopOnce;
+            action.fadeIn(0.2).play();
+            if (prev) prev.fadeOut(0.2);
+            m.current = name;
         },
 
         buildChamber: function(ox, oz) {
@@ -3392,33 +3772,79 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
         makeMonster: function(s) {
             const g = this._g;
             const monster = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.SphereGeometry(0.95, 14, 12),
-                new THREE.MeshStandardMaterial({ color: 0x140f1b, roughness: 0.9 })
-            );
-            body.scale.set(1.25, 1.5, 0.8);
-            body.position.y = 1.35;
+            const skin = new THREE.MeshStandardMaterial({ color: 0x161020, roughness: 0.92 });
+            const horn = new THREE.MeshStandardMaterial({ color: 0x2c2433, roughness: 0.8 });
+            const bone = new THREE.MeshStandardMaterial({ color: 0xeae0d0, roughness: 0.5 });
+            monster.userData.disposables = [skin, horn, bone];
+
+            // Hulking body + head
+            const body = new THREE.Mesh(new THREE.SphereGeometry(1.0, 18, 14), skin);
+            body.scale.set(1.35, 1.6, 0.95);
+            body.position.y = 1.55;
             monster.add(body);
-            for (const ex of [-0.34, 0.34]) {
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.72, 16, 14), skin);
+            head.scale.set(1.1, 1.0, 1.0);
+            head.position.set(0, 2.95, 0.1);
+            monster.add(head);
+
+            // Horns
+            for (const hx of [-0.46, 0.46]) {
+                const h = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.72, 10), horn);
+                h.position.set(hx, 3.55, 0.05);
+                h.rotation.z = hx > 0 ? -0.35 : 0.35;
+                monster.add(h);
+            }
+
+            // Big glowing eyes
+            for (const ex of [-0.3, 0.3]) {
                 const eye = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: g.flameTex, color: s.eyes,
+                    map: g.flameTex, color: s.eyes || 0xff3b30,
                     blending: THREE.AdditiveBlending, depthWrite: false,
                 }));
-                eye.scale.set(0.4, 0.5, 1);
-                eye.position.set(ex, 1.95, 0.6);
+                eye.scale.set(0.52, 0.62, 1);
+                eye.position.set(ex, 3.02, 0.72);
                 monster.add(eye);
+            }
+
+            // Fanged grin
+            for (let i = -2; i <= 2; i++) {
+                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.24, 6), bone);
+                fang.position.set(i * 0.16, 2.6, 0.64);
+                fang.rotation.x = Math.PI;
+                monster.add(fang);
+            }
+
+            // Clawed arms raised to strike
+            for (const ax of [-1.2, 1.2]) {
+                const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.12, 1.55, 10), skin);
+                arm.position.set(ax, 1.95, 0.35);
+                arm.rotation.z = ax > 0 ? 0.7 : -0.7;
+                arm.rotation.x = -0.5;
+                monster.add(arm);
+                for (let c = -1; c <= 1; c++) {
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.3, 6), bone);
+                    claw.position.set(ax + (ax > 0 ? 0.58 : -0.58), 2.62, 0.6 + c * 0.13);
+                    claw.rotation.x = -1.2;
+                    monster.add(claw);
+                }
             }
             return monster;
         },
 
-        // A real dead-end room built behind a wrong door, in the same slot
-        // the next chamber would occupy — the player genuinely walks into it
+        // A real room built behind a wrong door — and deliberately built to look
+        // like any other chamber (same stone, warm torchlight, a treasure glow
+        // teasing further on) so you can't tell it's wrong until you step in and
+        // see what's inside. Only one ever exists (it is torn down when you
+        // flee), so it can be nearly the size of a normal chamber.
         buildTrapRoom: function(gate) {
             const g = this._g;
             const s = gate.chamber.scenario;
             const group = new THREE.Group();
             group.position.set(gate.baseX, 0, -13.3);
-            const room = { group: group, disposables: [], monster: null, rubble: null, lunge: false };
+            const room = { group: group, disposables: [], monster: null, creature: null };
+            const H = 5;                 // matches a normal chamber's wall height
+            const W = 12, D = 11, midZ = 7 - D / 2;   // entrance plane at local z = 7
+            const open = 1.15;           // half-width of the doorway
 
             const addWall = (w, h, x, y, z, rotY) => {
                 const tex = g.stoneTex.clone();
@@ -3432,47 +3858,72 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 group.add(wall);
             };
 
-            // A narrow dead-end corridor (so traps behind adjacent doors
-            // can stand side by side without overlapping)
-            addWall(0.6, 5, -1.4, 2.5, 7);
-            addWall(0.6, 5, 1.4, 2.5, 7);
-            addWall(2.6, 2, 0, 4, 7);
-            addWall(4.0, 5, 0, 2.5, 2.6);
-            addWall(4.4, 5, -1.7, 2.5, 4.8, Math.PI / 2);
-            addWall(4.4, 5, 1.7, 2.5, 4.8, Math.PI / 2);
-            const lamp = new THREE.PointLight(s.light, 0.9, 10, 2);
-            lamp.position.set(0, 2.6, 4.8);
+            // Front wall with the doorway opening (aligned to the gate), wide
+            // side walls and a far wall — open to the night sky like a real room.
+            addWall(W / 2 - open, H, -(W / 2 + open) / 2, H / 2, 7);
+            addWall(W / 2 - open, H, (W / 2 + open) / 2, H / 2, 7);
+            addWall(2.6, 2, 0, 4, 7);                  // lintel over the doorway
+            addWall(W, H, 0, H / 2, 7 - D);            // far wall
+            addWall(D, H, -W / 2, H / 2, midZ, Math.PI / 2);
+            addWall(D, H, W / 2, H / 2, midZ, Math.PI / 2);
+
+            // Warm torchlight, just like a normal chamber — no give-away tint
+            const lamp = new THREE.PointLight(s.light, 1.3, 26, 2);
+            lamp.position.set(0, H - 0.6, midZ + 1);
             group.add(lamp);
+            for (const lx of [-W / 3, W / 3]) {
+                const side = new THREE.PointLight(s.light, 0.6, 16, 2);
+                side.position.set(lx, H - 1.2, 4.2);
+                group.add(side);
+            }
+            // A treasure glow on the far wall, teasing a way forward (the bait)
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: g.flameTex, color: 0xffd27f,
+                blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.4,
+            }));
+            glow.scale.set(3, 3, 1);
+            glow.position.set(0, 1.6, 7 - D + 0.5);
+            room.disposables.push(glow.material);
+            group.add(glow);
 
             if (s.fail === 'monster') {
-                room.monster = this.makeMonster(s);
-                room.monster.position.set(0, 0, 3.8);
-                group.add(room.monster);
-            } else if (s.fail === 'block' || s.fail === 'collapse') {
-                // A rubble pile blocking the room — already there for 'block',
-                // appears with the cave-in for 'collapse'
-                room.rubble = new THREE.Group();
-                const mat = new THREE.MeshStandardMaterial({ color: s.failColor, roughness: 0.95 });
-                room.disposables.push(mat);
-                for (let i = 0; i < 10; i++) {
-                    const rock = new THREE.Mesh(new THREE.SphereGeometry(0.4 + Math.random() * 0.45, 7, 6), mat);
-                    rock.position.set((Math.random() - 0.5) * 2.4, 0.3 + Math.random() * 1.5, 3.4 + Math.random());
-                    rock.scale.y = 0.7 + Math.random() * 0.4;
-                    room.rubble.add(rock);
+                // A creature is already standing there in plain sight
+                room.creatureKey = s.creature;
+                const c = s.creature && this.attachCreature(room, s.creature);
+                if (c) {
+                    room.creature = c;
+                } else {
+                    // Model not downloaded yet: show the procedural beast for now;
+                    // animate() swaps in the real model the instant it's ready.
+                    room.monster = this.makeMonster(s);
+                    room.monster.position.set(0, 0, 1.6);
+                    room.disposables.push.apply(room.disposables, room.monster.userData.disposables || []);
+                    group.add(room.monster);
                 }
-                room.rubble.visible = s.fail === 'block';
-                group.add(room.rubble);
             } else if (s.fail === 'bounce') {
                 const ring = new THREE.Mesh(
-                    new THREE.RingGeometry(1.0, 1.3, 40),
+                    new THREE.RingGeometry(1.1, 1.6, 48),
                     new THREE.MeshBasicMaterial({
-                        color: s.failColor, transparent: true, opacity: 0.5,
+                        color: s.failColor, transparent: true, opacity: 0.55,
                         blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
                     })
                 );
                 ring.rotation.x = -Math.PI / 2;
-                ring.position.set(0, 0.04, 4.4);
-                group.add(ring);
+                ring.position.set(0, 0.06, 1.6);
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.0, 1.25, H, 24, 1, true),
+                    new THREE.MeshBasicMaterial({
+                        color: s.failColor, transparent: true, opacity: 0.16,
+                        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+                    })
+                );
+                pillar.position.set(0, H / 2, 1.6);
+                room.disposables.push(ring.material, pillar.material);
+                group.add(ring, pillar);
+            } else {
+                // 'block' / 'collapse' — a clearly themed obstacle (rocks / ice /
+                // thorns) already filling the back of the room and barring the way
+                this.buildObstacle(room, s.obstacle || 'rocks', s.failColor);
             }
 
             g.scene.add(group);
@@ -3480,9 +3931,66 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             return room;
         },
 
+        // A realistic, themed pile that blocks the room — visible the moment you
+        // walk in, so you simply see it and turn back.
+        buildObstacle: function(room, kind, color) {
+            const group = new THREE.Group();
+            const disp = [];
+            if (kind === 'ice') {
+                const ice = new THREE.MeshStandardMaterial({
+                    color: 0xbfe6ff, roughness: 0.15, metalness: 0.1,
+                    transparent: true, opacity: 0.78, emissive: 0x244a66, emissiveIntensity: 0.5,
+                });
+                disp.push(ice);
+                for (let i = 0; i < 14; i++) {
+                    const shard = new THREE.Mesh(new THREE.ConeGeometry(0.35 + Math.random() * 0.35, 1.6 + Math.random() * 2.2, 5), ice);
+                    shard.position.set((Math.random() - 0.5) * 5.5, (1.0 + Math.random() * 1.2) / 2, -2 + Math.random() * 2.4);
+                    shard.scale.y = 1 + Math.random();
+                    shard.rotation.set((Math.random() - 0.5) * 0.5, Math.random() * 3, (Math.random() - 0.5) * 0.5);
+                    group.add(shard);
+                }
+            } else if (kind === 'thorns') {
+                const bark = new THREE.MeshStandardMaterial({ color: 0x2f3d22, roughness: 0.95 });
+                const leaf = new THREE.MeshStandardMaterial({ color: color || 0x3f6f33, roughness: 0.9 });
+                disp.push(bark, leaf);
+                for (let i = 0; i < 22; i++) {
+                    const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 1.8 + Math.random() * 2.4, 6), bark);
+                    vine.position.set((Math.random() - 0.5) * 6, 1.2 + Math.random() * 1.4, -2 + Math.random() * 2.6);
+                    vine.rotation.set((Math.random() - 0.5) * 1.6, Math.random() * 3, (Math.random() - 0.5) * 1.6);
+                    group.add(vine);
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.5, 5), leaf);
+                    spike.position.copy(vine.position);
+                    spike.position.y += 0.3;
+                    spike.rotation.copy(vine.rotation);
+                    group.add(spike);
+                }
+            } else {
+                // rocks / cave-in
+                const rock = new THREE.MeshStandardMaterial({ color: color || 0x6e6675, roughness: 0.95, flatShading: true });
+                const rock2 = new THREE.MeshStandardMaterial({ color: 0x2c2a30, roughness: 1, flatShading: true });
+                disp.push(rock, rock2);
+                for (let i = 0; i < 20; i++) {
+                    const b = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5 + Math.random() * 0.8, 0), i % 3 ? rock : rock2);
+                    b.position.set((Math.random() - 0.5) * 6.5, 0.2 + Math.random() * 2.8, -2.2 + Math.random() * 2.6);
+                    b.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+                    b.scale.y = 0.75 + Math.random() * 0.4;
+                    group.add(b);
+                }
+            }
+            room.disposables.push.apply(room.disposables, disp);
+            room.group.add(group);
+            return group;
+        },
+
         disposeTrapRooms: function() {
             const g = this._g;
             g.trapRooms.forEach(room => {
+                if (room.creature) {
+                    if (room.creature.current) room.creature.current.stop();
+                    room.creature.current = null;
+                    room.group.remove(room.creature.pivot);
+                    room.creature.inUse = false;
+                }
                 room.disposables.forEach(d => d.dispose());
                 g.scene.remove(room.group);
             });
@@ -3501,71 +4009,26 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             this.disposeTrapRooms();
         },
 
-        // The moment the trap springs, styled by the room type
+        // The player has walked in and now sees what's inside. This is calm by
+        // design — no jump-scare: you simply realize it's the wrong room and
+        // turn back. Crossings (bridges) still give way, as that's their nature.
         triggerTrap: function(gate) {
             const g = this._g;
             const s = gate.chamber.scenario;
             failureSound.play();
             this.message = { value: s.failMsg, error: true };
-            g.camShake = 1;
 
             if (this.isCrossing(s)) {
                 this.collapseCrossing(gate);
-            } else if (s.fail === 'monster') {
-                gate.trapRoom.lunge = true;
-            } else if (s.fail === 'collapse') {
-                gate.trapRoom.rubble.visible = true;
-                // Beams and rocks rain down inside the room
-                for (let i = 0; i < 14; i++) {
-                    const isBeam = i % 2 === 0;
-                    const mesh = new THREE.Mesh(
-                        isBeam ? g.plankGeo : g.puffGeo,
-                        new THREE.MeshBasicMaterial({ color: isBeam ? s.failColor : 0x4a4038, transparent: true })
-                    );
-                    if (!isBeam) mesh.scale.setScalar(1.4 + Math.random() * 1.8);
-                    mesh.position.set(
-                        gate.baseX + (Math.random() - 0.5) * 3,
-                        3 + Math.random() * 1.5,
-                        -9.6 + (Math.random() - 0.5) * 2
-                    );
-                    g.scene.add(mesh);
-                    g.particles.push({
-                        mesh: mesh,
-                        vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, -1 - Math.random() * 2, 0),
-                        gravity: 9,
-                        spin: new THREE.Vector3(Math.random() * 8, Math.random() * 8, Math.random() * 8),
-                        maxLife: 1.1,
-                        life: 1.1,
-                    });
-                }
-            } else if (s.fail === 'block') {
-                // A burst of dust by the rubble
-                for (let i = 0; i < 8; i++) {
-                    const mesh = new THREE.Mesh(
-                        g.puffGeo,
-                        new THREE.MeshBasicMaterial({ color: 0x5c5248, transparent: true })
-                    );
-                    mesh.scale.setScalar(1.5 + Math.random() * 2);
-                    mesh.position.set(gate.baseX + (Math.random() - 0.5) * 3, 0.5 + Math.random() * 1.5, -9.3);
-                    g.scene.add(mesh);
-                    g.particles.push({
-                        mesh: mesh,
-                        vel: new THREE.Vector3((Math.random() - 0.5) * 2, 0.5 + Math.random(), 0.5),
-                        gravity: 0.8,
-                        maxLife: 0.8,
-                        life: 0.8,
-                    });
-                }
+                g.camShake = 0.6;
+                return;
             }
-
-            // Colored flash right in front of the camera
-            const flash = new THREE.Mesh(
-                g.flashGeo,
-                new THREE.MeshBasicMaterial({ color: s.failColor, transparent: true, opacity: 0.8 })
-            );
-            flash.position.set(g.camera.position.x, 1.6, g.camera.position.z - 1.5);
-            g.scene.add(flash);
-            g.particles.push({ mesh: flash, vel: new THREE.Vector3(), gravity: 0, grow: 9, maxLife: 0.25, life: 0.25 });
+            // A small startle only, and a calm "notice" from the creature if any
+            g.camShake = 0.2;
+            const room = gate.trapRoom;
+            if (room && room.creature) {
+                this.playCreatureClip(room.creature, room.creature.spec.notice, false);
+            }
         },
 
         refreshPickMeshes: function() {
@@ -3972,7 +4435,7 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 g.walkT = Math.min(1, g.walkT + dt / (crossing ? 1.2 : 2.0));
                 const e = 0.5 - 0.5 * Math.cos(Math.PI * g.walkT);
                 const ex = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, g.walkT * 1.6));
-                g.camera.position.set(gate.baseX * ex, 1.6, 5 - (crossing ? 8.4 : 14.0) * e);
+                g.camera.position.set(gate.baseX * ex, 1.6, 5 - (crossing ? 8.4 : 14.6) * e);
                 g.pitch *= Math.max(0, 1 - dt * 3);
                 yawToward(gate.baseX, -25, 5);
                 if (g.walkT >= 1) {
@@ -3983,15 +4446,9 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                     g.walkT = 0;
                 }
             } else if (g.mode === 'failEvent') {
+                // A beat to take in the room and what's in it, then we leave
                 g.modeDelay -= dt;
-                const gate = g.walkGate;
-                const room = gate.trapRoom;
-                if (room && room.lunge && room.monster) {
-                    // The monster lunges toward the player
-                    room.monster.position.z = Math.min(4.0, room.monster.position.z + dt * 2.4);
-                    room.monster.scale.addScalar(dt * 0.3);
-                }
-                if (this.isCrossing(gate.chamber.scenario)) {
+                if (this.isCrossing(g.walkGate.chamber.scenario)) {
                     // Look down at the planks/stones tumbling into the pit
                     g.pitch = Math.max(-0.45, g.pitch - dt * 0.9);
                 }
@@ -4003,10 +4460,9 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                     g.returnPitch = g.pitch;
                 }
             } else if (g.mode === 'failReturn') {
-                // The character flees back to the chamber. What collapsed or
-                // opened stays that way — that path can no longer be chosen.
-                g.walkT = Math.min(1, g.walkT + dt / 0.55);
-                const e = 1 - Math.pow(1 - g.walkT, 2);  // fast escape, ease-out
+                // Walk calmly back out to the chamber.
+                g.walkT = Math.min(1, g.walkT + dt / 0.7);
+                const e = 1 - Math.pow(1 - g.walkT, 2);  // ease-out
                 g.camera.position.lerpVectors(g.returnFrom, new THREE.Vector3(0, 1.6, 5), e);
                 g.yaw = g.returnYaw * (1 - e);
                 g.pitch = g.returnPitch * (1 - e);
@@ -4014,8 +4470,13 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                     const gate = g.walkGate;
                     gate.active = false;
                     this.refreshPickMeshes();
-                    gate.shake = 0.7;
+                    gate.shake = 0.4;
                     g.camShake = 0;
+                    // Shut the dead-end door behind us and tear the room down, so
+                    // only ever one (big) trap room exists at a time.
+                    gate.openTarget = 0;
+                    if (gate.back) gate.back.visible = true;
+                    if (gate.trapRoom) { gate.trapRoom = null; this.disposeTrapRooms(); }
                     g.mode = 'idle';
                 }
             } else if (g.mode === 'chestFail') {
@@ -4116,6 +4577,28 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
 
             g.camera.rotation.y = g.yaw;
             g.camera.rotation.x = g.pitch;
+
+            this.updateHero(dt, t);
+            // If a creature finished downloading after its room was built, swap
+            // it in now (replacing the temporary procedural stand-in).
+            if (g.creatures && g.trapRooms.length) {
+                g.trapRooms.forEach(room => {
+                    if (!room.creature && room.creatureKey && g.creatures[room.creatureKey] &&
+                        !g.creatures[room.creatureKey].inUse) {
+                        const c = this.attachCreature(room, room.creatureKey);
+                        if (c) {
+                            room.creature = c;
+                            if (room.monster) { room.group.remove(room.monster); room.monster = null; }
+                        }
+                    }
+                });
+            }
+            // Advance the animation of whichever creature is currently on show
+            if (g.creatures) {
+                for (const k in g.creatures) {
+                    if (g.creatures[k].inUse) g.creatures[k].mixer.update(dt);
+                }
+            }
             g.renderer.render(g.scene, g.camera);
         },
 
@@ -4193,6 +4676,21 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             const canvas = this._g.renderer.domElement;
             canvas.removeEventListener('click', this.onCanvasClick);
             canvas.removeEventListener('mousemove', this.onCanvasMouseMove);
+            if (this._g.hero) {
+                this.disposeHeroModel();
+                this._g.hero.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+                (this._g.heroDisposables || []).forEach(m => m.dispose());
+            }
+            if (this._g.creatures) {
+                for (const k in this._g.creatures) {
+                    const c = this._g.creatures[k];
+                    c.mixer.stopAllAction();
+                    c.pivot.traverse(o => {
+                        if (o.geometry) o.geometry.dispose();
+                        if (o.material) [].concat(o.material).forEach(mat => mat.dispose());
+                    });
+                }
+            }
             this._g.renderer.dispose();
             if (canvas.parentNode) {
                 canvas.parentNode.removeChild(canvas);
