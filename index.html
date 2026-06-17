@@ -159,6 +159,127 @@
         touch-action: manipulation;
     }
 
+    /* Word Link - Tetris-style well: drag a line from an exposed block to its match */
+    .wl-area {
+        position: relative;
+        width: 100%;
+        max-width: 460px;
+        margin: 0 auto;
+        height: 66vh;
+        min-height: 380px;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 4px solid #2a3550;
+        background:
+            repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 33.33%),
+            linear-gradient(#1b2440, #243056);
+        touch-action: none;
+        user-select: none;
+    }
+
+    .wl-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    .wl-token {
+        position: absolute;
+        box-sizing: border-box;
+        padding: 2px 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: grab;
+        z-index: 4;
+        text-align: center;
+        line-height: 1.05;
+        overflow: hidden;
+    }
+
+    .wl-faller {
+        border: 3px solid #ffb300;
+        color: #4e342e;
+    }
+
+    /* Only the exposed (top of stack) question can be answered - it glows */
+    .wl-exposed {
+        background: linear-gradient(#ffe082, #ffb300);
+        border: 3px solid #ff8f00;
+        color: #4e342e;
+        box-shadow: inset 0 3px 0 rgba(255,255,255,0.55), 0 0 0 3px rgba(255, 193, 7, 0.5);
+        z-index: 5;
+    }
+
+    .wl-buried {
+        background: linear-gradient(#6b7286, #4a516b);
+        border: 3px solid #39405a;
+        color: #cdd3e4;
+        opacity: 0.85;
+        cursor: default;
+    }
+
+    .wl-target {
+        background: linear-gradient(#a5f0a8, #43a047);
+        border: 3px solid #2e7d32;
+        color: #0d3d12;
+        box-shadow: inset 0 3px 0 rgba(255,255,255,0.45);
+    }
+
+    .wl-burst {
+        position: absolute;
+        z-index: 6;
+        font-size: 44px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        animation: wl-pop 0.6s ease-out forwards;
+    }
+
+    .wl-over {
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: rgba(15, 20, 40, 0.82);
+        color: #fff;
+    }
+
+    .wl-over-title {
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    .wl-restart {
+        font-size: 20px;
+        font-weight: bold;
+        padding: 12px 28px;
+        border: none;
+        border-radius: 14px;
+        background: #ffb300;
+        color: #3e2723;
+        box-shadow: 0 4px 0 #ff8f00;
+        cursor: pointer;
+    }
+
+    .wl-restart:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #ff8f00;
+    }
+
+    @keyframes wl-pop {
+        0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+    }
+
     .attempt-history {
       display: flex;
       gap: 6px;
@@ -240,6 +361,11 @@
     .platformer-jump {
         background: #81d4fa;
         box-shadow: 0 3px 0 #0288d1;
+    }
+
+    .platformer-down {
+        background: #b39ddb;
+        box-shadow: 0 3px 0 #673ab7;
     }
 
     /* Balloon shooter (3D) */

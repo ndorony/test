@@ -25,6 +25,7 @@ apps =  {
             {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', appType: 'balloon_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
             {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', appType: 'platformer', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
             {icon: 'sports_esports', name:'מבוך האוצר', type: 'app', appType: 'treasure_maze', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'בחר את הדלת הנכונה'},
+            {icon: 'timeline', name:'חבר במילים', type: 'app', appType: 'word_link', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'מתחו קו מהמילה הנופלת אל בת הזוג שלה'},
           ]
         },
         {icon: 'format_shapes', name:'שם לאות', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
@@ -34,6 +35,7 @@ apps =  {
         {icon: 'format_size', name:'אות קטנה לגדולה', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'englishLowerCase', resultIndex: 'englishUpperCase' },
         {icon: 'format_size', name:'אות גדולה לקטנה', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'englishUpperCase', resultIndex: 'englishUpperCase' },
         {icon: 'format_shapes', name:'חיות', type: 'app', appType: 'mcq', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew'},
+        {icon: 'timeline', name:'חבר במילים - חיות', type: 'app', appType: 'word_link', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 4, title: 'מתחו קו מהמילה הנופלת אל בת הזוג שלה'},
         {icon: 'format_shapes', name:'חלקי גוף', type: 'app', appType: 'mcq', listName: 'BODY_PARTS', questionIndex: 'english_name', resultIndex: 'hebrew'},
         {icon: 'format_shapes', name:'מספרים', type: 'app', appType: 'mcq', listName: 'NUMBERS', questionIndex: 'english_name', resultIndex: 'hebrew'},
         {icon: 'format_shapes', name:'צורות', type: 'app', appType: 'mcq', listName: 'SHAPES', questionIndex: 'english_name', resultIndex: 'hebrew'},

@@ -1134,6 +1134,461 @@ var FallingAnswersComponent = Vue.component('falling-answers', Vue.extend({
 }));
 
 
+// Word Link - matching game. Question words drift down from the top; answer
+// words sit in slots along the bottom. Drag a line from a falling word to its
+// matching answer and, if they pair up, both explode. A wrong link just fizzles;
+// a word that reaches the floor respawns at the top (no losing, kid-friendly).
+var WordLinkComponent = Vue.component('word-link', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="row">
+            <h3 v-html="title" :style="{color: theme.colors.text}"></h3>
+        </div>
+        <div class="row">
+            <div class="wl-area" ref="wlArea" @pointerdown="onDown" @pointermove="onMove"
+                 @pointerup="onUp" @pointercancel="onUp" @pointerleave="onUp">
+                <svg class="wl-svg" :width="areaW" :height="areaH">
+                    <line v-if="line.active" :x1="line.x1" :y1="line.y1" :x2="line.x2" :y2="line.y2"
+                          :stroke="line.ok ? '#69f0ae' : '#ffd54f'" stroke-width="7"
+                          stroke-linecap="round" stroke-dasharray="2 14" />
+                </svg>
+                <div v-for="b in blocks" :key="b.id" v-show="!b.dead"
+                     class="wl-token wl-faller" :class="{'wl-exposed': b.exposed, 'wl-buried': !b.exposed}"
+                     :data-id="b.id"
+                     :style="{left: b.left + 'px', top: b.y + 'px', width: blockW + 'px', height: blockH + 'px'}">{{ b.text }}</div>
+                <div v-for="t in targets" :key="t.id" class="wl-token wl-target"
+                     :data-id="t.id"
+                     :style="{left: t.left + 'px', top: t.top + 'px', width: blockW + 'px', height: blockH + 'px'}">{{ t.text }}</div>
+                <div v-for="x in bursts" :key="x.id" class="wl-burst"
+                     :style="{left: x.x + 'px', top: x.y + 'px'}">💥</div>
+                <div v-if="gameOver" class="wl-over">
+                    <div class="wl-over-title">💥 המשחק נגמר!</div>
+                    <button class="wl-restart" @click="restart">שחק שוב</button>
+                </div>
+            </div>
+        </div>
+        <div class="row" dir="rtl">
+            <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
+        </div>
+        <div class="row"><h3 :style="{color: theme.colors.text}">{{ score }}</h3></div>
+        <progress-bar :title="'שלב נוכחי'" :progress="progress" :theme="theme"></progress-bar>
+    </div>
+    `,
+
+    extends: BaseGameComponent,
+
+    data: function() {
+        return {
+            title: '',
+            list: [],
+            blocks: [],     // every question block on screen (flat, for rendering)
+            columns: [],    // columns[c] = stack of those same block refs (logic)
+            targets: [],    // answer slots along the bottom
+            bursts: [],
+            line: {active: false, x1: 0, y1: 0, x2: 0, y2: 0, ok: false},
+            dragId: null,
+            dragGroup: null,
+            moveTimer: null,
+            spawnTimer: null,
+            areaW: 320,
+            areaH: 400,
+            nCols: 5,
+            colW: 64,
+            blockW: 60,
+            blockH: 48,
+            stackFloor: 320,
+            targetTop: 330,
+            maxRows: 8,
+            preRows: 3,         // how tall the wall starts
+            descendSpeed: 0.05, // very slow, Tetris-like
+            startBottomY: 168,  // y of the lowest tile when the wall is built
+            gameOver: false,
+            seq: 0,
+            destroyed: false,
+        };
+    },
+
+    methods: {
+        create: function() {
+            // Real setup happens in mounted() (same pattern as falling_answers).
+        },
+
+        uid: function() {
+            this.seq += 1;
+            return 'wl' + this.seq;
+        },
+
+        fieldToken: function(idx, fieldName) {
+            const field = this.list[idx][fieldName];
+            const isText = field.type === 'text' || field.type === 'text_to_speech';
+            return {text: isText ? String(field.value) : '🔊', action: generateQuestion(field)};
+        },
+
+        colX: function(c) {
+            return Math.round(c * this.colW + (this.colW - this.blockW) / 2);
+        },
+
+        pickQuestionIdx: function() {
+            return getWeightedRandomIndex(this.list, this.currentAppId, getSetItems(this.currentApp));
+        },
+
+        // --- the wall ------------------------------------------------------
+        // Every tile carries an absolute y and the whole wall descends together
+        // (tick adds to each y). The FRONT tile of a column is the lowest one
+        // (largest y) - the only one that can be answered. Clearing it just
+        // removes it; nothing drops in to fill the gap (the wall keeps coming).
+        addTile: function(c, idx, y) {
+            const q = this.fieldToken(idx, this.currentApp.questionIndex);
+            const b = {id: this.uid(), idx: idx, text: q.text, action: q.action, col: c,
+                       left: this.colX(c), y: y, exposed: false, dead: false};
+            this.columns[c].push(b);
+            this.blocks.push(b);
+            return b;
+        },
+
+        removeBlock: function(b) {
+            const col = this.columns[b.col];
+            const i = col.indexOf(b);
+            if (i !== -1) { col.splice(i, 1); }
+            const bi = this.blocks.indexOf(b);
+            if (bi !== -1) { this.blocks.splice(bi, 1); }
+        },
+
+        // The front (answerable) tile of a column = the lowest one on screen.
+        frontTile: function(c) {
+            const col = this.columns[c];
+            if (!col.length) {
+                return null;
+            }
+            let low = col[0];
+            for (let i = 1; i < col.length; i++) {
+                if (col[i].y > low.y) { low = col[i]; }
+            }
+            return low;
+        },
+
+        refreshExposed: function() {
+            this.blocks.forEach(b => { b.exposed = false; });
+            for (let c = 0; c < this.columns.length; c++) {
+                const f = this.frontTile(c);
+                if (f) { f.exposed = true; }
+            }
+        },
+
+        columnTopY: function(c) {
+            const col = this.columns[c];
+            let top = Infinity;
+            for (let i = 0; i < col.length; i++) {
+                if (col[i].y < top) { top = col[i].y; }
+            }
+            return top;
+        },
+
+        exposedIdxs: function() {
+            const a = [];
+            for (let c = 0; c < this.columns.length; c++) {
+                const f = this.frontTile(c);
+                if (f) { a.push(f.idx); }
+            }
+            return a;
+        },
+        onScreenIdxs: function() {
+            return this.blocks.filter(b => !b.dead).map(b => b.idx);
+        },
+
+        // --- answer slots --------------------------------------------------
+        assignTarget: function(t, idx) {
+            const a = this.fieldToken(idx, this.currentApp.resultIndex);
+            t.idx = idx; t.text = a.text; t.action = a.action;
+        },
+
+        // The rule: if no answer currently matches an exposed (top) question,
+        // the next answer must be for one of those exposed questions; otherwise
+        // pick freely among the answers of the questions on screen.
+        pickTargetIdx: function(avoid) {
+            const exposed = this.exposedIdxs();
+            const covered = this.targets.some(t => exposed.indexOf(t.idx) !== -1);
+            let pool;
+            if (exposed.length && !covered) {
+                pool = exposed.filter(i => avoid.indexOf(i) === -1);
+                if (!pool.length) { pool = exposed; }
+            } else {
+                const onScreen = this.onScreenIdxs();
+                pool = onScreen.filter(i => avoid.indexOf(i) === -1);
+                if (!pool.length) { pool = onScreen.length ? onScreen : [this.pickQuestionIdx()]; }
+            }
+            return pool[Math.floor(Math.random() * pool.length)];
+        },
+
+        refillTarget: function(t) {
+            const avoid = this.targets.filter(x => x !== t).map(x => x.idx);
+            this.assignTarget(t, this.pickTargetIdx(avoid));
+            this.ensureSolvable();
+        },
+
+        // Safety net: guarantee at least one answer matches an exposed question.
+        ensureSolvable: function() {
+            const exposed = this.exposedIdxs();
+            if (!exposed.length || !this.targets.length) {
+                return;
+            }
+            if (this.targets.some(t => exposed.indexOf(t.idx) !== -1)) {
+                return;
+            }
+            const idx = exposed[Math.floor(Math.random() * exposed.length)];
+            const t = this.targets[Math.floor(Math.random() * this.targets.length)];
+            this.assignTarget(t, idx);
+        },
+
+        buildTargets: function() {
+            this.targets = [];
+            for (let s = 0; s < this.nCols; s++) {
+                this.targets.push({id: this.uid(), slot: s, idx: 0, text: '',
+                                   action: function() {}, left: this.colX(s), top: this.targetTop});
+            }
+            this.targets.forEach(t => this.refillTarget(t));
+        },
+
+        // --- pointer / line drawing ---------------------------------------
+        tokenCenter: function(el) {
+            const r = el.getBoundingClientRect();
+            const ar = this.$refs.wlArea.getBoundingClientRect();
+            return {x: r.left + r.width / 2 - ar.left, y: r.top + r.height / 2 - ar.top};
+        },
+        relPoint: function(e) {
+            const ar = this.$refs.wlArea.getBoundingClientRect();
+            return {x: e.clientX - ar.left, y: e.clientY - ar.top};
+        },
+        tokenIdAt: function(clientX, clientY) {
+            const el = document.elementFromPoint(clientX, clientY);
+            const token = el && el.closest ? el.closest('.wl-token') : null;
+            return token ? token.getAttribute('data-id') : null;
+        },
+        find: function(id) {
+            return this.blocks.find(b => b.id === id) || this.targets.find(t => t.id === id) || null;
+        },
+        groupOf: function(id) {
+            return this.blocks.some(b => b.id === id) ? 'q' : 'a';
+        },
+
+        onDown: function(e) {
+            const id = this.tokenIdAt(e.clientX, e.clientY);
+            if (!id) {
+                return;
+            }
+            const tok = this.find(id);
+            const grp = this.groupOf(id);
+            if (!tok || (grp === 'q' && !tok.exposed)) {
+                return; // buried questions can't be answered
+            }
+            e.preventDefault();
+            const el = document.elementFromPoint(e.clientX, e.clientY).closest('.wl-token');
+            const c = this.tokenCenter(el);
+            this.dragId = id;
+            this.dragGroup = grp;
+            this.line = {active: true, x1: c.x, y1: c.y, x2: c.x, y2: c.y, ok: false};
+        },
+
+        onMove: function(e) {
+            if (!this.dragId) {
+                return;
+            }
+            const p = this.relPoint(e);
+            this.line.x2 = p.x;
+            this.line.y2 = p.y;
+            const startEl = this.$refs.wlArea.querySelector('[data-id="' + this.dragId + '"]');
+            if (startEl) {
+                const c = this.tokenCenter(startEl);
+                this.line.x1 = c.x;
+                this.line.y1 = c.y;
+            }
+            const overId = this.tokenIdAt(e.clientX, e.clientY);
+            const over = overId ? this.find(overId) : null;
+            const drag = this.find(this.dragId);
+            let ok = false;
+            if (over && drag && this.groupOf(overId) !== this.dragGroup) {
+                const qB = this.dragGroup === 'q' ? drag : over;
+                ok = !!qB.exposed && over.idx === drag.idx;
+            }
+            this.line.ok = ok;
+        },
+
+        onUp: function(e) {
+            if (!this.dragId) {
+                return;
+            }
+            const overId = this.tokenIdAt(e.clientX, e.clientY);
+            const drag = this.find(this.dragId);
+            if (overId && overId !== this.dragId) {
+                const over = this.find(overId);
+                if (over && drag && this.groupOf(overId) !== this.dragGroup) {
+                    const qBlock = this.dragGroup === 'q' ? drag : over;
+                    const target = this.dragGroup === 'q' ? over : drag;
+                    if (qBlock.exposed && qBlock.idx === target.idx) {
+                        this.matchPair(qBlock, target);
+                    } else {
+                        this.message = {value: 'לא תואם, נסה שוב', error: true};
+                        failureSound.play();
+                    }
+                }
+            } else if (overId && overId === this.dragId && drag) {
+                try { drag.action(); } catch (err) {} // a tap reads the word aloud
+            }
+            this.line.active = false;
+            this.dragId = null;
+            this.dragGroup = null;
+        },
+
+        burst: function(token) {
+            const el = this.$refs.wlArea.querySelector('[data-id="' + token.id + '"]');
+            const c = el ? this.tokenCenter(el) : {x: token.left, y: token.y || token.top};
+            const b = {id: this.uid(), x: c.x, y: c.y};
+            this.bursts.push(b);
+            setTimeout(() => {
+                const i = this.bursts.indexOf(b);
+                if (i !== -1) { this.bursts.splice(i, 1); }
+            }, 600);
+        },
+
+        matchPair: function(block, target) {
+            this.burst(block);
+            this.burst(target);
+            this.removeBlock(block);
+            this.message = {value: this.getSuccessMsg(), success: true};
+            successSound.play();
+            this.score += 1;
+            updateWeightForKey(this.currentAppId, block.idx, -1);
+            this.saveScore();
+            this.reloadProgress();
+            this.refreshExposed();
+            this.refillTarget(target);
+            this.ensureSolvable();
+        },
+
+        // --- timers --------------------------------------------------------
+        tick: function() {
+            if (this.gameOver) {
+                return;
+            }
+            const floor = this.stackFloor;
+            let over = false;
+            for (let i = 0; i < this.blocks.length; i++) {
+                const b = this.blocks[i];
+                if (b.dead) { continue; }
+                b.y += this.descendSpeed;
+                if (b.y + this.blockH >= floor) { over = true; }
+            }
+            if (over) { this.endGame(); }
+        },
+
+        spawnTick: function() {
+            if (this.gameOver) {
+                return;
+            }
+            // feed the wall: add a tile on top of the shortest column
+            let best = -1, min = Infinity;
+            for (let c = 0; c < this.nCols; c++) {
+                const len = this.columns[c].length;
+                if (len < this.maxRows && len < min) { min = len; best = c; }
+            }
+            if (best === -1) {
+                return;
+            }
+            const y = this.columns[best].length ? this.columnTopY(best) - this.blockH : 4;
+            this.addTile(best, this.pickQuestionIdx(), y);
+            this.refreshExposed();
+            this.ensureSolvable();
+        },
+
+        endGame: function() {
+            this.gameOver = true;
+            clearInterval(this.moveTimer);
+            clearInterval(this.spawnTimer);
+            this.message = {value: 'המשחק נגמר!', error: true};
+            try { failureSound.play(); } catch (e) {}
+        },
+
+        restart: function() {
+            this.blocks = [];
+            this.columns = Array.from({length: this.nCols}, () => []);
+            this.bursts = [];
+            this.gameOver = false;
+            this.message = {};
+            this.measure();
+            this.initialFill();
+            this.refreshExposed();
+            this.buildTargets();
+            this.ensureSolvable();
+            this.moveTimer = setInterval(() => this.tick(), 30);
+            this.spawnTimer = setInterval(() => this.spawnTick(), 2200);
+        },
+
+        // --- layout --------------------------------------------------------
+        measure: function() {
+            if (!this.$refs.wlArea) {
+                return;
+            }
+            this.areaW = this.$refs.wlArea.offsetWidth;
+            this.areaH = this.$refs.wlArea.offsetHeight;
+            this.colW = this.areaW / this.nCols;
+            this.blockW = Math.max(48, Math.floor(this.colW)); // tiles touch -> Tetris grid
+            this.blockH = 56;
+            this.targetTop = this.areaH - this.blockH - 10;
+            this.stackFloor = this.targetTop - 6;
+            this.maxRows = 8;
+            this.startBottomY = this.preRows * this.blockH;
+            for (let c = 0; c < this.columns.length; c++) {
+                this.columns[c].forEach(b => { b.col = c; b.left = this.colX(c); });
+            }
+            this.targets.forEach(t => { t.left = this.colX(t.slot); t.top = this.targetTop; });
+        },
+
+        initialFill: function() {
+            for (let c = 0; c < this.nCols; c++) {
+                for (let r = 0; r < this.preRows; r++) {
+                    this.addTile(c, this.pickQuestionIdx(), this.startBottomY - r * this.blockH);
+                }
+            }
+        },
+    },
+
+    mounted() {
+        this.currentAppId = this.$route.params.currentAppId;
+        this.currentApp = getItemById(apps, this.currentAppId);
+        this.updateScore();
+        if (!this.reloadProgress()) {
+            return;
+        }
+        this.title = this.currentApp.title || 'חברו קו מהקובייה החשופה בקדמת הערימה אל התשובה למטה';
+        this.list = getDataList(this.currentApp.listName);
+        this.$nextTick(() => {
+            this.areaW = this.$refs.wlArea.offsetWidth;
+            // Narrow well -> only 1-3 questions are ever exposed at once
+            this.nCols = this.areaW < 320 ? 2 : 3;
+            this.columns = Array.from({length: this.nCols}, () => []);
+            this.measure();
+            this.initialFill();
+            this.refreshExposed();
+            this.buildTargets();
+            this.ensureSolvable();
+            this.onResize = () => this.measure();
+            window.addEventListener('resize', this.onResize);
+            this.moveTimer = setInterval(() => this.tick(), 30);
+            this.spawnTimer = setInterval(() => this.spawnTick(), 2200);
+        });
+    },
+
+    beforeDestroy() {
+        this.destroyed = true;
+        clearInterval(this.moveTimer);
+        clearInterval(this.spawnTimer);
+        if (this.onResize) {
+            window.removeEventListener('resize', this.onResize);
+        }
+    },
+}));
+
+
 // Balloon Shooter - 3D first-person shooting range (Three.js).
 // The question is shown above the game area; the answers hang on balloons.
 // Hit the right balloon to pop it - the rest fly away. Wrong balloon pops
@@ -5103,9 +5558,18 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                         @mousedown="touch.right = true" @mouseup="touch.right = false"
                         @mouseleave="touch.right = false">▶</button>
             </div>
-            <button class="platformer-btn platformer-jump"
-                    @touchstart.prevent="touch.jump = true"
-                    @mousedown="touch.jump = true">קפוץ ⬆</button>
+            <div class="platformer-dpad">
+                <button class="platformer-btn platformer-down"
+                        @touchstart.prevent="touch.down = true" @touchend.prevent="touch.down = false"
+                        @touchcancel="touch.down = false"
+                        @mousedown="touch.down = true" @mouseup="touch.down = false"
+                        @mouseleave="touch.down = false">⬇</button>
+                <button class="platformer-btn platformer-jump"
+                        @touchstart.prevent="touch.up = true" @touchend.prevent="touch.up = false"
+                        @touchcancel="touch.up = false"
+                        @mousedown="touch.up = true" @mouseup="touch.up = false"
+                        @mouseleave="touch.up = false">⬆</button>
+            </div>
         </div>
         <div class="row" dir="rtl">
             <h2 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</h2>
@@ -5122,7 +5586,7 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
             title: '',
             list: [],
             game: null,
-            touch: {left: false, right: false, jump: false},
+            touch: {left: false, right: false, up: false, down: false},
             destroyed: false,
         }
     },
@@ -5183,8 +5647,10 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
             const W = 900, H = 500, GROUND_H = 64;
             const SEG = 900, INTRO = 620, OUTRO = 520;
             const SPEED = 240, JUMP_VELOCITY = 590;
+            const UNDER = 320, CLIMB = 230; // underground depth + tree-climb speed
 
-            const BLOCK_TEXTURES = {river: 'pf_stone', clouds: 'pf_cloud', dragon: 'pf_block'};
+            // All "answer cube" obstacles now share the Mario question-block look.
+            const BLOCK_TEXTURES = {river: 'pf_qblock', clouds: 'pf_qblock', dragon: 'pf_qblock'};
 
             function createTextures(scene) {
                 if (scene.textures.exists('pf_ground')) {
@@ -5213,6 +5679,18 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 g.lineStyle(5, 0xff8f00); g.strokeRoundedRect(3, 3, 134, 78, 14);
                 g.fillStyle(0xffffff, 0.35); g.fillRoundedRect(12, 10, 116, 18, 8);
                 g.generateTexture('pf_block', 140, 84); g.clear();
+
+                // Mario-style question cube: beveled 3D box you bonk from below.
+                const QW = 128, QH = 100;
+                g.fillStyle(0x7a4a12); g.fillRect(0, 0, QW, QH);               // dark outline
+                g.fillStyle(0xc9821f); g.fillRect(4, 4, QW - 8, QH - 8);       // body
+                g.fillStyle(0xe2a534); g.fillRect(4, 4, QW - 8, 12);          // lit top bevel
+                g.fillStyle(0xe2a534); g.fillRect(4, 4, 12, QH - 8);          // lit left bevel
+                g.fillStyle(0x9c5f14); g.fillRect(4, QH - 16, QW - 8, 12);    // shaded bottom bevel
+                g.fillStyle(0x9c5f14); g.fillRect(QW - 16, 4, 12, QH - 8);    // shaded right bevel
+                g.fillStyle(0xffe9b0);                                          // corner rivets
+                [[12, 12], [QW - 12, 12], [12, QH - 12], [QW - 12, QH - 12]].forEach(p => g.fillCircle(p[0], p[1], 4));
+                g.generateTexture('pf_qblock', QW, QH); g.clear();
 
                 // Cloud block
                 g.fillStyle(0xffffff); g.fillRoundedRect(0, 0, 140, 84, 40);
@@ -5246,6 +5724,14 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 g.fillStyle(0x7cb342); g.fillRoundedRect(0, 0, LW, 16, {tl: 10, tr: 10, bl: 0, br: 0});
                 g.fillStyle(0x9ccc65); g.fillRect(0, 0, LW, 6);
                 g.generateTexture('pf_platform', LW, LH); g.clear();
+
+                // Trampoline: a stretchy red mat on a dark frame with two legs
+                const TW = 130, TH = 48;
+                g.fillStyle(0x37474f); g.fillRect(14, 22, 11, TH - 22); g.fillRect(TW - 25, 22, 11, TH - 22); // legs
+                g.fillStyle(0x263238); g.fillRoundedRect(2, 12, TW - 4, 14, 6);                                // frame rim
+                g.fillGradientStyle(0xff6b6b, 0xe53935, 0xc62828, 0xb71c1c, 1); g.fillEllipse(TW / 2, 14, TW - 22, 16); // mat
+                g.fillStyle(0xffffff, 0.30); g.fillEllipse(TW / 2 - 14, 11, 34, 6);                            // sheen
+                g.generateTexture('pf_tramp', TW, TH); g.clear();
 
                 // Apple (tree fruit) with stem, leaf and highlight
                 const AW = 46, AH = 50;
@@ -5323,6 +5809,15 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     });
                 });
                 obstacle.barrier.destroy();
+                // A solved tree is no longer climbable - drop the player and retire the zone
+                if (obstacle.climbZone) {
+                    const ci = scene.climbZones.indexOf(obstacle.climbZone);
+                    if (ci >= 0) { scene.climbZones.splice(ci, 1); }
+                    if (scene.climbing === obstacle.climbZone) {
+                        scene.climbing = null;
+                        scene.player.body.setAllowGravity(true);
+                    }
+                }
                 obstacle.deco.forEach(d => scene.tweens.add({targets: d, alpha: 0, duration: 600}));
                 if (obstacle.type === 'river') {
                     scene.add.tileSprite(obstacle.wallX, H - GROUND_H + 9, 130, 18, 'pf_bridge').setDepth(4);
@@ -5343,10 +5838,6 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 if (vm.destroyed || obstacle.answered || block.disabled || scene.warping) {
                     return;
                 }
-                if (obstacle.type === 'pipes') {
-                    handlePipeChoice(scene, obstacle, block);
-                    return;
-                }
                 if (block.correct) {
                     obstacle.answered = true;
                     scene.bannerText.setText('🪙 רוץ קדימה!');
@@ -5359,47 +5850,107 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 }
             }
 
-            // Mario warp pipes: entering a pipe drops the player down and out
-            // somewhere else - forward past the gate if right, back to the start
-            // of the obstacle if wrong (still no falling, no dying).
-            function handlePipeChoice(scene, obstacle, pipe) {
-                scene.warping = true;
-                const goRight = pipe.correct;
-                const destX = goRight ? obstacle.wallX + 70 : obstacle.startX;
-                warpPlayer(scene, pipe.img.x, pipe.img.y, destX, () => {
-                    if (goRight) {
-                        obstacle.answered = true;
-                        scene.bannerText.setText('🪙 רוץ קדימה!');
-                        solveObstacle(scene, obstacle, pipe);
-                        vm.onCorrect(obstacle.q);
-                    } else {
-                        markWrong(scene, pipe);
-                        scene.cameras.main.shake(150, 0.004);
-                        vm.onWrong(obstacle.q);
+            // Mario pipes: stand on top and press down to slide in. The right pipe
+            // drops you into an underground tunnel that continues past the gate; the
+            // wrong pipe just spits you back out the top (still no falling, no dying).
+            function tryEnterPipe(scene) {
+                const player = scene.player;
+                const grounded = player.body.blocked.down || player.body.touching.down;
+                if (!grounded) {
+                    return;
+                }
+                for (let i = 0; i < scene.pipes.length; i++) {
+                    const block = scene.pipes[i];
+                    if (block.disabled || block.obstacle.answered) {
+                        continue;
                     }
-                });
+                    if (scene.physics.overlap(player, block.topZone)) {
+                        enterPipe(scene, block);
+                        return;
+                    }
+                }
             }
 
-            function warpPlayer(scene, pipeX, pipeY, destX, onArrive) {
+            function enterPipe(scene, block) {
+                scene.warping = true;
                 const player = scene.player;
+                const pipe = block.img;
                 player.body.setVelocity(0, 0);
                 player.body.moves = false;
                 player.setAngle(0);
                 scene.tweens.add({
-                    targets: player, x: pipeX, duration: 130,
+                    targets: player, x: pipe.x, duration: 110,
                     onComplete: () => scene.tweens.add({
-                        targets: player, y: pipeY + 22, scale: 0.3, duration: 300, ease: 'Quad.easeIn',
+                        targets: player, y: pipe.y + 10, scale: 0.3, duration: 280, ease: 'Quad.easeIn',
+                        onComplete: () => block.correct ? descendIntoTunnel(scene, block) : ejectFromPipe(scene, block),
+                    }),
+                });
+            }
+
+            // Right pipe: teleport down into the tunnel and hand control back so the
+            // player can run right underground. The question counts as answered here.
+            function descendIntoTunnel(scene, block) {
+                const player = scene.player;
+                const obstacle = block.obstacle;
+                const destX = block.img.x;
+                const destY = scene.tunnelFloorTop - 60;
+                scene.inTunnel = true;
+                scene.cameras.main.setBounds(0, 0, scene.worldW, H + UNDER);
+                player.setScale(1);
+                player.setPosition(destX, destY);
+                player.body.reset(destX, destY);
+                player.body.moves = true;
+                scene.warping = false;
+                obstacle.answered = true;
+                scene.bannerText.setText('🪙 רוץ ימינה במנהרה!');
+                vm.onCorrect(obstacle.q);
+            }
+
+            // Wrong pipe: pop back up out of the same pipe and gray it out.
+            function ejectFromPipe(scene, block) {
+                const player = scene.player;
+                const pipe = block.img;
+                const destY = scene.groundTop - 140;
+                player.setPosition(pipe.x, pipe.y + 10);
+                scene.tweens.add({
+                    targets: player, y: destY, scale: 1, duration: 280, ease: 'Back.easeOut',
+                    onComplete: () => {
+                        player.body.reset(pipe.x, destY);
+                        player.body.moves = true;
+                        scene.warping = false;
+                        markWrong(scene, block);
+                        scene.cameras.main.shake(150, 0.004);
+                        vm.onWrong(block.obstacle.q);
+                    },
+                });
+            }
+
+            // Right trampoline: squash it, then fling the player up out of the tunnel in
+            // an arc that lands on the surface past the gate (this is the way back up).
+            function launchToSurface(scene, obstacle, block) {
+                scene.warping = true;
+                const player = scene.player;
+                const pad = block.img;
+                player.body.setVelocity(0, 0);
+                player.body.moves = false;
+                player.setAngle(0);
+                scene.tweens.add({targets: pad, scaleY: 0.45, duration: 80, yoyo: true});
+                const destX = obstacle.wallX + 70;
+                const destY = scene.groundTop - 60;
+                const peakY = scene.groundTop - 150;
+                scene.inTunnel = false;
+                scene.tweens.add({
+                    targets: player, x: (pad.x + destX) / 2, y: peakY, duration: 440, ease: 'Quad.easeOut',
+                    onComplete: () => scene.tweens.add({
+                        targets: player, x: destX, y: destY, duration: 300, ease: 'Quad.easeIn',
                         onComplete: () => {
-                            player.setPosition(destX, scene.groundTop - 60);
-                            scene.tweens.add({
-                                targets: player, scale: 1, duration: 240, ease: 'Back.easeOut',
-                                onComplete: () => {
-                                    player.body.reset(destX, scene.groundTop - 60);
-                                    player.body.moves = true;
-                                    scene.warping = false;
-                                    onArrive();
-                                },
-                            });
+                            scene.cameras.main.setBounds(0, 0, scene.worldW, H);
+                            player.body.reset(destX, destY);
+                            player.body.moves = true;
+                            scene.warping = false;
+                            if (obstacle.barrier) { obstacle.barrier.destroy(); obstacle.barrier = null; }
+                            sparkleBurst(scene, destX, destY);
+                            scene.bannerText.setText('🪙 רוץ קדימה!');
                         },
                     }),
                 });
@@ -5414,69 +5965,185 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 }, opts || {})).setOrigin(0.5).setDepth(5);
             }
 
-            // river / clouds / dragon: blocks float overhead, jump up to pick one
+            // A Mario block bounces up briefly when bonked from below
+            function bonkBlock(scene, block) {
+                scene.tweens.add({
+                    targets: [block.img, block.label],
+                    y: block.homeY - 14,
+                    duration: 90, yoyo: true, ease: 'Quad.easeOut',
+                });
+            }
+
+            // river / clouds / dragon: solid Mario cubes overhead - bonk from below
             function buildFloatingBlocks(scene, obstacle, baseX, q, groundTop, texKey) {
                 const blockY = groundTop - 170;
                 q.options.forEach((option, idx) => {
                     const x = baseX + 150 + idx * 190;
                     const img = scene.physics.add.staticImage(x, blockY, texKey).setDepth(4);
-                    const label = makeLabel(scene, x, blockY, option.text, {wordWrap: {width: 125}});
-                    const block = {img: img, label: label, correct: option.correct, disabled: false};
-                    scene.physics.add.overlap(scene.player, img, () => handleChoice(scene, obstacle, block));
+                    const label = makeLabel(scene, x, blockY, option.text, {wordWrap: {width: 110}});
+                    const block = {img: img, label: label, correct: option.correct, disabled: false, homeY: blockY};
+                    // Solid block: only a head-bonk from below (player rising into it)
+                    // answers. The player's own up-collision flag is the reliable signal
+                    // (a static block's touching flags aren't dependable in Arcade).
+                    scene.physics.add.collider(scene.player, img, () => {
+                        if (block.disabled || obstacle.answered) {
+                            return;
+                        }
+                        const p = scene.player.body;
+                        if (p.blocked.up || p.touching.up) {
+                            bonkBlock(scene, block);
+                            handleChoice(scene, obstacle, block);
+                        }
+                    });
                     obstacle.blocks.push(block);
                 });
             }
 
-            // pipes: jump into the mouth of the pipe you choose to warp through it
+            // pipes: solid columns you stand on; press down on the right one to drop
+            // into the underground tunnel (built separately, spanning to the trampolines).
             function buildPipes(scene, obstacle, baseX, q, groundTop) {
                 q.options.forEach((option, idx) => {
                     const x = baseX + 150 + idx * 190;
                     const pipe = scene.physics.add.staticImage(x, groundTop - 56, 'pf_pipe').setDepth(4);
+                    scene.physics.add.collider(scene.player, pipe); // solid - stand on top
                     const label = makeLabel(scene, x, groundTop - 134, option.text, {color: '#1b5e20'});
-                    const block = {img: pipe, label: label, correct: option.correct, disabled: false};
-                    // Trigger only at the pipe's mouth, above standing height, so the
-                    // player must hop into it (running past on the ground does nothing).
-                    const mouth = scene.add.rectangle(x, groundTop - 98, 60, 26, 0x000000, 0);
-                    scene.physics.add.existing(mouth, true);
-                    scene.physics.add.overlap(scene.player, mouth, () => handleChoice(scene, obstacle, block));
+                    // Thin trigger across the pipe's lip: "standing on this pipe".
+                    const topZone = scene.add.rectangle(x, groundTop - 112, 84, 36, 0x000000, 0);
+                    scene.physics.add.existing(topZone, true);
+                    const block = {img: pipe, label: label, correct: option.correct,
+                                   disabled: false, topZone: topZone, obstacle: obstacle};
+                    scene.pipes.push(block);
                     obstacle.blocks.push(block);
                 });
             }
 
-            // platform: jump up and land on the floating platform with the right answer
+            // Underground tunnel the right pipe drops into: a dark cave with a floor to
+            // run on and some coins. It spans from the pipe segment to the trampoline
+            // segment, where the right trampoline flings the player back up to daylight.
+            function buildTunnel(scene, surfaceTop, startX, endX) {
+                const floorTop = H + UNDER - 48;
+                scene.tunnelFloorTop = floorTop;
+                const tWidth = endX - startX;
+                const cx = (startX + endX) / 2;
+
+                // Dark cave backdrop spanning from just under the ground down past the floor
+                scene.add.rectangle(cx, (surfaceTop + (floorTop + 48)) / 2, tWidth, (floorTop + 48) - surfaceTop, 0x241a14).setDepth(1);
+                const floor = scene.add.tileSprite(cx, floorTop + 24, tWidth, 48, 'pf_ground').setDepth(2);
+                scene.physics.add.existing(floor, true);
+                scene.physics.add.collider(scene.player, floor);
+                for (let c = startX + 130; c < endX - 130; c += 170) {
+                    scene.add.image(c, floorTop - 64, 'pf_coin').setDepth(3);
+                }
+            }
+
+            // platform: four solid-looking platforms. Step on the right one and it
+            // holds (gate opens); step on a wrong one and it crumbles out from under
+            // you and you drop back to the ground (no dying - just try another).
             function buildPlatform(scene, obstacle, baseX, q, groundTop) {
                 q.options.forEach((option, idx) => {
                     const x = baseX + 150 + idx * 190;
-                    const y = groundTop - (idx % 2 === 0 ? 90 : 116);
+                    const y = groundTop - (idx % 2 === 0 ? 96 : 124);
                     const plat = scene.physics.add.staticImage(x, y, 'pf_platform').setDepth(4);
                     // One-way: the player can jump up through it and land on top
                     plat.body.checkCollision.down = false;
                     plat.body.checkCollision.left = false;
                     plat.body.checkCollision.right = false;
-                    scene.physics.add.collider(scene.player, plat);
+                    const collider = scene.physics.add.collider(scene.player, plat);
                     const label = makeLabel(scene, x, y - 2, option.text, {
                         fontSize: '20px', color: '#3e2723', wordWrap: {width: 130},
                     });
-                    const block = {img: plat, label: label, correct: option.correct, disabled: false};
+                    const block = {img: plat, label: label, correct: option.correct, disabled: false, collider: collider};
                     const zone = scene.add.rectangle(x, y - 18, 132, 24, 0x000000, 0);
                     scene.physics.add.existing(zone, true);
                     scene.physics.add.overlap(scene.player, zone, () => {
                         if (scene.player.body.velocity.y < -10) {
                             return; // ignore the upward pass-through; count the landing
                         }
-                        handleChoice(scene, obstacle, block);
+                        handlePlatform(scene, obstacle, block);
                     });
                     obstacle.blocks.push(block);
                 });
             }
 
-            // tree: jump up and grab the one right fruit (Dangerous Dave style)
+            function handlePlatform(scene, obstacle, block) {
+                if (vm.destroyed || obstacle.answered || block.disabled || scene.warping) {
+                    return;
+                }
+                if (block.correct) {
+                    obstacle.answered = true;
+                    scene.bannerText.setText('🪙 רוץ קדימה!');
+                    solveObstacle(scene, obstacle, block);
+                    vm.onCorrect(obstacle.q);
+                } else {
+                    // crumble away and drop the player through
+                    block.disabled = true;
+                    if (block.collider) { scene.physics.world.removeCollider(block.collider); block.collider = null; }
+                    if (block.img.body) { block.img.body.enable = false; }
+                    scene.tweens.add({targets: [block.img, block.label], alpha: 0, y: '+=34', duration: 300});
+                    scene.cameras.main.shake(150, 0.004);
+                    vm.onWrong(obstacle.q);
+                }
+            }
+
+            // trampolines (underground): four springy pads. The right one flings you up
+            // to the surface past the gate; a wrong one gives a dead little bounce + grays.
+            function buildTrampolines(scene, obstacle, baseX, q, groundTop) {
+                q.options.forEach((option, idx) => {
+                    const x = baseX + 150 + idx * 185;
+                    const y = groundTop - 84;
+                    const pad = scene.physics.add.staticImage(x, y, 'pf_tramp').setDepth(4);
+                    pad.body.checkCollision.down = false;
+                    pad.body.checkCollision.left = false;
+                    pad.body.checkCollision.right = false;
+                    scene.physics.add.collider(scene.player, pad);
+                    const label = makeLabel(scene, x, y - 46, option.text, {fontSize: '20px', color: '#ffcdd2', stroke: '#7f0000'});
+                    const block = {img: pad, label: label, correct: option.correct, disabled: false, homeY: y};
+                    const zone = scene.add.rectangle(x, y - 22, 120, 22, 0x000000, 0);
+                    scene.physics.add.existing(zone, true);
+                    scene.physics.add.overlap(scene.player, zone, () => {
+                        if (scene.player.body.velocity.y < -10) {
+                            return; // ignore the upward pass-through; count the landing
+                        }
+                        handleTrampoline(scene, obstacle, block);
+                    });
+                    obstacle.blocks.push(block);
+                });
+            }
+
+            function handleTrampoline(scene, obstacle, block) {
+                if (vm.destroyed || obstacle.answered || block.disabled || scene.warping) {
+                    return;
+                }
+                if (block.correct) {
+                    obstacle.answered = true;
+                    scene.bannerText.setText('🚀 קפיצה למעלה!');
+                    launchToSurface(scene, obstacle, block);
+                    vm.onCorrect(obstacle.q);
+                } else {
+                    scene.tweens.add({targets: [block.img, block.label], y: block.homeY - 8, duration: 80, yoyo: true});
+                    markWrong(scene, block);
+                    scene.cameras.main.shake(120, 0.004);
+                    vm.onWrong(obstacle.q);
+                }
+            }
+
+            // tree: climb the trunk/foliage (Dangerous Dave style) and grab the right fruit
             function buildTree(scene, obstacle, baseX, q, groundTop) {
                 const cx = baseX + 430;
                 drawTree(scene, cx, groundTop);
+
+                // The whole trunk + canopy is a climb field: while inside it the
+                // player ignores gravity and moves freely with the arrows / D-pad.
+                const zoneH = 300, zoneW = 360;
+                const climbZone = scene.add.rectangle(cx, groundTop - zoneH / 2, zoneW, zoneH, 0x000000, 0);
+                scene.physics.add.existing(climbZone, true);
+                scene.climbZones.push(climbZone);
+                obstacle.climbZone = climbZone;
+
+                const n = q.options.length;
                 q.options.forEach((option, idx) => {
-                    const x = cx - 150 + idx * 100;
-                    const y = groundTop - (idx % 2 === 0 ? 140 : 172);
+                    const x = cx + (idx - (n - 1) / 2) * 105;
+                    const y = groundTop - (idx % 2 === 0 ? 215 : 285); // high enough to need climbing
                     const fruit = scene.physics.add.staticImage(x, y, 'pf_apple').setDepth(5);
                     const label = makeLabel(scene, x, y + 32, option.text, {
                         color: '#ffffff', stroke: '#2e7d32', strokeThickness: 5, fontSize: '20px',
@@ -5486,6 +6153,39 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     scene.physics.add.overlap(scene.player, fruit, () => handleChoice(scene, obstacle, block));
                     obstacle.blocks.push(block);
                 });
+            }
+
+            // Tree climbing: returns true while it owns the player's movement this frame
+            function updateClimb(scene, upHeld, downHeld, jumpPressed) {
+                const player = scene.player;
+                const art = scene.playerArt;
+                let zone = null;
+                for (let i = 0; i < scene.climbZones.length; i++) {
+                    if (scene.physics.overlap(player, scene.climbZones[i])) { zone = scene.climbZones[i]; break; }
+                }
+                if (!scene.climbing) {
+                    if (zone && (upHeld || downHeld)) {
+                        scene.climbing = zone;
+                        player.body.setAllowGravity(false);
+                    } else {
+                        return false;
+                    }
+                } else if (jumpPressed || !zone) {
+                    // hop off (with a little boost) or fall out the side of the foliage
+                    scene.climbing = null;
+                    player.body.setAllowGravity(true);
+                    if (jumpPressed) { player.body.setVelocityY(-JUMP_VELOCITY * 0.7); }
+                    return false;
+                }
+
+                const left = scene.cursors.left.isDown || vm.touch.left;
+                const right = scene.cursors.right.isDown || vm.touch.right;
+                player.body.setVelocityX(left && !right ? -CLIMB : right && !left ? CLIMB : 0);
+                player.body.setVelocityY(upHeld ? -CLIMB : downHeld ? CLIMB : 0);
+                if (left && !right) { art.setFlipX(false); } else if (right && !left) { art.setFlipX(true); }
+                art.setAngle(0);
+                art.setScale(1, 1 + Math.sin(scene.time.now * 0.02) * 0.06);
+                return true;
             }
 
             function drawTree(scene, cx, groundTop) {
@@ -5535,17 +6235,20 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
             function buildObstacle(scene, type, baseX, q, groundTop) {
                 const obstacle = {type: type, q: q, answered: false, activated: false, blocks: [], deco: []};
 
-                // Invisible gate that opens when the obstacle is solved, plus the
-                // warp-back checkpoint used by the pipes.
+                // Invisible gate that opens when the obstacle is solved. Both the gate
+                // and the question trigger sit on this obstacle's lane (groundTop is the
+                // surface for most, but the underground floor for the trampolines).
                 obstacle.startX = baseX + 60;
                 obstacle.wallX = baseX + 815;
-                const wall = scene.add.rectangle(obstacle.wallX, H / 2, 26, H, 0x000000, 0);
+                const wall = scene.add.rectangle(obstacle.wallX, groundTop - 130, 26, 360, 0x000000, 0);
                 scene.physics.add.existing(wall, true);
                 scene.physics.add.collider(scene.player, wall);
                 obstacle.barrier = wall;
 
                 if (type === 'pipes') {
                     buildPipes(scene, obstacle, baseX, q, groundTop);
+                } else if (type === 'trampolines') {
+                    buildTrampolines(scene, obstacle, baseX, q, groundTop);
                 } else if (type === 'platform') {
                     buildPlatform(scene, obstacle, baseX, q, groundTop);
                 } else if (type === 'tree') {
@@ -5560,7 +6263,7 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 }
 
                 // Activation zone: shows + reads the question when the player arrives
-                const trigger = scene.add.rectangle(baseX + 30, H / 2, 30, H, 0x000000, 0);
+                const trigger = scene.add.rectangle(baseX + 30, groundTop - 130, 30, 360, 0x000000, 0);
                 scene.physics.add.existing(trigger, true);
                 scene.physics.add.overlap(scene.player, trigger, () => {
                     if (vm.destroyed || obstacle.activated) {
@@ -5583,8 +6286,12 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 createTextures(scene);
 
                 const usedIndexes = new Set();
-                const pool = vm.shuffle(['river', 'clouds', 'pipes', 'platform', 'tree']);
-                const themes = pool.slice(0, 4).concat(['dragon']);
+                // Every run has the pipe -> underground -> trampoline detour: drop down
+                // the right pipe, run the tunnel, and the right trampoline flings you
+                // back up to the surface past the gate. Two random surface obstacles
+                // lead in, the dragon block is the finale.
+                const surface = vm.shuffle(['river', 'clouds', 'platform', 'tree']).slice(0, 2);
+                const themes = surface.concat(['pipes', 'trampolines', 'dragon']);
                 const total = INTRO + themes.length * SEG + OUTRO;
                 const groundTop = H - GROUND_H;
                 scene.groundTop = groundTop;
@@ -5592,8 +6299,17 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 scene.levelDone = false;
                 scene.currentQ = null;
                 scene.warping = false;
+                scene.worldW = total;
+                scene.pipes = [];
+                scene.climbZones = [];
+                scene.climbing = null;
+                scene.inTunnel = false;
+                scene.prevUpTouch = false;
+                scene.prevDownTouch = false;
 
-                scene.physics.world.setBounds(0, 0, total, H);
+                // World is taller than the view so the underground tunnel fits below;
+                // the camera stays clamped to the surface until the player goes down.
+                scene.physics.world.setBounds(0, 0, total, H + UNDER);
                 scene.cameras.main.setBounds(0, 0, total, H);
 
                 // Layered, parallax background -> reads like a real side-scroller
@@ -5643,7 +6359,17 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     }
                 });
 
-                themes.forEach((type, i) => buildObstacle(scene, type, INTRO + i * SEG, vm.makeQuestion(usedIndexes), groundTop));
+                // The tunnel runs under the pipe segment all the way to the trampoline
+                // segment, so build it first (it sets scene.tunnelFloorTop, the lane the
+                // trampoline obstacle is built on).
+                const pipeBaseX = INTRO + themes.indexOf('pipes') * SEG;
+                const trampBaseX = INTRO + themes.indexOf('trampolines') * SEG;
+                buildTunnel(scene, groundTop, pipeBaseX + 20, trampBaseX + 815 + 150);
+
+                themes.forEach((type, i) => {
+                    const lane = type === 'trampolines' ? scene.tunnelFloorTop : groundTop;
+                    buildObstacle(scene, type, INTRO + i * SEG, vm.makeQuestion(usedIndexes), lane);
+                });
 
                 // Trophy at the end of the level -> rebuild with fresh questions
                 const trophy = scene.add.text(total - 180, groundTop - 44, '🏆', {fontSize: '58px'}).setOrigin(0.5);
@@ -5700,6 +6426,27 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
 
                 const left = scene.cursors.left.isDown || vm.touch.left;
                 const right = scene.cursors.right.isDown || vm.touch.right;
+                const upHeld = scene.cursors.up.isDown || vm.touch.up;
+                const downHeld = scene.cursors.down.isDown || vm.touch.down;
+                // Held buttons -> edge presses (keyboard via JustDown, touch via prev state)
+                const jumpPressed = Phaser.Input.Keyboard.JustDown(scene.cursors.up)
+                    || Phaser.Input.Keyboard.JustDown(scene.cursors.space)
+                    || (vm.touch.up && !scene.prevUpTouch);
+                const downPressed = Phaser.Input.Keyboard.JustDown(scene.cursors.down)
+                    || (vm.touch.down && !scene.prevDownTouch);
+
+                // Climbing a tree trunk (Dangerous Dave style) overrides normal movement
+                if (updateClimb(scene, upHeld, downHeld, jumpPressed)) {
+                    scene.prevUpTouch = vm.touch.up;
+                    scene.prevDownTouch = vm.touch.down;
+                    return;
+                }
+
+                // Standing on a pipe and pressing down warps you into it
+                if (downPressed && !scene.warping) {
+                    tryEnterPipe(scene);
+                }
+
                 if (left && !right) {
                     player.body.setVelocityX(-SPEED);
                     art.setFlipX(false);
@@ -5714,10 +6461,6 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 if (player.body.blocked.down || player.body.touching.down) {
                     scene.coyoteUntil = time + 120;
                 }
-                const jumpPressed = Phaser.Input.Keyboard.JustDown(scene.cursors.up)
-                    || Phaser.Input.Keyboard.JustDown(scene.cursors.space)
-                    || vm.touch.jump;
-                vm.touch.jump = false;
                 if (jumpPressed) {
                     scene.jumpBufferUntil = time + 140;
                 }
@@ -5726,6 +6469,9 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                     scene.jumpBufferUntil = 0;
                     scene.coyoteUntil = 0;
                 }
+
+                scene.prevUpTouch = vm.touch.up;
+                scene.prevDownTouch = vm.touch.down;
 
                 // Make him *look* like he's running / jumping. Applied to the
                 // sprite only, never the physics body, so he can't sink.
@@ -5747,7 +6493,8 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
                 }
 
                 // Safety net: the level has no pits, but recover gracefully anyway
-                if (player.y > H + 80) {
+                // (skipped underground, where the player is legitimately below H).
+                if (!scene.inTunnel && player.y > H + 80) {
                     player.setPosition(scene.lastCheckpointX, scene.groundTop - 80);
                     player.body.setVelocity(0, 0);
                 }
@@ -6355,6 +7102,7 @@ const routes = [
     {path: '/play/common/:currentAppId', component: CommonComponent, props: true },
     {path: '/play/draw_letter/:currentAppId', component: DrawLetterComponent, props: true },
     {path: '/play/falling_answers/:currentAppId', component: FallingAnswersComponent, props: true },
+    {path: '/play/word_link/:currentAppId', component: WordLinkComponent, props: true },
     {path: '/play/balloon_shooter/:currentAppId', component: BalloonShooterComponent, props: true },
     {path: '/play/platformer/:currentAppId', component: PlatformerComponent, props: true },
     {path: '/play/treasure_maze/:currentAppId', component: TreasureMazeComponent, props: true },
