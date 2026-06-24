@@ -1103,7 +1103,7 @@ QUESTION : [
     },
     {
         letter: {type: "text", value: "ה"},
-        letterName: {type: "speech", value: "הֵיי"},
+        letterName: {type: "speech", value: "הֵי"},
     },
     {
         letter: {type: "text", value: "ו"},
