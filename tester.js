@@ -4509,7 +4509,9 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 questionItem['type'] = this.currentApp.questionType;
             }
             this.exercise = render(questionItem);
-            const action = generateQuestion(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            // Use questionItem (with questionType applied) so a 'speech'/'text_to_speech'
+            // override — e.g. reading a letter aloud — is spoken automatically.
+            const action = generateQuestion(questionItem);
             action();
 
             // 3 doors, one correct — the maze concept uses 3 options, not 4

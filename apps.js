@@ -323,6 +323,7 @@ apps =  {
         {icon: 'format_size', name:'אותיות', type: 'app', appType: 'mcq', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter'},
         {icon: 'format_list_numbered', name:'מספרים', type: 'app', appType: 'mcq', listName: 'HEBREW_NUMBERS', questionIndex: 'numberName', resultIndex: 'number'},
         {icon: 'format_size', name:'אותיות עם ניקוד', type: 'app', appType: 'mcq', listName: 'HEBREW_LETTERS_WITH_NIKUD', questionIndex: 'letter', resultIndex: 'letter', questionType: 'speech'},
+        {icon: 'sports_esports', name:'מבוך האותיות', type: 'app', appType: 'treasure_maze', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', title: 'הקשב לאות ובחר את הדלת הנכונה'},
         {icon: 'format_size', name:'השם שלי', type: 'app', appType: 'mcq', listName: 'NAME', questionIndex: 'letterName', resultIndex: 'letter'},
       ]
     },
