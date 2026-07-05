@@ -251,7 +251,7 @@ check('letters never seen stay locked in review until unlocked progressively', r
 // encounter path progression
 check('pointer starts at 0', run(`getEncounterPointer('animals')`) === 0);
 const route = run(`getAdventureLevelCompleteRoute('adv-colors-2')`);
-check('level complete inside encounter 2 → back to world (with celebration), pointer at 3', route === '/adventure/world/colors?celebrate=1' && run(`getEncounterPointer('colors')`) === 3, route);
+check('level complete inside encounter 2 → back to world (with celebration), pointer at 3', route.startsWith('/adventure/world/colors?celebrate=1') && run(`getEncounterPointer('colors')`) === 3, route);
 run(`getAdventureLevelCompleteRoute('adv-colors-1')`);
 check('replaying an earlier encounter does not move the pointer back', run(`getEncounterPointer('colors')`) === 3);
 check('legacy id → null (legacy navigation unchanged)', run(`getAdventureLevelCompleteRoute('0_2_1')`) === null);
@@ -276,6 +276,40 @@ check('level-1 player: basic items open, level-3 items locked',
     run(`isAvatarOptionUnlocked({value: '🎀', level: 1}) && !isAvatarOptionUnlocked({value: '🎩', level: 3})`));
 run(`setLocalStorage('adv_player', {xp: 120})`);
 check('level-3 player: level-3 items unlocked', run(`isAvatarOptionUnlocked({value: '🎩', level: 3})`));
+
+console.log('--- 11. guided step (Phase A) ---');
+// fresh clear of adventure progress for a clean guided-step check
+run(`Array.from(localStorage._map.keys()).filter(k => k.includes('adv-') || k.includes('adv_')).forEach(k => localStorage.removeItem(k))`);
+const firstStep = run(`getNextGuidedStep()`);
+check('fresh player → first alphabet world', firstStep && firstStep.worldId === 'hebrew1' && firstStep.encounterIndex === 0, JSON.stringify(firstStep));
+run(`setLocalStorage('adv-hebrew1_completed', true)`);
+check('after completing hebrew1 → next is hebrew2', run(`getNextGuidedStep().worldId`) === 'hebrew2');
+run(`setLocalStorage('adv-hebrew2_encounterPointer', 2)`);
+check('guided step respects the encounter pointer', run(`getNextGuidedStep().encounterIndex`) === 2);
+
+console.log('--- 12. stars & coins (Phase B) ---');
+check('0% mistakes → 3 stars', run(`computeSessionStars({correct: 10, wrong: 0})`) === 3);
+check('10% mistakes → 3 stars', run(`computeSessionStars({correct: 9, wrong: 1})`) === 3);
+check('25% mistakes → 2 stars', run(`computeSessionStars({correct: 6, wrong: 2})`) === 2);
+check('50% mistakes → 1 star', run(`computeSessionStars({correct: 5, wrong: 5})`) === 1);
+check('empty session → 1 star (defensive)', run(`computeSessionStars({})`) === 1);
+// full reward flow: answers build a session, completion grants stars+coins
+run(`Array.from(localStorage._map.keys()).filter(k => k.includes('adv-') || k.includes('adv_')).forEach(k => localStorage.removeItem(k))`);
+run(`getWeightsForKey('adv-animals-1', getItemById(apps, 'adv-animals-1').setItems, getDataList('ADV_WORLD:animals'))`);
+run(`updateWeightForKey('adv-animals-1', 0, -1); updateWeightForKey('adv-animals-1', 1, -1);`); // 2 correct, 0 wrong
+const sess = run(`getLocalStorage('adv_session', {})`);
+check('session tracks the current encounter accuracy', sess.key === 'adv-animals-1' && sess.correct === 2 && sess.wrong === 0, JSON.stringify(sess));
+const coinsBefore = run(`getAdventurePlayer().coins || 0`);
+const rewardRoute = run(`getAdventureLevelCompleteRoute('adv-animals-1')`);
+check('completion route carries stars=3 & coins=30', rewardRoute.includes('stars=3') && rewardRoute.includes('coins=30'), rewardRoute);
+check('coins credited to the player', (run(`getAdventurePlayer().coins`) - coinsBefore) === 30, run(`getAdventurePlayer().coins`));
+check('best stars saved for the encounter', run(`getWorldStars('animals')['1']`) === 3);
+check('session reset after completion', Object.keys(run(`getLocalStorage('adv_session', {})`)).length === 0);
+// replaying at same/lower quality grants no extra coins
+run(`updateWeightForKey('adv-animals-1', 0, 1); updateWeightForKey('adv-animals-1', 0, -1);`); // 1 correct 1 wrong = 1 star
+const coinsAfterReplay = run(`getAdventurePlayer().coins`);
+run(`getAdventureLevelCompleteRoute('adv-animals-1')`);
+check('replay with worse result grants no coins and keeps best stars', run(`getAdventurePlayer().coins`) === coinsAfterReplay && run(`getWorldStars('animals')['1']`) === 3);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

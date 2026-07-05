@@ -17,14 +17,22 @@
 
 const ADVENTURE_XP_PER_CORRECT = 2;
 const ADVENTURE_XP_PER_LEVEL = 50;
+const ADVENTURE_COINS_PER_STAR = 10;
 
 function getAdventurePlayer() {
-    return getLocalStorage('adv_player', {xp: 0});
+    return getLocalStorage('adv_player', {xp: 0, coins: 0});
 }
 
 function addAdventureXp(amount) {
     const player = getAdventurePlayer();
     player.xp = (player.xp || 0) + amount;
+    setLocalStorage('adv_player', player);
+    return player;
+}
+
+function addAdventureCoins(amount) {
+    const player = getAdventurePlayer();
+    player.coins = (player.coins || 0) + amount;
     setLocalStorage('adv_player', player);
     return player;
 }
@@ -135,6 +143,19 @@ function getWorldUnlockText(world) {
     return '';
 }
 
+// The single "next thing to do": the first unlocked-but-uncompleted world,
+// at its current encounter pointer. Returns null when everything is done.
+function getNextGuidedStep() {
+    for (const world of WORLDS) {
+        if (!isWorldUnlocked(world) || isWorldCompleted(world.id)) {
+            continue;
+        }
+        return {worldId: world.id, name: world.name, emoji: world.emoji || '🌍',
+                encounterIndex: getEncounterPointer(world.id)};
+    }
+    return null;
+}
+
 // --- Encounter progression along the world path ---
 //
 // The pointer is the index of the furthest encounter the child may enter.
@@ -158,33 +179,100 @@ function advanceEncounterPointer(worldId, completedIndex) {
     setEncounterPointer(worldId, Math.max(getEncounterPointer(worldId), next));
 }
 
+// --- Encounter accuracy → stars & coins ---
+
+// 3 stars: up to 10% mistakes; 2: up to 30%; else 1
+function computeSessionStars(session) {
+    const total = (session.correct || 0) + (session.wrong || 0);
+    if (!total) {
+        return 1;
+    }
+    const failRate = session.wrong / total;
+    if (failRate <= 0.10) {
+        return 3;
+    }
+    if (failRate <= 0.30) {
+        return 2;
+    }
+    return 1;
+}
+
+// Best stars earned per encounter, kept as {"<encounterIndex>": stars}
+function getWorldStars(worldId) {
+    return getLocalStorage(`adv-${worldId}_stars`, {});
+}
+
 // Hook for BaseGame.reloadProgress in tester.js: when a learning cycle is
-// completed inside an adventure encounter, advance the path and return to the
-// world screen. Returns null for non-adventure ids (→ legacy behavior).
+// completed inside an adventure encounter, grant rewards, advance the path and
+// return to the world screen. Returns null for non-adventure ids (→ legacy).
 function getAdventureLevelCompleteRoute(currentAppId) {
     const parsed = parseAdventureId(currentAppId);
     if (!parsed) {
         return null;
     }
     advanceEncounterPointer(parsed.world.id, parsed.encounterIndex);
-    // celebrate=1 makes the world screen show a celebration banner on return
-    return `/adventure/world/${parsed.world.id}?celebrate=1`;
+
+    // Reward: stars from this encounter's accuracy, coins from stars.
+    const session = getLocalStorage('adv_session', {});
+    const stars = session.key === currentAppId ? computeSessionStars(session) : 1;
+    const starsMap = getWorldStars(parsed.world.id);
+    const previousBest = starsMap[parsed.encounterIndex] || 0;
+    const isNewBest = stars > previousBest;
+    if (isNewBest) {
+        starsMap[parsed.encounterIndex] = stars;
+        setLocalStorage(`adv-${parsed.world.id}_stars`, starsMap);
+    }
+    // Coins are only awarded for improving (or first-time) results, so replaying
+    // an already-3-star encounter can't farm coins.
+    const coins = isNewBest ? (stars - previousBest) * ADVENTURE_COINS_PER_STAR : 0;
+    if (coins > 0) {
+        addAdventureCoins(coins);
+    }
+    setLocalStorage('adv_session', {});
+
+    if (typeof gtag === 'function') {
+        gtag('event', 'adventure_encounter_completed', {
+            world_id: parsed.world.id, encounter_index: parsed.encounterIndex, stars: stars,
+        });
+    }
+
+    // celebrate=1 shows the banner; stars/coins drive its contents
+    return `/adventure/world/${parsed.world.id}?celebrate=1&stars=${stars}&coins=${coins}`;
 }
 
 // Hook for updateWeightForKey in tester.js: called on every answer, in every
-// game. Awards XP for correct answers in adventure encounters and records
-// world completion the moment it is observed.
+// game. Tracks per-encounter accuracy, awards XP for correct answers in
+// adventure encounters, and records world completion the moment it is observed.
 function onAdventureAnswer(key, isCorrect) {
     const parsed = parseAdventureId(key);
     if (!parsed) {
         return;
     }
+
+    // Track accuracy for the CURRENT encounter (used for stars). Reset whenever
+    // the child switches to a different encounter id.
+    const session = getLocalStorage('adv_session', {});
+    if (session.key !== key) {
+        session.key = key;
+        session.correct = 0;
+        session.wrong = 0;
+    }
+    if (isCorrect) {
+        session.correct += 1;
+    } else {
+        session.wrong += 1;
+    }
+    setLocalStorage('adv_session', session);
+
     if (isCorrect) {
         addAdventureXp(ADVENTURE_XP_PER_CORRECT);
     }
     const state = getWorldLearningState(parsed.world.id);
     if (state && state.completed && !isWorldCompleted(parsed.world.id)) {
         setLocalStorage(`adv-${parsed.world.id}_completed`, true);
+        if (typeof gtag === 'function') {
+            gtag('event', 'adventure_world_completed', {world_id: parsed.world.id});
+        }
     }
     // Let the in-game frame (companion) react to the answer
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
@@ -273,7 +361,10 @@ var AdventurePlayerCard = Vue.component('adventure-player-card', {
     <div class="adv-player" dir="rtl" style="display: flex; align-items: center; gap: 12px;">
       <adventure-avatar :size="56"></adventure-avatar>
       <div style="flex: 1;">
-        <span style="font-size: 1.15em; font-weight: bold;">רמה {{ level }}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 1.15em; font-weight: bold;">רמה {{ level }}</span>
+          <span style="font-size: 1.05em; font-weight: bold;">🪙 {{ coins }}</span>
+        </div>
         <div class="adv-xp-track">
           <div class="adv-xp-fill" :style="{width: xpPercent + '%'}"></div>
         </div>
@@ -284,6 +375,7 @@ var AdventurePlayerCard = Vue.component('adventure-player-card', {
         const player = getAdventurePlayer();
         return {
             level: getAdventureLevel(player.xp),
+            coins: player.coins || 0,
             xpInLevel: getAdventureXpInLevel(player.xp),
             xpPerLevel: ADVENTURE_XP_PER_LEVEL,
         };
@@ -360,10 +452,11 @@ var AdventureCompanion = Vue.component('adventure-companion', {
 // Every click saves immediately — no "save" button a kid could miss.
 var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
     template: `
-    <div class="adv-screen" dir="rtl">
+    <div class="adv-screen adv-art-avatar" dir="rtl">
       <adventure-clouds></adventure-clouds>
       <div class="adv-content">
         <div class="adv-title">👗 ארון החפצים</div>
+        <adventure-companion v-if="firstRun" message="קודם בונים דמות! בחרו דמות, צבע וחבר למסע 🎨"></adventure-companion>
         <div style="text-align: center; margin-bottom: 18px;">
           <adventure-avatar :size="110" :key="refreshKey"></adventure-avatar>
           <companion-sprite :emoji="avatar.companion" :size="95" style="margin-right: 12px;"></companion-sprite>
@@ -381,13 +474,18 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
             </span>
           </div>
         </div>
-        <router-link to="/adventure" class="adv-back">→ חזרה למפת העולמות</router-link>
+        <div v-if="firstRun" class="adv-card adv-pop adv-pulse adv-cta" @click="startAdventure">
+          <span class="adv-sprite adv-float">🚀</span>
+          <div class="adv-card-title">יוצאים להרפתקה! ▶</div>
+        </div>
+        <router-link v-else to="/adventure" class="adv-back">→ חזרה למפת העולמות</router-link>
       </div>
     </div>`,
     data: function () {
         return {
             avatar: getAdventureAvatar(),
             refreshKey: 0,
+            firstRun: this.$route.query.first === '1',
             sections: [
                 {field: 'base', title: 'הדמות שלי', options: this.buildOptions('base')},
                 {field: 'color', title: 'צבע הקסם', options: this.buildOptions('color')},
@@ -397,6 +495,13 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
         };
     },
     methods: {
+        startAdventure: function () {
+            setLocalStorage('adv_onboarded', true);
+            if (typeof gtag === 'function') {
+                gtag('event', 'adventure_onboarded');
+            }
+            this.$router.push('/adventure');
+        },
         buildOptions: function (field) {
             return ADVENTURE_AVATAR_OPTIONS[field].map(option => ({
                 value: option.value,
@@ -415,25 +520,41 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
     },
 });
 
-// The parallel entry screen: player card + world selection
+// The parallel entry screen: player card + guided continue + world selection
 var AdventureHomeComponent = Vue.component('adventure-home', {
     template: `
-    <div class="adv-screen" dir="rtl">
+    <div class="adv-screen adv-art-home" dir="rtl" v-if="ready">
       <adventure-clouds></adventure-clouds>
       <div class="adv-content">
         <div class="adv-title">🗺️ הרפתקה</div>
         <adventure-player-card></adventure-player-card>
-        <adventure-companion message="לאן נצא להרפתקה היום?"></adventure-companion>
+        <adventure-companion :message="companionMessage"></adventure-companion>
+
+        <!-- The one guided call to action -->
+        <div v-if="nextStep" class="adv-card adv-pop adv-pulse adv-cta" @click="continueAdventure">
+          <span class="adv-sprite adv-float">{{ nextStep.emoji }}</span>
+          <div style="flex: 1;">
+            <div class="adv-card-title">▶ ממשיכים בהרפתקה</div>
+            <div class="adv-card-sub">{{ nextStep.name }}</div>
+          </div>
+        </div>
+        <div v-else class="adv-card adv-pop" style="cursor: default;">
+          <span class="adv-sprite adv-float">🏆</span>
+          <div class="adv-card-title">כל הכבוד! סיימתם את כל ההרפתקה</div>
+        </div>
+
         <router-link to="/adventure/avatar" style="color: inherit;">
           <div class="adv-card adv-pop">
             <span class="adv-sprite">👗</span>
             <div class="adv-card-title">ארון החפצים — לעצב את הדמות שלי</div>
           </div>
         </router-link>
+
+        <div class="adv-section-label">כל העולמות</div>
         <div v-for="(world, i) in worlds" :key="world.id"
              class="adv-card adv-pop"
              :class="{'adv-locked': world.locked}"
-             :style="{animationDelay: (i * 0.08) + 's'}"
+             :style="{animationDelay: (i * 0.05) + 's'}"
              @click="enterWorld(world)">
           <span class="adv-sprite" :class="{'adv-float': !world.locked}">{{ world.emoji }}</span>
           <div style="flex: 1;">
@@ -449,23 +570,41 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
             <div class="adv-card-sub" v-else>הרפתקה חדשה!</div>
           </div>
         </div>
-        <router-link to="/" class="adv-back">→ חזרה לתפריט הרגיל</router-link>
+        <router-link to="/free" class="adv-back">→ מצב חופשי (להורים)</router-link>
       </div>
     </div>`,
     data: function () {
-        return {
-            worlds: WORLDS.map(world => ({
-                id: world.id,
-                name: world.name,
-                emoji: world.emoji || '🌍',
-                locked: !isWorldUnlocked(world),
-                completed: isWorldCompleted(world.id),
-                lockText: getWorldUnlockText(world),
-                state: getWorldLearningState(world.id),
-            })),
-        };
+        return {ready: false, nextStep: null, worlds: []};
+    },
+    created: function () {
+        // First run: send the child to build a character before anything else
+        if (!getLocalStorage('adv_onboarded', false)) {
+            this.$router.replace('/adventure/avatar?first=1');
+            return;
+        }
+        this.ready = true;
+        this.nextStep = getNextGuidedStep();
+        this.worlds = WORLDS.map(world => ({
+            id: world.id,
+            name: world.name,
+            emoji: world.emoji || '🌍',
+            locked: !isWorldUnlocked(world),
+            completed: isWorldCompleted(world.id),
+            lockText: getWorldUnlockText(world),
+            state: getWorldLearningState(world.id),
+        }));
+    },
+    computed: {
+        companionMessage: function () {
+            return this.nextStep ? 'בואו נמשיך מאיפה שעצרנו!' : 'סיימנו הכול — אפשר לשחק שוב 🏆';
+        },
     },
     methods: {
+        continueAdventure: function () {
+            if (this.nextStep) {
+                this.$router.push('/adventure/world/' + this.nextStep.worldId);
+            }
+        },
         enterWorld: function (world) {
             if (!world.locked) {
                 this.$router.push('/adventure/world/' + world.id);
@@ -477,14 +616,14 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
 // A world screen: learning summary + the encounter path
 var AdventureWorldComponent = Vue.component('adventure-world', {
     template: `
-    <div class="adv-screen" dir="rtl" v-if="world">
+    <div class="adv-screen" :class="artClass" dir="rtl" v-if="world">
       <adventure-clouds></adventure-clouds>
       <div class="adv-content">
         <div v-if="celebrate" class="adv-banner">
           כל הכבוד! 🎉
-          <span class="adv-bounce" style="animation-delay: 0s;">⭐</span>
-          <span class="adv-bounce" style="animation-delay: 0.15s;">⭐</span>
-          <span class="adv-bounce" style="animation-delay: 0.3s;">⭐</span>
+          <span v-for="n in 3" :key="n" class="adv-bounce"
+                :style="{animationDelay: (n * 0.15) + 's', opacity: n <= rewardStars ? 1 : 0.3}">⭐</span>
+          <div v-if="rewardCoins > 0" style="font-size: 0.7em; margin-top: 4px;">+{{ rewardCoins }} 🪙</div>
         </div>
         <div class="adv-title"><span class="adv-float" style="display: inline-block;">{{ world.emoji }}</span> {{ world.name }}</div>
         <adventure-player-card></adventure-player-card>
@@ -502,10 +641,12 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
           <div style="flex: 1;">
             <div class="adv-card-title">
               {{ step.index + 1 }}. {{ step.name }}
-              <span v-if="step.done">✅</span>
               <span v-if="step.locked">🔒</span>
             </div>
             <div class="adv-card-sub" v-if="step.current">⭐ כאן אנחנו</div>
+            <div class="adv-card-sub adv-stars" v-else-if="step.stars > 0">
+              <span v-for="n in 3" :key="n">{{ n <= step.stars ? '⭐' : '☆' }}</span>
+            </div>
           </div>
         </div>
         <router-link to="/adventure" class="adv-back">→ חזרה למפת העולמות</router-link>
@@ -518,6 +659,9 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
             steps: [],
             completed: false,
             celebrate: false,
+            rewardStars: 0,
+            rewardCoins: 0,
+            artClass: '',
         };
     },
     created: function () {
@@ -527,14 +671,18 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
             return;
         }
         this.world = world;
+        this.artClass = world.art && world.art.bg ? 'adv-art-' + world.art.bg : '';
         ensureWorldWeights(world);
         this.state = getWorldLearningState(world.id);
         this.completed = isWorldCompleted(world.id);
         this.celebrate = this.$route.query.celebrate === '1';
+        this.rewardStars = Number(this.$route.query.stars) || 0;
+        this.rewardCoins = Number(this.$route.query.coins) || 0;
         if (this.celebrate) {
             setTimeout(() => { this.celebrate = false; }, 3500);
         }
         const pointer = getEncounterPointer(world.id);
+        const starsMap = getWorldStars(world.id);
         this.steps = world.encounters.map((encounter, index) => {
             const display = getEncounterDisplay(world, encounter, index);
             return {
@@ -544,6 +692,7 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
                 done: index < pointer,
                 current: index === pointer,
                 locked: index > pointer,
+                stars: starsMap[index] || 0,
             };
         });
     },

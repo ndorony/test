@@ -9648,6 +9648,7 @@ const Login = {
 
 const routes = [
     {path: '/', component: MenuComponent,},
+    {path: '/free', component: MenuComponent,},
     {path: '/user', component: UserComponent},
     {path: '/menu/:currentMenu', component: MenuComponent,},
     {path: '/app/:currentAppId', component: AppComponent, props: true },
@@ -9698,9 +9699,13 @@ router.beforeEach((to, from, next) => {
   } else if (!username && to.path !== '/login') {
     sendMetric('/login');
     next('/login');
+  } else if (to.path === '/' && typeof getAdventureRoutes === 'function') {
+    // Adventure mode is the default experience; legacy menus live at /free
+    sendMetric('/adventure');
+    next('/adventure');
   } else if (username && to.path === '/login') {
-    sendMetric('/');
-    next('/');
+    sendMetric('/adventure');
+    next('/adventure');
   } else {
     sendMetric(to.path);
     next();

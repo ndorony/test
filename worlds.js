@@ -56,6 +56,7 @@ const HEBREW_LETTER_WORLDS = HEBREW_LETTER_GROUPS.map((group, index) => ({
     setItems: group.range.to - group.range.from + 1,
     questionIndex: 'letterName', // spoken name, auto-played
     resultIndex: 'letter',       // the child picks the letter
+    art: {bg: 'world_letters_bg'},
     unlock: index === 0 ? {playerLevel: 1} : {world: HEBREW_LETTER_GROUPS[index - 1].id},
     // Placeholder game lineup — the final choice of mini-games and skins will be decided separately
     encounters: [
@@ -76,6 +77,7 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
         setItems: 27, // review world — everything open (and seeded from the letter worlds)
         questionIndex: 'letterName',
         resultIndex: 'letter',
+        art: {bg: 'world_review_bg'},
         unlock: {world: 'hebrew6'},
         encounters: [
             {type: 'learn'},
@@ -96,6 +98,7 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
         questionIndex: 'letter',
         resultIndex: 'letter',
         questionType: 'speech',
+        art: {bg: 'world_nikud_bg'},
         unlock: {world: 'hebrewreview'},
         encounters: [
             {type: 'learn'},
@@ -113,6 +116,7 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
         setItems: 3,
         questionIndex: 'english_name',
         resultIndex: 'emoji',
+        art: {bg: 'world_english_bg'},
         unlock: {playerLevel: 2},
         encounters: [
             {type: 'learn'},
@@ -130,6 +134,7 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
         setItems: 3,
         questionIndex: 'english_name',
         resultIndex: 'emoji',
+        art: {bg: 'world_english_bg'},
         unlock: {playerLevel: 3},
         encounters: [
             {type: 'learn'},
@@ -147,6 +152,7 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
         setItems: 3,
         questionIndex: 'english_name',
         resultIndex: 'hebrew',
+        art: {bg: 'world_english_bg'},
         unlock: {playerLevel: 4},
         encounters: [
             {type: 'learn'},

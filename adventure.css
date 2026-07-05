@@ -20,6 +20,46 @@
     padding: 16px 12px 40px;
 }
 
+/* Painted backgrounds (Phase F). The gradient above stays as a fallback, so
+   these classes are harmless until the art files exist. background-image with
+   a missing file simply shows nothing and the gradient shows through. */
+.adv-screen.adv-art-home,
+.adv-screen.adv-art-avatar,
+.adv-screen[class*="adv-art-"] {
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+.adv-screen.adv-art-home            { background-image: url('assets/adventure/art/home_bg.jpg'); }
+.adv-screen.adv-art-avatar          { background-image: url('assets/adventure/art/avatar_bg.jpg'); }
+.adv-screen.adv-art-world_letters_bg { background-image: url('assets/adventure/art/world_letters_bg.jpg'); }
+.adv-screen.adv-art-world_review_bg  { background-image: url('assets/adventure/art/world_review_bg.jpg'); }
+.adv-screen.adv-art-world_nikud_bg   { background-image: url('assets/adventure/art/world_nikud_bg.jpg'); }
+.adv-screen.adv-art-world_english_bg { background-image: url('assets/adventure/art/world_english_bg.jpg'); }
+
+/* A translucent scrim keeps text readable over busy painted backgrounds */
+.adv-screen[class*="adv-art-"] .adv-content {
+    background: rgba(255, 255, 255, 0.28);
+    border-radius: 22px;
+    backdrop-filter: blur(1.5px);
+}
+
+/* Guided call-to-action card + section label + earned stars row */
+.adv-cta {
+    background: linear-gradient(100deg, #fff0c9, #ffd9ec 60%, #e5d5ff);
+    border: 3px solid #ffc828;
+}
+.adv-section-label {
+    font-weight: bold;
+    font-size: 1.05em;
+    margin: 18px 4px 8px;
+    color: #4c3585;
+}
+.adv-stars {
+    font-size: 0.95em;
+    letter-spacing: 1px;
+}
+
 /* --- Decorative drifting clouds (pure CSS layer behind the content) --- */
 
 .adv-clouds {
