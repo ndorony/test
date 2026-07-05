@@ -26,6 +26,8 @@ apps =  {
             {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', appType: 'platformer', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
             {icon: 'sports_esports', name:'מבוך האוצר', type: 'app', appType: 'treasure_maze', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'בחר את הדלת הנכונה'},
             {icon: 'timeline', name:'חבר במילים', type: 'app', appType: 'word_link', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'מתחו קו מהמילה הנופלת אל בת הזוג שלה'},
+            {icon: 'sports_kabaddi', name:'דו-קרב', type: 'app', appType: 'duel_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
+            {icon: 'auto_fix_high', name:'דו-קרב הקוסמים', type: 'app', appType: 'wizard_duel', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
           ]
         },
         {icon: 'format_shapes', name:'שם לאות', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
@@ -288,6 +290,10 @@ apps =  {
         {icon: 'directions_run', name:'הרפתקת ריצה - מילים חדשות', type: 'app', appType: 'platformer', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
         {icon: 'sports_esports', name:'מבוך האוצר - חיות', type: 'app', appType: 'treasure_maze', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'בחר את הדלת הנכונה'},
         {icon: 'sports_esports', name:'מבוך האוצר - מילים חדשות', type: 'app', appType: 'treasure_maze', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'בחר את הדלת הנכונה'},
+        {icon: 'sports_kabaddi', name:'דו-קרב - חיות', type: 'app', appType: 'duel_shooter', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
+        {icon: 'sports_kabaddi', name:'דו-קרב - מילים חדשות', type: 'app', appType: 'duel_shooter', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
+        {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - חיות', type: 'app', appType: 'wizard_duel', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
+        {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - מילים חדשות', type: 'app', appType: 'wizard_duel', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
       ]
     },
     {
@@ -302,6 +308,8 @@ apps =  {
         {icon: 'sports_esports', name:'מטווח בלונים - חיבור', type: 'app', appType: 'balloon_shooter', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'פגע בבלון עם התשובה הנכונה'},
         {icon: 'directions_run', name:'הרפתקת ריצה - חיבור', type: 'app', appType: 'platformer', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
         {icon: 'sports_esports', name:'מבוך האוצר - חיבור', type: 'app', appType: 'treasure_maze', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'בחר את הדלת הנכונה'},
+        {icon: 'sports_kabaddi', name:'דו-קרב - חיבור', type: 'app', appType: 'duel_shooter', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
+        {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - כפל', type: 'app', appType: 'wizard_duel', listName: 'MULTIPLICATION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
       ]
     },
     {

@@ -6541,6 +6541,2426 @@ var PlatformerComponent = Vue.component('platformer', Vue.extend({
 }));
 
 
+// Tiny WebAudio synth for the duel game - pew/click/boom effects with no audio
+// files. The context is created lazily on the first user click (autoplay policy)
+// and every call is safe to make even where WebAudio is unavailable.
+var duelSfx = (function () {
+    let ctx = null;
+    function ac() {
+        try {
+            if (!ctx) {
+                ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+            return ctx;
+        } catch (e) {
+            return null;
+        }
+    }
+    function tone(freq, dur, type, vol, when = 0, slideTo = 0) {
+        const c = ac();
+        if (!c) return;
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, c.currentTime + when);
+        if (slideTo) {
+            o.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), c.currentTime + when + dur);
+        }
+        g.gain.setValueAtTime(vol, c.currentTime + when);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + when + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(c.currentTime + when);
+        o.stop(c.currentTime + when + dur + 0.05);
+    }
+    function noise(dur, vol, when = 0) {
+        const c = ac();
+        if (!c) return;
+        const buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) {
+            d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+        }
+        const s = c.createBufferSource();
+        s.buffer = buf;
+        const f = c.createBiquadFilter();
+        f.type = 'lowpass';
+        f.frequency.value = 900;
+        const g = c.createGain();
+        g.gain.value = vol;
+        s.connect(f);
+        f.connect(g);
+        g.connect(c.destination);
+        s.start(c.currentTime + when);
+    }
+    return {
+        unlock: ac,
+        pew: function () { tone(900, 0.18, 'square', 0.12, 0, 200); },
+        superPew: function () { tone(1400, 0.28, 'sawtooth', 0.14, 0, 300); tone(700, 0.28, 'square', 0.1, 0.04, 200); },
+        click: function () { tone(220, 0.05, 'square', 0.14); tone(170, 0.05, 'square', 0.12, 0.1); },
+        fizzle: function () { noise(0.35, 0.1); },
+        boom: function () { noise(0.3, 0.25); tone(130, 0.3, 'triangle', 0.2, 0, 55); },
+        enemyPew: function () { tone(420, 0.22, 'sawtooth', 0.12, 0, 160); },
+        whoosh: function () { noise(0.22, 0.06); tone(700, 0.2, 'sawtooth', 0.03, 0, 250); },
+        hurt: function () { tone(320, 0.25, 'triangle', 0.16, 0, 140); },
+        fanfare: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.2, 'square', 0.12, i * 0.13); }); },
+        sad: function () { [392, 330, 262].forEach(function (f, i) { tone(f, 0.28, 'triangle', 0.12, i * 0.2); }); },
+    };
+})();
+
+// Duel Shooter - a real-time 3D showdown (Three.js). Answering questions loads
+// your magazine: a correct answer adds a golden energy bolt, a wrong answer adds
+// a broken (dud) bolt that clearly doesn't work. When the magazine is full both
+// fighters step out from behind their crates: golden bolts streak across the
+// arena and hit the boss, a dud just sputters out of the barrel and drops
+// ("click!"), giving the boss one shot back at you. Each side has 10 HP shown on
+// fighting-game health bars. Bosses are the maze creatures (orc, ghost, dragon);
+// the hero is the animated robot with a ray gun. Nobody gets hurt for real -
+// the loser falls over comically and the winner dances.
+var DuelShooterComponent = Vue.component('duel-shooter', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="ds3-wrap" ref="wrap" :class="{'ds-shake': arenaShake}">
+            <div class="ds3-arena" ref="arena"></div>
+
+            <div class="ds3-progress" v-if="progress && progress.total">
+                <div class="ds3-progress-fill" :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
+            </div>
+
+            <div class="ds3-hud" dir="ltr">
+                <div class="ds3-side">
+                    <div class="ds3-name">{{ hero.icon }} אני <span class="ds3-score">⭐ {{ score }}</span></div>
+                    <div class="ds3-hpbar"><div class="ds3-hpfill" :style="hpStyle(playerHp)"></div></div>
+                </div>
+                <div class="ds3-vs">VS<br><span>יריב {{ bossIndex + 1 }}/{{ villains.length }}</span></div>
+                <div class="ds3-side ds3-side-enemy">
+                    <div class="ds3-name">{{ villain.icon }} {{ villain.name }}</div>
+                    <div class="ds3-hpbar ds3-flip"><div class="ds3-hpfill" :style="hpStyle(enemyHp)"></div></div>
+                </div>
+            </div>
+
+            <div class="ds3-question" v-if="started && phase === 'load'" v-html="exercise"></div>
+
+            <div class="ds3-flash" v-if="message.value"
+                 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</div>
+
+            <div class="ds-mag" dir="ltr">
+                <div v-for="n in magSize" :key="'m'+n" class="ds-slot" :class="slotClass(n - 1)">
+                    <span v-if="magazine[n-1] && !magazine[n-1].good">✖</span>
+                    <span v-else-if="magazine[n-1] && magazine[n-1].super">⚡</span>
+                </div>
+            </div>
+
+            <div class="ds-msg">{{ duelMsg }}</div>
+
+            <a class="ds3-fs-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
+            <a class="ds3-hero-btn" v-if="started && phase === 'load'" @click="switchHero">🔁 {{ hero.icon }} {{ hero.label }}</a>
+
+            <div v-for="d in dmgPops" :key="'dp'+d.id" class="ds-dmg" :style="{left: d.x + '%', color: d.color}">{{ d.text }}</div>
+            <template v-if="phase === 'victory'">
+                <div v-for="c in confetti" :key="'cf'+c.id" class="ds-confetti"
+                     :style="{left: c.left + '%', background: c.color, animationDelay: c.delay + 's'}"></div>
+            </template>
+
+            <div class="ds3-start" v-if="!started" @click="startGame">
+                <h4>🏹 דו-קרב 🎯</h4>
+                <p v-if="currentApp && currentApp.title">{{ currentApp.title }}</p>
+                <p>הסתתר מאחורי שקי החול, בחר את הכדור הנכון בעמדת התחמושת — וכשהמחסנית מלאה צא לקרב!</p>
+                <a class="btn-large amber darken-2 ds3-start-btn">▶ התחל במסך מלא</a>
+            </div>
+        </div>
+    </div>`,
+
+    extends: BaseGameComponent,
+
+    data: function() { return {
+        phase: 'load',          // 'load' | 'duel' | 'victory' | 'defeat'
+        results: [],
+        magazine: [],           // [{good: bool, super: bool, state: 'ready'|'spent'}]
+        fireIndex: 0,
+        maxHp: 10,
+        playerHp: 10,
+        enemyHp: 10,
+        locked: false,
+        started: false,         // start-overlay clicked (also requests fullscreen)
+        arenaShake: false,
+        streak: 0,              // consecutive correct answers; every 3rd loads a super bolt
+        bossIndex: 0,
+        // KayKit skeletons (CC0) with a full baked animation library, then the
+        // Quaternius dragon as the final boss. `clips` maps game actions to
+        // each model's own clip names (lowercased).
+        heroIndex: 0,
+        heroOptions: [
+            {key: 'mage', label: 'קוסם', icon: '🧙', url: 'assets/models/duel/Mage.glb', height: 1.7,
+             clips: {idle: 'idle', hide: 'spellcasting', run: 'running_a', shoot: 'spellcast_shoot',
+                     hit: 'hit_a', death: 'death_a', cheer: 'cheer'},
+             hideMeshes: [], muzzleMesh: '2h_staff'},
+            {key: 'rogue', label: 'הרפתקן', icon: '🏹', url: 'assets/models/duel/Rogue.glb', height: 1.65,
+             clips: {idle: '2h_ranged_aiming', hide: '2h_ranged_aiming', run: 'running_a', shoot: '2h_ranged_shoot',
+                     hit: 'hit_a', death: 'death_a', cheer: 'cheer'},
+             hideMeshes: ['1h_crossbow', 'knife_offhand'], muzzleMesh: '2h_crossbow'},
+            {key: 'knight', label: 'אביר', icon: '🛡️', url: 'assets/models/duel/Knight.glb', height: 1.7,
+             clips: {idle: 'idle', hide: 'blocking', run: 'running_a', shoot: '1h_melee_attack_slice_diagonal',
+                     hit: 'hit_a', death: 'death_a', cheer: 'cheer'},
+             hideMeshes: ['2h_sword', '1h_sword_offhand', 'badge_shield', 'spike_shield', 'rectangle_shield'],
+             muzzleMesh: '1h_sword'},
+            {key: 'robot', label: 'רובוט', icon: '🤖', url: 'assets/models/duel/RobotExpressive.glb', height: 1.55,
+             clips: {idle: 'idle', hide: 'sitting', run: 'running', shoot: 'punch',
+                     hit: 'no', death: 'death', cheer: 'dance'},
+             hideMeshes: [], muzzleMesh: null},
+        ],
+        villains: [
+            {key: 'minion',  icon: '💀', name: 'השלד הקטן',   url: 'assets/models/duel/Skeleton_Minion.glb',  height: 1.5,  y: 0,
+             clips: {idle: 'idle_combat', run: 'running_a', attack: 'throw', hit: 'hit_a', death: 'death_a', cheer: 'taunt', spawn: 'skeletons_awaken_standing'}},
+            {key: 'warrior', icon: '⚔️', name: 'השלד הלוחם',  url: 'assets/models/duel/Skeleton_Warrior.glb', height: 1.8,  y: 0,
+             clips: {idle: 'idle_combat', run: 'running_a', attack: 'throw', hit: 'hit_a', death: 'death_a', cheer: 'taunt', spawn: 'skeletons_awaken_standing'}},
+            {key: 'skelmage', icon: '🔮', name: 'קוסם השלדים', url: 'assets/models/duel/Skeleton_Mage.glb',   height: 1.85, y: 0,
+             clips: {idle: 'idle_combat', run: 'running_a', attack: 'spellcast_shoot', hit: 'hit_a', death: 'death_a', cheer: 'taunt', spawn: 'skeletons_awaken_standing'}},
+            {key: 'dragon',  icon: '🐉', name: 'הדרקון',      url: 'assets/models/maze/dragon.glb',           height: 2.4,  y: 0.35,
+             clips: {idle: 'flying_idle', run: 'flying_idle', attack: 'headbutt', hit: 'headbutt', death: 'death', cheer: 'headbutt', spawn: 'flying_idle'}},
+        ],
+        duelMsg: '',
+        fxId: 0,
+        dmgPops: [],            // floating damage numbers (HTML overlay)
+        confetti: [],
+        timeouts: [],
+    }},
+
+    computed: {
+        magSize: function() {
+            return (this.currentApp && this.currentApp.magazineSize) ? this.currentApp.magazineSize : 6;
+        },
+        villain: function() {
+            return this.villains[this.bossIndex % this.villains.length];
+        },
+        hero: function() {
+            return this.heroOptions[this.heroIndex % this.heroOptions.length];
+        },
+    },
+
+    methods: {
+        create: function () {
+            this.clearTimers();
+            this.bossIndex = getLocalStorage(`${this.currentAppId}_duel_boss`, 0) % this.villains.length;
+            this.heroIndex = getLocalStorage('duel_hero_choice', 0) % this.heroOptions.length;
+            this.playerHp = this.maxHp;
+            this.enemyHp = this.maxHp;
+            this.magazine = [];
+            this.fireIndex = 0;
+            this.streak = 0;
+            this.phase = 'load';
+            this.dmgPops = [];
+            this.confetti = [];
+            this.duelMsg = this.villain.name + ' יורה לעברך! הסתתר וטען כדורים מעמדת התחמושת!';
+            this.message = {};
+            this.resetStage3D();
+            this.nextQuestion();
+            // First entry seeds the weights inside nextQuestion; honor the news
+            // screen / level-complete navigation just like MCQComponent does.
+            this.reloadProgress();
+        },
+
+        nextQuestion: function () {
+            let question = generateFromList(this.currentApp.listName, this.currentApp.questionIndex,
+                                            this.currentApp.resultIndex, this.currentAppId,
+                                            getSetItems(this.currentApp), questionType=this.currentApp.questionType);
+            this.results = this.shuffle(question.options);
+            this.exercise = question.question;
+            this.result = question.result;
+            this.questionIndex = question.questionIndex;
+            this.buildAnswerCards3D();
+            question.action();
+            this.locked = false;
+            this.$forceUpdate();
+        },
+
+        // While loading the magazine only the progress bar is refreshed; navigation
+        // (level done / news screen) waits until the duel resolves, so a full
+        // magazine always gets fired.
+        refreshProgress: function () {
+            this.progress = getCurrentLevelProgress(this.currentAppId);
+        },
+
+        hpStyle: function (hp) {
+            const pct = Math.max(0, hp / this.maxHp * 100);
+            const color = pct > 60 ? '#43d675' : (pct > 30 ? '#ffb300' : '#ff5252');
+            return {width: pct + '%', backgroundColor: color, boxShadow: '0 0 8px ' + color};
+        },
+
+        startGame: function () {
+            duelSfx.unlock();
+            this.started = true;
+            this.enterFullscreen();
+        },
+
+        // Cycle the playable character (choice is saved for all duel games)
+        switchHero: function () {
+            if (this.phase !== 'load') return;
+            this.heroIndex = (this.heroIndex + 1) % this.heroOptions.length;
+            setLocalStorage('duel_hero_choice', this.heroIndex);
+            this.loadHero3D();
+        },
+
+        enterFullscreen: function () {
+            const el = this.$refs.wrap;
+            if (!el || document.fullscreenElement) return;
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (req) {
+                try {
+                    const p = req.call(el);
+                    // A shooter wants landscape; supported on Android in fullscreen
+                    const lock = () => {
+                        try {
+                            if (screen.orientation && screen.orientation.lock) {
+                                screen.orientation.lock('landscape').catch(() => {});
+                            }
+                        } catch (e) {}
+                    };
+                    if (p && p.then) { p.then(lock).catch(() => {}); } else { lock(); }
+                } catch (e) { /* embedded mode is fine */ }
+            }
+        },
+
+        toggleFullscreen: function () {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+            } else {
+                this.enterFullscreen();
+            }
+        },
+
+        answer: function (index) {
+            if (this.locked || this.phase !== 'load') {
+                return
+            }
+            this.locked = true;
+            duelSfx.unlock();
+            const good = this.results[index] === this.result;
+            let superBullet = false;
+            if (good) {
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                this.score += 1;
+                this.streak += 1;
+                superBullet = this.streak % 3 === 0;
+                this.message = superBullet
+                    ? {value: 'רצף של ' + this.streak + '! כדור-על נטען! ⚡⚡', success: true}
+                    : {value: 'כדור זהב נוסף למחסנית! ✨', success: true};
+            } else {
+                failureSound.play();
+                this.score = Math.max(0, this.score - 1);
+                this.streak = 0;
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                this.message = {value: 'אופס! נכנס כדור מקולקל 💨 התשובה הנכונה: ' + this.result, error: true};
+            }
+            this.saveScore();
+            this.refreshProgress();
+            this.answerFeedback3D(index, good);
+            this.magazine.push({good: good, super: superBullet, state: 'ready'});
+            this.later(() => {
+                this.message = {};
+                if (this.magazine.length >= this.magSize) {
+                    this.startDuel();
+                } else {
+                    this.nextQuestion();
+                }
+            }, good ? 650 : 2200);
+        },
+
+        startDuel: function () {
+            this.phase = 'duel';
+            this.duelMsg = 'המחסנית מלאה! הקרב מתחיל! 🔥';
+            if (this._duel) this._duel.answerRoot.visible = false;
+            this.setCamPreset3D('battle', 1.0);
+            this.walkTo3D(true, () => {
+                this.later(this.fireNext, 350);
+            });
+        },
+
+        fireNext: function () {
+            if (this.enemyHp <= 0) {
+                return this.endDuel(true);
+            }
+            if (this.playerHp <= 0) {
+                return this.endDuel(false);
+            }
+            if (this.fireIndex >= this.magazine.length) {
+                return this.endVolley();
+            }
+            const bullet = this.magazine[this.fireIndex];
+            if (bullet.good) {
+                const dmg = bullet.super ? 2 : 1;
+                this.duelMsg = bullet.super ? 'כדור-על בדרך!! ⚡⚡' : 'כדור זהב בדרך! ⚡';
+                if (bullet.super) { duelSfx.superPew(); } else { duelSfx.pew(); }
+                this.heroShoot3D(bullet.super, () => {
+                    bullet.state = 'spent';
+                    this.enemyHp = Math.max(0, this.enemyHp - dmg);
+                    this.shakeArena();
+                    duelSfx.boom();
+                    this.dmgPop(74, '-' + dmg, bullet.super ? '#00e5ff' : '#ffd54f');
+                    this.fireIndex += 1;
+                    this.later(this.fireNext, 500);
+                });
+            } else {
+                this.duelMsg = 'קליק... קליק... הכדור המקולקל לא יורה! 💨';
+                duelSfx.click();
+                this.dudDrop3D(() => {
+                    bullet.state = 'spent';
+                    duelSfx.fizzle();
+                    this.duelMsg = 'עכשיו תור ' + this.villain.name + ' לירות! 😈';
+                    this.later(() => {
+                        duelSfx.enemyPew();
+                        this.enemyShoot3D(() => {
+                            this.playerHp = Math.max(0, this.playerHp - 1);
+                            this.shakeArena();
+                            duelSfx.hurt();
+                            this.dmgPop(22, '-1', '#ff8a80');
+                            this.fireIndex += 1;
+                            this.later(this.fireNext, 500);
+                        });
+                    }, 400);
+                });
+            }
+        },
+
+        shakeArena: function () {
+            this.arenaShake = false;
+            this.later(() => { this.arenaShake = true; }, 20);
+            this.later(() => { this.arenaShake = false; }, 470);
+            // Quick camera dolly punch on impact (battle view only)
+            const g = this._duel;
+            if (g && this.phase !== 'load') {
+                const b = g.camPresets.battle;
+                const z = (g.camera.aspect < 0.9 && b.posP) ? b.posP[2] : b.pos[2];
+                this.tween3D(g.cam.pos, 'z', z - 0.5, 0.08, {
+                    ease: 'out',
+                    onDone: () => this.tween3D(g.cam.pos, 'z', z, 0.35),
+                });
+            }
+        },
+
+        endVolley: function () {
+            this.duelMsg = 'המחסנית ריקה! חוזרים למחבוא לאסוף כדורים 🔄';
+            this.setCamPreset3D('cover', 1.4);
+            this.walkTo3D(false, () => {
+                if (this.reloadProgress()) {
+                    this.magazine = [];
+                    this.fireIndex = 0;
+                    this.phase = 'load';
+                    this.setHeroClip('hide');
+                    this.duelMsg = 'לחץ על הכדור עם התשובה הנכונה!';
+                    this.nextQuestion();
+                }
+            });
+        },
+
+        endDuel: function (won) {
+            this.phase = won ? 'victory' : 'defeat';
+            if (won) {
+                duelSfx.fanfare();
+                successSound.play();
+                const lastBoss = this.bossIndex === this.villains.length - 1;
+                this.score += lastBoss ? 10 : 5;
+                this.saveScore();
+                setLocalStorage(`${this.currentAppId}_duel_boss`, (this.bossIndex + 1) % this.villains.length);
+                this.makeConfetti();
+                this.duelMsg = '';
+                this.enemyDie3D();
+                this.setHeroClip('cheer');
+                this.message = lastBoss
+                    ? {value: 'אלוף!! ניצחת את כל היריבים! 🏆👑', success: true}
+                    : {value: 'ניצחון! ' + this.villain.name + ' מובס! 🏆', success: true};
+            } else {
+                duelSfx.sad();
+                this.duelMsg = '';
+                this.heroDie3D();
+                this.enemyCheer3D();
+                this.message = {value: 'הפעם ' + this.villain.name + ' ניצח... בוא ננסה שוב! 💪', error: true};
+            }
+            this.later(() => {
+                if (this.reloadProgress()) {
+                    this.create();
+                }
+            }, 3600);
+        },
+
+        makeConfetti: function () {
+            const colors = ['#ffd54f', '#4fc3f7', '#81c784', '#f06292', '#ba68c8', '#ff8a65'];
+            this.confetti = Array.from({length: 40}, (_, i) => ({
+                id: i,
+                left: Math.random() * 100,
+                delay: Math.random() * 1.2,
+                color: colors[i % colors.length],
+            }));
+        },
+
+        dmgPop: function (x, text, color) {
+            const id = ++this.fxId;
+            this.dmgPops.push({id: id, x: x, text: text, color: color});
+            this.later(() => { this.dmgPops = this.dmgPops.filter(d => d.id !== id); }, 1000);
+        },
+
+        slotClass: function (i) {
+            const b = this.magazine[i];
+            if (!b) {
+                return {};
+            }
+            return {
+                'ds-good': b.good && !b.super,
+                'ds-super': b.good && b.super,
+                'ds-dud': !b.good,
+                'ds-spent': b.state === 'spent',
+                'ds-firing': this.phase === 'duel' && i === this.fireIndex && b.state !== 'spent',
+            };
+        },
+
+        later: function (fn, ms) {
+            this.timeouts.push(setTimeout(fn, ms));
+        },
+
+        clearTimers: function () {
+            this.timeouts.forEach(clearTimeout);
+            this.timeouts = [];
+        },
+
+        // ------------------------------------------------------------------
+        // 3D layer. Everything below renders the fight; the game logic above
+        // works even if THREE fails to load (callbacks still fire via timers).
+        // ------------------------------------------------------------------
+
+        initScene3D: function () {
+            if (typeof THREE === 'undefined' || !this.$refs.arena) {
+                return false;
+            }
+            const area = this.$refs.arena;
+            const g = this._duel = {
+                area: area,
+                clock: new THREE.Clock(),
+                tweens: [],
+                bursts: [],
+                mixers: [],
+                heroHomeX: -3.1, heroHomeZ: 1.0, heroOutX: -1.25,
+                enemyHomeX: 2.95, enemyOutX: 1.25,
+            };
+
+            g.renderer = new THREE.WebGLRenderer({antialias: true});
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+            g.renderer.outputEncoding = THREE.sRGBEncoding;
+            g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            g.renderer.toneMappingExposure = 1.15;
+            g.renderer.shadowMap.enabled = true;
+            g.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            area.appendChild(g.renderer.domElement);
+
+            g.scene = new THREE.Scene();
+            g.scene.background = this.makeSkyTexture3D();
+            g.scene.fog = new THREE.Fog(0x2b2350, 16, 34);
+
+            g.camera = new THREE.PerspectiveCamera(42, area.clientWidth / area.clientHeight, 0.1, 100);
+            // Two camera moods: "cover" crouches behind the hero's crate while
+            // loading bullets; "battle" is the wide side-on duel view.
+            // posP/lookP are the portrait-phone variants: same framing, camera
+            // pulled back along the view direction so everything stays in shot
+            g.camPresets = {
+                cover:  {pos: [-6.4, 1.9, 4.4], look: [-1.4, 0.85, -0.3], posP: [-9.4, 2.5, 7.2]},
+                battle: {pos: [0, 2.25, 7.7],   look: [0, 1.1, 0],        posP: [0, 3.1, 13.5]},
+            };
+            g.cam = {
+                pos: new THREE.Vector3().fromArray(g.camPresets.cover.pos),
+                look: new THREE.Vector3().fromArray(g.camPresets.cover.look),
+            };
+            g.camera.position.copy(g.cam.pos);
+            g.camera.lookAt(g.cam.look);
+            g.nextSuppress = 2.5;
+
+            g.raycaster = new THREE.Raycaster();
+            this._onPointer = ev => {
+                if (!this._duel || this.phase !== 'load' || !this.started || this.locked) return;
+                const rect = g.renderer.domElement.getBoundingClientRect();
+                const ndc = new THREE.Vector2(
+                    ((ev.clientX - rect.left) / rect.width) * 2 - 1,
+                    -((ev.clientY - rect.top) / rect.height) * 2 + 1
+                );
+                g.raycaster.setFromCamera(ndc, g.camera);
+                const hits = g.raycaster.intersectObjects(g.answerRoot.children, true);
+                if (hits.length) {
+                    let o = hits[0].object;
+                    while (o && o.userData.answerIndex === undefined) o = o.parent;
+                    if (o) this.answer(o.userData.answerIndex);
+                }
+            };
+            g.renderer.domElement.addEventListener('pointerdown', this._onPointer);
+            this._onFsChange = () => this.later(() => this._onResize && this._onResize(), 80);
+            document.addEventListener('fullscreenchange', this._onFsChange);
+
+            g.scene.add(new THREE.HemisphereLight(0x8fa3ff, 0x3d2f20, 0.8));
+            const sun = new THREE.DirectionalLight(0xffd9a8, 1.05);
+            sun.position.set(-5, 8, 5);
+            sun.castShadow = true;
+            sun.shadow.mapSize.set(1024, 1024);
+            sun.shadow.camera.left = -8; sun.shadow.camera.right = 8;
+            sun.shadow.camera.top = 8; sun.shadow.camera.bottom = -8;
+            g.scene.add(sun);
+            // Cool blue moonlight rim from behind - gives the "night battle" pop
+            const rim = new THREE.DirectionalLight(0x7fa8ff, 0.55);
+            rim.position.set(6, 4, -6);
+            g.scene.add(rim);
+
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(60, 40),
+                new THREE.MeshStandardMaterial({map: this.makeSandTexture3D(), roughness: 1})
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            g.scene.add(ground);
+
+            // Background dunes + a few rocks for depth
+            const duneMat = new THREE.MeshStandardMaterial({color: 0x8a6a3f, roughness: 1});
+            [[-9, -10, 5], [0, -13, 7], [9, -10, 5]].forEach(d => {
+                const dune = new THREE.Mesh(new THREE.SphereGeometry(d[2], 16, 12), duneMat);
+                dune.position.set(d[0], -d[2] * 0.72, d[1]);
+                g.scene.add(dune);
+            });
+            const rockMat = new THREE.MeshStandardMaterial({color: 0x6b6560, roughness: 0.95});
+            [[-5.5, -2.5, 0.5], [5.8, -3.2, 0.65], [-2.2, -4.5, 0.4], [3.1, -5.2, 0.55]].forEach(r => {
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(r[2]), rockMat);
+                rock.position.set(r[0], r[2] * 0.6, r[1]);
+                rock.rotation.set(Math.random(), Math.random(), Math.random());
+                rock.castShadow = true;
+                g.scene.add(rock);
+            });
+
+            // Desert props: cacti silhouettes for depth
+            const cactusMat = new THREE.MeshStandardMaterial({color: 0x2f6b38, roughness: 0.9});
+            [[-7.5, -5, 1.2], [6.8, -7, 1.5], [-3.5, -8, 1.0], [8.5, -4, 0.9]].forEach(c => {
+                const cactus = new THREE.Group();
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 1.6, 8), cactusMat);
+                trunk.position.y = 0.8;
+                cactus.add(trunk);
+                [-1, 1].forEach(side => {
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.7, 8), cactusMat);
+                    arm.position.set(side * 0.32, 0.95, 0);
+                    arm.rotation.z = side * -0.9;
+                    cactus.add(arm);
+                    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.5, 8), cactusMat);
+                    up.position.set(side * 0.52, 1.3, 0);
+                    cactus.add(up);
+                });
+                cactus.position.set(c[0], 0, c[1]);
+                cactus.scale.setScalar(c[2]);
+                g.scene.add(cactus);
+            });
+
+            // Burning torches beside each cover crate - flickering battle-camp light
+            g.flames = [];
+            g.flameTex = this.makeGlowTexture3D('rgba(255,236,150,1)', 'rgba(255,120,20,0)');
+            [[-3.1, -1.0], [3.1, -1.0]].forEach((tp, i) => {
+                const pole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.05, 0.07, 1.5, 8),
+                    new THREE.MeshStandardMaterial({color: 0x5a4026, roughness: 0.9})
+                );
+                pole.position.set(tp[0], 0.75, tp[1]);
+                pole.castShadow = true;
+                g.scene.add(pole);
+                const flame = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: g.flameTex, blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                flame.position.set(tp[0], 1.65, tp[1]);
+                flame.scale.setScalar(0.55);
+                g.scene.add(flame);
+                const light = new THREE.PointLight(0xff9440, 1.1, 7);
+                light.position.set(tp[0], 1.7, tp[1]);
+                g.scene.add(light);
+                g.flames.push({sprite: flame, light: light, phase: i * 2.1});
+            });
+
+            // Real cover: sandbag walls the fighters crouch behind
+            this.makeSandbagWall3D(-2.1);
+            this.makeSandbagWall3D(2.1);
+
+            // Crates become camp props behind the lines (GLB swaps in when loaded)
+            g.crates = [this.makeCrate3D(-4.6, -0.7), this.makeCrate3D(4.6, -0.7)];
+
+            // The ammo rack - the in-world "machine" where bullets are chosen
+            this.makeAmmoRack3D();
+
+            // Actors: procedural stand-ins appear instantly; real models swap in
+            g.hero = this.makeFigure3D(0x3f7fe0, 0x274b86);
+            g.hero.group.position.set(g.heroHomeX, 0, g.heroHomeZ);
+            g.hero.group.rotation.y = Math.PI / 2;
+            g.scene.add(g.hero.group);
+
+            g.gun = new THREE.Group();
+            g.gun.position.set(0.05, 1.02, 0.32);
+            g.hero.group.add(g.gun);
+            const barrel = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.05, 0.07, 0.7, 10),
+                new THREE.MeshStandardMaterial({color: 0x37474f, metalness: 0.6, roughness: 0.35})
+            );
+            barrel.rotation.x = Math.PI / 2;
+            barrel.position.z = 0.35;
+            g.gun.add(barrel);
+            g.gunTipLocal = new THREE.Vector3(0, 0, 0.75);
+
+            g.enemy = null;
+            this.loadEnemy3D();
+            this.loadHero3D();
+            this.loadCrateModel3D();
+            this.loadProps3D();
+
+            // Reusable FX: muzzle flash sprite + light, tracer bolt, enemy orb
+            g.flashTex = this.makeGlowTexture3D('rgba(255,255,255,1)', 'rgba(255,180,40,0)');
+            g.flash = new THREE.Sprite(new THREE.SpriteMaterial({map: g.flashTex, blending: THREE.AdditiveBlending, depthWrite: false}));
+            g.flash.scale.setScalar(0.9);
+            g.flash.visible = false;
+            g.scene.add(g.flash);
+            g.flashLight = new THREE.PointLight(0xffc266, 0, 6);
+            g.scene.add(g.flashLight);
+
+            g.bolt = this.makeBolt3D(0xffc935);
+            g.superBolt = this.makeBolt3D(0x25e2ff);
+            g.superBolt.scale.setScalar(1.7);
+            g.dudBolt = this.makeBolt3D(0x8a8a8a);
+            g.orb = this.makeBolt3D(0xc45cff);
+            g.orb.scale.setScalar(1.4);
+
+            this._onResize = () => {
+                if (!this._duel) return;
+                const w = area.clientWidth, h = area.clientHeight;
+                g.renderer.setSize(w, h);
+                g.camera.aspect = w / h;
+                g.camera.updateProjectionMatrix();
+                // Re-frame for the new orientation (portrait uses farther presets)
+                if (g.camMode) this.setCamPreset3D(g.camMode);
+            };
+            window.addEventListener('resize', this._onResize);
+
+            const loop = () => {
+                if (!this._duel) return;
+                g.raf = requestAnimationFrame(loop);
+                const dt = Math.min(g.clock.getDelta(), 0.05);
+                const t = g.clock.elapsedTime;
+                g.mixers.forEach(m => m.update(dt));
+                this.updateTweens3D(dt);
+                this.updateBursts3D(dt);
+                // Torch flames flicker
+                g.flames.forEach(f => {
+                    const k = Math.sin(t * 11 + f.phase) * 0.5 + Math.sin(t * 23 + f.phase * 3) * 0.5;
+                    f.light.intensity = 1.05 + k * 0.3;
+                    f.sprite.scale.setScalar(0.5 + k * 0.09);
+                });
+                // Procedural stand-ins get a light idle bob so they never look frozen
+                if (g.hero && !g.hero.model) g.hero.group.position.y = Math.sin(t * 2.2) * 0.03;
+                if (g.enemy && !g.enemy.model && g.enemy.alive) g.enemy.group.position.y = (g.enemy.spec.y || 0) + Math.sin(t * 1.8 + 1) * 0.05;
+                // While you reload behind the crate the boss keeps up suppressing fire
+                if (this.phase === 'load' && this.started && g.enemy && g.enemy.alive && t > g.nextSuppress) {
+                    g.nextSuppress = t + 2.2 + Math.random() * 2;
+                    this.suppress3D();
+                }
+                // Camera rig position + subtle handheld sway
+                g.camera.position.set(
+                    g.cam.pos.x + Math.sin(t * 0.4) * 0.07,
+                    g.cam.pos.y + Math.cos(t * 0.3) * 0.045,
+                    g.cam.pos.z
+                );
+                g.camera.lookAt(g.cam.look);
+                g.renderer.render(g.scene, g.camera);
+            };
+            loop();
+            return true;
+        },
+
+        // --- textures & procedural builders ---
+
+        makeCanvasTex3D: function (size, draw) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size;
+            draw(canvas.getContext('2d'), size);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        },
+
+        makeSkyTexture3D: function () {
+            return this.makeCanvasTex3D(1024, (ctx, s) => {
+                const grad = ctx.createLinearGradient(0, 0, 0, s);
+                grad.addColorStop(0, '#0c0c2e');
+                grad.addColorStop(0.4, '#33245c');
+                grad.addColorStop(0.68, '#c65a3f');
+                grad.addColorStop(0.78, '#f4a45c');
+                grad.addColorStop(1, '#f8c476');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, s, s);
+                // soft nebula patches
+                [['rgba(186,104,200,0.16)', 0.22, 0.18, 0.3], ['rgba(79,195,247,0.10)', 0.6, 0.1, 0.24],
+                 ['rgba(240,98,146,0.10)', 0.42, 0.3, 0.34]].forEach(n => {
+                    const neb = ctx.createRadialGradient(s * n[1], s * n[2], 4, s * n[1], s * n[2], s * n[3]);
+                    neb.addColorStop(0, n[0]);
+                    neb.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = neb;
+                    ctx.fillRect(0, 0, s, s);
+                });
+                // stars - a few bright ones with cross sparkle
+                for (let i = 0; i < 220; i++) {
+                    const y = Math.random() * s * 0.55;
+                    const x = Math.random() * s;
+                    ctx.globalAlpha = 0.25 + Math.random() * 0.7;
+                    ctx.fillStyle = '#ffffff';
+                    const sz = Math.random() < 0.12 ? 3 : 1.6;
+                    ctx.fillRect(x, y, sz, sz);
+                    if (sz > 2) {
+                        ctx.globalAlpha = 0.3;
+                        ctx.fillRect(x - 4, y + 0.5, 11, 1);
+                        ctx.fillRect(x + 0.5, y - 4, 1, 11);
+                    }
+                }
+                ctx.globalAlpha = 1;
+                // big glowing moon
+                const mx = s * 0.76, my = s * 0.16;
+                const halo = ctx.createRadialGradient(mx, my, 10, mx, my, 150);
+                halo.addColorStop(0, 'rgba(255,246,214,0.55)');
+                halo.addColorStop(1, 'rgba(255,246,214,0)');
+                ctx.fillStyle = halo;
+                ctx.beginPath();
+                ctx.arc(mx, my, 150, 0, Math.PI * 2);
+                ctx.fill();
+                const moon = ctx.createRadialGradient(mx - 14, my - 14, 4, mx, my, 58);
+                moon.addColorStop(0, '#fffdf4');
+                moon.addColorStop(0.8, '#ffedb8');
+                moon.addColorStop(1, '#f4d88a');
+                ctx.fillStyle = moon;
+                ctx.beginPath();
+                ctx.arc(mx, my, 58, 0, Math.PI * 2);
+                ctx.fill();
+                // craters
+                ctx.fillStyle = 'rgba(200,170,110,0.35)';
+                [[-18, 8, 9], [14, -12, 7], [4, 22, 12], [-28, -20, 6]].forEach(c => {
+                    ctx.beginPath();
+                    ctx.arc(mx + c[0], my + c[1], c[2], 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            });
+        },
+
+        makeSandTexture3D: function () {
+            const tex = this.makeCanvasTex3D(256, (ctx, s) => {
+                ctx.fillStyle = '#b98d54';
+                ctx.fillRect(0, 0, s, s);
+                const shades = ['#a87e48', '#c69a5f', '#b1854e', '#cfa468'];
+                for (let i = 0; i < 2600; i++) {
+                    ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+                    ctx.fillRect(Math.random() * s, Math.random() * s, 2, 2);
+                }
+            });
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(7, 5);
+            return tex;
+        },
+
+        makeGlowTexture3D: function (inner, outer) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+            gradient.addColorStop(0, inner);
+            gradient.addColorStop(1, outer);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        },
+
+        makeCrate3D: function (x, z) {
+            const g = this._duel;
+            const group = new THREE.Group();
+            const woodMat = new THREE.MeshStandardMaterial({color: 0x8a5a2e, roughness: 0.9});
+            const box = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.05, 0.95), woodMat);
+            box.position.y = 0.525;
+            box.castShadow = true;
+            box.receiveShadow = true;
+            group.add(box);
+            const bandMat = new THREE.MeshStandardMaterial({color: 0x4a3218, roughness: 0.7});
+            [0.28, 0.78].forEach(y => {
+                const band = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 1.0), bandMat);
+                band.position.y = y;
+                group.add(band);
+            });
+            group.position.set(x, 0, z === undefined ? 0.15 : z);
+            g.scene.add(group);
+            return group;
+        },
+
+        // A stacked sandbag wall - reads as proper battle cover
+        makeSandbagWall3D: function (x) {
+            const g = this._duel;
+            const group = new THREE.Group();
+            const colors = [0x7d6b43, 0x6d5c38, 0x86754a, 0x76653f];
+            const rows = [
+                {y: 0.19, count: 5, offset: 0},
+                {y: 0.52, count: 4, offset: 0.21},
+                {y: 0.85, count: 3, offset: 0.42},
+            ];
+            rows.forEach(row => {
+                for (let i = 0; i < row.count; i++) {
+                    const bag = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.32, 10, 8),
+                        new THREE.MeshStandardMaterial({
+                            color: colors[(i + row.count) % colors.length],
+                            roughness: 1,
+                        })
+                    );
+                    bag.scale.set(0.85, 0.62, 1.35);
+                    bag.position.set(
+                        (Math.random() - 0.5) * 0.06,
+                        row.y,
+                        -0.85 + row.offset + i * 0.44
+                    );
+                    bag.rotation.y = (Math.random() - 0.5) * 0.2;
+                    bag.castShadow = true;
+                    bag.receiveShadow = true;
+                    group.add(bag);
+                }
+            });
+            group.position.set(x, 0, 0.15);
+            g.scene.add(group);
+            return group;
+        },
+
+        // The ammo rack: a wooden stand behind the hero's wall holding the four
+        // answer bullets. Clicking a bullet on the rack loads it into the gun.
+        makeAmmoRack3D: function () {
+            const g = this._duel;
+            const rack = new THREE.Group();
+            const woodMat = new THREE.MeshStandardMaterial({color: 0x6b4a26, roughness: 0.85});
+            [-0.44, 0.44].forEach(lx => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.2, 8), woodMat);
+                leg.position.set(lx, 1.1, -0.05);
+                leg.castShadow = true;
+                rack.add(leg);
+            });
+            const board = new THREE.Mesh(
+                new THREE.BoxGeometry(1.02, 1.78, 0.06),
+                new THREE.MeshStandardMaterial({color: 0x54381c, roughness: 0.9})
+            );
+            board.position.set(0, 1.16, -0.05);
+            board.castShadow = true;
+            rack.add(board);
+            // title plank
+            const titleCanvas = document.createElement('canvas');
+            titleCanvas.width = 512;
+            titleCanvas.height = 96;
+            const tctx = titleCanvas.getContext('2d');
+            tctx.fillStyle = '#3e2a12';
+            tctx.fillRect(0, 0, 512, 96);
+            tctx.strokeStyle = '#f2b632';
+            tctx.lineWidth = 8;
+            tctx.strokeRect(4, 4, 504, 88);
+            tctx.font = 'bold 56px Arial, sans-serif';
+            tctx.textAlign = 'center';
+            tctx.textBaseline = 'middle';
+            tctx.fillStyle = '#ffe9b0';
+            tctx.fillText('🔫 עמדת תחמושת', 256, 52);
+            const titleTex = new THREE.CanvasTexture(titleCanvas);
+            titleTex.encoding = THREE.sRGBEncoding;
+            const title = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.25, 0.24),
+                new THREE.MeshBasicMaterial({map: titleTex})
+            );
+            title.position.set(0, 2.2, -0.02);
+            rack.add(title);
+
+            rack.position.set(-4.5, 0, 1.65);
+            // face the cover camera
+            rack.rotation.y = Math.atan2(g.camPresets.cover.pos[0] - rack.position.x,
+                                         g.camPresets.cover.pos[2] - rack.position.z);
+            g.scene.add(rack);
+            g.rack = rack;
+            g.answerRoot = new THREE.Group();
+            rack.add(g.answerRoot);
+        },
+
+        // Simple articulated stand-in figure (used until a GLB loads, and forever
+        // when offline). Blue for the hero; the enemy variant gets horns.
+        makeFigure3D: function (color, darkColor, horns) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({color: color, roughness: 0.6});
+            const darkMat = new THREE.MeshStandardMaterial({color: darkColor, roughness: 0.7});
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.34, 0.85, 12), mat);
+            body.position.y = 0.85;
+            body.castShadow = true;
+            group.add(body);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 12), mat);
+            head.position.y = 1.5;
+            head.castShadow = true;
+            group.add(head);
+            const eye = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.05), darkMat);
+            eye.position.set(0, 1.53, 0.2);
+            group.add(eye);
+            [-0.14, 0.14].forEach(lx => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.45, 8), darkMat);
+                leg.position.set(lx, 0.22, 0);
+                leg.castShadow = true;
+                group.add(leg);
+            });
+            if (horns) {
+                [-0.14, 0.14].forEach(hx => {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.28, 8), darkMat);
+                    horn.position.set(hx, 1.75, 0);
+                    horn.rotation.z = hx > 0 ? -0.4 : 0.4;
+                    group.add(horn);
+                });
+            }
+            return {group: group, model: null, mixer: null, actions: null, current: null, alive: true};
+        },
+
+        makeBolt3D: function (color) {
+            const g = this._duel;
+            const bolt = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.09, 10, 8),
+                new THREE.MeshBasicMaterial({color: 0xffffff})
+            );
+            bolt.add(core);
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.makeGlowTexture3D('rgba(255,255,255,1)', 'rgba(255,255,255,0)'),
+                color: color, blending: THREE.AdditiveBlending, depthWrite: false,
+            }));
+            glow.scale.setScalar(0.55);
+            bolt.add(glow);
+            const light = new THREE.PointLight(color, 0.9, 4);
+            bolt.add(light);
+            bolt.visible = false;
+            g.scene.add(bolt);
+            return bolt;
+        },
+
+        // --- model loading ---
+
+        prepModel3D: function (model) {
+            model.traverse(o => {
+                if (o.isMesh) {
+                    o.castShadow = true;
+                    o.frustumCulled = false;
+                }
+            });
+        },
+
+        normalizeModel3D: function (model, height) {
+            let box = new THREE.Box3().setFromObject(model);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            model.scale.setScalar(height / (size.y || 1));
+            box = new THREE.Box3().setFromObject(model);
+            model.position.y -= box.min.y;
+            model.position.x -= (box.min.x + box.max.x) / 2;
+            model.position.z -= (box.min.z + box.max.z) / 2;
+        },
+
+        loadHero3D: function () {
+            const g = this._duel;
+            if (typeof THREE.GLTFLoader === 'undefined' || typeof THREE.AnimationMixer === 'undefined') return;
+            const spec = this.hero;
+            new THREE.GLTFLoader().load(
+                spec.url,
+                gltf => {
+                    if (!this._duel || this._duel !== g || this.hero !== spec) return;
+                    const model = gltf.scene;
+                    this.prepModel3D(model);
+                    this.normalizeModel3D(model, spec.height);
+                    // Swap: clear the stand-in / previous character (incl. gun)
+                    if (g.hero.mixer) g.mixers = g.mixers.filter(m => m !== g.hero.mixer);
+                    g.heroMuzzle = null;
+                    g.hero.current = null;
+                    for (let i = g.hero.group.children.length - 1; i >= 0; i--) {
+                        g.hero.group.remove(g.hero.group.children[i]);
+                    }
+                    g.hero.group.add(model);
+                    g.hero.model = model;
+                    g.hero.spec = spec;
+                    g.hero.mixer = new THREE.AnimationMixer(model);
+                    g.mixers.push(g.hero.mixer);
+                    g.hero.actions = {};
+                    gltf.animations.forEach(clip => {
+                        // Clip names may be prefixed, e.g. "CharacterArmature|Idle"
+                        g.hero.actions[clip.name.toLowerCase().split('|').pop()] = g.hero.mixer.clipAction(clip);
+                    });
+                    // The pack ships every weapon variant attached; keep only the
+                    // two-handed crossbow, and use it as the bolt's muzzle anchor.
+                    model.traverse(o => {
+                        const n = (o.name || '').toLowerCase();
+                        if (spec.hideMeshes.indexOf(n) >= 0) o.visible = false;
+                        if (n === spec.muzzleMesh) g.heroMuzzle = o;
+                    });
+                    this.setHeroClip(this.phase === 'load' ? 'hide' : 'idle');
+                },
+                undefined,
+                err => console.warn('Duel hero model failed to load - keeping the stand-in figure.', err)
+            );
+        },
+
+        loadEnemy3D: function () {
+            const g = this._duel;
+            if (!g) return;
+            const spec = this.villain;
+            if (g.enemy) {
+                g.scene.remove(g.enemy.group);
+                if (g.enemy.mixer) g.mixers = g.mixers.filter(m => m !== g.enemy.mixer);
+            }
+            // Stand-in monster appears immediately
+            g.enemy = this.makeFigure3D(0xb03a3a, 0x5e1f1f, true);
+            g.enemy.spec = spec;
+            g.enemy.group.position.set(g.enemyHomeX, spec.y || 0, 0);
+            g.enemy.group.rotation.y = -Math.PI / 2;
+            g.scene.add(g.enemy.group);
+            if (typeof THREE.GLTFLoader === 'undefined' || typeof THREE.AnimationMixer === 'undefined') return;
+            const mine = g.enemy;
+            new THREE.GLTFLoader().load(spec.url, gltf => {
+                if (!this._duel || this._duel !== g || g.enemy !== mine) return;
+                const model = gltf.scene;
+                this.prepModel3D(model);
+                this.normalizeModel3D(model, spec.height);
+                for (let i = mine.group.children.length - 1; i >= 0; i--) {
+                    mine.group.remove(mine.group.children[i]);
+                }
+                mine.group.add(model);
+                mine.model = model;
+                mine.mixer = new THREE.AnimationMixer(model);
+                g.mixers.push(mine.mixer);
+                mine.actions = {};
+                gltf.animations.forEach(clip => {
+                    // Clip names may be prefixed, e.g. "CharacterArmature|Idle"
+                    mine.actions[clip.name.toLowerCase().split('|').pop()] = mine.mixer.clipAction(clip);
+                });
+                // Boss entrance: skeletons wake up from their inactive pose
+                this.setEnemyClip('spawn', true);
+            }, undefined, err => console.warn('Duel boss model failed to load - keeping the stand-in.', err));
+        },
+
+        // Background props from the KayKit dungeon pack: barrels, crate stacks
+        // and banners that dress the two camps.
+        loadProps3D: function () {
+            const g = this._duel;
+            if (typeof THREE.GLTFLoader === 'undefined') return;
+            const loader = new THREE.GLTFLoader();
+            const place = (url, height, spots) => {
+                loader.load(url, gltf => {
+                    if (!this._duel || this._duel !== g) return;
+                    this.prepModel3D(gltf.scene);
+                    spots.forEach(s => {
+                        const prop = gltf.scene.clone(true);
+                        this.normalizeModel3D(prop, height);
+                        prop.position.set(s[0], 0, s[1]);
+                        prop.rotation.y = s[2] || 0;
+                        g.scene.add(prop);
+                    });
+                }, undefined, () => {});
+            };
+            place('assets/models/duel/props/barrel_large.gltf.glb', 0.85, [[-4.0, -0.6, 0.4], [4.4, 0.3, -0.7]]);
+            place('assets/models/duel/props/barrel_small_stack.gltf.glb', 0.95, [[4.0, -1.2, 0.9]]);
+            place('assets/models/duel/props/crates_stacked.gltf.glb', 1.15, [[-5.3, -1.4, 0.5], [5.6, -2.0, -0.3]]);
+            place('assets/models/duel/props/banner_patternA_blue.gltf.glb', 2.3, [[-2.6, -2.4, 0.5]]);
+            place('assets/models/duel/props/banner_patternA_red.gltf.glb', 2.3, [[2.6, -2.4, -0.5]]);
+        },
+
+        loadCrateModel3D: function () {
+            const g = this._duel;
+            if (typeof THREE.GLTFLoader === 'undefined') return;
+            const loader = new THREE.GLTFLoader();
+            const swapIn = model => {
+                if (!this._duel || this._duel !== g) return;
+                this.prepModel3D(model);
+                g.crates.forEach(anchor => {
+                    const crate = model.clone(true);
+                    this.normalizeModel3D(crate, 1.15);
+                    crate.position.set(anchor.position.x, 0, anchor.position.z);
+                    g.scene.add(crate);
+                    anchor.visible = false;
+                });
+            };
+            if (window.SHOOTER_MODEL_DATA && window.SHOOTER_MODEL_DATA.crate) {
+                const binary = atob(window.SHOOTER_MODEL_DATA.crate);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                loader.parse(bytes.buffer, '', gltf => swapIn(gltf.scene), () => {});
+                return;
+            }
+            loader.load('assets/models/shooter/crate.glb', gltf => swapIn(gltf.scene), undefined, () => {});
+        },
+
+        // --- camera rig, answer bullets, suppression fire ---
+
+        setCamPreset3D: function (name, dur) {
+            const g = this._duel;
+            if (!g) return;
+            const p = g.camPresets[name];
+            g.camMode = name;
+            const portrait = g.camera.aspect < 0.9;
+            const pos = (portrait && p.posP) ? p.posP : p.pos;
+            const look = (portrait && p.lookP) ? p.lookP : p.look;
+            if (!dur) {
+                g.cam.pos.fromArray(pos);
+                g.cam.look.fromArray(look);
+                return;
+            }
+            ['x', 'y', 'z'].forEach((axis, i) => {
+                this.tween3D(g.cam.pos, axis, pos[i], dur);
+                this.tween3D(g.cam.look, axis, look[i], dur);
+            });
+        },
+
+        // A clickable "cartridge card" - brass bullet icon + the answer text
+        makeAnswerTexture3D: function (text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 160;
+            const ctx = canvas.getContext('2d');
+            const rr = (x, y, w, h, r) => {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            };
+            rr(6, 6, 500, 148, 30);
+            ctx.fillStyle = 'rgba(10, 14, 34, 0.92)';
+            ctx.fill();
+            ctx.lineWidth = 7;
+            ctx.strokeStyle = '#f2b632';
+            ctx.stroke();
+            // brass cartridge pointing right
+            const grad = ctx.createLinearGradient(0, 55, 0, 105);
+            grad.addColorStop(0, '#f6d27a');
+            grad.addColorStop(0.5, '#d8a23a');
+            grad.addColorStop(1, '#a97a20');
+            ctx.fillStyle = grad;
+            rr(28, 55, 62, 50, 10);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(90, 55);
+            ctx.quadraticCurveTo(126, 80, 90, 105);
+            ctx.fill();
+            // answer text, shrunk to fit
+            let size = 62;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0,0,0,0.7)';
+            ctx.shadowBlur = 6;
+            const plain = String(text).replace(/<[^>]*>/g, '').trim() || '?';
+            do {
+                ctx.font = 'bold ' + size + 'px Arial, sans-serif';
+                size -= 4;
+            } while (ctx.measureText(plain).width > 350 && size > 18);
+            ctx.fillText(plain, 316, 82);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        },
+
+        buildAnswerCards3D: function () {
+            const g = this._duel;
+            if (!g) return;
+            this.disposeAnswerCards3D();
+            this.results.forEach((text, i) => {
+                const mat = new THREE.MeshBasicMaterial({
+                    map: this.makeAnswerTexture3D(text),
+                    transparent: true,
+                    depthTest: false,
+                });
+                const card = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.47), mat);
+                card.renderOrder = 999;
+                card.userData.answerIndex = i;
+                // A vertical column of four bullets on the rack board
+                card.scale.setScalar(0.55);
+                card.position.set(0, 1.76 - i * 0.4, 0.01);
+                g.answerRoot.add(card);
+            });
+            g.answerRoot.visible = true;
+        },
+
+        disposeAnswerCards3D: function () {
+            const g = this._duel;
+            if (!g) return;
+            g.answerRoot.children.slice().forEach(card => {
+                g.answerRoot.remove(card);
+                if (card.material) {
+                    if (card.material.map) card.material.map.dispose();
+                    card.material.dispose();
+                }
+                if (card.geometry) card.geometry.dispose();
+            });
+        },
+
+        // Visual response on the clicked card: the good bullet dives into the gun,
+        // a wrong one turns gray and sags; the rest fade out
+        answerFeedback3D: function (index, good) {
+            const g = this._duel;
+            if (!g) return;
+            g.answerRoot.children.forEach(card => {
+                if (card.userData.answerIndex === index) {
+                    if (good) {
+                        // The chosen bullet flies off the rack into the hero's gun
+                        const target = g.answerRoot.worldToLocal(this.gunTip3D());
+                        this.tween3D(card.position, 'x', target.x, 0.55, {ease: 'in'});
+                        this.tween3D(card.position, 'y', target.y, 0.55, {ease: 'in'});
+                        this.tween3D(card.position, 'z', target.z, 0.55, {ease: 'in'});
+                        this.tween3D(card.scale, 'x', 0.06, 0.55, {ease: 'in'});
+                        this.tween3D(card.scale, 'y', 0.06, 0.55, {ease: 'in'});
+                    } else {
+                        // A broken one turns gray and drops off the rack
+                        card.material.color.set(0x4d4d4d);
+                        this.tween3D(card.rotation, 'z', 0.5, 0.4);
+                        this.tween3D(card.position, 'y', 0.12, 0.8, {ease: 'in'});
+                        this.tween3D(card.material, 'opacity', 0.55, 0.8);
+                    }
+                } else {
+                    this.tween3D(card.material, 'opacity', 0.12, 0.35);
+                }
+            });
+        },
+
+        // The boss shoots at your crate while you reload - pure drama, no damage
+        suppress3D: function () {
+            const g = this._duel;
+            if (!g || !g.enemy || this.phase !== 'load') return;
+            const spec = g.enemy.spec || {height: 2};
+            const from = new THREE.Vector3(g.enemy.group.position.x - 0.4, (spec.y || 0) + spec.height * 0.5, 0);
+            const to = new THREE.Vector3(-1.9 + Math.random() * 0.4, 0.95 + Math.random() * 0.45, 0.15);
+            this.setEnemyClip('attack', true);
+            duelSfx.whoosh();
+            this.flyBolt3D(g.orb, from, to, 0.35, 0, () => {
+                this.burst3D(to, 0xc45cff, 8, 2, 1.2);
+            });
+        },
+
+        // --- animation helpers ---
+
+        setClip3D: function (entity, name, oneShot) {
+            if (!entity || !entity.actions) return;
+            let key = (name || '').toLowerCase();
+            // Semantic names (idle/run/shoot/hit/death/...) resolve through the
+            // character spec's clips map to the model's own clip names.
+            const clips = entity.spec && entity.spec.clips;
+            if (clips && clips[key]) key = clips[key];
+            if (!entity.actions[key]) {
+                // Fall back to an idle-like clip - never accidentally play a death
+                const candidates = [clips && clips.idle, 'idle', 'idle_combat', 'flying_idle'];
+                key = candidates.find(c => c && entity.actions[c]) ||
+                      Object.keys(entity.actions).find(k => k.indexOf('death') < 0);
+            }
+            if (!key || !entity.actions[key] || entity.current === key) return;
+            const action = entity.actions[key];
+            const prev = entity.current && entity.actions[entity.current];
+            const once = !!oneShot;
+            action.reset();
+            action.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat);
+            action.clampWhenFinished = !!once;
+            action.fadeIn(0.18).play();
+            if (prev) prev.fadeOut(0.18);
+            entity.current = key;
+            if (once && entity.mixer) {
+                // Drop back to idle when a one-shot clip ends
+                const onDone = e => {
+                    if (e.action !== action) return;
+                    entity.mixer.removeEventListener('finished', onDone);
+                    if (this._duel && entity.alive && entity.current === key) {
+                        entity.current = null;
+                        this.setClip3D(entity, 'idle');
+                    }
+                };
+                entity.mixer.addEventListener('finished', onDone);
+            }
+        },
+
+        setHeroClip: function (name, oneShot) {
+            if (this._duel) this.setClip3D(this._duel.hero, name, oneShot);
+        },
+
+        setEnemyClip: function (name, oneShot) {
+            if (this._duel && this._duel.enemy) this.setClip3D(this._duel.enemy, name, oneShot);
+        },
+
+        tween3D: function (obj, prop, to, dur, opts) {
+            opts = opts || {};
+            if (!this._duel) {
+                if (opts.onDone) this.later(opts.onDone, dur * 1000);
+                return;
+            }
+            this._duel.tweens.push({
+                obj: obj, prop: prop, from: obj[prop], to: to, dur: dur, t: 0,
+                ease: opts.ease || 'inout', onDone: opts.onDone,
+            });
+        },
+
+        updateTweens3D: function (dt) {
+            const g = this._duel;
+            for (let i = g.tweens.length - 1; i >= 0; i--) {
+                const tw = g.tweens[i];
+                tw.t += dt;
+                let k = Math.min(1, tw.t / tw.dur);
+                if (tw.ease === 'inout') k = k * k * (3 - 2 * k);
+                else if (tw.ease === 'in') k = k * k;
+                else if (tw.ease === 'out') k = 1 - (1 - k) * (1 - k);
+                tw.obj[tw.prop] = tw.from + (tw.to - tw.from) * k;
+                if (tw.t >= tw.dur) {
+                    g.tweens.splice(i, 1);
+                    if (tw.onDone) tw.onDone();
+                }
+            }
+        },
+
+        burst3D: function (pos, color, count, speed, up) {
+            const g = this._duel;
+            if (!g) return;
+            const geo = new THREE.SphereGeometry(0.055, 6, 5);
+            const parts = [];
+            for (let i = 0; i < (count || 14); i++) {
+                const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+                    color: color, transparent: true, opacity: 1,
+                    blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                m.position.copy(pos);
+                const a = Math.random() * Math.PI * 2;
+                const v = (speed || 3) * (0.4 + Math.random() * 0.6);
+                m.userData.vel = new THREE.Vector3(Math.cos(a) * v, (up || 1.6) * Math.random() * v * 0.8, Math.sin(a) * v * 0.4);
+                g.scene.add(m);
+                parts.push(m);
+            }
+            g.bursts.push({parts: parts, life: 0.6, t: 0});
+        },
+
+        updateBursts3D: function (dt) {
+            const g = this._duel;
+            for (let i = g.bursts.length - 1; i >= 0; i--) {
+                const b = g.bursts[i];
+                b.t += dt;
+                const k = b.t / b.life;
+                b.parts.forEach(p => {
+                    p.userData.vel.y -= 6 * dt;
+                    p.position.addScaledVector(p.userData.vel, dt);
+                    p.material.opacity = Math.max(0, 1 - k);
+                });
+                if (b.t >= b.life) {
+                    b.parts.forEach(p => {
+                        g.scene.remove(p);
+                        p.material.dispose();
+                    });
+                    g.bursts.splice(i, 1);
+                }
+            }
+        },
+
+        muzzleFlash3D: function (pos, color) {
+            const g = this._duel;
+            if (!g) return;
+            g.flash.position.copy(pos);
+            g.flash.material.color.set(color || 0xffc266);
+            g.flash.visible = true;
+            g.flashLight.position.copy(pos);
+            g.flashLight.color.set(color || 0xffc266);
+            g.flashLight.intensity = 2.4;
+            this.later(() => {
+                if (!this._duel) return;
+                g.flash.visible = false;
+                g.flashLight.intensity = 0;
+            }, 90);
+        },
+
+        gunTip3D: function () {
+            const g = this._duel;
+            g.hero.group.updateMatrixWorld(true);
+            if (g.heroMuzzle) {
+                const v = new THREE.Vector3();
+                g.heroMuzzle.getWorldPosition(v);
+                v.x += 0.3;   // just past the crossbow tip, toward the enemy
+                return v;
+            }
+            return g.gun.localToWorld(g.gunTipLocal.clone());
+        },
+
+        hitFlash3D: function (entity) {
+            const g = this._duel;
+            if (!g || !entity) return;
+            const touched = [];
+            entity.group.traverse(o => {
+                if (o.isMesh && o.material && o.material.emissive) {
+                    touched.push([o.material, o.material.emissive.getHex()]);
+                    o.material.emissive.setHex(0xff2222);
+                }
+            });
+            this.later(() => {
+                touched.forEach(([m, hex]) => m.emissive.setHex(hex));
+            }, 160);
+        },
+
+        // Sprint around the sandbag wall (never through it) via a waypoint at the
+        // wall's near edge, facing the direction of travel.
+        walkTo3D: function (out, cb) {
+            const g = this._duel;
+            if (!g) {
+                this.later(cb, 900);
+                return;
+            }
+            this.setHeroClip('run');
+            this.setEnemyClip('run');
+            const heroPts = out ? [[-2.7, 1.55], [g.heroOutX, 0.1]] : [[-2.7, 1.55], [g.heroHomeX, g.heroHomeZ]];
+            const enemyPts = out ? [[2.7, 1.55], [g.enemyOutX, 0.1]] : [[2.7, 1.55], [g.enemyHomeX, 0]];
+            let done = 0;
+            const finish = () => {
+                done += 1;
+                if (done < 2 || !this._duel) return;
+                g.hero.group.rotation.y = Math.PI / 2;
+                g.enemy.group.rotation.y = -Math.PI / 2;
+                this.setHeroClip('idle');
+                this.setEnemyClip('idle');
+                cb();
+            };
+            this.runPath3D(g.hero.group, heroPts, finish);
+            this.runPath3D(g.enemy.group, enemyPts, finish);
+        },
+
+        runPath3D: function (group, points, onDone) {
+            const speed = 3.6;   // m/s - a sprint, not a stroll
+            const step = i => {
+                if (!this._duel || i >= points.length) {
+                    if (onDone) onDone();
+                    return;
+                }
+                const tx = points[i][0], tz = points[i][1];
+                const dx = tx - group.position.x;
+                const dz = tz - group.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < 0.05) {
+                    step(i + 1);
+                    return;
+                }
+                this.tween3D(group.rotation, 'y', Math.atan2(dx, dz), 0.12);
+                this.tween3D(group.position, 'x', tx, dist / speed, {ease: 'inout'});
+                this.tween3D(group.position, 'z', tz, dist / speed, {ease: 'inout', onDone: () => step(i + 1)});
+            };
+            step(0);
+        },
+
+        flyBolt3D: function (bolt, from, to, dur, arc, onHit) {
+            const g = this._duel;
+            if (!g) {
+                this.later(onHit, dur * 1000);
+                return;
+            }
+            bolt.position.copy(from);
+            bolt.visible = true;
+            const state = {k: 0};
+            this._duel.tweens.push({
+                obj: state, prop: 'k', from: 0, to: 1, dur: dur, t: 0, ease: arc ? 'in' : 'linear',
+                onDone: () => {
+                    bolt.visible = false;
+                    onHit();
+                },
+            });
+            // Position is driven every frame off the tweened progress
+            const drive = () => {
+                if (!this._duel || !bolt.visible) return;
+                bolt.position.lerpVectors(from, to, state.k);
+                if (arc) bolt.position.y += Math.sin(Math.min(1, state.k) * Math.PI) * arc;
+                requestAnimationFrame(drive);
+            };
+            drive();
+        },
+
+        heroShoot3D: function (superBolt, onHit) {
+            const g = this._duel;
+            this.setHeroClip('shoot', true);
+            if (!g) {
+                this.later(onHit, 600);
+                return;
+            }
+            const from = this.gunTip3D();
+            const spec = g.enemy.spec || {height: 2};
+            const to = new THREE.Vector3(g.enemy.group.position.x - 0.25, (spec.y || 0) + spec.height * 0.55, 0);
+            this.muzzleFlash3D(from, superBolt ? 0x66eaff : 0xffc266);
+            const bolt = superBolt ? g.superBolt : g.bolt;
+            this.flyBolt3D(bolt, from, to, 0.24, 0, () => {
+                this.burst3D(to, superBolt ? 0x66eaff : 0xffc935, superBolt ? 26 : 16, superBolt ? 4.5 : 3);
+                this.hitFlash3D(g.enemy);
+                this.setEnemyClip('hit', true);
+                // Knockback flinch
+                this.tween3D(g.enemy.group.position, 'x', g.enemy.group.position.x + 0.25, 0.1, {
+                    onDone: () => this.tween3D(g.enemy.group.position, 'x', g.enemyOutX, 0.25),
+                });
+                onHit();
+            });
+        },
+
+        dudDrop3D: function (onDone) {
+            const g = this._duel;
+            if (!g) {
+                this.later(onDone, 900);
+                return;
+            }
+            const from = this.gunTip3D();
+            const to = new THREE.Vector3(from.x + 1.1, 0.06, 0.1);
+            this.flyBolt3D(g.dudBolt, from, to, 0.55, 0.25, () => {
+                this.burst3D(to, 0x9e9e9e, 10, 1.2, 2.2);   // gray smoke puff
+                onDone();
+            });
+        },
+
+        enemyShoot3D: function (onHit) {
+            const g = this._duel;
+            if (!g) {
+                this.later(onHit, 600);
+                return;
+            }
+            const spec = g.enemy.spec || {height: 2};
+            const from = new THREE.Vector3(g.enemy.group.position.x - 0.4, (spec.y || 0) + spec.height * 0.5, 0);
+            const to = new THREE.Vector3(g.hero.group.position.x + 0.25, 0.95, 0);
+            this.muzzleFlash3D(from, 0xc45cff);
+            this.setEnemyClip('attack', true);
+            this.flyBolt3D(g.orb, from, to, 0.28, 0, () => {
+                this.burst3D(to, 0xc45cff, 16, 3);
+                this.hitFlash3D(g.hero);
+                this.tween3D(g.hero.group.position, 'x', g.hero.group.position.x - 0.25, 0.1, {
+                    onDone: () => this.tween3D(g.hero.group.position, 'x', g.heroOutX, 0.25),
+                });
+                onHit();
+            });
+        },
+
+        enemyDie3D: function () {
+            const g = this._duel;
+            if (!g || !g.enemy) return;
+            g.enemy.alive = false;
+            const pos = g.enemy.group.position.clone();
+            pos.y += 1;
+            this.burst3D(pos, 0xffd54f, 30, 4);
+            const deathClip = (g.enemy.spec.clips || {}).death || 'death';
+            if (g.enemy.actions && g.enemy.actions[deathClip]) {
+                // Real baked death animation - the body stays down until reset
+                this.setClip3D(g.enemy, 'death', true);
+            } else {
+                this.tween3D(g.enemy.group.rotation, 'z', -Math.PI / 2, 0.8, {ease: 'in'});
+                this.tween3D(g.enemy.group.position, 'y', (g.enemy.spec.y || 0) - 0.15, 0.8, {
+                    onDone: () => {
+                        this.later(() => {
+                            if (!this._duel || !g.enemy || g.enemy.alive) return;
+                            this.burst3D(g.enemy.group.position.clone().setY(0.5), 0xffffff, 20, 2.5);
+                            g.enemy.group.visible = false;
+                        }, 700);
+                    },
+                });
+            }
+        },
+
+        heroDie3D: function () {
+            const g = this._duel;
+            if (!g) return;
+            g.hero.alive = false;
+            const heroDeath = (g.hero.spec && g.hero.spec.clips) ? g.hero.spec.clips.death : 'death';
+            if (g.hero.actions && g.hero.actions[heroDeath]) {
+                this.setHeroClip('death', true);
+            } else {
+                this.tween3D(g.hero.group.rotation, 'z', Math.PI / 2, 0.8, {ease: 'in'});
+            }
+        },
+
+        enemyCheer3D: function () {
+            const g = this._duel;
+            if (!g || !g.enemy) return;
+            const cheerClip = (g.enemy.spec.clips || {}).cheer;
+            if (g.enemy.actions && g.enemy.actions[cheerClip]) {
+                this.setEnemyClip('cheer');
+                return;
+            }
+            // Victory hops for the procedural stand-in boss
+            const hop = n => {
+                if (!this._duel || n <= 0) return;
+                this.tween3D(g.enemy.group.position, 'y', (g.enemy.spec.y || 0) + 0.45, 0.25, {
+                    ease: 'out',
+                    onDone: () => this.tween3D(g.enemy.group.position, 'y', g.enemy.spec.y || 0, 0.25, {
+                        ease: 'in', onDone: () => hop(n - 1),
+                    }),
+                });
+            };
+            hop(4);
+        },
+
+        resetStage3D: function () {
+            const g = this._duel;
+            if (!g) return;
+            g.tweens = [];
+            this.setCamPreset3D('cover');
+            const swapBoss = !g.enemy || (g.enemy.spec && g.enemy.spec.key !== this.villain.key) || !g.enemy.alive;
+            g.hero.alive = true;
+            g.hero.group.visible = true;
+            g.hero.group.rotation.set(0, Math.PI / 2, 0);
+            g.hero.group.position.set(g.heroHomeX, 0, g.heroHomeZ);
+            this.setHeroClip('hide');
+            if (swapBoss) {
+                this.loadEnemy3D();
+            } else {
+                g.enemy.group.position.set(g.enemyHomeX, g.enemy.spec.y || 0, 0);
+                g.enemy.group.rotation.set(0, -Math.PI / 2, 0);
+            }
+        },
+    },
+
+    mounted: function () {
+        this.initScene3D();
+        this.resetStage3D();
+        // create() ran in created(), before the scene existed - build the
+        // in-world answer cards for the question it already generated.
+        if (this.phase === 'load' && this.results.length) {
+            this.buildAnswerCards3D();
+        }
+    },
+
+    beforeDestroy() {
+        this.clearTimers();
+        const g = this._duel;
+        if (g) this.disposeAnswerCards3D();
+        this._duel = null;
+        if (this._onResize) window.removeEventListener('resize', this._onResize);
+        if (this._onFsChange) document.removeEventListener('fullscreenchange', this._onFsChange);
+        if (g) {
+            if (this._onPointer && g.renderer) {
+                g.renderer.domElement.removeEventListener('pointerdown', this._onPointer);
+            }
+            cancelAnimationFrame(g.raf);
+            if (g.renderer) {
+                g.renderer.dispose();
+                if (g.renderer.domElement && g.renderer.domElement.parentNode) {
+                    g.renderer.domElement.parentNode.removeChild(g.renderer.domElement);
+                }
+            }
+        }
+    },
+}));
+
+
+
+// Wizard Duel - a Prodigy-style turn-based battle. A painted daytime scene with
+// an animated 3D mage (left) facing a monster boss (right) on a transparent
+// canvas layer. The question floats in a burning magic circle in the middle and
+// the answers are big buttons at the bottom. A correct answer casts a fireball
+// at the boss; a wrong one lets the boss strike back. Hero has 100 HP, bosses
+// get tougher (30/45/60). Same learning engine as every other game.
+var WizardDuelComponent = Vue.component('wizard-duel', Vue.extend({
+    template: `
+    <div class="container">
+        <div class="ds3-wrap wd-wrap" ref="wrap" :class="{'ds-shake': arenaShake}">
+            <div class="wd-stage" ref="stage"></div>
+
+            <div class="ds3-progress" v-if="progress && progress.total">
+                <div class="ds3-progress-fill" :style="{width: (progress.progress / progress.total * 100) + '%'}"></div>
+            </div>
+
+            <div class="wd-chip wd-chip-left" dir="rtl">
+                <div class="wd-avatar">🧙</div>
+                <div class="wd-chipbody">
+                    <div class="wd-chipname">אני <span class="wd-coins">🪙 {{ score }}</span></div>
+                    <div class="wd-hpbar"><div class="wd-hpfill" :style="hpStyle(playerHp, maxHp)"></div>
+                        <span class="wd-hptext">{{ playerHp }} / {{ maxHp }}</span></div>
+                </div>
+            </div>
+            <div class="wd-chip wd-chip-right" dir="rtl">
+                <div class="wd-avatar">{{ boss.icon }}</div>
+                <div class="wd-chipbody">
+                    <div class="wd-chipname">{{ boss.name }} <span class="wd-coins">{{ bossIndex + 1 }}/{{ bosses.length }}</span></div>
+                    <div class="wd-hpbar"><div class="wd-hpfill" :style="hpStyle(enemyHp, boss.hp)"></div>
+                        <span class="wd-hptext">{{ enemyHp }} / {{ boss.hp }}</span></div>
+                </div>
+            </div>
+
+            <div class="wd-circle" v-if="started && phase === 'question'">
+                <div class="wd-flame">🔥</div>
+                <div class="wd-question" v-html="exercise"></div>
+            </div>
+
+            <div class="ds3-flash" v-if="message.value"
+                 v-bind:class="{ 'error': message.error, 'success': message.success }">{{ message.value }}</div>
+
+            <div v-for="d in dmgPops" :key="'dp'+d.id" class="ds-dmg" :style="{left: d.x + '%', color: d.color}">{{ d.text }}</div>
+            <template v-if="phase === 'victory'">
+                <div v-for="c in confetti" :key="'cf'+c.id" class="ds-confetti"
+                     :style="{left: c.left + '%', background: c.color, animationDelay: c.delay + 's'}"></div>
+            </template>
+
+            <div class="wd-answers" v-if="started && phase === 'question'" dir="rtl">
+                <a v-for="(result, index) in results" :key="'a'+index" class="wd-answer"
+                   v-on:click="answer(index)">{{ result }}</a>
+            </div>
+
+            <a class="ds3-fs-btn" @click="toggleFullscreen"><i class="material-icons">fullscreen</i></a>
+
+            <div class="ds3-start" v-if="!started" @click="startGame">
+                <h4>🧙 דו-קרב הקוסמים 🔥</h4>
+                <p v-if="currentApp && currentApp.title">{{ currentApp.title }}</p>
+                <p>ענה נכון והקוסם יטיל כדור אש על המפלצת. טעות - והמפלצת תוקפת אותך!</p>
+                <a class="btn-large amber darken-2 ds3-start-btn">▶ התחל במסך מלא</a>
+            </div>
+        </div>
+    </div>`,
+
+    extends: BaseGameComponent,
+
+    data: function() { return {
+        phase: 'question',      // 'question' | 'anim' | 'victory' | 'defeat'
+        results: [],
+        maxHp: 100,
+        playerHp: 100,
+        enemyHp: 30,
+        locked: false,
+        started: false,
+        arenaShake: false,
+        streak: 0,
+        bossIndex: 0,
+        hero: {
+            url: 'assets/models/duel/Mage.glb', height: 1.75,
+            clips: {idle: 'idle', attack: 'spellcast_shoot', hit: 'hit_a', death: 'death_a', cheer: 'cheer'},
+            muzzleMesh: '2h_staff',
+        },
+        bosses: [
+            {key: 'orc',    icon: '👹', name: 'האורק',      url: 'assets/models/maze/orc.glb',    height: 2.0, y: 0,   hp: 30,
+             clips: {idle: 'idle',        attack: 'punch',    hit: 'hitreact', death: 'death', cheer: 'yes'}},
+            {key: 'ghost',  icon: '👻', name: 'רוח הרפאים', url: 'assets/models/maze/ghost.glb',  height: 1.9, y: 0.3, hp: 45,
+             clips: {idle: 'flying_idle', attack: 'headbutt', hit: 'hitreact', death: 'death', cheer: 'yes'}},
+            {key: 'dragon', icon: '🐉', name: 'הדרקון',     url: 'assets/models/maze/dragon.glb', height: 2.5, y: 0.3, hp: 60,
+             clips: {idle: 'flying_idle', attack: 'headbutt', hit: 'hitreact', death: 'death', cheer: 'headbutt'}},
+        ],
+        fxId: 0,
+        dmgPops: [],
+        confetti: [],
+        timeouts: [],
+    }},
+
+    computed: {
+        boss: function() {
+            return this.bosses[this.bossIndex % this.bosses.length];
+        },
+    },
+
+    methods: {
+        create: function () {
+            this.clearTimers();
+            this.bossIndex = getLocalStorage(`${this.currentAppId}_wizard_boss`, 0) % this.bosses.length;
+            this.playerHp = this.maxHp;
+            this.enemyHp = this.boss.hp;
+            this.phase = 'question';
+            this.streak = 0;
+            this.dmgPops = [];
+            this.confetti = [];
+            this.message = {};
+            this.resetStageWd();
+            this.nextQuestion();
+            // Honor the news screen / level-complete navigation (see MCQComponent)
+            this.reloadProgress();
+        },
+
+        nextQuestion: function () {
+            let question = generateFromList(this.currentApp.listName, this.currentApp.questionIndex,
+                                            this.currentApp.resultIndex, this.currentAppId,
+                                            getSetItems(this.currentApp), questionType=this.currentApp.questionType);
+            this.results = this.shuffle(question.options);
+            this.exercise = question.question;
+            this.result = question.result;
+            this.questionIndex = question.questionIndex;
+            this.phase = 'question';
+            question.action();
+            this.locked = false;
+            this.$forceUpdate();
+        },
+
+        refreshProgress: function () {
+            this.progress = getCurrentLevelProgress(this.currentAppId);
+        },
+
+        hpStyle: function (hp, max) {
+            const pct = Math.max(0, hp / max * 100);
+            const color = pct > 60 ? '#43d675' : (pct > 30 ? '#ffb300' : '#ff5252');
+            return {width: pct + '%', backgroundColor: color};
+        },
+
+        startGame: function () {
+            duelSfx.unlock();
+            this.started = true;
+            this.enterFullscreenWd();
+        },
+
+        enterFullscreenWd: function () {
+            const el = this.$refs.wrap;
+            if (!el || document.fullscreenElement) return;
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (!req) return;
+            try {
+                const p = req.call(el);
+                const lock = () => {
+                    try {
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(() => {});
+                        }
+                    } catch (e) {}
+                };
+                if (p && p.then) { p.then(lock).catch(() => {}); } else { lock(); }
+            } catch (e) {}
+        },
+
+        toggleFullscreen: function () {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+            } else {
+                this.started = true;
+                this.enterFullscreenWd();
+            }
+        },
+
+        answer: function (index) {
+            if (this.locked || this.phase !== 'question') {
+                return
+            }
+            this.locked = true;
+            duelSfx.unlock();
+            const good = this.results[index] === this.result;
+            if (good) {
+                successSound.play();
+                updateWeightForKey(this.currentAppId, this.questionIndex, -1);
+                this.score += 1;
+                this.streak += 1;
+                this.saveScore();
+                this.refreshProgress();
+                this.phase = 'anim';
+                const crit = this.streak % 3 === 0;
+                const dmg = (9 + Math.floor(Math.random() * 5)) * (crit ? 2 : 1);
+                this.message = crit ? {value: 'רצף של ' + this.streak + '! כדור אש ענק! 🔥🔥', success: true}
+                                    : {value: 'לחש מוצלח! 🔥', success: true};
+                this.heroCastWd(crit, () => {
+                    this.enemyHp = Math.max(0, this.enemyHp - dmg);
+                    this.dmgPop(72, '-' + dmg, crit ? '#00e5ff' : '#ffd54f');
+                    this.shakeWd();
+                    duelSfx.boom();
+                    if (this.enemyHp <= 0) {
+                        this.later(() => this.endBattle(true), 600);
+                    } else {
+                        this.later(() => { this.message = {}; this.nextQuestion(); }, 900);
+                    }
+                });
+            } else {
+                failureSound.play();
+                this.score = Math.max(0, this.score - 1);
+                this.streak = 0;
+                updateWeightForKey(this.currentAppId, this.questionIndex, 1);
+                this.saveScore();
+                this.refreshProgress();
+                this.phase = 'anim';
+                const dmg = 7 + Math.floor(Math.random() * 6);
+                this.message = {value: 'אופס! התשובה הנכונה: ' + this.result, error: true};
+                this.bossAttackWd(() => {
+                    this.playerHp = Math.max(0, this.playerHp - dmg);
+                    this.dmgPop(24, '-' + dmg, '#ff8a80');
+                    this.shakeWd();
+                    duelSfx.hurt();
+                    if (this.playerHp <= 0) {
+                        this.later(() => this.endBattle(false), 600);
+                    } else {
+                        this.later(() => { this.message = {}; this.nextQuestion(); }, 1700);
+                    }
+                });
+            }
+        },
+
+        endBattle: function (won) {
+            this.phase = won ? 'victory' : 'defeat';
+            if (won) {
+                duelSfx.fanfare();
+                successSound.play();
+                const lastBoss = this.bossIndex === this.bosses.length - 1;
+                this.score += lastBoss ? 10 : 5;
+                this.saveScore();
+                setLocalStorage(`${this.currentAppId}_wizard_boss`, (this.bossIndex + 1) % this.bosses.length);
+                this.makeConfetti();
+                if (this._wd && this._wd.enemy) this._wd.enemy.alive = false;
+                this.setClipWd(this._wd && this._wd.enemy, 'death', true);
+                this.setClipWd(this._wd && this._wd.hero, 'cheer');
+                this.message = lastBoss
+                    ? {value: 'אלוף הקוסמים!! ניצחת את כולם! 🏆👑', success: true}
+                    : {value: 'ניצחון! ' + this.boss.name + ' מובס! 🏆', success: true};
+            } else {
+                duelSfx.sad();
+                if (this._wd && this._wd.hero) this._wd.hero.alive = false;
+                this.setClipWd(this._wd && this._wd.hero, 'death', true);
+                this.setClipWd(this._wd && this._wd.enemy, 'cheer');
+                this.message = {value: 'הפעם ' + this.boss.name + ' ניצח... ננסה שוב! 💪', error: true};
+            }
+            this.later(() => {
+                if (this.reloadProgress()) {
+                    this.create();
+                }
+            }, 3400);
+        },
+
+        makeConfetti: function () {
+            const colors = ['#ffd54f', '#4fc3f7', '#81c784', '#f06292', '#ba68c8', '#ff8a65'];
+            this.confetti = Array.from({length: 40}, (_, i) => ({
+                id: i, left: Math.random() * 100, delay: Math.random() * 1.2,
+                color: colors[i % colors.length],
+            }));
+        },
+
+        dmgPop: function (x, text, color) {
+            const id = ++this.fxId;
+            this.dmgPops.push({id: id, x: x, text: text, color: color});
+            this.later(() => { this.dmgPops = this.dmgPops.filter(d => d.id !== id); }, 1000);
+        },
+
+        shakeWd: function () {
+            this.arenaShake = false;
+            this.later(() => { this.arenaShake = true; }, 20);
+            this.later(() => { this.arenaShake = false; }, 470);
+        },
+
+        later: function (fn, ms) {
+            this.timeouts.push(setTimeout(fn, ms));
+        },
+
+        clearTimers: function () {
+            this.timeouts.forEach(clearTimeout);
+            this.timeouts = [];
+        },
+
+        // ------------------------------------------------------------------
+        // 3D layer: transparent canvas with the two animated characters over a
+        // painted cartoon backdrop. Callbacks always fire even without WebGL.
+        // ------------------------------------------------------------------
+
+        initStageWd: function () {
+            if (typeof THREE === 'undefined' || !this.$refs.stage) return false;
+            const area = this.$refs.stage;
+            const g = this._wd = {
+                area: area, clock: new THREE.Clock(), tweens: [], bursts: [], mixers: [],
+            };
+            g.renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+            g.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            g.renderer.setSize(area.clientWidth, area.clientHeight);
+            g.renderer.outputEncoding = THREE.sRGBEncoding;
+            g.renderer.setClearColor(0x000000, 0);
+            area.appendChild(g.renderer.domElement);
+
+            g.scene = new THREE.Scene();
+            g.camera = new THREE.PerspectiveCamera(38, area.clientWidth / area.clientHeight, 0.1, 50);
+            g.camera.position.set(0, 1.9, 8.0);
+            g.camera.lookAt(0, 1.2, 0);
+
+            g.scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x9c8452, 1.05));
+            const sun = new THREE.DirectionalLight(0xfff2cc, 0.9);
+            sun.position.set(-4, 8, 6);
+            g.scene.add(sun);
+
+            // Soft blob shadows so the characters sit on the painted grass
+            g.shadowTex = this.makeGlowTexWd('rgba(0,0,0,0.4)', 'rgba(0,0,0,0)');
+            g.blobs = [-1.7, 1.7].map(x => {
+                const blob = new THREE.Sprite(new THREE.SpriteMaterial({map: g.shadowTex, depthWrite: false}));
+                blob.position.set(x, 0.05, 0);
+                blob.scale.set(2.0, 0.55, 1);
+                g.scene.add(blob);
+                return blob;
+            });
+
+            g.hero = {group: new THREE.Group(), spec: this.hero, alive: true};
+            g.hero.group.position.set(-1.7, 0, 0);
+            g.hero.group.rotation.y = Math.PI / 2;
+            g.scene.add(g.hero.group);
+            this.loadCharWd(g.hero, this.hero, m => {
+                m.traverse(o => { if ((o.name || '').toLowerCase() === this.hero.muzzleMesh) g.heroMuzzle = o; });
+            });
+
+            g.enemy = null;
+            this.loadBossWd();
+
+            g.bolt = this.makeBoltWd(0xff8c1a);
+            g.orb = this.makeBoltWd(0xc45cff);
+            this.layoutWd();
+
+            this._onResizeWd = () => {
+                if (!this._wd) return;
+                const w = area.clientWidth, h = area.clientHeight;
+                g.renderer.setSize(w, h);
+                g.camera.aspect = w / h;
+                g.camera.updateProjectionMatrix();
+                this.layoutWd();
+            };
+            window.addEventListener('resize', this._onResizeWd);
+            this._onFsWd = () => this.later(() => this._onResizeWd && this._onResizeWd(), 80);
+            document.addEventListener('fullscreenchange', this._onFsWd);
+
+            const loop = () => {
+                if (!this._wd) return;
+                g.raf = requestAnimationFrame(loop);
+                const dt = Math.min(g.clock.getDelta(), 0.05);
+                g.mixers.forEach(m => m.update(dt));
+                // tweens
+                for (let i = g.tweens.length - 1; i >= 0; i--) {
+                    const tw = g.tweens[i];
+                    tw.t += dt;
+                    let k = Math.min(1, tw.t / tw.dur);
+                    if (tw.ease === 'in') k = k * k;
+                    else if (tw.ease !== 'linear') k = k * k * (3 - 2 * k);
+                    tw.obj[tw.prop] = tw.from + (tw.to - tw.from) * k;
+                    if (tw.t >= tw.dur) {
+                        g.tweens.splice(i, 1);
+                        if (tw.onDone) tw.onDone();
+                    }
+                }
+                // particle bursts
+                for (let i = g.bursts.length - 1; i >= 0; i--) {
+                    const b = g.bursts[i];
+                    b.t += dt;
+                    b.parts.forEach(p => {
+                        p.userData.vel.y -= 6 * dt;
+                        p.position.addScaledVector(p.userData.vel, dt);
+                        p.material.opacity = Math.max(0, 1 - b.t / b.life);
+                    });
+                    if (b.t >= b.life) {
+                        b.parts.forEach(p => { g.scene.remove(p); p.material.dispose(); });
+                        g.bursts.splice(i, 1);
+                    }
+                }
+                g.renderer.render(g.scene, g.camera);
+            };
+            loop();
+            return true;
+        },
+
+        // Fit both fighters in frame on any aspect ratio: pull the camera back
+        // on narrow (portrait phone) screens and bring the fighters inward so
+        // the question circle never hides them.
+        layoutWd: function () {
+            const g = this._wd;
+            if (!g) return;
+            const aspect = g.camera.aspect || 1;
+            const dist = aspect >= 1.4 ? 7.6 : (aspect >= 0.9 ? 9.2 : 11.5);
+            g.camera.position.set(0, 1.85, dist);
+            g.camera.lookAt(0, 1.25, 0);
+            const halfW = Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)) * dist * aspect;
+            g.sideX = Math.min(2.3, halfW * 0.62);
+            if (g.hero) g.hero.group.position.x = -g.sideX;
+            if (g.enemy) g.enemy.group.position.x = g.sideX;
+            (g.blobs || []).forEach((b, i) => { b.position.x = i === 0 ? -g.sideX : g.sideX; });
+        },
+
+        // Paint the cartoon backdrop (sky, clouds, hills, ruins, grass) once
+        paintBackdropWd: function () {
+            if (!this.$refs.wrap) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = 1200;
+            canvas.height = 640;
+            const ctx = canvas.getContext('2d');
+            const sky = ctx.createLinearGradient(0, 0, 0, 460);
+            sky.addColorStop(0, '#5db4f0');
+            sky.addColorStop(0.7, '#a8dcf7');
+            sky.addColorStop(1, '#d9f0fb');
+            ctx.fillStyle = sky;
+            ctx.fillRect(0, 0, 1200, 460);
+            // sun glow
+            const sun = ctx.createRadialGradient(180, 90, 6, 180, 90, 120);
+            sun.addColorStop(0, 'rgba(255,250,210,0.95)');
+            sun.addColorStop(1, 'rgba(255,250,210,0)');
+            ctx.fillStyle = sun;
+            ctx.fillRect(0, 0, 460, 260);
+            // clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            [[260, 110, 1], [640, 70, 1.3], [960, 130, 0.9], [80, 210, 0.7], [1120, 250, 0.65]].forEach(c => {
+                for (let i = 0; i < 4; i++) {
+                    ctx.beginPath();
+                    ctx.ellipse(c[0] + i * 34 * c[2] - 50 * c[2], c[1] + (i % 2) * 10, 42 * c[2], 26 * c[2], 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            // distant hills
+            ctx.fillStyle = '#8fce7c';
+            ctx.beginPath();
+            ctx.ellipse(200, 480, 420, 90, 0, Math.PI, 0);
+            ctx.fill();
+            ctx.fillStyle = '#7dbf6a';
+            ctx.beginPath();
+            ctx.ellipse(1000, 490, 460, 110, 0, Math.PI, 0);
+            ctx.fill();
+            // stone ruins: arches left + tower right
+            const stone = '#b9b3a5', stoneDark = '#948e80';
+            ctx.fillStyle = stone;
+            ctx.fillRect(60, 300, 34, 160);
+            ctx.fillRect(190, 300, 34, 160);
+            ctx.fillRect(46, 280, 192, 30);
+            ctx.fillStyle = stoneDark;
+            ctx.fillRect(46, 280, 192, 8);
+            ctx.fillStyle = stone;
+            ctx.fillRect(980, 220, 150, 240);
+            ctx.fillStyle = stoneDark;
+            ctx.fillRect(980, 220, 150, 14);
+            ctx.fillRect(1005, 260, 26, 36);
+            ctx.fillRect(1075, 260, 26, 36);
+            ctx.fillRect(1005, 320, 26, 36);
+            ctx.fillRect(1075, 320, 26, 36);
+            // grass
+            const grass = ctx.createLinearGradient(0, 440, 0, 640);
+            grass.addColorStop(0, '#8ed468');
+            grass.addColorStop(1, '#5da944');
+            ctx.fillStyle = grass;
+            ctx.fillRect(0, 440, 1200, 200);
+            ctx.fillStyle = 'rgba(255,255,255,0.16)';
+            ctx.beginPath();
+            ctx.ellipse(600, 452, 640, 26, 0, 0, Math.PI * 2);
+            ctx.fill();
+            this.$refs.wrap.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
+            this.$refs.wrap.style.backgroundSize = 'cover';
+            this.$refs.wrap.style.backgroundPosition = 'center';
+        },
+
+        makeGlowTexWd: function (inner, outer) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+            gradient.addColorStop(0, inner);
+            gradient.addColorStop(1, outer);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        },
+
+        makeBoltWd: function (color) {
+            const g = this._wd;
+            const bolt = new THREE.Group();
+            bolt.add(new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8),
+                                    new THREE.MeshBasicMaterial({color: 0xffffff})));
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.makeGlowTexWd('rgba(255,255,255,1)', 'rgba(255,255,255,0)'),
+                color: color, blending: THREE.AdditiveBlending, depthWrite: false,
+            }));
+            glow.scale.setScalar(0.85);
+            bolt.add(glow);
+            bolt.visible = false;
+            g.scene.add(bolt);
+            return bolt;
+        },
+
+        loadCharWd: function (entity, spec, onModel) {
+            const g = this._wd;
+            if (typeof THREE.GLTFLoader === 'undefined' || typeof THREE.AnimationMixer === 'undefined') return;
+            new THREE.GLTFLoader().load(spec.url, gltf => {
+                if (!this._wd || this._wd !== g) return;
+                const model = gltf.scene;
+                model.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+                let box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                model.scale.setScalar(spec.height / (size.y || 1));
+                box = new THREE.Box3().setFromObject(model);
+                model.position.y -= box.min.y;
+                model.position.x -= (box.min.x + box.max.x) / 2;
+                model.position.z -= (box.min.z + box.max.z) / 2;
+                model.position.y += spec.y || 0;
+                entity.group.add(model);
+                entity.model = model;
+                entity.spec = spec;
+                entity.mixer = new THREE.AnimationMixer(model);
+                g.mixers.push(entity.mixer);
+                entity.actions = {};
+                gltf.animations.forEach(clip => {
+                    entity.actions[clip.name.toLowerCase().split('|').pop()] = entity.mixer.clipAction(clip);
+                });
+                this.setClipWd(entity, 'idle');
+                if (onModel) onModel(model);
+            }, undefined, err => console.warn('Wizard duel model failed to load.', err));
+        },
+
+        loadBossWd: function () {
+            const g = this._wd;
+            if (!g) return;
+            if (g.enemy) {
+                g.scene.remove(g.enemy.group);
+                if (g.enemy.mixer) g.mixers = g.mixers.filter(m => m !== g.enemy.mixer);
+            }
+            g.enemy = {group: new THREE.Group(), spec: this.boss, alive: true};
+            g.enemy.group.position.set(g.sideX || 1.7, 0, 0);
+            g.enemy.group.rotation.y = -Math.PI / 2;
+            g.scene.add(g.enemy.group);
+            this.loadCharWd(g.enemy, this.boss);
+        },
+
+        setClipWd: function (entity, name, oneShot) {
+            if (!entity || !entity.actions) return;
+            let key = (name || '').toLowerCase();
+            const clips = entity.spec && entity.spec.clips;
+            if (clips && clips[key]) key = clips[key];
+            if (!entity.actions[key]) {
+                const candidates = [clips && clips.idle, 'idle', 'idle_combat', 'flying_idle'];
+                key = candidates.find(c => c && entity.actions[c]) ||
+                      Object.keys(entity.actions).find(k => k.indexOf('death') < 0);
+            }
+            if (!key || !entity.actions[key] || entity.current === key) return;
+            const action = entity.actions[key];
+            const prev = entity.current && entity.actions[entity.current];
+            action.reset();
+            action.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat);
+            action.clampWhenFinished = !!oneShot;
+            action.fadeIn(0.18).play();
+            if (prev) prev.fadeOut(0.18);
+            entity.current = key;
+            if (oneShot && entity.mixer) {
+                const onDone = e => {
+                    if (e.action !== action) return;
+                    entity.mixer.removeEventListener('finished', onDone);
+                    if (this._wd && entity.alive && entity.current === key) {
+                        entity.current = null;
+                        this.setClipWd(entity, 'idle');
+                    }
+                };
+                entity.mixer.addEventListener('finished', onDone);
+            }
+        },
+
+        tweenWd: function (obj, prop, to, dur, opts) {
+            opts = opts || {};
+            if (!this._wd) {
+                if (opts.onDone) this.later(opts.onDone, dur * 1000);
+                return;
+            }
+            this._wd.tweens.push({obj: obj, prop: prop, from: obj[prop], to: to, dur: dur, t: 0,
+                                  ease: opts.ease, onDone: opts.onDone});
+        },
+
+        burstWd: function (pos, color, count) {
+            const g = this._wd;
+            if (!g) return;
+            const geo = new THREE.SphereGeometry(0.06, 6, 5);
+            const parts = [];
+            for (let i = 0; i < (count || 16); i++) {
+                const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+                    color: color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
+                m.position.copy(pos);
+                const a = Math.random() * Math.PI * 2;
+                const v = 3.2 * (0.4 + Math.random() * 0.6);
+                m.userData.vel = new THREE.Vector3(Math.cos(a) * v, 1.6 * Math.random() * v * 0.8, Math.sin(a) * v * 0.4);
+                g.scene.add(m);
+                parts.push(m);
+            }
+            g.bursts.push({parts: parts, life: 0.6, t: 0});
+        },
+
+        flyBoltWd: function (bolt, from, to, dur, onHit) {
+            const g = this._wd;
+            if (!g) {
+                this.later(onHit, dur * 1000);
+                return;
+            }
+            bolt.position.copy(from);
+            bolt.visible = true;
+            const state = {k: 0};
+            g.tweens.push({obj: state, prop: 'k', from: 0, to: 1, dur: dur, t: 0, ease: 'linear',
+                onDone: () => { bolt.visible = false; onHit(); }});
+            const drive = () => {
+                if (!this._wd || !bolt.visible) return;
+                bolt.position.lerpVectors(from, to, state.k);
+                bolt.position.y += Math.sin(Math.min(1, state.k) * Math.PI) * 0.5;
+                requestAnimationFrame(drive);
+            };
+            drive();
+        },
+
+        heroCastWd: function (crit, onHit) {
+            const g = this._wd;
+            this.setClipWd(g && g.hero, 'attack', true);
+            if (!g) {
+                this.later(onHit, 700);
+                return;
+            }
+            duelSfx.superPew();
+            this.later(() => {
+                if (!this._wd) { onHit(); return; }
+                let from = new THREE.Vector3(g.hero.group.position.x + 0.4, 1.6, 0);
+                if (g.heroMuzzle) {
+                    g.hero.group.updateMatrixWorld(true);
+                    g.heroMuzzle.getWorldPosition(from);
+                }
+                const spec = g.enemy ? g.enemy.spec : {height: 2, y: 0};
+                const to = new THREE.Vector3(g.enemy ? g.enemy.group.position.x - 0.1 : 1.6, (spec.y || 0) + spec.height * 0.55, 0);
+                g.bolt.children[1].scale.setScalar(crit ? 1.5 : 0.85);
+                this.flyBoltWd(g.bolt, from, to, 0.4, () => {
+                    this.burstWd(to, crit ? 0x66eaff : 0xff8c1a, crit ? 30 : 18);
+                    this.setClipWd(g.enemy, 'hit', true);
+                    onHit();
+                });
+            }, 450);
+        },
+
+        bossAttackWd: function (onHit) {
+            const g = this._wd;
+            this.setClipWd(g && g.enemy, 'attack', true);
+            if (!g) {
+                this.later(onHit, 700);
+                return;
+            }
+            duelSfx.enemyPew();
+            this.later(() => {
+                if (!this._wd) { onHit(); return; }
+                const spec = g.enemy ? g.enemy.spec : {height: 2, y: 0};
+                const from = new THREE.Vector3(g.enemy.group.position.x - 0.4, (spec.y || 0) + spec.height * 0.5, 0);
+                const to = new THREE.Vector3(g.hero.group.position.x + 0.1, 1.1, 0);
+                this.flyBoltWd(g.orb, from, to, 0.4, () => {
+                    this.burstWd(to, 0xc45cff, 16);
+                    this.setClipWd(g.hero, 'hit', true);
+                    onHit();
+                });
+            }, 450);
+        },
+
+        resetStageWd: function () {
+            const g = this._wd;
+            if (!g) return;
+            g.tweens = [];
+            g.hero.alive = true;
+            g.hero.current = null;
+            this.setClipWd(g.hero, 'idle');
+            const swapBoss = !g.enemy || (g.enemy.spec && g.enemy.spec.key !== this.boss.key) || !g.enemy.alive;
+            if (swapBoss) {
+                this.loadBossWd();
+            } else {
+                g.enemy.current = null;
+                this.setClipWd(g.enemy, 'idle');
+            }
+        },
+    },
+
+    mounted: function () {
+        this.paintBackdropWd();
+        this.initStageWd();
+        this.resetStageWd();
+    },
+
+    beforeDestroy() {
+        this.clearTimers();
+        const g = this._wd;
+        this._wd = null;
+        if (this._onResizeWd) window.removeEventListener('resize', this._onResizeWd);
+        if (this._onFsWd) document.removeEventListener('fullscreenchange', this._onFsWd);
+        if (g) {
+            cancelAnimationFrame(g.raf);
+            if (g.renderer) {
+                g.renderer.dispose();
+                if (g.renderer.domElement && g.renderer.domElement.parentNode) {
+                    g.renderer.domElement.parentNode.removeChild(g.renderer.domElement);
+                }
+            }
+        }
+    },
+}));
+
+
 var AppComponent = Vue.component('app',{
     template: `<div>
 
@@ -7108,6 +9528,8 @@ const routes = [
     {path: '/play/balloon_shooter/:currentAppId', component: BalloonShooterComponent, props: true },
     {path: '/play/platformer/:currentAppId', component: PlatformerComponent, props: true },
     {path: '/play/treasure_maze/:currentAppId', component: TreasureMazeComponent, props: true },
+    {path: '/play/duel_shooter/:currentAppId', component: DuelShooterComponent, props: true },
+    {path: '/play/wizard_duel/:currentAppId', component: WizardDuelComponent, props: true },
     {path: '/display/news/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/all/:currentAppId', component: DisplayComponent, props: true },
     {path: '/display/item/:currentAppId/:itemId', component: DisplayComponent, props: true },

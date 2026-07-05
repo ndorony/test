@@ -321,6 +321,8 @@ currentAppId, questionIndex, progress`.
 | `balloon_shooter` | `BalloonShooterComponent` | `listName, questionIndex, resultIndex, title` | מטווח בלונים תלת-ממדי בגוף ראשון (Three.js) — יורים בבלון עם התשובה הנכונה |
 | `platformer` | `PlatformerComponent` | `listName, questionIndex, resultIndex, title` | פלטפורמר דו-ממדי בסגנון מריו (Phaser 3) — רצים וקופצים אל בלוק התשובה הנכון; מכשולים בנושאי נהר, עננים, צינורות (וארפ בסגנון מריו), פלטפורמות, עץ פירות ודרקון |
 | `treasure_maze` | `TreasureMazeComponent` | `listName, questionIndex, resultIndex, title` | מבוך אוצר תלת-ממדי (Three.js) — 3 שערים, בוחרים את הדלת עם התשובה הנכונה כדי להתקדם |
+| `duel_shooter` | `DuelShooterComponent` | `listName, questionIndex, resultIndex, title` (אופציונלי: `magazineSize`, ברירת מחדל 6) | דו-קרב תלת-ממדי במסך מלא (Three.js) — מסתתרים מאחורי שקי חול תחת אש מטרידה, בוחרים כדורי-תשובה מעמדת תחמושת בעולם (נכון = כדור זהב, רצף 3 = כדור-על בנזק כפול, שגוי = מקולקל), ואז רצים מסביב למחסה לקרב מול בוסים מונפשים (שלדי KayKit + דרקון). גיבור ניתן להחלפה (קוסם/הרפתקן/אביר/רובוט, נשמר ב-`duel_hero_choice`). 10 נק' חיים לכל צד. הערה: משתמש ב-`this._duel` (לא `_g` — שם שמור של Vue!) |
+| `wizard_duel` | `WizardDuelComponent` | `listName, questionIndex, resultIndex, title` | דו-קרב קוסמים בתורות בסגנון Prodigy — סצנת יום מצוירת (קנבס) עם שכבת תלת-ממד שקופה של קוסם מונפש מול בוס (אורק/רוח/דרקון), שאלה בעיגול קסם בוער, כפתורי תשובה גדולים. נכון = כדור אש (רצף 3 = קריטי x2), טעות = הבוס תוקף. 100 חיים לגיבור, בוסים 30/45/60. בוס נשמר ב-`<id>_wizard_boss` |
 
 לאותו `listName` אפשר להגדיר כמה משחקים בכיוונים שונים — למשל `questionIndex:
 'english_name', resultIndex: 'hebrew'` מול ההפך — בלי לשכפל נתונים.

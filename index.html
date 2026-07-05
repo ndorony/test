@@ -159,6 +159,475 @@
         touch-action: manipulation;
     }
 
+    /* Duel Shooter - 3D showdown arena (Three.js canvas) with a
+       fighting-game HUD: HP bars, VS badge, magazine, damage pops, confetti. */
+    .ds3-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 760px;
+        margin: 0 auto;
+    }
+
+    .ds3-arena {
+        width: 100%;
+        height: clamp(260px, 52vw, 400px);
+        border-radius: 14px;
+        overflow: hidden;
+        background: linear-gradient(#131238, #3d2c63 45%, #c65a3f 72%, #b98d54);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .ds3-arena canvas { display: block; }
+
+    .ds3-arena { position: relative; }
+
+    .ds3-arena::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background: radial-gradient(ellipse at center, transparent 52%, rgba(8, 6, 26, 0.5) 100%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .ds3-hud {
+        position: absolute;
+        top: 10px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .ds3-side { flex: 1; }
+    .ds3-side-enemy .ds3-name { text-align: right; }
+
+    .ds3-name {
+        color: #fff;
+        font-weight: 800;
+        font-size: 14px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+        margin-bottom: 3px;
+    }
+
+    .ds3-hpbar {
+        position: relative;
+        height: 16px;
+        background: rgba(0, 0, 0, 0.55);
+        border: 2px solid rgba(255, 255, 255, 0.75);
+        border-radius: 9px;
+        overflow: hidden;
+    }
+
+    .ds3-hpbar::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background: repeating-linear-gradient(90deg,
+            transparent 0, transparent calc(10% - 2px),
+            rgba(0, 0, 0, 0.45) calc(10% - 2px), rgba(0, 0, 0, 0.45) 10%);
+        pointer-events: none;
+    }
+
+    .ds3-hpfill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.45s ease, background-color 0.45s ease;
+    }
+
+    .ds3-flip { transform: scaleX(-1); }
+
+    .ds3-vs {
+        color: #ffd54f;
+        font-weight: 900;
+        font-size: 17px;
+        line-height: 1.05;
+        text-align: center;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+        white-space: nowrap;
+    }
+
+    .ds3-vs span { font-size: 11px; color: #ffe9b0; font-weight: 700; }
+
+    .ds3-score { color: #ffd54f; font-size: 13px; margin-left: 8px; }
+
+    .ds3-progress {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 5px;
+        z-index: 6;
+        background: rgba(0, 0, 0, 0.45);
+        border-radius: 14px 14px 0 0;
+        overflow: hidden;
+    }
+
+    .ds3-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ffd54f, #ff9800);
+        transition: width 0.5s ease;
+    }
+
+    .ds3-question {
+        position: absolute;
+        top: 52px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
+        background: rgba(8, 10, 26, 0.75);
+        border: 2px solid rgba(255, 213, 79, 0.6);
+        color: #fff;
+        font-size: 20px;
+        font-weight: 800;
+        padding: 6px 22px;
+        border-radius: 24px;
+        max-width: 82%;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ds3-question a { color: #ffd54f; }
+
+    .ds3-flash {
+        position: absolute;
+        top: 34%;
+        width: 100%;
+        text-align: center;
+        z-index: 6;
+        font-size: 23px;
+        font-weight: 900;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+        pointer-events: none;
+        padding: 0 12px;
+        box-sizing: border-box;
+    }
+
+    .ds3-fs-btn {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        z-index: 7;
+        color: #fff;
+        opacity: 0.75;
+        cursor: pointer;
+    }
+
+    .ds3-fs-btn i { font-size: 30px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+
+    .ds3-hero-btn {
+        position: absolute;
+        top: 52px;
+        left: 10px;
+        z-index: 7;
+        color: #fff;
+        background: rgba(8, 10, 26, 0.7);
+        border: 1px solid rgba(255, 213, 79, 0.55);
+        border-radius: 18px;
+        padding: 4px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .ds3-start {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 9;
+        background: rgba(5, 7, 20, 0.84);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        text-align: center;
+        cursor: pointer;
+        padding: 16px;
+        box-sizing: border-box;
+        border-radius: 14px;
+    }
+
+    .ds3-start h4 { font-weight: 900; margin: 0 0 10px; }
+    .ds3-start p { margin: 4px 0; font-size: 15px; color: #e8eaf6; }
+    .ds3-start-btn { margin-top: 16px; border-radius: 30px; font-weight: 800; }
+
+    .ds3-wrap:fullscreen { max-width: none; background: #000; }
+    .ds3-wrap:fullscreen .ds3-arena { height: 100vh; border-radius: 0; }
+    .ds3-wrap:fullscreen .ds3-progress { border-radius: 0; }
+    .ds3-wrap:-webkit-full-screen { max-width: none; background: #000; }
+    .ds3-wrap:-webkit-full-screen .ds3-arena { height: 100vh; border-radius: 0; }
+
+    .ds-msg {
+        position: absolute;
+        bottom: 8px;
+        width: 100%;
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+        z-index: 5;
+        padding: 0 10px;
+        box-sizing: border-box;
+        pointer-events: none;
+    }
+
+    .ds-dmg {
+        position: absolute;
+        top: 32%;
+        z-index: 6;
+        font-weight: 900;
+        font-size: 26px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        animation: dsDmg 1s ease-out forwards;
+        pointer-events: none;
+    }
+
+    @keyframes dsDmg {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(-52px) scale(1.5); }
+    }
+
+    .ds-confetti {
+        position: absolute;
+        top: -12px;
+        width: 9px;
+        height: 15px;
+        border-radius: 2px;
+        z-index: 6;
+        animation: dsConfetti 2s linear forwards;
+        pointer-events: none;
+    }
+
+    @keyframes dsConfetti {
+        to { transform: translateY(430px) rotate(740deg); opacity: 0.2; }
+    }
+
+    .ds-shake { animation: dsArenaShake 0.45s; }
+
+    @keyframes dsArenaShake {
+        0%, 100% { transform: translate(0, 0); }
+        20% { transform: translate(-7px, 3px); }
+        40% { transform: translate(6px, -4px); }
+        60% { transform: translate(-5px, 2px); }
+        80% { transform: translate(4px, -2px); }
+    }
+
+    /* Wizard Duel - Prodigy-style turn battle: painted backdrop, HP chips,
+       burning magic circle question panel, big answer buttons at the bottom */
+    .wd-wrap { background: #7ec8f7; }
+
+    .wd-stage {
+        width: 100%;
+        height: clamp(280px, 56vw, 440px);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .ds3-wrap:fullscreen .wd-stage { height: 100vh; border-radius: 0; }
+    .ds3-wrap:-webkit-full-screen .wd-stage { height: 100vh; border-radius: 0; }
+
+    .wd-chip {
+        position: absolute;
+        top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(20, 24, 48, 0.85);
+        border: 2px solid #f2b632;
+        border-radius: 14px;
+        padding: 6px 12px;
+        z-index: 6;
+        min-width: 180px;
+        box-sizing: border-box;
+    }
+
+    .wd-chip-left { left: 12px; }
+    .wd-chip-right { right: 12px; }
+
+    .wd-avatar {
+        font-size: 30px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        width: 46px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .wd-chipbody { flex: 1; }
+
+    .wd-chipname {
+        color: #fff;
+        font-weight: 800;
+        font-size: 14px;
+        margin-bottom: 3px;
+    }
+
+    .wd-coins { color: #ffd54f; font-size: 12px; font-weight: 700; margin-right: 6px; }
+
+    .wd-hpbar {
+        position: relative;
+        height: 16px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .wd-hpfill { height: 100%; border-radius: 7px; transition: width 0.45s ease, background-color 0.45s; }
+
+    .wd-hptext {
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        direction: ltr;
+        text-align: center;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 16px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+    }
+
+    .wd-circle {
+        position: absolute;
+        top: 46%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(46%, 340px);
+        aspect-ratio: 1;
+        background: radial-gradient(circle, #fdf8ea 62%, #f6e7c4 78%, rgba(246, 231, 196, 0));
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+        box-shadow: 0 0 0 6px rgba(255, 122, 26, 0.75), 0 0 34px 16px rgba(255, 122, 26, 0.55),
+                    inset 0 0 26px rgba(216, 138, 43, 0.35);
+        animation: wdPulse 2.2s ease-in-out infinite;
+        padding: 8%;
+        box-sizing: border-box;
+        text-align: center;
+    }
+
+    @keyframes wdPulse {
+        0%, 100% { box-shadow: 0 0 0 6px rgba(255, 122, 26, 0.75), 0 0 34px 14px rgba(255, 122, 26, 0.5), inset 0 0 26px rgba(216, 138, 43, 0.35); }
+        50% { box-shadow: 0 0 0 7px rgba(255, 160, 30, 0.9), 0 0 48px 22px rgba(255, 140, 26, 0.65), inset 0 0 30px rgba(216, 138, 43, 0.45); }
+    }
+
+    .wd-flame {
+        position: absolute;
+        top: -22px;
+        font-size: 34px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    }
+
+    .wd-question {
+        font-size: clamp(20px, 4.2vw, 34px);
+        font-weight: 900;
+        color: #3d2c14;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .wd-answers {
+        position: absolute;
+        bottom: 12px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        z-index: 6;
+    }
+
+    .wd-answer {
+        background: linear-gradient(#f8ecd2, #ecd9ae);
+        border: 2px solid #b99b6b;
+        border-bottom-width: 5px;
+        border-radius: 12px;
+        color: #4a3418;
+        font-size: clamp(16px, 3vw, 24px);
+        font-weight: 900;
+        padding: 12px 4px;
+        flex: 1 1 21%;
+        max-width: 220px;
+        min-height: 52px;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.15;
+        user-select: none;
+    }
+
+    .wd-answer:active { transform: translateY(2px); border-bottom-width: 3px; }
+
+    /* Portrait phones: shrink + raise the magic circle so the fighters below
+       stay visible, and let the answers wrap into a 2x2 grid */
+    @media (orientation: portrait) {
+        .wd-circle { width: min(62%, 250px); top: 34%; }
+        .wd-answer { flex: 1 1 40%; max-width: none; }
+        .wd-chip { min-width: 150px; padding: 4px 8px; }
+    }
+
+    .ds-mag {
+        position: absolute;
+        bottom: 34px;
+        left: 0;
+        right: 0;
+        z-index: 5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        pointer-events: none;
+    }
+
+    .ds-slot {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px dashed #90a4ae;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #c62828;
+        font-size: 16px;
+        transition: transform 0.2s;
+    }
+
+    .ds-slot.ds-good {
+        border: 2px solid #f9a825;
+        background: radial-gradient(circle at 30% 30%, #ffe082, #f9a825);
+        box-shadow: 0 0 6px rgba(249, 168, 37, 0.7);
+    }
+
+    .ds-slot.ds-super {
+        border: 2px solid #00acc1;
+        background: radial-gradient(circle at 30% 30%, #b2ebf2, #00acc1);
+        color: #01427a;
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.85);
+    }
+
+    .ds-slot.ds-dud {
+        border: 2px solid #757575;
+        background: repeating-linear-gradient(45deg, #bdbdbd 0 6px, #9e9e9e 6px 12px);
+    }
+
+    .ds-slot.ds-spent { opacity: 0.25; }
+    .ds-slot.ds-firing { transform: scale(1.3); }
+
+
     /* Word Link - Tetris-style well: drag a line from an exposed block to its match */
     .wl-area {
         position: relative;
