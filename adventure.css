@@ -1,0 +1,374 @@
+/* adventure.css — adventure mode skin + reusable animation library.
+   Placeholder-friendly: everything works with emoji/CSS now and will keep
+   working when AI-generated art replaces the visuals (same classes). */
+
+/* --- Screen scaffolding: soft pastel sky, full-bleed --- */
+
+.adv-screen {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #a5d8ff 0%, #d0bfff 55%, #ffd6e7 100%);
+    overflow: hidden;
+    position: relative;
+    color: #3b2d5c;
+}
+
+.adv-screen .adv-content {
+    position: relative;
+    z-index: 2;
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 16px 12px 40px;
+}
+
+/* --- Decorative drifting clouds (pure CSS layer behind the content) --- */
+
+.adv-clouds {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.adv-cloud {
+    position: absolute;
+    font-size: 3.2em;
+    opacity: 0.55;
+    animation: adv-drift linear infinite;
+}
+
+@keyframes adv-drift {
+    from { transform: translateX(-15vw); }
+    to   { transform: translateX(115vw); }
+}
+
+/* --- Reusable animation classes --- */
+
+/* Idle bob — characters, islands, companion ("the world breathes") */
+.adv-float {
+    animation: adv-float 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes adv-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+}
+
+/* Glow pulse — the current step / clickable highlights */
+.adv-pulse {
+    animation: adv-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes adv-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 40, 0.65); }
+    50%      { box-shadow: 0 0 0 12px rgba(255, 200, 40, 0); }
+}
+
+/* Pop-in entrance — stagger with inline animation-delay */
+.adv-pop {
+    animation: adv-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes adv-pop {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* Joy bounce — celebration stars, success reactions */
+.adv-bounce {
+    animation: adv-bounce 0.9s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes adv-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40%      { transform: translateY(-14px) scale(1.15); }
+}
+
+/* Gentle "oops" head-shake — wrong answers (never punishing) */
+.adv-shake {
+    animation: adv-shake 0.5s ease-in-out;
+}
+
+@keyframes adv-shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px) rotate(-3deg); }
+    75%      { transform: translateX(6px) rotate(3deg); }
+}
+
+/* Celebration banner sliding from the top */
+.adv-banner {
+    animation: adv-banner-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    background: linear-gradient(90deg, #ffd43b, #ffa8a8, #d0bfff);
+    border-radius: 16px;
+    padding: 14px;
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #5c3d00;
+    margin-bottom: 14px;
+}
+
+@keyframes adv-banner-in {
+    from { transform: translateY(-60px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Cards (worlds / path steps) --- */
+
+.adv-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(80, 50, 140, 0.18);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adv-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(80, 50, 140, 0.28);
+}
+
+.adv-card.adv-locked {
+    opacity: 0.55;
+    filter: grayscale(0.7);
+    cursor: default;
+}
+
+.adv-card.adv-locked:hover {
+    transform: none;
+}
+
+.adv-card.adv-current {
+    border: 3px solid #ffc828;
+}
+
+.adv-sprite {
+    font-size: 2.4em;
+    line-height: 1;
+}
+
+.adv-card-title {
+    font-size: 1.15em;
+    font-weight: bold;
+}
+
+.adv-card-sub {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+/* --- Player card + XP bar --- */
+
+.adv-player {
+    background: linear-gradient(135deg, #845ef7, #b388ff);
+    border-radius: 18px;
+    padding: 14px 16px;
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(80, 50, 140, 0.3);
+}
+
+.adv-xp-track {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    height: 14px;
+    margin: 8px 0 4px;
+    overflow: hidden;
+}
+
+.adv-xp-fill {
+    background: linear-gradient(90deg, #ffd43b, #ffec99);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* --- Layered avatar: aura circle + base character + hat on top --- */
+
+.adv-avatar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px rgba(80, 50, 140, 0.25);
+    vertical-align: middle;
+}
+
+.adv-avatar-base {
+    line-height: 1;
+}
+
+.adv-avatar-hat {
+    position: absolute;
+    top: -38%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-8deg);
+    font-size: 0.75em;
+}
+
+/* --- Dressing room option chips --- */
+
+.adv-option {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: #f3f0ff;
+    font-size: 1.7em;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.adv-option:hover {
+    transform: scale(1.1);
+}
+
+.adv-option-selected {
+    border-color: #ffc828;
+    box-shadow: 0 0 8px rgba(255, 200, 40, 0.7);
+}
+
+.adv-option.adv-locked {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+    cursor: default;
+}
+
+.adv-option.adv-locked:hover {
+    transform: none;
+}
+
+.adv-option-lock {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.4em;
+    background: white;
+    border-radius: 8px;
+    padding: 0 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Lottie companion (animated emoji with plain-emoji fallback) --- */
+
+.adv-lottie {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.adv-lottie-box {
+    position: absolute;
+    inset: 0;
+}
+
+/* --- Companion with a speech bubble --- */
+
+.adv-companion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.adv-companion .adv-sprite {
+    font-size: 3em;
+}
+
+.adv-bubble {
+    background: white;
+    border-radius: 16px;
+    padding: 10px 14px;
+    box-shadow: 0 3px 10px rgba(80, 50, 140, 0.18);
+    position: relative;
+    font-size: 1em;
+}
+
+.adv-title {
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    margin: 10px 0 16px;
+    color: #4c3585;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.6);
+}
+
+.adv-back {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    color: #4c3585;
+    font-weight: bold;
+}
+
+/* --- In-game frame: world bar + reacting companion --- */
+
+.adv-frame-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: linear-gradient(90deg, #845ef7, #b388ff);
+    color: white;
+    box-shadow: 0 2px 10px rgba(80, 50, 140, 0.35);
+}
+
+.adv-frame-title {
+    font-weight: bold;
+    font-size: 1.05em;
+}
+
+.adv-frame-exit {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 4px 12px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.adv-frame-exit:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.adv-frame-companion {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 1200;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none; /* never block game buttons */
+}
+
+.adv-frame-companion .adv-sprite {
+    font-size: 2.6em;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.25));
+}
+
+/* --- Accessibility: respect reduced motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+    .adv-float, .adv-pulse, .adv-pop, .adv-bounce, .adv-shake, .adv-cloud, .adv-banner {
+        animation: none;
+    }
+}

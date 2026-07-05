@@ -75,6 +75,13 @@ function text_to_speech(text){
 
 
 const getDataList = (listName) => {
+    // Adventure mode: virtual lists (a world's filtered subset) from worlds.js
+    if (typeof getAdventureList === 'function') {
+        const adventureList = getAdventureList(listName);
+        if (adventureList) {
+            return adventureList;
+        }
+    }
     if (!DATA[listName]) {
         throw new Error('List does not exist');
     }
@@ -137,7 +144,8 @@ const getWeightsForKey = (key, setItems, elements) => {
     const storedWeights = localStorage.getItem(getWeightsKey(key));
     if (storedWeights) {
         let weights = JSON.parse(storedWeights);
-        if (setItems){
+        // Adventure mode: unlock cycles run only from 'learn' encounters (worlds.js)
+        if (setItems && (typeof shouldAdventureAutoUnlock !== 'function' || shouldAdventureAutoUnlock(key))){
             newWeights = updateWeights(key, weights, setItems);
             if (newWeights) {
                 weights = newWeights;
@@ -151,8 +159,16 @@ const getWeightsForKey = (key, setItems, elements) => {
     }
 
     // Initialize weights based on the mode
-    let weights;
-    if (setItems === 0 || getActivityMode() == 'practicing') {
+    let weights = null;
+    // Adventure mode: first-time init seeded from existing knowledge about the
+    // same items (worlds.js). Returns null for regular keys or when there is
+    // no evidence — then the default initialization proceeds as usual.
+    if (typeof getAdventureSeededWeights === 'function') {
+        weights = getAdventureSeededWeights(key, setItems, elements);
+    }
+    if (weights) {
+        // Seeded from prior knowledge — progress and new_items were already updated inside the hook
+    } else if (setItems === 0 || getActivityMode() == 'practicing') {
         // All elements get a fixed weight of 5
         weights = elements.map(() => 5);
     } else {
@@ -177,6 +193,10 @@ const updateWeightForKey = (key, index, change) => {
     // Retrieve the current weights from localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
     recordAttemptResult(key, index, change < 0);
+    // Adventure mode: report the answer for XP / world-completion tracking (adventure.js)
+    if (typeof onAdventureAnswer === 'function') {
+        onAdventureAnswer(key, change < 0);
+    }
     if (typeof gtag === 'function') {
         var _appItem = getItemById(apps, key);
         gtag('event', 'question_answered', {
@@ -353,6 +373,13 @@ function generateFromList(listName, questionIndex, resultIndex, key, setItems=1,
 
 
 function getItemById(currentItem, id) {
+  // Adventure mode: adv-<world>-<n> ids resolve to a virtual app from worlds.js
+  if (typeof resolveAdventureApp === 'function') {
+      const adventureApp = resolveAdventureApp(id);
+      if (adventureApp) {
+          return adventureApp;
+      }
+  }
   // Split the ID into an array of indices
   const indices = id.split('_').map(Number);
 
@@ -436,6 +463,14 @@ var BaseGameComponent = Vue.component('base-game',{
         reloadProgress: function(){
             this.progress = getCurrentLevelProgress(this.currentAppId);
             if (this.progress.progress == this.progress.total){
+                // Adventure mode: return to the world path instead of the legacy app screen
+                if (typeof getAdventureLevelCompleteRoute === 'function') {
+                    const adventureRoute = getAdventureLevelCompleteRoute(this.currentAppId);
+                    if (adventureRoute) {
+                        this.$router.push(adventureRoute);
+                        return false;
+                    }
+                }
                 this.$router.push('/app/' + this.currentAppId);
                 return false;
 
@@ -3140,6 +3175,60 @@ const MAZE_SCENARIOS = [
       fail: 'shatter', failColor: 0xffd740, failMsg: 'המפתח הלא נכון נשבר במנעול!' },
 ];
 
+// Pastel unicorn restyle of the maze scenarios, used when the unicorn theme is
+// selected in the style picker: candy palettes, friendly fail effects and no
+// scary creatures.
+const MAZE_UNICORN_SCENARIOS = [
+    { title: '🌈 שערי הקשת — איזו דלת מובילה לאוצר?', door: 0xff9ecd, frame: 0xc5b3ff, flame: 0xffc1ec, light: 0xffa8e0, rune: 0xfff0fa,
+      fail: 'block', obstacle: 'ice', failColor: 0xbfe9ff, failMsg: 'קיר בדולח נוצץ חוסם את הדרך! נסה דלת אחרת' },
+    { title: '✨ שביל אבקת הקסם — בחר במעבר הנכון', door: 0xb69df5, frame: 0xe4c9f7, flame: 0xd9b8ff, light: 0xc9a6ff, rune: 0xf3e3ff,
+      fail: 'bounce', failColor: 0xd9b8ff, failMsg: 'ענן קסם רך החזיר אותך בעדינות!' },
+    { title: '🦄 גן חדי הקרן — איזו דלת תוביל הלאה?', door: 0x93dba1, frame: 0xf7c8e0, flame: 0xc0f0c8, light: 0xa8e6b4, rune: 0xe3ffe8,
+      fail: 'block', obstacle: 'thorns', failColor: 0xff9ecd, failMsg: 'שיחי ורדים פורחים חוסמים את השביל!' },
+    { title: '🌸 גשרי הפריחה — איזה גשר יחזיק?', layout: 'bridges', pit: 'water', door: 0xffb7d9, frame: 0xf0a8c8, flame: 0xffd1e8, light: 0xffb7d9, rune: 0xffe3f0,
+      fail: 'collapse', failColor: 0xf0a8c8, failMsg: 'הגשר התפרק לעלי כותרת! ברחת בזמן!' },
+    { title: '🍭 ממלכת הממתקים — איזו תיבה אמיתית?', layout: 'chests', door: 0xffa8b8, frame: 0xffd9a8, flame: 0xffe3b3, light: 0xffd280, rune: 0xfff0c9,
+      fail: 'smoke', failColor: 0xffb3d9, failMsg: 'תיבת צחוק! ענן סוכריות ורוד!' },
+    { title: '☁️ נהר העננים — איזה שביל בטוח?', layout: 'stones', pit: 'water', door: 0xa8d8ff, frame: 0xd0e8ff, flame: 0xc9e6ff, light: 0xa8d0ff, rune: 0xe3f2ff,
+      fail: 'collapse', failColor: 0xc9e6ff, failMsg: 'אבני הענן שקעו! קפצת חזרה בזמן!' },
+    { title: '🗝️ חדר מפתחות הקסם — איזה מפתח פותח?', layout: 'keys', door: 0xd9a8f0, frame: 0xf0c9ff, flame: 0xe8c1ff, light: 0xd9a8ff, rune: 0xf7e3ff,
+      fail: 'shatter', failColor: 0xffd740, failMsg: 'המפתח הפך לנצנצים! נסה מפתח אחר!' },
+];
+
+// Scene atmosphere per style. 'night' is the classic look; 'unicorn' turns the
+// maze into a bright pastel dawn with golden sparkles instead of stars.
+const MAZE_ATMOSPHERES = {
+    night: {
+        fog: [0x0c1024, 8, 46], skyTop: 0x05070f, skyBottom: 0x232a52,
+        stars: 0xcfdcff, starSize: 1.4,
+        moonInner: 'rgba(235,240,255,1)', moonOuter: 'rgba(160,180,255,0)',
+        hemiSky: 0x32406e, hemiGround: 0x14100c, hemiIntensity: 0.55,
+        dirColor: 0x8fa6e8, dirIntensity: 0.5,
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0xd6e88a,
+        exposure: 1.1,
+        scenarios: MAZE_SCENARIOS,
+    },
+    unicorn: {
+        fog: [0xfbe9f7, 16, 70], skyTop: 0xaccbff, skyBottom: 0xffd9ec,
+        stars: 0xffe9a8, starSize: 2.2,
+        moonInner: 'rgba(255,250,220,1)', moonOuter: 'rgba(255,214,160,0)', // a soft sun
+        hemiSky: 0xfff6fc, hemiGround: 0xe8d5f2, hemiIntensity: 1.25,
+        dirColor: 0xfff0f7, dirIntensity: 0.85,
+        exposure: 1.3,
+        // Candy-colored textures (the tints stay white — the color lives in the texture)
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0xffaef5,
+        stonePalette: {bg: '#e3c3ee', shades: ['#ffd6ef', '#f2c6e8', '#ffe3f5', '#e8ccf7']},
+        cobblePalette: {bg: '#f2d5ee', shades: ['#ffe0f2', '#f7d6f0', '#ffe9f7', '#f0d9f5']},
+        woodPalette: {base: '#f7dceb', grain: [235, 160, 200]},
+        rainbow: true,
+        scenarios: MAZE_UNICORN_SCENARIOS,
+    },
+};
+
+function getMazeAtmosphere() {
+    return getLocalStorage('theme', 'base') === 'unicorn' ? MAZE_ATMOSPHERES.unicorn : MAZE_ATMOSPHERES.night;
+}
+
 // Swappable companion characters for the maze. All are CC0/free rigged models
 // from the three.js examples, served with CORS over jsDelivr so they load
 // straight from a URL. `clips` maps the game's states to each model's own clip
@@ -3243,12 +3332,14 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             return new THREE.CanvasTexture(canvas);
         },
 
-        makeWoodTexture: function() {
+        makeWoodTexture: function(palette) {
+            const base = (palette && palette.base) || '#9a7950';
+            const grain = (palette && palette.grain) || [60, 35, 15];
             return this.makeCanvasTexture(256, (ctx, s) => {
-                ctx.fillStyle = '#9a7950';
+                ctx.fillStyle = base;
                 ctx.fillRect(0, 0, s, s);
                 for (let i = 0; i < 40; i++) {
-                    ctx.strokeStyle = `rgba(${60 + Math.random() * 40}, ${35 + Math.random() * 25}, 15, ${0.25 + Math.random() * 0.3})`;
+                    ctx.strokeStyle = `rgba(${grain[0] + Math.random() * 40}, ${grain[1] + Math.random() * 25}, ${grain[2]}, ${0.25 + Math.random() * 0.3})`;
                     ctx.lineWidth = 1 + Math.random() * 2.5;
                     const y = Math.random() * s;
                     ctx.beginPath();
@@ -3259,11 +3350,12 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             });
         },
 
-        makeStoneTexture: function() {
+        makeStoneTexture: function(palette) {
+            const bg = (palette && palette.bg) || '#36323d';
+            const shades = (palette && palette.shades) || ['#55505c', '#4a4550', '#5d5866', '#48434e'];
             return this.makeCanvasTexture(256, (ctx, s) => {
-                ctx.fillStyle = '#36323d';
+                ctx.fillStyle = bg;
                 ctx.fillRect(0, 0, s, s);
-                const shades = ['#55505c', '#4a4550', '#5d5866', '#48434e'];
                 const rows = 6, cols = 4;
                 for (let r = 0; r < rows; r++) {
                     const h = s / rows;
@@ -3277,11 +3369,26 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             });
         },
 
-        makeCobbleTexture: function() {
+        makeRainbowTexture: function() {
             return this.makeCanvasTexture(256, (ctx, s) => {
-                ctx.fillStyle = '#26242c';
+                const colors = ['#ff9ecd', '#ffd280', '#fff3b0', '#93dba1', '#8ec9ff', '#b69df5'];
+                ctx.lineWidth = 10;
+                ctx.globalAlpha = 0.9;
+                colors.forEach((color, i) => {
+                    ctx.strokeStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(s / 2, s, s * 0.88 - i * 11, Math.PI, 2 * Math.PI);
+                    ctx.stroke();
+                });
+            });
+        },
+
+        makeCobbleTexture: function(palette) {
+            const bg = (palette && palette.bg) || '#26242c';
+            const shades = (palette && palette.shades) || ['#3a3741', '#433f4a', '#36333d', '#3e3a45'];
+            return this.makeCanvasTexture(256, (ctx, s) => {
+                ctx.fillStyle = bg;
                 ctx.fillRect(0, 0, s, s);
-                const shades = ['#3a3741', '#433f4a', '#36333d', '#3e3a45'];
                 for (let i = 0; i < 220; i++) {
                     ctx.fillStyle = shades[i % shades.length];
                     ctx.beginPath();
@@ -3350,7 +3457,9 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             };
 
             g.scene = new THREE.Scene();
-            g.scene.fog = new THREE.Fog(0x0c1024, 8, 46);
+            // Style-driven atmosphere: classic night, or pastel dawn on the unicorn theme
+            const atmo = g.atmo = getMazeAtmosphere();
+            g.scene.fog = new THREE.Fog(atmo.fog[0], atmo.fog[1], atmo.fog[2]);
 
             g.camera = new THREE.PerspectiveCamera(70, area.clientWidth / area.clientHeight, 0.1, 300);
             g.camera.position.set(0, 1.6, 5);
@@ -3362,7 +3471,7 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             g.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isTouch ? 1.5 : 2));
             g.renderer.outputEncoding = THREE.sRGBEncoding;
             g.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            g.renderer.toneMappingExposure = 1.1;
+            g.renderer.toneMappingExposure = atmo.exposure;
             area.insertBefore(g.renderer.domElement, area.firstChild);
 
             // Night sky dome
@@ -3372,8 +3481,8 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                     side: THREE.BackSide,
                     depthWrite: false,
                     uniforms: {
-                        top: { value: new THREE.Color(0x05070f) },
-                        bottom: { value: new THREE.Color(0x232a52) },
+                        top: { value: new THREE.Color(atmo.skyTop) },
+                        bottom: { value: new THREE.Color(atmo.skyBottom) },
                     },
                     vertexShader: 'varying vec3 vP; void main(){ vP = position;' +
                         ' gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
@@ -3398,14 +3507,14 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             const starGeo = new THREE.BufferGeometry();
             starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
             g.stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
-                color: 0xcfdcff, size: 1.4, sizeAttenuation: false,
+                color: atmo.stars, size: atmo.starSize, sizeAttenuation: false,
                 transparent: true, opacity: 0.9,
             }));
             g.scene.add(g.stars);
 
             // Moon
             const moon = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: this.makeRadialTexture('rgba(235,240,255,1)', 'rgba(160,180,255,0)'),
+                map: this.makeRadialTexture(atmo.moonInner, atmo.moonOuter),
                 blending: THREE.AdditiveBlending,
                 depthWrite: false,
             }));
@@ -3413,28 +3522,39 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             moon.position.set(-55, 75, -130);
             g.scene.add(moon);
 
+            // A big soft rainbow on the horizon (unicorn style only)
+            if (atmo.rainbow) {
+                const rainbow = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: this.makeRainbowTexture(),
+                    transparent: true, opacity: 0.85, depthWrite: false,
+                }));
+                rainbow.scale.set(110, 110, 1);
+                rainbow.position.set(70, 30, -150);
+                g.scene.add(rainbow);
+            }
+
             // Lights: cold moonlight + warm torches (added per gate)
-            g.scene.add(new THREE.HemisphereLight(0x32406e, 0x14100c, 0.55));
-            const moonLight = new THREE.DirectionalLight(0x8fa6e8, 0.5);
+            g.scene.add(new THREE.HemisphereLight(atmo.hemiSky, atmo.hemiGround, atmo.hemiIntensity));
+            const moonLight = new THREE.DirectionalLight(atmo.dirColor, atmo.dirIntensity);
             moonLight.position.set(-12, 22, 8);
             g.scene.add(moonLight);
 
             // Cobblestone floor
-            const cobbleTex = this.makeCobbleTexture();
+            const cobbleTex = this.makeCobbleTexture(atmo.cobblePalette);
             cobbleTex.wrapS = cobbleTex.wrapT = THREE.RepeatWrapping;
             cobbleTex.repeat.set(14, 14);
             cobbleTex.anisotropy = g.renderer.capabilities.getMaxAnisotropy();
             const floor = new THREE.Mesh(
                 new THREE.PlaneGeometry(80, 80),
-                new THREE.MeshStandardMaterial({ map: cobbleTex, roughness: 1, metalness: 0 })
+                new THREE.MeshStandardMaterial({ map: cobbleTex, color: atmo.floorTint, roughness: 1, metalness: 0 })
             );
             floor.rotation.x = -Math.PI / 2;
             g.scene.add(floor);
 
             // Shared resources for building chambers
-            g.stoneTex = this.makeStoneTexture();
+            g.stoneTex = this.makeStoneTexture(atmo.stonePalette);
             g.stoneTex.wrapS = g.stoneTex.wrapT = THREE.RepeatWrapping;
-            g.woodTex = this.makeWoodTexture();
+            g.woodTex = this.makeWoodTexture(atmo.woodPalette);
             g.flameTex = this.makeRadialTexture('rgba(255,235,170,1)', 'rgba(255,140,30,0)');
             g.goldMat = new THREE.MeshStandardMaterial({
                 color: 0xffc94d, roughness: 0.35, metalness: 0.8,
@@ -3467,7 +3587,7 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             const fireflyGeo = new THREE.BufferGeometry();
             fireflyGeo.setAttribute('position', new THREE.Float32BufferAttribute(fireflyPositions, 3));
             g.fireflies = new THREE.Points(fireflyGeo, new THREE.PointsMaterial({
-                color: 0xd6e88a, size: 0.09, transparent: true, opacity: 0.85,
+                color: atmo.firefly, size: 0.09, transparent: true, opacity: 0.85,
                 blending: THREE.AdditiveBlending, depthWrite: false,
             }));
             g.scene.add(g.fireflies);
@@ -3822,10 +3942,11 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
 
         buildChamber: function(ox, oz) {
             const g = this._g;
+            const scenarioPool = g.atmo.scenarios;
             let scenario;
             do {
-                scenario = MAZE_SCENARIOS[Math.floor(Math.random() * MAZE_SCENARIOS.length)];
-            } while (MAZE_SCENARIOS.length > 1 && scenario === g.lastScenario);
+                scenario = scenarioPool[Math.floor(Math.random() * scenarioPool.length)];
+            } while (scenarioPool.length > 1 && scenario === g.lastScenario);
             g.lastScenario = scenario;
 
             const group = new THREE.Group();
@@ -3842,7 +3963,7 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 const tex = g.stoneTex.clone();
                 tex.needsUpdate = true;
                 tex.repeat.set(Math.max(1, w / 3.5), Math.max(1, h / 3.5));
-                const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 });
+                const mat = new THREE.MeshStandardMaterial({ map: tex, color: g.atmo.wallTint, roughness: 0.95 });
                 chamber.disposables.push(tex, mat);
                 const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.6), mat);
                 wall.position.set(x, y, z);
@@ -4305,7 +4426,7 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
                 const tex = g.stoneTex.clone();
                 tex.needsUpdate = true;
                 tex.repeat.set(Math.max(1, w / 3.5), Math.max(1, h / 3.5));
-                const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 });
+                const mat = new THREE.MeshStandardMaterial({ map: tex, color: g.atmo.wallTint, roughness: 0.95 });
                 room.disposables.push(tex, mat);
                 const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.6), mat);
                 wall.position.set(x, y, z);
@@ -9078,6 +9199,12 @@ var MenuComponent = Vue.component('menu',{
    <div>
    <div container>
     <div class="row">
+      <!-- Adventure mode entry — shown on the home menu only -->
+      <div v-if="adventureEnabled" class="col s8 offset-s2">
+        <router-link to="/adventure" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px; font-weight: bold;" :style="{background: theme.colors.primary}">
+          🗺️ הרפתקה
+        </router-link>
+      </div>
       <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
         <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
@@ -9093,6 +9220,11 @@ var MenuComponent = Vue.component('menu',{
          menu: null,
          theme: getTheme(),
         }
+    },
+    computed: {
+        adventureEnabled: function(){
+            return !this.$route.params.currentMenu && typeof getAdventureRoutes === 'function';
+        },
     },
     created: function(){
         this.init();
@@ -9538,6 +9670,11 @@ const routes = [
     {path: '/signUp', component: SignUp},
     {path: '/login', component: Login },
 ]
+
+// Adventure mode routes (adventure.js) — appended only when the module is loaded
+if (typeof getAdventureRoutes === 'function') {
+    getAdventureRoutes().forEach(route => routes.push(route));
+}
 
 const router = new VueRouter({
     routes

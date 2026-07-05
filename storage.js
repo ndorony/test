@@ -10,6 +10,11 @@ function getUser() {
 }
 
 function getKey(key) {
+    // Adventure mode: all encounters of a world share one knowledge key (worlds.js).
+    // Non-adventure keys are returned unchanged.
+    if (typeof normalizeAdventureKey === 'function') {
+        key = normalizeAdventureKey(key);
+    }
     return `${key}_${getUser()}_LocalData`;
 }
 
