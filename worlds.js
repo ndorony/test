@@ -58,13 +58,14 @@ const HEBREW_LETTER_WORLDS = HEBREW_LETTER_GROUPS.map((group, index) => ({
     resultIndex: 'letter',       // the child picks the letter
     art: {bg: 'world_letters_bg'},
     unlock: index === 0 ? {playerLevel: 1} : {world: HEBREW_LETTER_GROUPS[index - 1].id},
-    // Placeholder game lineup — the final choice of mini-games and skins will be decided separately
+    // Letter worlds are built around the treasure maze (hear the letter name,
+    // pick the door with the right letter), with falling answers for variety.
     encounters: [
         {type: 'learn'},
-        {type: 'game', game: 'mcq'},
+        {type: 'game', game: 'treasure_maze'},
         {type: 'game', game: 'falling_answers'},
-        {type: 'game', game: 'mcq'},
-        {type: 'final', game: 'mcq'},
+        {type: 'game', game: 'treasure_maze'},
+        {type: 'final', game: 'treasure_maze'},
     ],
 }));
 

@@ -3178,25 +3178,27 @@ const MAZE_SCENARIOS = [
 // Pastel unicorn restyle of the maze scenarios, used when the unicorn theme is
 // selected in the style picker: candy palettes, friendly fail effects and no
 // scary creatures.
+// Vivid hot-pink family matching the app navbar (unicorn theme #FF69B4 / #BA55D3):
+// bright pinks, magentas and purples, coherent and lively rather than multicolor.
 const MAZE_UNICORN_SCENARIOS = [
-    { title: '🌈 שערי הקשת — איזו דלת מובילה לאוצר?', door: 0xff9ecd, frame: 0xc5b3ff, flame: 0xffc1ec, light: 0xffa8e0, rune: 0xfff0fa,
-      fail: 'block', obstacle: 'ice', failColor: 0xbfe9ff, failMsg: 'קיר בדולח נוצץ חוסם את הדרך! נסה דלת אחרת' },
-    { title: '✨ שביל אבקת הקסם — בחר במעבר הנכון', door: 0xb69df5, frame: 0xe4c9f7, flame: 0xd9b8ff, light: 0xc9a6ff, rune: 0xf3e3ff,
-      fail: 'bounce', failColor: 0xd9b8ff, failMsg: 'ענן קסם רך החזיר אותך בעדינות!' },
-    { title: '🦄 גן חדי הקרן — איזו דלת תוביל הלאה?', door: 0x93dba1, frame: 0xf7c8e0, flame: 0xc0f0c8, light: 0xa8e6b4, rune: 0xe3ffe8,
-      fail: 'block', obstacle: 'thorns', failColor: 0xff9ecd, failMsg: 'שיחי ורדים פורחים חוסמים את השביל!' },
-    { title: '🌸 גשרי הפריחה — איזה גשר יחזיק?', layout: 'bridges', pit: 'water', door: 0xffb7d9, frame: 0xf0a8c8, flame: 0xffd1e8, light: 0xffb7d9, rune: 0xffe3f0,
-      fail: 'collapse', failColor: 0xf0a8c8, failMsg: 'הגשר התפרק לעלי כותרת! ברחת בזמן!' },
-    { title: '🍭 ממלכת הממתקים — איזו תיבה אמיתית?', layout: 'chests', door: 0xffa8b8, frame: 0xffd9a8, flame: 0xffe3b3, light: 0xffd280, rune: 0xfff0c9,
-      fail: 'smoke', failColor: 0xffb3d9, failMsg: 'תיבת צחוק! ענן סוכריות ורוד!' },
-    { title: '☁️ נהר העננים — איזה שביל בטוח?', layout: 'stones', pit: 'water', door: 0xa8d8ff, frame: 0xd0e8ff, flame: 0xc9e6ff, light: 0xa8d0ff, rune: 0xe3f2ff,
-      fail: 'collapse', failColor: 0xc9e6ff, failMsg: 'אבני הענן שקעו! קפצת חזרה בזמן!' },
-    { title: '🗝️ חדר מפתחות הקסם — איזה מפתח פותח?', layout: 'keys', door: 0xd9a8f0, frame: 0xf0c9ff, flame: 0xe8c1ff, light: 0xd9a8ff, rune: 0xf7e3ff,
-      fail: 'shatter', failColor: 0xffd740, failMsg: 'המפתח הפך לנצנצים! נסה מפתח אחר!' },
+    { title: '🌈 שערי הקשת — איזו דלת מובילה לאוצר?', door: 0xff4fa0, frame: 0xd66bff, flame: 0xff8fd0, light: 0xff69b4, rune: 0xffd6f0,
+      fail: 'block', obstacle: 'ice', failColor: 0xe0a8ff, failMsg: 'קיר בדולח נוצץ חוסם את הדרך! נסה דלת אחרת' },
+    { title: '✨ שביל אבקת הקסם — בחר במעבר הנכון', door: 0xba55d3, frame: 0xd98fff, flame: 0xff5fd6, light: 0xc47fff, rune: 0xffd6ff,
+      fail: 'bounce', failColor: 0xd98fff, failMsg: 'ענן קסם רך החזיר אותך בעדינות!' },
+    { title: '🦄 גן חדי הקרן — איזו דלת תוביל הלאה?', door: 0xff69b4, frame: 0xff9ed6, flame: 0xffb3e0, light: 0xff8fc7, rune: 0xffe3f5,
+      fail: 'block', obstacle: 'thorns', failColor: 0xff4fa0, failMsg: 'שיחי ורדים פורחים חוסמים את השביל!' },
+    { title: '🌸 גשרי הפריחה — איזה גשר יחזיק?', layout: 'bridges', pit: 'water', door: 0xff4f97, frame: 0xff8fbf, flame: 0xff6bd6, light: 0xff69b4, rune: 0xffd6e6,
+      fail: 'collapse', failColor: 0xff4f97, failMsg: 'הגשר התפרק לעלי כותרת! ברחת בזמן!' },
+    { title: '🍭 ממלכת הממתקים — איזו תיבה אמיתית?', layout: 'chests', door: 0xff5fa8, frame: 0xff9ec4, flame: 0xff8fd0, light: 0xff7fb0, rune: 0xffd6e6,
+      fail: 'smoke', failColor: 0xff6fb3, failMsg: 'תיבת צחוק! ענן סוכריות ורוד!' },
+    { title: '☁️ נהר הקסם — איזה שביל בטוח?', layout: 'stones', pit: 'water', door: 0xc85fff, frame: 0xe0a8ff, flame: 0xff8fd0, light: 0xc47fff, rune: 0xffd6f0,
+      fail: 'collapse', failColor: 0xd98fff, failMsg: 'אבני הקסם שקעו! קפצת חזרה בזמן!' },
+    { title: '🗝️ חדר מפתחות הקסם — איזה מפתח פותח?', layout: 'keys', door: 0xb15fff, frame: 0xd99fff, flame: 0xff5fd6, light: 0xc47fff, rune: 0xffd6ff,
+      fail: 'shatter', failColor: 0xff69b4, failMsg: 'המפתח הפך לנצנצים! נסה מפתח אחר!' },
 ];
 
 // Scene atmosphere per style. 'night' is the classic look; 'unicorn' turns the
-// maze into a bright pastel dawn with golden sparkles instead of stars.
+// maze into a bright, joyful candy-rainbow world with sunny sparkles.
 const MAZE_ATMOSPHERES = {
     night: {
         fog: [0x0c1024, 8, 46], skyTop: 0x05070f, skyBottom: 0x232a52,
@@ -3209,17 +3211,18 @@ const MAZE_ATMOSPHERES = {
         scenarios: MAZE_SCENARIOS,
     },
     unicorn: {
-        fog: [0xfbe9f7, 16, 70], skyTop: 0xaccbff, skyBottom: 0xffd9ec,
-        stars: 0xffe9a8, starSize: 2.2,
-        moonInner: 'rgba(255,250,220,1)', moonOuter: 'rgba(255,214,160,0)', // a soft sun
-        hemiSky: 0xfff6fc, hemiGround: 0xe8d5f2, hemiIntensity: 1.25,
-        dirColor: 0xfff0f7, dirIntensity: 0.85,
-        exposure: 1.3,
-        // Candy-colored textures (the tints stay white — the color lives in the texture)
-        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0xffaef5,
-        stonePalette: {bg: '#e3c3ee', shades: ['#ffd6ef', '#f2c6e8', '#ffe3f5', '#e8ccf7']},
-        cobblePalette: {bg: '#f2d5ee', shades: ['#ffe0f2', '#f7d6f0', '#ffe9f7', '#f0d9f5']},
-        woodPalette: {base: '#f7dceb', grain: [235, 160, 200]},
+        // Vivid hot-pink world matching the app navbar (#FF69B4 / #BA55D3)
+        fog: [0xffcbe8, 22, 82], skyTop: 0xd66bff, skyBottom: 0xff69b4,
+        stars: 0xffe3f5, starSize: 2.4,
+        moonInner: 'rgba(255,240,250,1)', moonOuter: 'rgba(255,150,210,0)', // a bright pink sun
+        hemiSky: 0xffffff, hemiGround: 0xffb3e0, hemiIntensity: 1.5,
+        dirColor: 0xffffff, dirIntensity: 1.05,
+        exposure: 1.4,
+        // Vivid pink/magenta textures (tints stay white — the color lives in the texture)
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0xff8fd0,
+        stonePalette: {bg: '#ff69b4', shades: ['#ff8fd0', '#ba55d3', '#ff4fa0', '#d98fff']},
+        cobblePalette: {bg: '#ff8fc7', shades: ['#ff69b4', '#ffa8d8', '#d66bff', '#ff5fa8']},
+        woodPalette: {base: '#ff9ec4', grain: [220, 80, 150]},
         rainbow: true,
         scenarios: MAZE_UNICORN_SCENARIOS,
     },
@@ -3235,6 +3238,54 @@ function getMazeAtmosphere() {
 // names; `once` lists the non-looping clips. The in-game button cycles through
 // these plus the hand-built procedural figure for easy side-by-side comparison.
 const HERO_MODELS = [
+    {
+        // Cute big-eyed chibi character (CC0 Quaternius via poly.pizza) — the
+        // default companion: a plush "beanie"-style buddy that runs and hops.
+        // Keys must be lowercase — actions are stored by clip.name.toLowerCase().
+        name: '🧸 חמוד', height: 1.35, yawOffset: Math.PI,
+        url: 'assets/models/maze/chibi.glb',
+        clips: {
+            idle: 'characterarmature|idle', run: 'characterarmature|run',
+            flee: 'characterarmature|run', scared: 'characterarmature|hitreact',
+            cheer: 'characterarmature|jump_idle',
+        },
+        once: [],
+    },
+    {
+        // Cute rigged puppy (Shiba Inu, CC0 Quaternius) — gallops and hops.
+        name: '🐶 כלבלב', height: 1.15, yawOffset: Math.PI,
+        url: 'assets/models/maze/shiba.glb',
+        clips: {
+            idle: 'idle', run: 'gallop', flee: 'gallop',
+            scared: 'idle_hitreact_left', cheer: 'gallop_jump',
+        },
+        once: [],
+    },
+    // A roster of cute rigged animals (CC0, Quaternius) sharing one rig, so the
+    // same clip map works for all. The in-game button cycles through them.
+    {
+        name: '🐺 האסקי', height: 1.2, yawOffset: Math.PI, url: 'assets/models/maze/husky.glb',
+        clips: {idle: 'idle', run: 'gallop', flee: 'gallop', scared: 'idle_hitreact_left', cheer: 'gallop_jump'}, once: [],
+    },
+    {
+        name: '🦌 איל', height: 1.5, yawOffset: Math.PI, url: 'assets/models/maze/deer.glb',
+        clips: {idle: 'idle', run: 'gallop', flee: 'gallop', scared: 'idle_hitreact_left', cheer: 'gallop_jump'}, once: [],
+    },
+    {
+        name: '🦙 אלפקה', height: 1.5, yawOffset: Math.PI, url: 'assets/models/maze/alpaca.glb',
+        clips: {idle: 'idle', run: 'gallop', flee: 'gallop', scared: 'idle_hitreact_left', cheer: 'gallop_jump'}, once: [],
+    },
+    {
+        // Cute rigged bunny (CharacterArmature rig — different clip names).
+        name: '🐰 ארנב', height: 1.6, yawOffset: Math.PI,
+        url: 'assets/models/maze/bunny.glb',
+        clips: {
+            idle: 'characterarmature|idle', run: 'characterarmature|run',
+            flee: 'characterarmature|run', scared: 'characterarmature|hitreact',
+            cheer: 'characterarmature|jump_idle',
+        },
+        once: [],
+    },
     {
         name: '🤖 רובוט', height: 1.5, yawOffset: Math.PI,
         url: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
@@ -3370,16 +3421,29 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
         },
 
         makeRainbowTexture: function() {
-            return this.makeCanvasTexture(256, (ctx, s) => {
-                const colors = ['#ff9ecd', '#ffd280', '#fff3b0', '#93dba1', '#8ec9ff', '#b69df5'];
-                ctx.lineWidth = 10;
-                ctx.globalAlpha = 0.9;
+            return this.makeCanvasTexture(512, (ctx, s) => {
+                // Vivid, thick bands so the arc reads as a real rainbow at distance
+                const colors = ['#ff3d7f', '#ff9f2e', '#ffe02e', '#3dd67a', '#2f9fff', '#b15fff'];
+                const band = s * 0.05;
+                const cy = s * 0.98;                 // arc centre near the bottom edge
+                ctx.lineWidth = band;
+                ctx.lineCap = 'butt';
+                ctx.globalAlpha = 1;
                 colors.forEach((color, i) => {
                     ctx.strokeStyle = color;
                     ctx.beginPath();
-                    ctx.arc(s / 2, s, s * 0.88 - i * 11, Math.PI, 2 * Math.PI);
+                    ctx.arc(s / 2, cy, s * 0.82 - i * band, Math.PI, 2 * Math.PI);
                     ctx.stroke();
                 });
+                // Fade the leg ends downward so the arch dissolves into the sky
+                // instead of ending in a hard horizontal cut.
+                ctx.globalCompositeOperation = 'destination-out';
+                const fade = ctx.createLinearGradient(0, s * 0.45, 0, s * 0.9);
+                fade.addColorStop(0, 'rgba(0,0,0,0)');
+                fade.addColorStop(1, 'rgba(0,0,0,1)');
+                ctx.fillStyle = fade;
+                ctx.fillRect(0, 0, s, s);
+                ctx.globalCompositeOperation = 'source-over';
             });
         },
 
@@ -3522,14 +3586,16 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             moon.position.set(-55, 75, -130);
             g.scene.add(moon);
 
-            // A big soft rainbow on the horizon (unicorn style only)
+            // A big bright rainbow arc on the horizon (unicorn style only).
+            // fog:false is essential — it sits far beyond the fog plane, so with
+            // fog on it would be washed to a flat pink dome.
             if (atmo.rainbow) {
                 const rainbow = new THREE.Sprite(new THREE.SpriteMaterial({
                     map: this.makeRainbowTexture(),
-                    transparent: true, opacity: 0.85, depthWrite: false,
+                    transparent: true, opacity: 0.95, depthWrite: false, fog: false,
                 }));
-                rainbow.scale.set(110, 110, 1);
-                rainbow.position.set(70, 30, -150);
+                rainbow.scale.set(150, 150, 1);
+                rainbow.position.set(0, 52, -140);
                 g.scene.add(rainbow);
             }
 
@@ -9199,12 +9265,8 @@ var MenuComponent = Vue.component('menu',{
    <div>
    <div container>
     <div class="row">
-      <!-- Adventure mode entry — shown on the home menu only -->
-      <div v-if="adventureEnabled" class="col s8 offset-s2">
-        <router-link to="/adventure" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px; font-weight: bold;" :style="{background: theme.colors.primary}">
-          🗺️ הרפתקה
-        </router-link>
-      </div>
+      <!-- Adventure mode is intentionally NOT linked here — it is reachable only
+           by its direct URL (#/adventure) while it is still work in progress. -->
       <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
         <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
@@ -9220,11 +9282,6 @@ var MenuComponent = Vue.component('menu',{
          menu: null,
          theme: getTheme(),
         }
-    },
-    computed: {
-        adventureEnabled: function(){
-            return !this.$route.params.currentMenu && typeof getAdventureRoutes === 'function';
-        },
     },
     created: function(){
         this.init();
@@ -9648,7 +9705,6 @@ const Login = {
 
 const routes = [
     {path: '/', component: MenuComponent,},
-    {path: '/free', component: MenuComponent,},
     {path: '/user', component: UserComponent},
     {path: '/menu/:currentMenu', component: MenuComponent,},
     {path: '/app/:currentAppId', component: AppComponent, props: true },
@@ -9699,13 +9755,9 @@ router.beforeEach((to, from, next) => {
   } else if (!username && to.path !== '/login') {
     sendMetric('/login');
     next('/login');
-  } else if (to.path === '/' && typeof getAdventureRoutes === 'function') {
-    // Adventure mode is the default experience; legacy menus live at /free
-    sendMetric('/adventure');
-    next('/adventure');
   } else if (username && to.path === '/login') {
-    sendMetric('/adventure');
-    next('/adventure');
+    sendMetric('/');
+    next('/');
   } else {
     sendMetric(to.path);
     next();

@@ -570,7 +570,7 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
             <div class="adv-card-sub" v-else>הרפתקה חדשה!</div>
           </div>
         </div>
-        <router-link to="/free" class="adv-back">→ מצב חופשי (להורים)</router-link>
+        <router-link to="/" class="adv-back">→ חזרה לתפריט הרגיל</router-link>
       </div>
     </div>`,
     data: function () {
