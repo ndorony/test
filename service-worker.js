@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v11';
+const CACHE_NAME = 'my-app-cache-v20';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -7,9 +7,15 @@ const CORE_ASSETS = [
   '/apps.js',
   '/themes.js',
   '/storage.js',
-  '/tester.js',
+  '/tester.js?v=17',
   '/sounds/success.mp3',
-  '/sounds/failure.mp3'
+  '/sounds/failure.mp3',
+  '/assets/svg/tall.svg',
+  '/assets/svg/short.svg',
+  '/assets/svg/thin.svg',
+  '/assets/svg/plump.svg',
+  '/assets/svg/big.svg',
+  '/assets/svg/small.svg'
 ];
 
 const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
@@ -19,6 +25,7 @@ const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
 const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS);
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
@@ -33,7 +40,7 @@ self.addEventListener('activate', event => {
         }
         return null;
       })
-    ))
+    )).then(() => self.clients.claim())
   );
 });
 
@@ -42,9 +49,13 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (event.request.mode === 'navigate') {
+  if (event.request.mode === 'navigate' || event.request.destination === 'script') {
     event.respondWith(
-      caches.match('/index.html').then(cached => cached || fetch(event.request))
+      fetch(event.request).catch(() =>
+        event.request.mode === 'navigate'
+          ? caches.match('/index.html')
+          : caches.match(event.request)
+      )
     );
     return;
   }

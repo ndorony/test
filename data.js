@@ -52,7 +52,27 @@ function createCount(maxEmojis) {
 }
 
 
-const DATA = {FEELING : [{'name': {'type': 'text', 'value': 'שמח'},
+const DATA = {BIG_VACATION_SIZES : [
+ {'name': {'type': 'text', 'value': 'גבוה'},
+  'english_name': {'type': 'text_to_speech', 'value': 'tall'},
+  'hebrew_english_name': {'type': 'text', 'value': 'טוֹל'},
+  'picture': {'type': 'image', 'value': 'assets/svg/tall.svg'}},
+ {'name': {'type': 'text', 'value': 'נמוך'},
+  'english_name': {'type': 'text_to_speech', 'value': 'short'},
+  'hebrew_english_name': {'type': 'text', 'value': 'שׁוֹרְט'},
+  'picture': {'type': 'image', 'value': 'assets/svg/short.svg'}},
+ {'name': {'type': 'text', 'value': 'רזה'},
+  'english_name': {'type': 'text_to_speech', 'value': 'thin'},
+  'hebrew_english_name': {'type': 'text', 'value': 'ת׳ין'},
+  'picture': {'type': 'image', 'value': 'assets/svg/thin.svg'}},
+ {'name': {'type': 'text', 'value': 'שמנמן'},
+  'english_name': {'type': 'text_to_speech', 'value': 'plump'},
+  'hebrew_english_name': {'type': 'text', 'value': 'פְּלַאמְפ'},
+  'picture': {'type': 'image', 'value': 'assets/svg/plump.svg'}},
+ {'name': {'type': 'text', 'value': 'גדול'}, 'english_name': {'type': 'text_to_speech', 'value': 'big'}, 'hebrew_english_name': {'type': 'text', 'value': 'בִּיג'}, 'picture': {'type': 'image', 'value': 'assets/svg/big.svg'}},
+ {'name': {'type': 'text', 'value': 'קטן'}, 'english_name': {'type': 'text_to_speech', 'value': 'small'}, 'hebrew_english_name': {'type': 'text', 'value': 'סְמוֹל'}, 'picture': {'type': 'image', 'value': 'assets/svg/small.svg'}}
+],
+ FEELING : [{'name': {'type': 'text', 'value': 'שמח'},
   'english_name': {'type': 'text_to_speech', 'value': 'Happy'},
   'hebrew_english_name': {'type': 'text', 'value': 'הַפִּי'},
   'emoji': {'type': 'text', 'value': '😊'}},
