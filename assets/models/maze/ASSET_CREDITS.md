@@ -13,9 +13,7 @@ The player companion (hero) that runs ahead through the maze:
 
 | File | Source | Author | License |
 | --- | --- | --- | --- |
-| `chibi.glb`  | https://poly.pizza/m/kKtL4zvS3n | Quaternius | CC0 1.0 |
 | `shiba.glb`  | https://poly.pizza/m/y4wdQpg767 | Quaternius | CC0 1.0 |
 | `husky.glb`  | https://poly.pizza/m/wcWiuEqwzq | Quaternius | CC0 1.0 |
 | `deer.glb`   | https://poly.pizza/m/T6Cs7tmMHJ | Quaternius | CC0 1.0 |
 | `alpaca.glb` | https://poly.pizza/m/bCVFD48i2l | Quaternius | CC0 1.0 |
-| `bunny.glb`  | https://poly.pizza/m/irZjWFARyl | Quaternius | CC0 1.0 |

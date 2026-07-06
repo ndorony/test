@@ -3239,20 +3239,8 @@ function getMazeAtmosphere() {
 // these plus the hand-built procedural figure for easy side-by-side comparison.
 const HERO_MODELS = [
     {
-        // Cute big-eyed chibi character (CC0 Quaternius via poly.pizza) — the
-        // default companion: a plush "beanie"-style buddy that runs and hops.
-        // Keys must be lowercase — actions are stored by clip.name.toLowerCase().
-        name: '🧸 חמוד', height: 1.35, yawOffset: Math.PI,
-        url: 'assets/models/maze/chibi.glb',
-        clips: {
-            idle: 'characterarmature|idle', run: 'characterarmature|run',
-            flee: 'characterarmature|run', scared: 'characterarmature|hitreact',
-            cheer: 'characterarmature|jump_idle',
-        },
-        once: [],
-    },
-    {
-        // Cute rigged puppy (Shiba Inu, CC0 Quaternius) — gallops and hops.
+        // Cute rigged puppy (Shiba Inu, CC0 Quaternius) — the default companion:
+        // gallops ahead to the doors and hops when happy.
         name: '🐶 כלבלב', height: 1.15, yawOffset: Math.PI,
         url: 'assets/models/maze/shiba.glb',
         clips: {
@@ -3274,17 +3262,6 @@ const HERO_MODELS = [
     {
         name: '🦙 אלפקה', height: 1.5, yawOffset: Math.PI, url: 'assets/models/maze/alpaca.glb',
         clips: {idle: 'idle', run: 'gallop', flee: 'gallop', scared: 'idle_hitreact_left', cheer: 'gallop_jump'}, once: [],
-    },
-    {
-        // Cute rigged bunny (CharacterArmature rig — different clip names).
-        name: '🐰 ארנב', height: 1.6, yawOffset: Math.PI,
-        url: 'assets/models/maze/bunny.glb',
-        clips: {
-            idle: 'characterarmature|idle', run: 'characterarmature|run',
-            flee: 'characterarmature|run', scared: 'characterarmature|hitreact',
-            cheer: 'characterarmature|jump_idle',
-        },
-        once: [],
     },
     {
         name: '🤖 רובוט', height: 1.5, yawOffset: Math.PI,
