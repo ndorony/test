@@ -1,7 +1,8 @@
-const CACHE_NAME = 'my-app-cache-v31';
+const CACHE_NAME = 'my-app-cache-v32';
 const CORE_ASSETS = [
   '/',
   '/index.html',
+  '/adventure.html',
   '/manifest.json',
   '/data.js',
   '/apps.js',
@@ -54,8 +55,11 @@ self.addEventListener('fetch', event => {
   }
 
   if (event.request.mode === 'navigate') {
+    // Serve the dedicated adventure entry for its own link; index.html otherwise.
+    const page = new URL(event.request.url).pathname.endsWith('/adventure.html')
+      ? '/adventure.html' : '/index.html';
     event.respondWith(
-      caches.match('/index.html').then(cached => cached || fetch(event.request))
+      caches.match(page).then(cached => cached || fetch(event.request))
     );
     return;
   }

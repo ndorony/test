@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🌈 הרפתקה</title>
+<!-- Dedicated entry link for adventure mode. Boots the SPA straight into the
+     guided adventure (kept separate from the main menu on purpose). -->
+<script>location.replace('index.html#/adventure');</script>
+<style>
+  html,body{height:100%;margin:0}
+  body{background:linear-gradient(160deg,#ffe3f3,#d9b3ff);color:#7a1f8f;
+    font-family:'Segoe UI','Arial Hebrew',sans-serif;display:grid;place-items:center}
+  .load{font-size:20px;font-weight:800;text-align:center}
+  .load .e{font-size:40px;display:block;margin-bottom:8px;animation:b 1.4s ease-in-out infinite}
+  @keyframes b{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+</head>
+<body>
+  <div class="load"><span class="e">🦄</span>טוענים את ההרפתקה…</div>
+</body>
+</html>
