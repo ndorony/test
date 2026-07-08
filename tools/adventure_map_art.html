@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הרפתקה — על אמנות אמיתית</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#0b0b12;font-family:'Segoe UI','Arial Hebrew',sans-serif;overflow:hidden}
+  #stage{position:fixed;inset:0;background:#e9d6ec center/cover no-repeat;transition:background-image .3s}
+  #stage::after{content:'';position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 42%,transparent 55%,rgba(60,30,70,.26));pointer-events:none}
+
+  .hud{position:absolute;top:14px;z-index:6;display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.66);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.7);
+    padding:7px 14px;border-radius:99px;font-weight:800;color:#5a1470;box-shadow:0 4px 14px rgba(120,60,120,.25)}
+  .hud.coins{inset-inline-start:14px}.hud.stars{inset-inline-end:14px}
+  .gear{position:absolute;top:14px;inset-inline-start:122px;z-index:6;width:40px;height:40px;border-radius:50%;
+    border:0;cursor:pointer;font-size:19px;background:rgba(255,255,255,.6);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(120,60,120,.25)}
+  .titlewrap{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:6;text-align:center;
+    background:rgba(255,255,255,.55);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.7);
+    padding:8px 26px;border-radius:18px;box-shadow:0 6px 18px rgba(120,60,120,.25)}
+  .titlewrap h1{font-size:25px;color:#7a1f8f;font-weight:900}
+  .titlewrap p{font-size:13px;color:#9a5aa8;font-weight:700;margin-top:2px}
+
+  .back{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:6;display:none;
+    font:inherit;font-weight:800;font-size:14px;cursor:pointer;padding:10px 20px;border-radius:99px;border:1px solid rgba(255,255,255,.7);
+    background:rgba(255,255,255,.7);backdrop-filter:blur(6px);color:#7a1f8f;box-shadow:0 6px 18px rgba(120,60,120,.3)}
+  .back.show{display:block}
+
+  .mk{position:absolute;transform:translate(-50%,-50%);z-index:3;display:flex;flex-direction:column;align-items:center;cursor:pointer;
+    animation:popIn .5s cubic-bezier(.2,.9,.3,1.25) both}
+  @keyframes popIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  .medal{position:relative;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:33px;font-weight:900;color:#5a1470;
+    background:radial-gradient(circle at 36% 30%,#fff,#ffd3ec 60%,#ff9ed4);
+    border:4px solid #fff;box-shadow:0 6px 0 rgba(200,90,160,.7),0 10px 22px rgba(80,20,60,.4),inset 0 3px 8px rgba(255,255,255,.6)}
+  .medal .gloss{position:absolute;top:9px;left:15px;width:32px;height:17px;border-radius:50%;background:rgba(255,255,255,.6)}
+  .num{position:absolute;top:-8px;inset-inline-end:-8px;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;
+    font-size:13px;font-weight:900;color:#5a2b00;background:linear-gradient(#ffe38a,#f0b800);border:2px solid #fff}
+  .label{margin-top:8px;font-size:13px;font-weight:800;color:#5a1470;white-space:nowrap;
+    background:rgba(255,255,255,.84);border:1px solid rgba(255,140,200,.6);padding:3px 12px;border-radius:99px;box-shadow:0 3px 8px rgba(80,20,60,.25)}
+  .stars{margin-top:4px;font-size:14px;letter-spacing:1px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+  .mk.done .medal{background:radial-gradient(circle at 36% 30%,#fff,#ffe0a0 55%,#f6b64a)}
+  .mk.done .crown{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:25px}
+  .mk.locked{cursor:default}
+  .mk.locked .medal{background:radial-gradient(circle at 36% 30%,#c9c2cc,#8f8794);color:#efeaf2;box-shadow:0 5px 0 rgba(60,50,70,.6),0 8px 16px rgba(0,0,0,.35)}
+  .mk.locked .label{color:#6a5f72;background:rgba(240,236,244,.82)}
+  .mk.current{z-index:4}
+  .mk.current .medal{width:86px;height:86px;font-size:38px;
+    box-shadow:0 6px 0 rgba(200,90,160,.7),0 0 0 6px rgba(255,215,0,.85),0 0 30px 8px rgba(255,215,0,.5),inset 0 3px 8px rgba(255,255,255,.6)}
+  .mk.current .ring{position:absolute;inset:-14px;border-radius:50%;border:4px solid rgba(255,215,0,.85);animation:pulse 1.6s ease-in-out infinite}
+  .mk.current .hero{position:absolute;top:-30px;left:52%;font-size:30px;animation:bob 1.5s ease-in-out infinite;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}
+  .mk.current .prog{margin-top:5px;font-size:12.5px;font-weight:900;color:#b8007a;background:rgba(255,255,255,.9);padding:3px 12px;border-radius:99px;box-shadow:0 3px 8px rgba(80,20,60,.25)}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.12);opacity:.25}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  #route{position:absolute;inset:0;z-index:2;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="route" viewBox="0 0 100 150" preserveAspectRatio="none"></svg>
+  <div class="hud coins">🪙 1,240</div>
+  <button class="gear" title="הגדרות">⚙️</button>
+  <div class="hud stars">⭐ 24/40</div>
+  <div class="titlewrap"><h1 id="ttl"></h1><p id="sub"></p></div>
+  <div id="markers"></div>
+  <button class="back" id="back">🗺️ למפת העולמות</button>
+</div>
+<script>
+const ART='../assets/adventure/art/';
+// Worlds hand-placed on the floating-islands illustration (home_bg).
+const WORLDS=[
+  {n:'אותיות א׳-ה׳',e:'א',x:48,y:84,state:'done',stars:3},
+  {n:'אותיות ו׳-י׳',e:'ו',x:39,y:79,state:'done',stars:3},
+  {n:'אותיות כ׳-מ׳',e:'כ',x:31,y:72,state:'done',stars:2},
+  {n:'אותיות נ׳-ע׳',e:'נ',x:22,y:64,state:'done',stars:3},
+  {n:'אותיות פ׳-ק׳',e:'פ',x:13,y:54,state:'current',stars:0,prog:'📍 כאן אנחנו'},
+  {n:'אותיות ר׳-ת׳',e:'ר',x:10,y:43,state:'locked'},
+  {n:'ארץ כל האותיות',e:'📜',x:17,y:33,state:'locked'},
+  {n:'עולם האות א׳ עם ניקוד',e:'אָ',x:21,y:17,state:'locked'},
+  {n:'עולם הצבעים',e:'🎨',x:82,y:20,state:'locked'},
+  {n:'עולם החיות',e:'🐾',x:83,y:62,state:'locked'},
+  {n:'עולם המספרים',e:'🔢',x:68,y:42,state:'locked'},
+];
+// Encounters climbing the flowered gate (world_letters_bg): start low, crown up top.
+const STEPS=[
+  {n:'לומדים אותיות',e:'📖',x:50,y:88,state:'done',stars:3},
+  {n:'מבוך האוצר',e:'🎯',x:39,y:76,state:'done',stars:3},
+  {n:'תשובות נופלות',e:'🍃',x:60,y:64,state:'done',stars:2},
+  {n:'מבוך האוצר',e:'🎯',x:44,y:52,state:'current',stars:0,prog:'▶ שחק עכשיו'},
+  {n:'חבר במילים',e:'🔗',x:57,y:40,state:'locked'},
+  {n:'האתגר הגדול',e:'👑',x:50,y:26,state:'locked'},
+];
+
+const stage=document.getElementById('stage'), markers=document.getElementById('markers'),
+      route=document.getElementById('route'), back=document.getElementById('back');
+
+function build(list){
+  markers.innerHTML='';
+  const isWorlds = list===WORLDS;
+  list.forEach((w,i)=>{
+    const el=document.createElement('div');
+    el.className='mk '+w.state;
+    el.style.left=w.x+'%'; el.style.top=w.y+'%';
+    el.style.animationDelay=(i*0.07)+'s';
+    if(w.state!=='locked' && isWorlds) el.onclick=enterPath;
+    const inner = w.state==='locked' ? '🔒' : w.e;
+    el.innerHTML=`
+      <div class="medal">
+        ${w.state==='current'?'<div class="ring"></div>':''}
+        ${w.state==='done'&&isWorlds?'<div class="crown">👑</div>':''}
+        ${w.state==='current'?'<div class="hero">🧚</div>':''}
+        <div class="gloss"></div>${inner}<div class="num">${i+1}</div>
+      </div>
+      <div class="label">${w.n}</div>
+      ${w.state==='current'?`<div class="prog">${w.prog}${w.stars!==undefined&&list===WORLDS?' · 3/5':''}</div>`:
+        w.state==='done'?`<div class="stars">${'⭐'.repeat(w.stars)}${'☆'.repeat(3-w.stars)}</div>`:''}`;
+    markers.appendChild(el);
+  });
+  // smooth curved dashed route through the markers (viewBox is 100 x 150)
+  const P=list.map(w=>({x:w.x,y:w.y*1.5}));
+  let d='M '+P[0].x+' '+P[0].y;
+  for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;d+=` Q ${a.x} ${my}, ${mx} ${my} T ${b.x} ${b.y}`;}
+  route.innerHTML=`<path d="${d}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2.4" stroke-linecap="round" filter="blur(1px)"/>`+
+    `<path d="${d}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0.4 3"/>`;
+}
+
+function showWorlds(){
+  stage.style.backgroundImage=`url('${ART}home_bg.jpg')`;
+  document.getElementById('ttl').textContent='ממלכת הקסם';
+  document.getElementById('sub').textContent='שוטו בין האיים והמשיכו במסע ✨';
+  back.classList.remove('show');
+  build(WORLDS);
+}
+function enterPath(){
+  stage.style.backgroundImage=`url('${ART}world_letters_bg.jpg')`;
+  document.getElementById('ttl').textContent='אותיות נ׳–ע׳';
+  document.getElementById('sub').textContent='המסע דרך שער הקסם 🌸';
+  back.classList.add('show');
+  build(STEPS);
+}
+back.onclick=showWorlds;
+(location.hash==='#path'?enterPath:showWorlds)();
+</script>
+</body>
+</html>

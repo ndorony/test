@@ -1,0 +1,8 @@
+.idea/
+tmp_server_out.log
+tmp_server_err.log
+__pycache__/
+pygame_game/saves/
+
+# Secrets — never commit
+.secrets/

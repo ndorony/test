@@ -1,10 +1,13 @@
-const CACHE_NAME = 'my-app-cache-v11';
+const CACHE_NAME = 'my-app-cache-v31';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/data.js',
   '/apps.js',
+  '/worlds.js',
+  '/adventure.js',
+  '/adventure.css',
   '/themes.js',
   '/storage.js',
   '/tester.js',
@@ -16,7 +19,15 @@ const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
   .split('')
   .map(letter => `/sounds/letters/${letter}.mp3`);
 
-const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS);
+const COMPANION_ANIMATIONS = ['unicorn', 'cat', 'dog', 'rabbit', 'turtle', 'penguin',
+  'fox', 'butterfly', 'panda', 'dragon', 'owl']
+  .map(name => `/assets/adventure/lottie/${name}.json`);
+
+const ADVENTURE_ART = ['home_bg', 'world_letters_bg', 'world_review_bg', 'world_nikud_bg',
+  'world_english_bg', 'avatar_bg', 'frame_bg', 'transition_clouds', 'reward_burst']
+  .map(name => `/assets/adventure/art/${name}.jpg`);
+
+const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS).concat(ADVENTURE_ART);
 
 self.addEventListener('install', event => {
   event.waitUntil(

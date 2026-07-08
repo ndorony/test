@@ -1,0 +1,736 @@
+/* adventure.css — adventure mode skin + reusable animation library.
+   Placeholder-friendly: everything works with emoji/CSS now and will keep
+   working when AI-generated art replaces the visuals (same classes). */
+
+/* --- Screen scaffolding: soft pastel sky, full-bleed --- */
+
+.adv-screen {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #a5d8ff 0%, #d0bfff 55%, #ffd6e7 100%);
+    overflow: hidden;
+    position: relative;
+    color: #3b2d5c;
+}
+
+.adv-screen .adv-content {
+    position: relative;
+    z-index: 2;
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 16px 12px 40px;
+}
+
+/* Painted backgrounds (Phase F). The gradient above stays as a fallback, so
+   these classes are harmless until the art files exist. background-image with
+   a missing file simply shows nothing and the gradient shows through. */
+.adv-screen.adv-art-home,
+.adv-screen.adv-art-avatar,
+.adv-screen[class*="adv-art-"] {
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+.adv-screen.adv-art-home            { background-image: url('assets/adventure/art/home_bg.jpg'); }
+.adv-screen.adv-art-avatar          { background-image: url('assets/adventure/art/avatar_bg.jpg'); }
+.adv-screen.adv-art-world_letters_bg { background-image: url('assets/adventure/art/world_letters_bg.jpg'); }
+.adv-screen.adv-art-world_review_bg  { background-image: url('assets/adventure/art/world_review_bg.jpg'); }
+.adv-screen.adv-art-world_nikud_bg   { background-image: url('assets/adventure/art/world_nikud_bg.jpg'); }
+.adv-screen.adv-art-world_english_bg { background-image: url('assets/adventure/art/world_english_bg.jpg'); }
+
+/* A translucent scrim keeps text readable over busy painted backgrounds */
+.adv-screen[class*="adv-art-"] .adv-content {
+    background: rgba(255, 255, 255, 0.28);
+    border-radius: 22px;
+    backdrop-filter: blur(1.5px);
+}
+
+/* Guided call-to-action card + section label + earned stars row */
+.adv-cta {
+    background: linear-gradient(100deg, #fff0c9, #ffd9ec 60%, #e5d5ff);
+    border: 3px solid #ffc828;
+}
+.adv-section-label {
+    font-weight: bold;
+    font-size: 1.05em;
+    margin: 18px 4px 8px;
+    color: #4c3585;
+}
+.adv-stars {
+    font-size: 0.95em;
+    letter-spacing: 1px;
+}
+
+/* --- Decorative drifting clouds (pure CSS layer behind the content) --- */
+
+.adv-clouds {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.adv-cloud {
+    position: absolute;
+    font-size: 3.2em;
+    opacity: 0.55;
+    animation: adv-drift linear infinite;
+}
+
+@keyframes adv-drift {
+    from { transform: translateX(-15vw); }
+    to   { transform: translateX(115vw); }
+}
+
+/* --- Reusable animation classes --- */
+
+/* Idle bob — characters, islands, companion ("the world breathes") */
+.adv-float {
+    animation: adv-float 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes adv-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+}
+
+/* Glow pulse — the current step / clickable highlights */
+.adv-pulse {
+    animation: adv-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes adv-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 40, 0.65); }
+    50%      { box-shadow: 0 0 0 12px rgba(255, 200, 40, 0); }
+}
+
+/* Pop-in entrance — stagger with inline animation-delay */
+.adv-pop {
+    animation: adv-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes adv-pop {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* Joy bounce — celebration stars, success reactions */
+.adv-bounce {
+    animation: adv-bounce 0.9s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes adv-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40%      { transform: translateY(-14px) scale(1.15); }
+}
+
+/* Gentle "oops" head-shake — wrong answers (never punishing) */
+.adv-shake {
+    animation: adv-shake 0.5s ease-in-out;
+}
+
+@keyframes adv-shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px) rotate(-3deg); }
+    75%      { transform: translateX(6px) rotate(3deg); }
+}
+
+/* Celebration banner sliding from the top */
+.adv-banner {
+    animation: adv-banner-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    background: linear-gradient(90deg, #ffd43b, #ffa8a8, #d0bfff);
+    border-radius: 16px;
+    padding: 14px;
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #5c3d00;
+    margin-bottom: 14px;
+}
+
+@keyframes adv-banner-in {
+    from { transform: translateY(-60px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Cards (worlds / path steps) --- */
+
+.adv-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(80, 50, 140, 0.18);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adv-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(80, 50, 140, 0.28);
+}
+
+.adv-card.adv-locked {
+    opacity: 0.55;
+    filter: grayscale(0.7);
+    cursor: default;
+}
+
+.adv-card.adv-locked:hover {
+    transform: none;
+}
+
+.adv-card.adv-current {
+    border: 3px solid #ffc828;
+}
+
+.adv-sprite {
+    font-size: 2.4em;
+    line-height: 1;
+}
+
+.adv-card-title {
+    font-size: 1.15em;
+    font-weight: bold;
+}
+
+.adv-card-sub {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+/* --- Player card + XP bar --- */
+
+.adv-player {
+    background: linear-gradient(135deg, #845ef7, #b388ff);
+    border-radius: 18px;
+    padding: 14px 16px;
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(80, 50, 140, 0.3);
+}
+
+.adv-xp-track {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    height: 14px;
+    margin: 8px 0 4px;
+    overflow: hidden;
+}
+
+.adv-xp-fill {
+    background: linear-gradient(90deg, #ffd43b, #ffec99);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* --- Layered avatar: aura circle + base character + hat on top --- */
+
+.adv-avatar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px rgba(80, 50, 140, 0.25);
+    vertical-align: middle;
+}
+
+.adv-avatar-base {
+    line-height: 1;
+}
+
+.adv-avatar-hat {
+    position: absolute;
+    top: -38%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-8deg);
+    font-size: 0.75em;
+}
+
+/* --- Dressing room option chips --- */
+
+.adv-option {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: #f3f0ff;
+    font-size: 1.7em;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.adv-option:hover {
+    transform: scale(1.1);
+}
+
+.adv-option-selected {
+    border-color: #ffc828;
+    box-shadow: 0 0 8px rgba(255, 200, 40, 0.7);
+}
+
+.adv-option.adv-locked {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+    cursor: default;
+}
+
+.adv-option.adv-locked:hover {
+    transform: none;
+}
+
+.adv-option-lock {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.4em;
+    background: white;
+    border-radius: 8px;
+    padding: 0 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Lottie companion (animated emoji with plain-emoji fallback) --- */
+
+.adv-lottie {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.adv-lottie-box {
+    position: absolute;
+    inset: 0;
+}
+
+/* --- Companion with a speech bubble --- */
+
+.adv-companion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.adv-companion .adv-sprite {
+    font-size: 3em;
+}
+
+.adv-bubble {
+    background: white;
+    border-radius: 16px;
+    padding: 10px 14px;
+    box-shadow: 0 3px 10px rgba(80, 50, 140, 0.18);
+    position: relative;
+    font-size: 1em;
+}
+
+.adv-title {
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    margin: 10px 0 16px;
+    color: #4c3585;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.6);
+}
+
+.adv-back {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    color: #4c3585;
+    font-weight: bold;
+}
+
+/* --- In-game frame: world bar + reacting companion --- */
+
+.adv-frame-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: linear-gradient(90deg, #845ef7, #b388ff);
+    color: white;
+    box-shadow: 0 2px 10px rgba(80, 50, 140, 0.35);
+}
+
+.adv-frame-title {
+    font-weight: bold;
+    font-size: 1.05em;
+}
+
+.adv-frame-exit {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 4px 12px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.adv-frame-exit:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.adv-frame-companion {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 1200;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none; /* never block game buttons */
+}
+
+.adv-frame-companion .adv-sprite {
+    font-size: 2.6em;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.25));
+}
+
+/* --- Art-map skin: interactive markers over the painted background art ---
+   Mirrors tools/adventure_map_art.html. Used by adventure-home (worlds
+   overview) and adventure-world (encounter path). All positions come from the
+   JS config objects HOME_MARKER_POS / PATH_MARKER_POS. */
+
+/* Full-bleed map screen: markers position over the whole stage, not the
+   centered .adv-content column. The background stays on .adv-screen. */
+.adv-mapscreen {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.adv-mapstage {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* Soft vignette so bright art never washes out the markers */
+.adv-mapstage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 80% at 50% 42%, transparent 55%, rgba(60, 30, 70, 0.26));
+    pointer-events: none;
+    z-index: 1;
+}
+
+.adv-route {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* --- The marker (medal) --- */
+
+.adv-mapmk {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.adv-medal {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 33px;
+    font-weight: 900;
+    color: #5a1470;
+    background: radial-gradient(circle at 36% 30%, #fff, #ffd3ec 60%, #ff9ed4);
+    border: 4px solid #fff;
+    box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 10px 22px rgba(80, 20, 60, 0.4), inset 0 3px 8px rgba(255, 255, 255, 0.6);
+}
+
+.adv-medalicon {
+    line-height: 1;
+}
+
+.adv-gloss {
+    position: absolute;
+    top: 9px;
+    left: 15px;
+    width: 32px;
+    height: 17px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.adv-num {
+    position: absolute;
+    top: -8px;
+    inset-inline-end: -8px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 900;
+    color: #5a2b00;
+    background: linear-gradient(#ffe38a, #f0b800);
+    border: 2px solid #fff;
+}
+
+.adv-label {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #5a1470;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.84);
+    border: 1px solid rgba(255, 140, 200, 0.6);
+    padding: 3px 12px;
+    border-radius: 99px;
+    box-shadow: 0 3px 8px rgba(80, 20, 60, 0.25);
+}
+
+.adv-mapmk .adv-stars {
+    margin-top: 4px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.adv-prog {
+    margin-top: 5px;
+    font-size: 12.5px;
+    font-weight: 900;
+    color: #b8007a;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 3px 12px;
+    border-radius: 99px;
+    box-shadow: 0 3px 8px rgba(80, 20, 60, 0.25);
+}
+
+/* Done: gold medal + crown */
+.adv-mapmk.adv-done .adv-medal {
+    background: radial-gradient(circle at 36% 30%, #fff, #ffe0a0 55%, #f6b64a);
+}
+
+.adv-crown {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 25px;
+}
+
+/* Locked: grey medal, not clickable */
+.adv-mapmk.adv-locked {
+    cursor: default;
+}
+
+.adv-mapmk.adv-locked .adv-medal {
+    background: radial-gradient(circle at 36% 30%, #c9c2cc, #8f8794);
+    color: #efeaf2;
+    box-shadow: 0 5px 0 rgba(60, 50, 70, 0.6), 0 8px 16px rgba(0, 0, 0, 0.35);
+}
+
+.adv-mapmk.adv-locked .adv-label {
+    color: #6a5f72;
+    background: rgba(240, 236, 244, 0.82);
+}
+
+/* Current: gold ring + bobbing hero + "play"/"you are here" label */
+.adv-mapmk.adv-current {
+    z-index: 4;
+}
+
+.adv-mapmk.adv-current .adv-medal {
+    width: 86px;
+    height: 86px;
+    font-size: 38px;
+    box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 0 0 6px rgba(255, 215, 0, 0.85), 0 0 30px 8px rgba(255, 215, 0, 0.5), inset 0 3px 8px rgba(255, 255, 255, 0.6);
+}
+
+.adv-mapmk.adv-current .adv-ring {
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 215, 0, 0.85);
+    animation: adv-mkpulse 1.6s ease-in-out infinite;
+}
+
+.adv-mapmk.adv-current .adv-hero {
+    position: absolute;
+    top: -30px;
+    left: 52%;
+    font-size: 30px;
+    animation: adv-mkbob 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35));
+}
+
+@keyframes adv-mkpulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50%      { transform: scale(1.12); opacity: 0.25; }
+}
+
+@keyframes adv-mkbob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-7px); }
+}
+
+/* --- Floating chrome over the map: HUD, title card, buttons --- */
+
+.adv-hud {
+    position: absolute;
+    top: 14px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.66);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-weight: 800;
+    color: #5a1470;
+    box-shadow: 0 4px 14px rgba(120, 60, 120, 0.25);
+}
+
+.adv-hud.adv-coins { inset-inline-start: 14px; }
+.adv-hud.adv-starshud { inset-inline-end: 14px; }
+
+.adv-iconbtn {
+    position: absolute;
+    top: 14px;
+    z-index: 6;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 0;
+    cursor: pointer;
+    font-size: 19px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(120, 60, 120, 0.25);
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.adv-iconbtn.adv-wardrobe { inset-inline-start: 118px; }
+.adv-iconbtn.adv-home { inset-inline-start: 166px; }
+
+.adv-titlecard {
+    position: absolute;
+    top: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    padding: 8px 26px;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(120, 60, 120, 0.25);
+    max-width: 92vw;
+}
+
+.adv-titlecard h1 {
+    font-size: 25px;
+    color: #7a1f8f;
+    font-weight: 900;
+}
+
+.adv-titlecard p {
+    font-size: 13px;
+    color: #9a5aa8;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+/* Path-screen overlays: player card (top-start), companion (bottom-start),
+   back-to-worlds button (bottom-center). These keep the existing components
+   working on the reskinned map. */
+.adv-mapside {
+    position: absolute;
+    top: 108px;
+    inset-inline-start: 12px;
+    z-index: 6;
+    width: min(260px, 46vw);
+}
+
+.adv-mapside .adv-player {
+    margin-bottom: 0;
+}
+
+.adv-mapfoot {
+    position: absolute;
+    bottom: 12px;
+    inset-inline-start: 12px;
+    z-index: 6;
+    max-width: min(320px, 60vw);
+}
+
+.adv-mapfoot .adv-companion {
+    margin-bottom: 0;
+}
+
+.adv-mapbanner {
+    position: absolute;
+    top: 118px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 7;
+    width: min(420px, 90vw);
+}
+
+.adv-mapback {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    color: #7a1f8f;
+    box-shadow: 0 6px 18px rgba(120, 60, 120, 0.3);
+    text-decoration: none;
+}
+
+/* --- Accessibility: respect reduced motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+    .adv-float, .adv-pulse, .adv-pop, .adv-bounce, .adv-shake, .adv-cloud, .adv-banner,
+    .adv-mapmk.adv-current .adv-ring, .adv-mapmk.adv-current .adv-hero {
+        animation: none;
+    }
+}

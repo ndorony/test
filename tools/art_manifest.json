@@ -1,0 +1,68 @@
+{
+  "style_base": "Children's educational game background art, soft pastel fairy-tale style. Dreamy palette of light pink (#ffd9ec), lavender (#d0bfff), baby blue (#a5d8ff), mint (#c0f0c8) and warm cream. Rounded, friendly shapes, gentle gradients, soft painterly lighting like a sunrise. Magical sparkles, small clouds and rainbows. Absolutely no text, no letters, no numbers, no characters, no people, no animals. Wide empty area in the center for UI overlay. Flat illustration with soft depth, high detail, consistent with a unicorn fantasy kingdom for ages 4-7.",
+  "assets": [
+    {
+      "id": "home_bg",
+      "file": "home_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompt": "A magical floating-islands kingdom seen from above the clouds, a path of glowing stepping stones between islands, a distant rainbow. Vertical composition, the middle third calm and open for menu cards."
+    },
+    {
+      "id": "world_letters_bg",
+      "file": "world_letters_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompt": "A cozy magical garden with stone archways and flower-covered paths on a floating island. Vertical composition, calm open center for a vertical list of cards."
+    },
+    {
+      "id": "world_review_bg",
+      "file": "world_review_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompt": "A grand pastel library-castle with floating books and glowing scrolls and celebration banners. Vertical composition, calm open center."
+    },
+    {
+      "id": "world_nikud_bg",
+      "file": "world_nikud_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompt": "A starry pastel-night observatory garden with glowing crystal flowers and soft aurora. Vertical composition, calm open center."
+    },
+    {
+      "id": "world_english_bg",
+      "file": "world_english_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompt": "A cheerful seaside meadow with hot air balloons and sailing clouds on a floating island. Vertical composition, calm open center."
+    },
+    {
+      "id": "avatar_bg",
+      "file": "avatar_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompt": "A cute dressing room inside a cloud castle, an open wardrobe and a round mirror, sparkles. Vertical composition, calm open center."
+    },
+    {
+      "id": "frame_bg",
+      "file": "frame_bg.jpg",
+      "size": "1536x1024",
+      "purpose": "background",
+      "prompt": "A soft blurred pastel meadow with bokeh sparkles, very calm, extra empty space in the middle. Horizontal composition for a game screen backdrop."
+    },
+    {
+      "id": "transition_clouds",
+      "file": "transition_clouds.jpg",
+      "size": "1536x1024",
+      "purpose": "transition",
+      "prompt": "Fluffy white-and-pink clouds filling the whole frame edge to edge, dense enough to fully hide anything behind them. Horizontal composition."
+    },
+    {
+      "id": "reward_burst",
+      "file": "reward_burst.jpg",
+      "size": "1024x1024",
+      "purpose": "decoration",
+      "prompt": "A radial burst of pastel confetti, stars and ribbons around a clear empty center. Square composition, transparent-feeling bright celebration."
+    }
+  ]
+}
