@@ -32,6 +32,8 @@ function render(object) {
     switch (object.type) {
         case "text":
             return object.value;
+        case "image":
+            return `<img class="field-image" src="${object.value}" alt="" loading="lazy">`;
         case "audio":
         return `<a class="brand-logo" onclick="audio('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
         case "text_to_speech":
@@ -527,7 +529,14 @@ var MCQComponent = Vue.component('msq',Vue.extend({
             <a class="waves-effect waves-light btn-large result answer-option"
                v-for="(result, index) in results"
                v-on:click="check(index)"
-               :style="{background: theme.colors.secondary}">{{ result }}</a>
+               :class="{'image-result': isImageResult(result)}"
+               :style="{background: theme.colors.secondary}">
+                <img v-if="isImageResult(result)"
+                     class="field-image"
+                     :src="imageResultSrc(result)"
+                     alt="">
+                <span v-else v-html="result"></span>
+            </a>
 
         </div>
         <div class="row" dir="rtl">
@@ -542,6 +551,13 @@ var MCQComponent = Vue.component('msq',Vue.extend({
     extends: BaseGameComponent,
 
     methods: {
+        isImageResult: function (result) {
+            return /^<img\b/i.test(result);
+        },
+        imageResultSrc: function (result) {
+            const match = result.match(/\bsrc="([^"]+)"/i);
+            return match ? match[1] : '';
+        },
         create: function (code) {
             this.saved = []
 
@@ -3441,7 +3457,28 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             });
         },
 
+        // Draws the parchment-scroll background used by all maze signs.
+        drawParchment: function(ctx, w, h) {
+            ctx.fillStyle = 'rgba(245, 230, 200, 0.97)';
+            ctx.strokeStyle = '#5d4024';
+            ctx.lineWidth = 5;
+            const r = 18;
+            ctx.beginPath();
+            ctx.moveTo(r, 3);
+            ctx.arcTo(w - 3, 3, w - 3, h - 3, r);
+            ctx.arcTo(w - 3, h - 3, 3, h - 3, r);
+            ctx.arcTo(3, h - 3, 3, 3, r);
+            ctx.arcTo(3, 3, w - 3, 3, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        },
+
         makeLabelSprite: function(text) {
+            // Answer can be an image (e.g. OpenMoji illustration) instead of text.
+            if (/\.(svg|png|jpe?g|webp|gif)$/i.test(text)) {
+                return this.makeImageLabelSprite(text);
+            }
             const canvas = document.createElement('canvas');
             let ctx = canvas.getContext('2d');
             let fontSize = 48;
@@ -3453,20 +3490,8 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             canvas.width = Math.min(560, Math.max(170, Math.ceil(textW) + 50));
             canvas.height = 96;
             ctx = canvas.getContext('2d');
-            // Old parchment scroll look for the maze signs
-            ctx.fillStyle = 'rgba(245, 230, 200, 0.97)';
-            ctx.strokeStyle = '#5d4024';
-            ctx.lineWidth = 5;
-            const r = 18, w = canvas.width, h = canvas.height;
-            ctx.beginPath();
-            ctx.moveTo(r, 3);
-            ctx.arcTo(w - 3, 3, w - 3, h - 3, r);
-            ctx.arcTo(w - 3, h - 3, 3, h - 3, r);
-            ctx.arcTo(3, h - 3, 3, 3, r);
-            ctx.arcTo(3, 3, w - 3, 3, r);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            const w = canvas.width, h = canvas.height;
+            this.drawParchment(ctx, w, h);
             ctx.fillStyle = '#2e1f10';
             ctx.font = `bold ${fontSize}px Arial`;
             ctx.textAlign = 'center';
@@ -3481,6 +3506,41 @@ var TreasureMazeComponent = Vue.component('treasure-maze', Vue.extend({
             }));
             const height = 0.8;
             sprite.scale.set(height * w / h, height, 1);
+            return sprite;
+        },
+
+        // A square parchment sign that shows an illustration. The image loads
+        // asynchronously, so we draw the parchment now and repaint the picture
+        // onto the same canvas (texture.needsUpdate) once it arrives.
+        makeImageLabelSprite: function(src) {
+            const size = 220;
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            this.drawParchment(ctx, size, size);
+
+            const labelTexture = new THREE.CanvasTexture(canvas);
+            labelTexture.encoding = THREE.sRGBEncoding;
+
+            const img = new Image();
+            img.onload = () => {
+                // SVGs without width/height can report 0 intrinsic size — fall back to square.
+                const iw = img.naturalWidth || img.width || 72;
+                const ih = img.naturalHeight || img.height || 72;
+                const pad = 16;
+                const box = size - pad * 2;
+                const scale = Math.min(box / iw, box / ih);
+                const dw = iw * scale, dh = ih * scale;
+                ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
+                labelTexture.needsUpdate = true;
+            };
+            img.src = src;
+
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: labelTexture,
+                depthTest: false,
+            }));
+            sprite.scale.set(1.35, 1.35, 1);
             return sprite;
         },
 
@@ -5339,7 +5399,16 @@ var DisplayComponent = Vue.component('display',{
             </div>
             <div class="row">
                 <div class="center-align">
-                   <a class="waves-effect waves-light btn-large result" v-on:click="next()" :style="{background: theme.colors.secondary}">{{ result }}</a>
+                   <a class="waves-effect waves-light btn-large result"
+                      :class="{'image-result': isImageResult(result)}"
+                      v-on:click="next()"
+                      :style="{background: theme.colors.secondary}">
+                       <img v-if="isImageResult(result)"
+                            class="field-image"
+                            :src="imageResultSrc(result)"
+                            alt="">
+                       <span v-else v-html="result"></span>
+                   </a>
                 </div>
             </div>
     </div>`,
@@ -5365,6 +5434,13 @@ var DisplayComponent = Vue.component('display',{
 
     mounted() {},
     methods: {
+        isImageResult: function (result) {
+            return /^<img\b/i.test(result);
+        },
+        imageResultSrc: function (result) {
+            const match = result.match(/\bsrc="([^"]+)"/i);
+            return match ? match[1] : '';
+        },
         getItems: function(){
             this.currentIndex = 0;
             const data = getDataList(this.currentApp.listName);

@@ -1224,6 +1224,24 @@
         margin-right: 14px;
     }
 
+    .field-image {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        vertical-align: middle;
+    }
+
+    .result.image-result {
+        height: auto;
+        min-height: 128px;
+        padding: 12px 16px;
+        line-height: normal;
+        overflow: visible;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     </style>
 </head>
 <body dir="rtl">
@@ -1270,7 +1288,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="./firebase.js"></script>
 
-<script src="./tester.js"></script>
+<script src="./tester.js?v=17"></script>
 
 <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
 </body>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v32';
+const CACHE_NAME = 'my-app-cache-v33';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -11,9 +11,15 @@ const CORE_ASSETS = [
   '/adventure.css',
   '/themes.js',
   '/storage.js',
-  '/tester.js',
+  '/tester.js?v=17',
   '/sounds/success.mp3',
-  '/sounds/failure.mp3'
+  '/sounds/failure.mp3',
+  '/assets/svg/tall.svg',
+  '/assets/svg/short.svg',
+  '/assets/svg/thin.svg',
+  '/assets/svg/plump.svg',
+  '/assets/svg/big.svg',
+  '/assets/svg/small.svg'
 ];
 
 const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
@@ -31,6 +37,7 @@ const ADVENTURE_ART = ['home_bg', 'world_letters_bg', 'world_review_bg', 'world_
 const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS).concat(ADVENTURE_ART);
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
@@ -45,7 +52,7 @@ self.addEventListener('activate', event => {
         }
         return null;
       })
-    ))
+    )).then(() => self.clients.claim())
   );
 });
 
@@ -54,12 +61,19 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (event.request.mode === 'navigate') {
-    // Serve the dedicated adventure entry for its own link; index.html otherwise.
-    const page = new URL(event.request.url).pathname.endsWith('/adventure.html')
-      ? '/adventure.html' : '/index.html';
+  // Network-first for navigations and scripts (so updates show without waiting
+  // for a cache bump). On navigation fallback, serve the dedicated adventure
+  // entry for its own link; index.html otherwise.
+  if (event.request.mode === 'navigate' || event.request.destination === 'script') {
     event.respondWith(
-      caches.match(page).then(cached => cached || fetch(event.request))
+      fetch(event.request).catch(() => {
+        if (event.request.mode === 'navigate') {
+          const page = new URL(event.request.url).pathname.endsWith('/adventure.html')
+            ? '/adventure.html' : '/index.html';
+          return caches.match(page);
+        }
+        return caches.match(event.request);
+      })
     );
     return;
   }
