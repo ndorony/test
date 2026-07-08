@@ -9698,7 +9698,8 @@ const SignUp = {
         if (typeof firebaseSyncUsers === 'function') {
             firebaseSyncUsers();
         }
-        this.$router.push('/');
+        const redirect = getPostAuthRedirect(this.$route.query.redirect);
+        this.$router.push(redirect);
       } else {
         alert('הכנס שם משתמש');
       }
@@ -9736,7 +9737,7 @@ const Login = {
     created: function() {
     this.users = removeDuplicates(JSON.parse(localStorage.getItem('users'))) || [];
     if (this.users.length === 0) {
-      this.$router.push('/signUp');
+      this.$router.push({ path: '/signUp', query: this.$route.query });
     }
     theme = getTheme();
   },
@@ -9746,7 +9747,8 @@ const Login = {
         sessionStorage.setItem('username', this.selectedUser);
         DATA['NAME'] = getUniqueElements(this.selectedUser);
         this.$forceUpdate();
-        this.$router.push('/');
+        const redirect = getPostAuthRedirect(this.$route.query.redirect);
+        this.$router.push(redirect);
         this.$emit('theme-changed', this.selectedTheme);
       } else {
         alert('בחר שם משתמש');
@@ -9796,6 +9798,10 @@ gtag('event', 'page_view', {
 });
 }
 
+function getPostAuthRedirect(redirect) {
+  return (typeof redirect === 'string' && redirect.charAt(0) === '/') ? redirect : '/';
+}
+
 
 router.beforeEach((to, from, next) => {
   const username = getUser();
@@ -9807,10 +9813,11 @@ router.beforeEach((to, from, next) => {
       next();
   } else if (!username && to.path !== '/login') {
     sendMetric('/login');
-    next('/login');
+    next({ path: '/login', query: { redirect: to.fullPath } });
   } else if (username && to.path === '/login') {
-    sendMetric('/');
-    next('/');
+    const redirect = getPostAuthRedirect(to.query.redirect);
+    sendMetric(redirect);
+    next(redirect);
   } else {
     sendMetric(to.path);
     next();
