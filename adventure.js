@@ -520,61 +520,115 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
     },
 });
 
+// --- Art-map skin: hand-tuned marker positions over the background art ---
+// These coordinates are art-specific and NOT part of the data model. They are
+// deliberately kept as trivially-swappable arrays so the final placement can be
+// pasted straight from the prototype.
+// positions finalized in tools/adventure_map_art.html
+//
+// Home overview: world index (0-based, matching WORLDS order) -> {x, y} in %
+// over home_bg.jpg (the floating-islands illustration).
+var HOME_MARKER_POS = [
+    {x: 15, y: 16},
+    {x: 81, y: 20},
+    {x: 13, y: 52},
+    {x: 80, y: 62},
+    {x: 34, y: 73},
+    {x: 23, y: 82},
+    {x: 44, y: 92},
+];
+// Level path: encounter/step index (0-based) -> {x, y} in % over the world bg,
+// climbing bottom -> top so the final (crown) step sits near the top.
+var PATH_MARKER_POS = [
+    {x: 50, y: 88},
+    {x: 39, y: 76},
+    {x: 60, y: 64},
+    {x: 44, y: 52},
+    {x: 57, y: 40},
+    {x: 50, y: 26},
+];
+
+// Resolve a marker position. Falls back to a default winding path (bottom ->
+// top, gentle zig-zag) when there are more markers than seeded coordinates.
+function advMarkerPos(posList, index, total) {
+    if (posList[index]) {
+        return posList[index];
+    }
+    var denom = Math.max(total - 1, 1);
+    var t = index / denom;
+    var y = 90 - t * 78;                        // climb from ~90% up to ~12%
+    var x = 50 + Math.sin(index * 1.1) * 30;    // gentle zig-zag around centre
+    return {x: Math.round(x), y: Math.round(y)};
+}
+
+// Build the dashed SVG route connecting markers in order. The route <svg> uses
+// viewBox 0 0 100 150 (preserveAspectRatio="none"), so y is scaled by 1.5.
+function advRoutePath(markers) {
+    if (!markers.length) {
+        return '';
+    }
+    var d = 'M ' + markers[0].x + ' ' + (markers[0].y * 1.5);
+    for (var i = 1; i < markers.length; i++) {
+        d += ' L ' + markers[i].x + ' ' + (markers[i].y * 1.5);
+    }
+    return d;
+}
+
+// Aggregate a world's per-encounter star map into a 0..3 medal rating.
+function advWorldStarRating(worldId) {
+    var map = getWorldStars(worldId) || {};
+    var vals = Object.keys(map).map(function (k) { return map[k]; }).filter(function (v) { return v > 0; });
+    if (!vals.length) {
+        return 0;
+    }
+    var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    return Math.max(0, Math.min(3, Math.round(avg)));
+}
+
 // The parallel entry screen: player card + guided continue + world selection
 var AdventureHomeComponent = Vue.component('adventure-home', {
     template: `
-    <div class="adv-screen adv-art-home" dir="rtl" v-if="ready">
-      <adventure-clouds></adventure-clouds>
-      <div class="adv-content">
-        <div class="adv-title">🗺️ הרפתקה</div>
-        <adventure-player-card></adventure-player-card>
-        <adventure-companion :message="companionMessage"></adventure-companion>
+    <div class="adv-screen adv-mapscreen adv-art-home" dir="rtl" v-if="ready">
+      <div class="adv-mapstage">
+        <svg class="adv-route" viewBox="0 0 100 150" preserveAspectRatio="none">
+          <path :d="routeD" fill="none" stroke="rgba(255,255,255,.72)"
+                stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0.3 3"></path>
+        </svg>
 
-        <!-- The one guided call to action -->
-        <div v-if="nextStep" class="adv-card adv-pop adv-pulse adv-cta" @click="continueAdventure">
-          <span class="adv-sprite adv-float">{{ nextStep.emoji }}</span>
-          <div style="flex: 1;">
-            <div class="adv-card-title">▶ ממשיכים בהרפתקה</div>
-            <div class="adv-card-sub">{{ nextStep.name }}</div>
+        <!-- Markers: every world placed over the floating-islands art -->
+        <div v-for="mk in markers" :key="mk.id"
+             class="adv-mapmk"
+             :class="'adv-' + mk.state"
+             :style="{left: mk.x + '%', top: mk.y + '%'}"
+             @click="enterWorld(mk)">
+          <div class="adv-medal">
+            <div v-if="mk.state === 'current'" class="adv-ring"></div>
+            <div v-if="mk.state === 'done'" class="adv-crown">👑</div>
+            <div v-if="mk.state === 'current'" class="adv-hero">{{ heroEmoji }}</div>
+            <div class="adv-gloss"></div>
+            <span class="adv-medalicon">{{ mk.state === 'locked' ? '🔒' : mk.emoji }}</span>
+            <div class="adv-num">{{ mk.index + 1 }}</div>
+          </div>
+          <div class="adv-label">{{ mk.name }}</div>
+          <div v-if="mk.state === 'current'" class="adv-prog">📍 כאן אנחנו · {{ mk.progress }}</div>
+          <div v-else-if="mk.state === 'done'" class="adv-stars">
+            <span v-for="n in 3" :key="n">{{ n <= mk.stars ? '⭐' : '☆' }}</span>
           </div>
         </div>
-        <div v-else class="adv-card adv-pop" style="cursor: default;">
-          <span class="adv-sprite adv-float">🏆</span>
-          <div class="adv-card-title">כל הכבוד! סיימתם את כל ההרפתקה</div>
-        </div>
+      </div>
 
-        <router-link to="/adventure/avatar" style="color: inherit;">
-          <div class="adv-card adv-pop">
-            <span class="adv-sprite">👗</span>
-            <div class="adv-card-title">ארון החפצים — לעצב את הדמות שלי</div>
-          </div>
-        </router-link>
-
-        <div class="adv-section-label">כל העולמות</div>
-        <div v-for="(world, i) in worlds" :key="world.id"
-             class="adv-card adv-pop"
-             :class="{'adv-locked': world.locked}"
-             :style="{animationDelay: (i * 0.05) + 's'}"
-             @click="enterWorld(world)">
-          <span class="adv-sprite" :class="{'adv-float': !world.locked}">{{ world.emoji }}</span>
-          <div style="flex: 1;">
-            <div class="adv-card-title">
-              {{ world.name }}
-              <span v-if="world.completed">🏆</span>
-              <span v-if="world.locked">🔒</span>
-            </div>
-            <div class="adv-card-sub" v-if="world.locked">{{ world.lockText }}</div>
-            <div class="adv-card-sub" v-else-if="world.state.started">
-              נפתחו {{ world.state.unlocked }} מתוך {{ world.state.total }} · נלמדו {{ world.state.mastered }}
-            </div>
-            <div class="adv-card-sub" v-else>הרפתקה חדשה!</div>
-          </div>
-        </div>
-        <router-link to="/" class="adv-back">→ חזרה לתפריט הרגיל</router-link>
+      <!-- HUD + navigation chrome floating over the map -->
+      <div class="adv-hud adv-coins">🪙 {{ coins }}</div>
+      <div class="adv-hud adv-starshud">⭐ {{ starsEarned }}/{{ starsPossible }}</div>
+      <router-link to="/adventure/avatar" class="adv-iconbtn adv-wardrobe" title="ארון החפצים">👗</router-link>
+      <router-link to="/" class="adv-iconbtn adv-home" title="חזרה לתפריט הרגיל">🏠</router-link>
+      <div class="adv-titlecard">
+        <h1>ממלכת הקסם</h1>
+        <p>{{ subtitle }}</p>
       </div>
     </div>`,
     data: function () {
-        return {ready: false, nextStep: null, worlds: []};
+        return {ready: false, nextStep: null, worlds: [], coins: 0, starsEarned: 0, starsPossible: 0, heroEmoji: '🧚'};
     },
     created: function () {
         // First run: send the child to build a character before anything else
@@ -584,29 +638,66 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
         }
         this.ready = true;
         this.nextStep = getNextGuidedStep();
-        this.worlds = WORLDS.map(world => ({
-            id: world.id,
-            name: world.name,
-            emoji: world.emoji || '🌍',
-            locked: !isWorldUnlocked(world),
-            completed: isWorldCompleted(world.id),
-            lockText: getWorldUnlockText(world),
-            state: getWorldLearningState(world.id),
-        }));
+        var currentWorldId = this.nextStep ? this.nextStep.worldId : null;
+        var player = getAdventurePlayer();
+        this.coins = player.coins || 0;
+        this.heroEmoji = getAdventureAvatar().base || '🧚';
+        // Total stars earned vs. achievable, for the HUD (presentation only)
+        var earned = 0, possible = 0;
+        WORLDS.forEach(function (world) {
+            possible += (world.encounters ? world.encounters.length : 0) * 3;
+            var map = getWorldStars(world.id) || {};
+            Object.keys(map).forEach(function (k) { earned += map[k]; });
+        });
+        this.starsEarned = earned;
+        this.starsPossible = possible;
+        // Build the marker view-model. State logic is unchanged (same helpers);
+        // only the visual mapping (done/current/available/locked) is new.
+        this.worlds = WORLDS.map(function (world) {
+            var completed = isWorldCompleted(world.id);
+            var unlocked = isWorldUnlocked(world);
+            var state;
+            if (completed) {
+                state = 'done';
+            } else if (!unlocked) {
+                state = 'locked';
+            } else if (world.id === currentWorldId) {
+                state = 'current';
+            } else {
+                state = 'available';
+            }
+            var total = world.encounters ? world.encounters.length : 0;
+            return {
+                id: world.id,
+                name: world.name,
+                emoji: world.emoji || '🌍',
+                locked: !unlocked,
+                completed: completed,
+                state: state,
+                stars: advWorldStarRating(world.id),
+                progress: getEncounterPointer(world.id) + '/' + total,
+            };
+        });
     },
     computed: {
-        companionMessage: function () {
-            return this.nextStep ? 'בואו נמשיך מאיפה שעצרנו!' : 'סיימנו הכול — אפשר לשחק שוב 🏆';
+        subtitle: function () {
+            return this.nextStep ? 'שוטו בין האיים והמשיכו במסע ✨' : 'סיימתם את כל ההרפתקה! 🏆';
+        },
+        markers: function () {
+            var total = this.worlds.length;
+            return this.worlds.map(function (world, i) {
+                var pos = advMarkerPos(HOME_MARKER_POS, i, total);
+                return Object.assign({}, world, {index: i, x: pos.x, y: pos.y});
+            });
+        },
+        routeD: function () {
+            return advRoutePath(this.markers);
         },
     },
     methods: {
-        continueAdventure: function () {
-            if (this.nextStep) {
-                this.$router.push('/adventure/world/' + this.nextStep.worldId);
-            }
-        },
         enterWorld: function (world) {
-            if (!world.locked) {
+            // Routing unchanged: only unlocked worlds are tappable
+            if (world.state !== 'locked') {
                 this.$router.push('/adventure/world/' + world.id);
             }
         },
@@ -616,41 +707,56 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
 // A world screen: learning summary + the encounter path
 var AdventureWorldComponent = Vue.component('adventure-world', {
     template: `
-    <div class="adv-screen" :class="artClass" dir="rtl" v-if="world">
-      <adventure-clouds></adventure-clouds>
-      <div class="adv-content">
-        <div v-if="celebrate" class="adv-banner">
+    <div class="adv-screen adv-mapscreen" :class="artClass || 'adv-art-world_letters_bg'" dir="rtl" v-if="world">
+      <div class="adv-mapstage">
+        <svg class="adv-route" viewBox="0 0 100 150" preserveAspectRatio="none">
+          <path :d="routeD" fill="none" stroke="rgba(255,255,255,.72)"
+                stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0.3 3"></path>
+        </svg>
+
+        <!-- Markers: every encounter placed over the world background art -->
+        <div v-for="mk in markers" :key="mk.index"
+             class="adv-mapmk"
+             :class="'adv-' + mk.state"
+             :style="{left: mk.x + '%', top: mk.y + '%'}"
+             @click="enter(mk)">
+          <div class="adv-medal">
+            <div v-if="mk.state === 'current'" class="adv-ring"></div>
+            <div v-if="mk.state === 'current'" class="adv-hero">{{ heroEmoji }}</div>
+            <div class="adv-gloss"></div>
+            <span class="adv-medalicon">{{ mk.state === 'locked' ? '🔒' : mk.icon }}</span>
+            <div class="adv-num">{{ mk.index + 1 }}</div>
+          </div>
+          <div class="adv-label">{{ mk.name }}</div>
+          <div v-if="mk.state === 'current'" class="adv-prog">▶ שחק עכשיו</div>
+          <div v-else-if="mk.state === 'done' && mk.stars > 0" class="adv-stars">
+            <span v-for="n in 3" :key="n">{{ n <= mk.stars ? '⭐' : '☆' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reward banner over the map (unchanged reward logic) -->
+      <div v-if="celebrate" class="adv-mapbanner">
+        <div class="adv-banner">
           כל הכבוד! 🎉
           <span v-for="n in 3" :key="n" class="adv-bounce"
                 :style="{animationDelay: (n * 0.15) + 's', opacity: n <= rewardStars ? 1 : 0.3}">⭐</span>
           <div v-if="rewardCoins > 0" style="font-size: 0.7em; margin-top: 4px;">+{{ rewardCoins }} 🪙</div>
         </div>
-        <div class="adv-title"><span class="adv-float" style="display: inline-block;">{{ world.emoji }}</span> {{ world.name }}</div>
-        <adventure-player-card></adventure-player-card>
-        <adventure-companion :message="companionMessage"></adventure-companion>
-        <div class="adv-card-sub" style="text-align: center; margin-bottom: 12px;">
-          נפתחו {{ state.unlocked }} מתוך {{ state.total }} · נלמדו {{ state.mastered }}
-          <span v-if="completed">· העולם הושלם 🏆</span>
-        </div>
-        <div v-for="step in steps" :key="step.index"
-             class="adv-card adv-pop"
-             :class="{'adv-locked': step.locked, 'adv-current': step.current, 'adv-pulse': step.current}"
-             :style="{animationDelay: (step.index * 0.08) + 's'}"
-             @click="enter(step)">
-          <span class="adv-sprite" :class="{'adv-float': step.current}">{{ step.icon }}</span>
-          <div style="flex: 1;">
-            <div class="adv-card-title">
-              {{ step.index + 1 }}. {{ step.name }}
-              <span v-if="step.locked">🔒</span>
-            </div>
-            <div class="adv-card-sub" v-if="step.current">⭐ כאן אנחנו</div>
-            <div class="adv-card-sub adv-stars" v-else-if="step.stars > 0">
-              <span v-for="n in 3" :key="n">{{ n <= step.stars ? '⭐' : '☆' }}</span>
-            </div>
-          </div>
-        </div>
-        <router-link to="/adventure" class="adv-back">→ חזרה למפת העולמות</router-link>
       </div>
+
+      <!-- HUD + navigation chrome floating over the map -->
+      <div class="adv-titlecard">
+        <h1>{{ world.name }}</h1>
+        <p>נפתחו {{ state.unlocked }} מתוך {{ state.total }} · נלמדו {{ state.mastered }}<span v-if="completed"> · הושלם 🏆</span></p>
+      </div>
+      <div class="adv-mapside">
+        <adventure-player-card></adventure-player-card>
+      </div>
+      <div class="adv-mapfoot">
+        <adventure-companion :message="companionMessage"></adventure-companion>
+      </div>
+      <router-link to="/adventure" class="adv-mapback">🗺️ למפת העולמות</router-link>
     </div>`,
     data: function () {
         return {
@@ -662,6 +768,7 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
             rewardStars: 0,
             rewardCoins: 0,
             artClass: '',
+            heroEmoji: getAdventureAvatar().base || '🧚',
         };
     },
     created: function () {
@@ -705,6 +812,19 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
                 return 'איזה יופי! מתקדמים בשביל ⭐';
             }
             return 'בוא נמשיך מהכוכב הזוהר!';
+        },
+        // Decorate the existing steps with a marker position + visual state.
+        // The underlying step data (done/current/locked/stars) is untouched.
+        markers: function () {
+            var total = this.steps.length;
+            return this.steps.map(function (step, i) {
+                var pos = advMarkerPos(PATH_MARKER_POS, i, total);
+                var state = step.current ? 'current' : (step.locked ? 'locked' : 'done');
+                return Object.assign({}, step, {state: state, x: pos.x, y: pos.y});
+            });
+        },
+        routeD: function () {
+            return advRoutePath(this.markers);
         },
     },
     methods: {

@@ -405,10 +405,332 @@
     filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.25));
 }
 
+/* --- Art-map skin: interactive markers over the painted background art ---
+   Mirrors tools/adventure_map_art.html. Used by adventure-home (worlds
+   overview) and adventure-world (encounter path). All positions come from the
+   JS config objects HOME_MARKER_POS / PATH_MARKER_POS. */
+
+/* Full-bleed map screen: markers position over the whole stage, not the
+   centered .adv-content column. The background stays on .adv-screen. */
+.adv-mapscreen {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.adv-mapstage {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* Soft vignette so bright art never washes out the markers */
+.adv-mapstage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 80% at 50% 42%, transparent 55%, rgba(60, 30, 70, 0.26));
+    pointer-events: none;
+    z-index: 1;
+}
+
+.adv-route {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* --- The marker (medal) --- */
+
+.adv-mapmk {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.adv-medal {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 33px;
+    font-weight: 900;
+    color: #5a1470;
+    background: radial-gradient(circle at 36% 30%, #fff, #ffd3ec 60%, #ff9ed4);
+    border: 4px solid #fff;
+    box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 10px 22px rgba(80, 20, 60, 0.4), inset 0 3px 8px rgba(255, 255, 255, 0.6);
+}
+
+.adv-medalicon {
+    line-height: 1;
+}
+
+.adv-gloss {
+    position: absolute;
+    top: 9px;
+    left: 15px;
+    width: 32px;
+    height: 17px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.adv-num {
+    position: absolute;
+    top: -8px;
+    inset-inline-end: -8px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 900;
+    color: #5a2b00;
+    background: linear-gradient(#ffe38a, #f0b800);
+    border: 2px solid #fff;
+}
+
+.adv-label {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #5a1470;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.84);
+    border: 1px solid rgba(255, 140, 200, 0.6);
+    padding: 3px 12px;
+    border-radius: 99px;
+    box-shadow: 0 3px 8px rgba(80, 20, 60, 0.25);
+}
+
+.adv-mapmk .adv-stars {
+    margin-top: 4px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.adv-prog {
+    margin-top: 5px;
+    font-size: 12.5px;
+    font-weight: 900;
+    color: #b8007a;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 3px 12px;
+    border-radius: 99px;
+    box-shadow: 0 3px 8px rgba(80, 20, 60, 0.25);
+}
+
+/* Done: gold medal + crown */
+.adv-mapmk.adv-done .adv-medal {
+    background: radial-gradient(circle at 36% 30%, #fff, #ffe0a0 55%, #f6b64a);
+}
+
+.adv-crown {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 25px;
+}
+
+/* Locked: grey medal, not clickable */
+.adv-mapmk.adv-locked {
+    cursor: default;
+}
+
+.adv-mapmk.adv-locked .adv-medal {
+    background: radial-gradient(circle at 36% 30%, #c9c2cc, #8f8794);
+    color: #efeaf2;
+    box-shadow: 0 5px 0 rgba(60, 50, 70, 0.6), 0 8px 16px rgba(0, 0, 0, 0.35);
+}
+
+.adv-mapmk.adv-locked .adv-label {
+    color: #6a5f72;
+    background: rgba(240, 236, 244, 0.82);
+}
+
+/* Current: gold ring + bobbing hero + "play"/"you are here" label */
+.adv-mapmk.adv-current {
+    z-index: 4;
+}
+
+.adv-mapmk.adv-current .adv-medal {
+    width: 86px;
+    height: 86px;
+    font-size: 38px;
+    box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 0 0 6px rgba(255, 215, 0, 0.85), 0 0 30px 8px rgba(255, 215, 0, 0.5), inset 0 3px 8px rgba(255, 255, 255, 0.6);
+}
+
+.adv-mapmk.adv-current .adv-ring {
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 215, 0, 0.85);
+    animation: adv-mkpulse 1.6s ease-in-out infinite;
+}
+
+.adv-mapmk.adv-current .adv-hero {
+    position: absolute;
+    top: -30px;
+    left: 52%;
+    font-size: 30px;
+    animation: adv-mkbob 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35));
+}
+
+@keyframes adv-mkpulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50%      { transform: scale(1.12); opacity: 0.25; }
+}
+
+@keyframes adv-mkbob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-7px); }
+}
+
+/* --- Floating chrome over the map: HUD, title card, buttons --- */
+
+.adv-hud {
+    position: absolute;
+    top: 14px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.66);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-weight: 800;
+    color: #5a1470;
+    box-shadow: 0 4px 14px rgba(120, 60, 120, 0.25);
+}
+
+.adv-hud.adv-coins { inset-inline-start: 14px; }
+.adv-hud.adv-starshud { inset-inline-end: 14px; }
+
+.adv-iconbtn {
+    position: absolute;
+    top: 14px;
+    z-index: 6;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 0;
+    cursor: pointer;
+    font-size: 19px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(120, 60, 120, 0.25);
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.adv-iconbtn.adv-wardrobe { inset-inline-start: 118px; }
+.adv-iconbtn.adv-home { inset-inline-start: 166px; }
+
+.adv-titlecard {
+    position: absolute;
+    top: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    padding: 8px 26px;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(120, 60, 120, 0.25);
+    max-width: 92vw;
+}
+
+.adv-titlecard h1 {
+    font-size: 25px;
+    color: #7a1f8f;
+    font-weight: 900;
+}
+
+.adv-titlecard p {
+    font-size: 13px;
+    color: #9a5aa8;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+/* Path-screen overlays: player card (top-start), companion (bottom-start),
+   back-to-worlds button (bottom-center). These keep the existing components
+   working on the reskinned map. */
+.adv-mapside {
+    position: absolute;
+    top: 108px;
+    inset-inline-start: 12px;
+    z-index: 6;
+    width: min(260px, 46vw);
+}
+
+.adv-mapside .adv-player {
+    margin-bottom: 0;
+}
+
+.adv-mapfoot {
+    position: absolute;
+    bottom: 12px;
+    inset-inline-start: 12px;
+    z-index: 6;
+    max-width: min(320px, 60vw);
+}
+
+.adv-mapfoot .adv-companion {
+    margin-bottom: 0;
+}
+
+.adv-mapbanner {
+    position: absolute;
+    top: 118px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 7;
+    width: min(420px, 90vw);
+}
+
+.adv-mapback {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    color: #7a1f8f;
+    box-shadow: 0 6px 18px rgba(120, 60, 120, 0.3);
+    text-decoration: none;
+}
+
 /* --- Accessibility: respect reduced motion --- */
 
 @media (prefers-reduced-motion: reduce) {
-    .adv-float, .adv-pulse, .adv-pop, .adv-bounce, .adv-shake, .adv-cloud, .adv-banner {
+    .adv-float, .adv-pulse, .adv-pop, .adv-bounce, .adv-shake, .adv-cloud, .adv-banner,
+    .adv-mapmk.adv-current .adv-ring, .adv-mapmk.adv-current .adv-hero {
         animation: none;
     }
 }
