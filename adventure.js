@@ -529,13 +529,17 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
 // Home overview: world index (0-based, matching WORLDS order) -> {x, y} in %
 // over home_bg.jpg (the floating-islands illustration).
 var HOME_MARKER_POS = [
-    {x: 15, y: 16},
-    {x: 81, y: 20},
-    {x: 13, y: 52},
-    {x: 80, y: 62},
-    {x: 34, y: 73},
-    {x: 23, y: 82},
-    {x: 44, y: 92},
+    {x: 48, y: 84},  // 1  hebrew1 (journey starts low, climbs the stepping stones)
+    {x: 39, y: 79},  // 2  hebrew2
+    {x: 31, y: 72},  // 3  hebrew3
+    {x: 22, y: 64},  // 4  hebrew4
+    {x: 13, y: 54},  // 5  hebrew5  (mid-left gazebo island)
+    {x: 10, y: 43},  // 6  hebrew6  (upper stepping stone)
+    {x: 17, y: 33},  // 7  hebrewreview
+    {x: 21, y: 17},  // 8  aleph    (top-left castle island)
+    {x: 82, y: 20},  // 9  colors   (top-right gazebo island)
+    {x: 83, y: 62},  // 10 animals  (bottom-right castle island)
+    {x: 68, y: 42},  // 11 numbers  (mid-right cloud)
 ];
 // Level path: encounter/step index (0-based) -> {x, y} in % over the world bg,
 // climbing bottom -> top so the final (crown) step sits near the top.

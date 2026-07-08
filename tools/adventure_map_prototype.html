@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מפת שלבים v2</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Segoe UI','Arial Hebrew',sans-serif;overflow:hidden;background:#000}
+  #stage{position:fixed;inset:0}
+  svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #gear{position:absolute;top:14px;left:14px;z-index:9;width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;font-size:20px;line-height:1;background:rgba(0,0,0,.35);color:#fff;backdrop-filter:blur(6px)}
+  #gear:hover{background:rgba(0,0,0,.5)}
+  #settings{position:absolute;top:62px;left:14px;z-index:9;display:none;background:rgba(22,22,32,.94);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:12px;min-width:196px;box-shadow:0 14px 34px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+  #settings.open{display:block}
+  #settings .s-title{color:#fff;font-weight:800;font-size:12.5px;opacity:.75;margin-bottom:9px}
+  #settings .s-opts{display:flex;flex-direction:column;gap:6px}
+  #settings button{font:inherit;font-weight:700;font-size:14px;text-align:right;cursor:pointer;padding:8px 12px;border-radius:9px;border:1px solid transparent;background:rgba(255,255,255,.08);color:#fff}
+  #settings button:hover{background:rgba(255,255,255,.18)}
+  #settings button.active{border-color:#FFD700;background:rgba(255,215,0,.16)}
+  #nav{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:9;display:none;font:inherit;font-weight:800;font-size:14px;cursor:pointer;padding:10px 20px;border-radius:99px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.42);color:#fff;backdrop-filter:blur(6px)}
+  #nav.show{display:block}
+  #nav:hover{background:rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+<div id="stage"><svg id="svg" viewBox="0 0 1280 800" preserveAspectRatio="xMidYMid slice"></svg></div>
+<button id="gear" title="מעבר לדף ההגדרות הקיים">⚙️</button>
+<div id="settings">
+  <div class="s-title">↗ דף ההגדרות הקיים (#/user)<br><span style="opacity:.6;font-weight:600">ערכת הנושא נבחרת שם — גלובלית לכל האפליקציה. כאן לתצוגה בלבד:</span></div>
+  <div class="s-opts">
+    <button data-t="soldiers">🎖️ חיילים</button>
+    <button data-t="space">🚀 חלל</button>
+    <button data-t="unicorn">🦄 חד קרן</button>
+    <button data-t="base">🗺️ בסיסי</button>
+    <button data-t="dark">🕯️ כהה</button>
+  </div>
+</div>
+<button id="nav">🗺️ מפת העולמות</button>
+<script>
+const themeOptions = {
+  base:{name:'בסיסי',colors:{primary:'#006064',secondary:'#78909c',tertiary:'#B0E0E6',accent:'#C0C0C0',background:'#F5F5F5',text:'#08343a',disabledText:'#B0BEC5'}},
+  soldiers:{name:'חיילים',colors:{primary:'#4B5320',secondary:'#8a8f5c',tertiary:'#BDB76B',accent:'#FFD700',background:'#e9e6cf',text:'#2b2f16',disabledText:'#A4A4A4'}},
+  unicorn:{name:'חד קרן',colors:{primary:'#FF69B4',secondary:'#BA55D3',tertiary:'#FFB6C1',accent:'#FFD700',background:'#FFF0F5',text:'#5a1470',disabledText:'#C0C0C0'}},
+  space:{name:'חלל',colors:{primary:'#1E90FF',secondary:'#3a2f8f',tertiary:'#87CEEB',accent:'#FFD700',background:'#05061f',text:'#eaf2ff',disabledText:'#5A5A5A'}},
+  dark:{name:'כהה',colors:{primary:'#3a2f4f',secondary:'#1E1E1E',tertiary:'#2F4F4F',accent:'#BB86FC',background:'#141018',text:'#E0E0E0',disabledText:'#757575'}},
+};
+
+// ---------- color helpers ----------
+function toRGB(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255];}
+function A(h,a){const[r,g,b]=toRGB(h);return`rgba(${r},${g},${b},${a})`;}
+function shade(h,p){let[r,g,b]=toRGB(h);const f=p<0?0:255,t=Math.abs(p);r=Math.round(r+(f-r)*t);g=Math.round(g+(f-g)*t);b=Math.round(b+(f-b)*t);return`#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;}
+const rnd=(s)=>{let x=Math.sin(s)*10000;return x-Math.floor(x);};
+
+// ---------- world flavor ----------
+const WORLD = {
+  soldiers:{title:'מבצע ההרפתקה',sub:'כבוש בסיס אחר בסיס',emoji:'🎖️',hero:'🪖',part:'ember',nodeEmojis:['⛺','🛡️','🎯','📡','🏰','🚩','🎖️'],dashed:true},
+  space:{title:'מסע בחלל',sub:'טוס מכוכב לכוכב',emoji:'🚀',hero:'👩‍🚀',part:'star',nodeEmojis:['🌍','🪐','☄️','🛸','🌟','👾','🚀'],dashed:false},
+  unicorn:{title:'ממלכת הקסם',sub:'עברי בין הטירות הקסומות',emoji:'🦄',hero:'🧚',part:'petal',nodeEmojis:['🏰','🌈','🦄','🍭','💎','🧁','👑'],dashed:false},
+  base:{title:'מפת ההרפתקאות',sub:'בחר שלב כדי לצאת למשימה',emoji:'🗺️',hero:'🧭',part:'bubble',nodeEmojis:['🏝️','⛵','🧭','🗿','🌋','🏴','🏆'],dashed:true},
+  dark:{title:'מבוך הצללים',sub:'צלול אל תוך האפלה',emoji:'🕯️',hero:'🧙',part:'firefly',nodeEmojis:['🕯️','🗝️','🚪','💀','🔮','⚰️','🏆'],dashed:true},
+};
+const LEVELS=[
+  {name:'מטווח בלונים',stars:3,state:'done'},
+  {name:'הרפתקת ריצה',stars:3,state:'done'},
+  {name:'מבוך האוצר',stars:2,state:'done'},
+  {name:'חבר במילים',stars:0,state:'current'},
+  {name:'דו-קרב',stars:0,state:'locked'},
+  {name:'דו-קרב הקוסמים',stars:0,state:'locked'},
+  {name:'קרב הגמר',stars:0,state:'locked'},
+];
+
+const W=1280,H=800;
+
+// ---------- scenery builders (return SVG strings) ----------
+function starsField(seed,count,color,maxR){let s='';for(let i=0;i<count;i++){const x=rnd(seed+i)*W,y=rnd(seed+i*1.7)*H*0.9,r=0.4+rnd(seed+i*2.3)*maxR,o=0.3+rnd(seed+i*3.1)*0.7;s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${color}" opacity="${o.toFixed(2)}"/>`;}return s;}
+function sparkle(x,y,r,c){return`<path d="M${x} ${y-r} L${x+r*0.28} ${y-r*0.28} L${x+r} ${y} L${x+r*0.28} ${y+r*0.28} L${x} ${y+r} L${x-r*0.28} ${y+r*0.28} L${x-r} ${y} L${x-r*0.28} ${y-r*0.28} Z" fill="${c}"/>`;}
+function hillBand(yTop,amp,color,phase){let d=`M0 ${yTop}`;for(let x=0;x<=W;x+=40){const y=yTop+Math.sin((x/W*Math.PI*2)+phase)*amp;d+=` L${x} ${y.toFixed(1)}`;}d+=` L${W} ${H} L0 ${H} Z`;return`<path d="${d}" fill="${color}"/>`;}
+function cloud(x,y,s,c){return`<g transform="translate(${x},${y}) scale(${s})" fill="${c}"><ellipse cx="0" cy="0" rx="46" ry="26"/><ellipse cx="34" cy="6" rx="34" ry="22"/><ellipse cx="-34" cy="8" rx="30" ry="20"/><ellipse cx="12" cy="-14" rx="28" ry="20"/></g>`;}
+function pine(x,y,s,c1,c2){return`<g transform="translate(${x},${y}) scale(${s})"><rect x="-4" y="0" width="8" height="20" fill="#5b4326"/><polygon points="0,-54 26,2 -26,2" fill="${c2}"/><polygon points="0,-40 22,14 -22,14" fill="${c1}"/><polygon points="0,-26 18,26 -18,26" fill="${c2}"/></g>`;}
+
+// A detailed fairy-tale castle illustration with waving flags (SVG, palette-driven)
+function castleSVG(cx,cy,s,c){
+  const wallL=shade(c.tertiary,.6), wallD=shade(c.tertiary,.18);
+  const roof=c.primary, roofD=shade(c.primary,-.28), gold=c.accent;
+  const wood='#7a4a24', woodD='#5b3418', glow='#ffe08a', u='cst';
+  const flag=(x,tip,col)=>`<g transform="translate(${x},${tip})"><line x1="0" y1="0" x2="0" y2="-30" stroke="#6b5a2a" stroke-width="3"/><circle cx="0" cy="-30" r="3" fill="${gold}"/><g transform="translate(0,-30)"><animateTransform attributeName="transform" type="skewX" values="0;18;2;-8;0" dur="2.6s" repeatCount="indefinite" additive="sum"/><path d="M0,0 L32,6 L0,14 Z" fill="${col}"/></g></g>`;
+  const win=(x,y)=>`<circle cx="${x}" cy="${y-4}" r="11" fill="${A(glow,.55)}" filter="url(#soft)"/><rect x="${x-6}" y="${y-16}" width="12" height="22" rx="6" fill="${glow}" stroke="${A('#000',.18)}"/>`;
+  return `<g transform="translate(${cx},${cy}) scale(${s})">
+    <defs>
+      <linearGradient id="${u}w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${wallL}"/><stop offset="1" stop-color="${wallD}"/></linearGradient>
+      <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(roof,.28)}"/><stop offset="1" stop-color="${roofD}"/></linearGradient>
+    </defs>
+    <ellipse cx="0" cy="8" rx="118" ry="15" fill="rgba(0,0,0,.16)"/>
+    <ellipse cx="0" cy="-150" rx="150" ry="150" fill="${A(gold,.10)}" filter="url(#blurBig)"/>
+    <rect x="-96" y="-168" width="44" height="174" fill="url(#${u}w)"/>
+    <rect x="52" y="-168" width="44" height="174" fill="url(#${u}w)"/>
+    <polygon points="-102,-168 -74,-214 -46,-168" fill="url(#${u}r)"/>
+    <polygon points="46,-168 74,-214 102,-168" fill="url(#${u}r)"/>
+    ${win(-74,-118)}${win(74,-118)}
+    <rect x="-27" y="-208" width="54" height="214" fill="url(#${u}w)"/>
+    <rect x="-27" y="-214" width="54" height="8" fill="${roofD}"/>
+    <polygon points="-34,-208 0,-268 34,-208" fill="url(#${u}r)"/>
+    ${win(0,-150)}
+    <rect x="-56" y="-116" width="112" height="122" fill="url(#${u}w)"/>
+    ${[-56,-40,-24,-8,8,24,40].map(x=>`<rect x="${x}" y="-128" width="12" height="14" fill="${wallD}"/>`).join('')}
+    <path d="M-24,6 L-24,-42 A24,24 0 0 1 24,-42 L24,6 Z" fill="${wood}"/>
+    <path d="M-24,6 L-24,-42 A24,24 0 0 1 24,-42 L24,6 Z" fill="none" stroke="${woodD}" stroke-width="3"/>
+    ${[-12,0,12].map(x=>`<line x1="${x}" y1="6" x2="${x}" y2="-54" stroke="${woodD}" stroke-width="2"/>`).join('')}
+    <path d="M0,-70 C-6,-82 -22,-79 -22,-67 C-22,-56 -8,-50 0,-42 C8,-50 22,-56 22,-67 C22,-79 6,-82 0,-70 Z" fill="${roof}" stroke="#fff" stroke-width="2"/>
+    ${flag(-74,-214,gold)}${flag(74,-214,gold)}${flag(0,-268,gold)}
+  </g>`;
+}
+
+function scene(key,c){
+  const g={far:'',mid:'',near:'',sky:''};
+  if(key==='space'){
+    g.sky=`<rect width="${W}" height="${H}" fill="url(#sky)"/>`+
+      `<ellipse cx="900" cy="120" rx="520" ry="300" fill="${A(c.secondary,.55)}" filter="url(#blurBig)"/>`+
+      `<ellipse cx="240" cy="60" rx="380" ry="240" fill="${A('#7a3bd6',.4)}" filter="url(#blurBig)"/>`+
+      `<ellipse cx="640" cy="560" rx="620" ry="260" fill="${A(c.primary,.28)}" filter="url(#blurBig)"/>`;
+    g.far=starsField(3,150,'#ffffff',1.7)+starsField(9,40,c.tertiary,1.2)+
+      sparkle(180,140,7,'#fff')+sparkle(1080,220,9,'#fff')+sparkle(560,90,6,A('#fff',.9));
+    // big ringed planet lower-left
+    g.mid=`<g filter="url(#soft)"><circle cx="150" cy="700" r="150" fill="url(#planet)"/>`+
+      `<ellipse cx="150" cy="700" rx="230" ry="52" fill="none" stroke="${A(c.accent,.85)}" stroke-width="10" transform="rotate(-18 150 700)"/>`+
+      `<circle cx="150" cy="700" r="150" fill="none" stroke="${A('#fff',.15)}" stroke-width="3"/></g>`+
+      `<circle cx="1140" cy="140" r="30" fill="${A(c.tertiary,.9)}" filter="url(#soft)"/>`;
+    return g;
+  }
+  if(key==='soldiers'){
+    g.sky=`<rect width="${W}" height="${H}" fill="url(#sky)"/>`+
+      `<circle cx="1050" cy="120" r="170" fill="${A('#fff8d0',.5)}" filter="url(#blurBig)"/>`;
+    // distant mountains
+    g.far=`<path d="M0 300 L180 190 L360 290 L520 200 L720 300 L900 210 L1120 300 L1280 240 L1280 400 L0 400 Z" fill="${A(shade(c.primary,.35),.7)}"/>`;
+    // rolling hills
+    g.mid=hillBand(430,26,shade(c.primary,.28),0.4)+hillBand(500,30,shade(c.primary,.12),2.1)+hillBand(600,34,c.primary,3.6);
+    // props: pines + tents + flag
+    g.near=pine(80,470,1.05,shade(c.primary,-.1),c.primary)+pine(1180,520,1.25,shade(c.primary,-.1),c.primary)+pine(1210,470,0.8,shade(c.primary,-.1),c.primary)+
+      `<g transform="translate(1060,650)"><polygon points="0,-46 46,20 -46,20" fill="${c.tertiary}"/><polygon points="0,-46 0,20 -46,20" fill="${shade(c.tertiary,-.15)}"/><rect x="-6" y="16" width="12" height="10" fill="#5b4326"/></g>`+
+      `<g transform="translate(120,700)"><line x1="0" y1="0" x2="0" y2="-70" stroke="#6b5a2a" stroke-width="5"/><polygon points="0,-70 60,-56 0,-42" fill="${c.accent}"/></g>`;
+    return g;
+  }
+  if(key==='unicorn'){
+    g.sky=`<rect width="${W}" height="${H}" fill="url(#sky)"/>`;
+    // rainbow arc
+    const rb=['#ff8fc7','#ffcf8f','#fff59a','#a6f5b5','#9ad7ff','#c9a3ff'];let rain='';
+    rb.forEach((col,i)=>{rain+=`<circle cx="360" cy="470" r="${300-i*22}" fill="none" stroke="${col}" stroke-width="20" opacity=".8"/>`;});
+    g.far=`<g clip-path="url(#topHalf)">${rain}</g>`+sparkle(920,150,10,'#fff')+sparkle(1050,260,7,c.accent)+sparkle(700,120,8,'#fff');
+    // candy hills
+    g.mid=hillBand(470,26,shade(c.secondary,.35),0.4)+hillBand(540,30,shade(c.primary,.35),2.1)+hillBand(630,34,shade(c.primary,.15),3.6);
+    // clouds + castle
+    g.near=cloud(1080,120,1.1,A('#fff',.9))+cloud(200,150,0.8,A('#fff',.85))+
+      castleSVG(1085,706,0.86,c);
+    return g;
+  }
+  // base / dark generic
+  g.sky=`<rect width="${W}" height="${H}" fill="url(#sky)"/>`;
+  g.mid=hillBand(500,26,shade(c.primary,.25),0.4)+hillBand(600,32,c.primary,2.6);
+  g.far=(key==='dark')?starsField(3,60,A(c.accent,.7),1.4):'';
+  return g;
+}
+
+// ---------- ambient particles (theme-specific life) ----------
+function particles(key,c,w){
+  const kind=w.part||'star'; const n=kind==='star'?30:16; let s='';
+  for(let i=0;i<n;i++){
+    const x=(rnd(i*1.3+key.length)*W).toFixed(0), y=(rnd(i*2.7+7)*H).toFixed(0);
+    const dur=(5+rnd(i)*7).toFixed(1), del=(-rnd(i*3)*8).toFixed(1);
+    if(kind==='star'){
+      const r=(0.6+rnd(i)*1.7).toFixed(1);
+      s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"><animate attributeName="opacity" values="0.15;1;0.15" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/></circle>`;
+    } else if(kind==='firefly'){
+      s+=`<circle cx="${x}" cy="${y}" r="2.4" fill="${c.accent}" filter="url(#soft)"><animate attributeName="opacity" values="0;1;0" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/><animate attributeName="cy" values="${y};${(+y-40)}" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/></circle>`;
+    } else if(kind==='petal'){
+      const col=['#ffd1ec','#ffb3d9','#fff0a6','#c9a3ff'][i%4], deg=(rnd(i)*360)|0;
+      s+=`<ellipse cx="${x}" cy="${y}" rx="6" ry="3" fill="${col}" transform="rotate(${deg} ${x} ${y})"><animate attributeName="cy" values="${y};${(+y+140)}" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.9;0" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/></ellipse>`;
+    } else if(kind==='ember'){
+      s+=`<circle cx="${x}" cy="${y}" r="${(1+rnd(i)*1.5).toFixed(1)}" fill="${A(c.accent,.9)}"><animate attributeName="cy" values="${y};${(+y-50)}" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.85;0" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/></circle>`;
+    } else { // bubble
+      s+=`<circle cx="${x}" cy="${y}" r="${(3+rnd(i)*5).toFixed(1)}" fill="none" stroke="${A('#fff',.5)}"><animate attributeName="cy" values="${y};${(+y-60)}" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.7;0" dur="${dur}s" begin="${del}s" repeatCount="indefinite"/></circle>`;
+    }
+  }
+  return `<g>${s}</g>`;
+}
+
+// ---------- path + nodes ----------
+const NR=42;
+function nodePoints(n){const p=[];for(let i=0;i<n;i++){const t=i/(n-1);const y=168+t*(H-250);const x=W*0.5+Math.sin(t*Math.PI*1.15+0.62)*(W*0.215);p.push({x,y});}return p;}
+function smoothPath(pts){let d=`M ${pts[0].x} ${pts[0].y}`;for(let i=1;i<pts.length;i++){const p0=pts[i-1],p1=pts[i];const my=(p0.y+p1.y)/2;d+=` C ${p0.x} ${my}, ${p1.x} ${my}, ${p1.x} ${p1.y}`;}return d;}
+
+function medallion(pt,i,lv,key,c,w){
+  const R=NR;const emoji=(lv.state==='learn')?'📖':w.nodeEmojis[i%w.nodeEmojis.length];
+  const cur=lv.state==='current',locked=lv.state==='locked';
+  let g=`<g transform="translate(${pt.x},${pt.y})" filter="url(#drop)">`;
+  if(cur) g+=`<circle r="${R+14}" fill="none" stroke="${A(c.accent,.9)}" stroke-width="4"><animate attributeName="r" values="${R+7};${R+18};${R+7}" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;.2;.9" dur="1.6s" repeatCount="indefinite"/></circle>`;
+  const discFill=locked?'url(#lockDisc)':`url(#nodeDisc)`;
+  g+=`<circle r="${R}" fill="${discFill}"/>`;
+  g+=`<circle r="${R}" fill="none" stroke="url(#goldRim)" stroke-width="6"/>`;
+  g+=`<circle r="${R-3}" fill="none" stroke="${A('#000',.18)}" stroke-width="1.5"/>`;
+  g+=`<ellipse cx="-11" cy="-16" rx="22" ry="13" fill="${A('#fff',locked?.12:.4)}"/>`;
+  g+=`<text y="15" font-size="42" text-anchor="middle"${locked?' opacity=".35"':''}>${emoji}</text>`;
+  if(locked) g+=`<text y="13" font-size="30" text-anchor="middle">🔒</text>`;
+  g+=`<g transform="translate(${R-7},${-R+7})"><circle r="14" fill="url(#goldRim)" stroke="#fff" stroke-width="2"/><text y="5" font-size="15" font-weight="900" text-anchor="middle" fill="#3a2b00">${i+1}</text></g>`;
+  // hero token standing ON the current node ("you are here"). Tuck it close and
+  // shift it to the node's OUTER side (away from the plaques, which hang toward
+  // the screen centre) so it never collides with a neighbouring node's plaque.
+  if(cur){
+    const hs = (pt.x>=W/2? 20 : -20);
+    g+=`<ellipse cx="${hs}" cy="${-R+9}" rx="15" ry="4.5" fill="rgba(0,0,0,.28)"/>`;
+    g+=`<g transform="translate(${hs},${-R-3})"><g><animateTransform attributeName="transform" type="translate" values="0 -2.5;0 2.5;0 -2.5" dur="1.5s" repeatCount="indefinite"/><circle r="15" fill="#fff" stroke="url(#goldRim)" stroke-width="2.5"/><text y="6" font-size="18" text-anchor="middle">${w.hero}</text></g></g>`;
+  }
+  g+=`</g>`;
+  // side plaque (name + stars/status) — placed beside the node so it never
+  // collides with neighbouring nodes on the winding path.
+  const twoLine = cur || (!locked && lv.stars>0);
+  const ph = twoLine?46:32;
+  const lw = Math.max(118, lv.name.length*12+34);
+  const side = pt.x>=W/2 ? -1 : 1;                 // -1 = plaque to the left
+  let px = side<0 ? pt.x-(R+12)-lw : pt.x+(R+12);
+  px = Math.max(10, Math.min(W-10-lw, px));
+  const cx = px+lw/2, top = pt.y-ph/2;
+  const nodeEdge = pt.x + side*(R-2), plaqueEdge = side<0 ? px+lw : px;
+  let g2=`<g filter="url(#drop)" opacity="${locked?.8:1}">`;
+  // pin/stem connecting the node to its plaque
+  g2+=`<line x1="${nodeEdge}" y1="${pt.y}" x2="${plaqueEdge}" y2="${pt.y}" stroke="${A(c.accent,.85)}" stroke-width="4" stroke-linecap="round"/><circle cx="${nodeEdge}" cy="${pt.y}" r="3.6" fill="${c.accent}"/>`;
+  g2+=`<rect x="${px}" y="${top}" width="${lw}" height="${ph}" rx="${ph/2}" fill="url(#banner)" stroke="${A(c.accent,.75)}" stroke-width="1.5"/>`;
+  g2+=`<text x="${cx}" y="${top+(twoLine?19:21)}" font-size="15" font-weight="800" text-anchor="middle" fill="${w.ink}">${lv.name}</text>`;
+  if(cur){
+    g2+=`<text x="${cx}" y="${top+38}" font-size="12.5" font-weight="700" text-anchor="middle" fill="${A(c.accent2||c.accent,1)}">▶ כאן אנחנו</text>`;
+  } else if(!locked && lv.stars>0){
+    let st='';for(let k=0;k<3;k++){const on=k<lv.stars;st+=`<g transform="translate(${cx-24+k*24},${top+35})">${starSvg(on?c.accent:A(w.ink,.28),on)}</g>`;}
+    g2+=st;
+  }
+  g2+=`</g>`;
+  return g+g2;
+}
+function starSvg(fill,on){return`<path d="M0,-9 L2.6,-2.8 L9,-2.8 L3.8,1.4 L5.8,8 L0,3.9 L-5.8,8 L-3.8,1.4 L-9,-2.8 L-2.6,-2.8 Z" fill="${fill}" stroke="${on?'#0004':'none'}" stroke-width=".5"/>`;}
+
+// ---------- HUD + title ----------
+function hud(c,w,ink,title,sub,emoji){
+  title=title||w.title; sub=sub||w.sub; emoji=emoji||w.emoji;
+  const lightBg = ink!=='#ffffff';
+  const bw=Math.max(320,title.length*26+170);
+  const panelFill = lightBg?A('#ffffff',.62):A('#000',.34);
+  return `<g font-family="Segoe UI,sans-serif">
+    <g transform="translate(68,44)"><rect x="0" y="-24" width="150" height="44" rx="22" fill="${A('#000',.32)}" stroke="${A(c.accent,.6)}"/><circle cx="28" cy="-2" r="14" fill="url(#goldRim)"/><text x="28" y="4" font-size="16" text-anchor="middle">🪙</text><text x="52" y="4" font-size="18" font-weight="900" fill="#fff">1240</text></g>
+    <g transform="translate(1090,44)"><rect x="0" y="-24" width="150" height="44" rx="22" fill="${A('#000',.32)}" stroke="${A(c.accent,.6)}"/><g transform="translate(28,-2)">${starSvg(c.accent,true)}</g><text x="52" y="4" font-size="18" font-weight="900" fill="#fff">7/18</text></g>
+    <g transform="translate(${W/2},60)" filter="url(#drop)">
+      <rect x="${-bw/2}" y="-28" width="${bw}" height="74" rx="20" fill="${panelFill}" stroke="url(#goldRim)" stroke-width="2.5"/>
+      <g transform="translate(${-bw/2+26},2)">${starSvg(c.accent,true)}</g>
+      <g transform="translate(${bw/2-26},2)">${starSvg(c.accent,true)}</g>
+      <text y="6" font-size="34" font-weight="900" text-anchor="middle" fill="${ink}">${emoji} ${title}</text>
+      <text y="32" font-size="15" font-weight="700" text-anchor="middle" fill="${A(ink,.85)}">${sub}</text>
+    </g></g>`;
+}
+
+// ---------- defs ----------
+function defs(key,c,lightBg){
+  const nodeA=shade(c.tertiary,.15),nodeB=shade(c.primary,-.05);
+  const skyStops = ({
+    space:`<stop offset="0" stop-color="#14225a"/><stop offset="55%" stop-color="#070826"/><stop offset="100%" stop-color="#02020f"/>`,
+    soldiers:`<stop offset="0" stop-color="${shade(c.tertiary,.35)}"/><stop offset="45%" stop-color="${shade(c.primary,.35)}"/><stop offset="100%" stop-color="${shade(c.primary,.1)}"/>`,
+    unicorn:`<stop offset="0" stop-color="#ffe3f3"/><stop offset="45%" stop-color="#ffc0e4"/><stop offset="100%" stop-color="#d9b3ff"/>`,
+    dark:`<stop offset="0" stop-color="#241a33"/><stop offset="60%" stop-color="#140f1c"/><stop offset="100%" stop-color="#0a070e"/>`,
+    base:`<stop offset="0" stop-color="${shade(c.tertiary,.25)}"/><stop offset="60%" stop-color="${c.tertiary}"/><stop offset="100%" stop-color="${shade(c.primary,.2)}"/>`,
+  })[key];
+  return `<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">${skyStops}</linearGradient>
+    <radialGradient id="nodeDisc" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="${shade(nodeA,.25)}"/><stop offset="60%" stop-color="${nodeA}"/><stop offset="100%" stop-color="${nodeB}"/></radialGradient>
+    <radialGradient id="lockDisc" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#9aa0a6"/><stop offset="100%" stop-color="#4a4f55"/></radialGradient>
+    <linearGradient id="goldRim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(c.accent,.5)}"/><stop offset="50%" stop-color="${c.accent}"/><stop offset="100%" stop-color="${shade(c.accent,-.25)}"/></linearGradient>
+    <radialGradient id="planet" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="${shade(c.tertiary,.2)}"/><stop offset="60%" stop-color="${c.primary}"/><stop offset="100%" stop-color="${shade(c.secondary,-.1)}"/></radialGradient>
+    <linearGradient id="banner" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lightBg?'#ffffff':A('#000',.55)}"/><stop offset="100%" stop-color="${lightBg?'#f0f0f5':A('#000',.7)}"/></linearGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(c.accent,.35)}"/><stop offset="100%" stop-color="${shade(c.accent,-.05)}"/></linearGradient>
+    <clipPath id="topHalf"><rect x="0" y="0" width="${W}" height="470"/></clipPath>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="blurBig" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="55"/></filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="drop" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000" flood-opacity="0.45"/></filter>
+  </defs>`;
+}
+
+// ---------- level-path screen ----------
+function renderPath(key){
+  const c=(themeOptions[key]||themeOptions.base).colors;
+  const w=WORLD[key]||WORLD.base;
+  const lightBg=['#F5F5F5','#e9e6cf','#FFF0F5'].includes(c.background);
+  w.ink=lightBg?c.text:'#ffffff';
+  const sc=scene(key,c);
+  const pts=nodePoints(LEVELS.length);
+  const dAll=smoothPath(pts);
+  // completed portion up to current index
+  const curIdx=LEVELS.findIndex(l=>l.state==='current');
+  const donePts=pts.slice(0,(curIdx<0?LEVELS.length:curIdx+1));
+  const dDone=smoothPath(donePts.length>1?donePts:pts.slice(0,2));
+
+  const road=`<g>
+      <path d="${dDone}" fill="none" stroke="${A(c.accent,.6)}" stroke-width="28" stroke-linecap="round" filter="url(#glow)"/>
+    </g><g filter="url(#drop)">
+      <path d="${dAll}" fill="none" stroke="${A('#000',.28)}" stroke-width="30" stroke-linecap="round"/>
+      <path d="${dAll}" fill="none" stroke="${A(w.ink==='#ffffff'?'#000':'#fff',.18)}" stroke-width="24" stroke-linecap="round"/>
+      <path d="${dAll}" fill="none" stroke="${A(c.disabledText,.65)}" stroke-width="16" stroke-linecap="round" stroke-dasharray="2 22"/>
+      <path d="${dDone}" fill="none" stroke="url(#road)" stroke-width="17" stroke-linecap="round"${w.dashed?' stroke-dasharray="18 12"':''}/>
+      <path d="${dDone}" fill="none" stroke="${A('#fff',.5)}" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 16"/>
+    </g>`;
+
+  const nodes=pts.map((p,i)=>medallion(p,i,LEVELS[i],key,c,w)).join('');
+  const vignette=`<rect width="${W}" height="${H}" fill="url(#vig)"/>`;
+  const vigDef=`<radialGradient id="vig" cx="50%" cy="42%" r="75%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="${lightBg?.18:.45}"/></radialGradient>`;
+
+  document.getElementById('svg').innerHTML =
+    defs(key,c,lightBg).replace('</defs>',vigDef+'</defs>')+
+    sc.sky+sc.far+sc.mid+sc.near+particles(key,c,w)+vignette+road+nodes+hud(c,w,w.ink);
+}
+
+// ---------- worlds overview screen (navigate between worlds) ----------
+const WORLDS_DATA=[
+  {name:'אותיות א׳-ה׳',emoji:'א',prog:'5/5',state:'done',stars:3},
+  {name:'אותיות ו׳-י׳',emoji:'ו',prog:'5/5',state:'done',stars:3},
+  {name:'אותיות כ׳-מ׳',emoji:'כ',prog:'5/5',state:'done',stars:2},
+  {name:'אותיות נ׳-ע׳',emoji:'נ',prog:'3/5',state:'current',stars:0},
+  {name:'אותיות פ׳-ק׳',emoji:'פ',prog:'0/5',state:'locked',stars:0},
+  {name:'אותיות ר׳-ת׳',emoji:'ר',prog:'0/5',state:'locked',stars:0},
+  {name:'ארץ כל האותיות',emoji:'📜',prog:'0/6',state:'locked',stars:0},
+];
+const WORLDS_TITLE={soldiers:'מפת המבצע',space:'הגלקסיה',unicorn:'ממלכות הקסם',base:'מפת העולמות',dark:'ממלכת הצללים'};
+
+// Worlds are scattered as islands across a map (a different language from the
+// linear level path). Hand-placed for a pleasing "treasure-map" meander.
+const ISLAND_POS=[
+  {x:245,y:250},{x:545,y:180},{x:850,y:235},{x:1045,y:430},
+  {x:770,y:560},{x:470,y:630},{x:195,y:520},
+];
+
+function islandNode(pos,i,wd,key,c,w){
+  const {x,y}=pos;
+  const done=wd.state==='done',cur=wd.state==='current',locked=wd.state==='locked';
+  const grass=locked?'#8f949b':c.primary, grassHi=locked?'#aab0b7':shade(c.tertiary,.4), dirt=locked?'#5b5e64':shade(c.secondary,-.08);
+  let g=`<g${locked?'':` style="cursor:pointer" onclick="enterWorld(${i})"`}>`;
+  g+=`<ellipse cx="${x}" cy="${y+58}" rx="82" ry="14" fill="rgba(0,0,0,.16)"/>`;
+  g+=`<g transform="translate(${x},${y})" filter="url(#drop)">`;
+  // floating island body: dirt underside + grassy top
+  g+=`<path d="M-90,2 Q-64,74 0,88 Q64,74 90,2 Z" fill="${dirt}"/>`;
+  g+=`<path d="M-90,2 Q-64,74 0,88 Q64,74 90,2 Z" fill="${A('#000',.12)}"/>`;
+  g+=`<ellipse cx="0" cy="2" rx="92" ry="33" fill="${grass}"/>`;
+  g+=`<ellipse cx="0" cy="-4" rx="84" ry="24" fill="${grassHi}"/>`;
+  g+=`<text y="16" font-size="54" text-anchor="middle"${locked?' opacity=".5"':''}>${wd.emoji}</text>`;
+  if(done) g+=`<g transform="translate(52,-16)"><line x1="0" y1="6" x2="0" y2="-30" stroke="#6b5a2a" stroke-width="3"/><path d="M0,-30 L20,-25 L0,-18 Z" fill="${c.accent}"><animateTransform attributeName="transform" type="skewX" values="0;14;0" dur="2.4s" repeatCount="indefinite" additive="sum"/></path></g>`;
+  if(locked){ g+=cloud(0,-2,0.72,A('#e9ecf3',.9))+`<text y="8" font-size="34" text-anchor="middle">🔒</text>`; }
+  if(cur){ g+=`<g transform="translate(0,-52)"><g><animateTransform attributeName="transform" type="translate" values="0 -5;0 5;0 -5" dur="1.4s" repeatCount="indefinite" additive="sum"/><text font-size="40" text-anchor="middle">📍</text></g></g>`; }
+  g+=`</g>`;
+  // name plate below the island
+  const twoLine=done||cur, ph=twoLine?46:32, lw=Math.max(148,wd.name.length*13+40);
+  const px=Math.max(10,Math.min(W-10-lw,x-lw/2)), top=y+64, cx=px+lw/2;
+  g+=`<g filter="url(#drop)" opacity="${locked?.85:1}"><rect x="${px}" y="${top}" width="${lw}" height="${ph}" rx="15" fill="url(#banner)" stroke="${A(c.accent,.78)}" stroke-width="1.5"/>`;
+  g+=`<text x="${cx}" y="${top+(twoLine?19:21)}" font-size="15" font-weight="800" text-anchor="middle" fill="${w.ink}">${wd.name}</text>`;
+  if(cur) g+=`<text x="${cx}" y="${top+37}" font-size="12.5" font-weight="800" text-anchor="middle" fill="${c.accent}">📍 אתה כאן · ${wd.prog}</text>`;
+  else if(done){let st='';for(let k=0;k<3;k++){const on=k<wd.stars;st+=`<g transform="translate(${cx-22+k*22},${top+35})">${starSvg(on?c.accent:A(w.ink,.28),on)}</g>`;}g+=st;}
+  else if(locked) g+=`<text x="${cx}" y="${top+21}" font-size="13" font-weight="700" text-anchor="middle" fill="${A(w.ink,.7)}"></text>`;
+  g+=`</g></g>`;
+  return g;
+}
+
+function compassRose(c){
+  return `<g transform="translate(90,708)" opacity=".85"><circle r="36" fill="${A('#000',.28)}" stroke="${A(c.accent,.65)}" stroke-width="2"/><path d="M0,-28 L8,0 L0,6 L-8,0 Z" fill="${c.accent}"/><path d="M0,28 L8,0 L0,-6 L-8,0 Z" fill="${A('#fff',.55)}"/><circle r="3" fill="#fff"/><text y="-40" font-size="12" font-weight="900" text-anchor="middle" fill="${A('#fff',.85)}">✦</text></g>`;
+}
+
+function renderWorlds(key){
+  const c=(themeOptions[key]||themeOptions.base).colors;
+  const w=WORLD[key]||WORLD.base;
+  const lightBg=['#F5F5F5','#e9e6cf','#FFF0F5'].includes(c.background);
+  w.ink=lightBg?c.text:'#ffffff';
+  const sc=scene(key,c);
+  const curIdx=WORLDS_DATA.findIndex(x=>x.state==='current');
+  const cutoff=curIdx<0?WORLDS_DATA.length:curIdx;
+  // dashed travel routes between islands (treasure-map style, curved)
+  let routes='';
+  for(let i=0;i<ISLAND_POS.length-1;i++){
+    const a=ISLAND_POS[i],b=ISLAND_POS[i+1];
+    const mx=(a.x+b.x)/2+(b.y-a.y)*0.12, my=(a.y+b.y)/2-46;
+    const passed=i<cutoff;
+    routes+=`<path d="M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}" fill="none" stroke="${passed?A(c.accent,.9):A(w.ink==='#ffffff'?'#fff':'#000',.35)}" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 17"/>`;
+  }
+  const nodes=ISLAND_POS.map((p,i)=>islandNode(p,i,WORLDS_DATA[i],key,c,w)).join('');
+  const vignette=`<rect width="${W}" height="${H}" fill="url(#vig)"/>`;
+  const vigDef=`<radialGradient id="vig" cx="50%" cy="42%" r="75%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="${lightBg?.18:.45}"/></radialGradient>`;
+  document.getElementById('svg').innerHTML =
+    defs(key,c,lightBg).replace('</defs>',vigDef+'</defs>')+
+    sc.sky+sc.far+sc.mid+sc.near+particles(key,c,w)+vignette+
+    `<g filter="url(#drop)">${routes}</g>`+nodes+compassRose(c)+
+    hud(c,w,w.ink, WORLDS_TITLE[key]||'מפת העולמות', 'בחר עולם והמשך במסע', '🗺️');
+}
+
+// ---------- view dispatcher + navigation between the two screens ----------
+let view='worlds', CURKEY='soldiers';
+function render(key){ CURKEY=key; (view==='worlds'?renderWorlds:renderPath)(key); updateNav(); }
+function updateNav(){ document.getElementById('nav').classList.toggle('show', view==='path'); }
+window.enterWorld=function(i){ view='path'; render(CURKEY); };
+
+const gear=document.getElementById('gear'), panel=document.getElementById('settings');
+document.getElementById('nav').addEventListener('click',()=>{ view='worlds'; render(CURKEY); });
+function markActive(t){panel.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.t===t));}
+gear.addEventListener('click',()=>panel.classList.toggle('open'));
+panel.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;render(b.dataset.t);location.hash=b.dataset.t;markActive(b.dataset.t);panel.classList.remove('open');});
+const initT=(location.hash||'#soldiers').slice(1)||'soldiers';
+render(initT); markActive(initT);
+</script>
+</body>
+</html>
