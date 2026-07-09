@@ -700,11 +700,19 @@
 
 .adv-mapbanner {
     position: absolute;
-    top: 118px;
+    top: 14px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 7;
-    width: min(420px, 90vw);
+    width: min(380px, calc(100vw - 24px));
+    pointer-events: none;
+}
+
+.adv-mapbanner .adv-banner {
+    margin-bottom: 0;
+    padding: 10px 14px;
+    font-size: 1.15em;
+    box-shadow: 0 8px 24px rgba(120, 60, 120, 0.22);
 }
 
 .adv-mapback {
@@ -732,5 +740,44 @@
     .adv-float, .adv-pulse, .adv-pop, .adv-bounce, .adv-shake, .adv-cloud, .adv-banner,
     .adv-mapmk.adv-current .adv-ring, .adv-mapmk.adv-current .adv-hero {
         animation: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .adv-titlecard {
+        top: 76px;
+        width: calc(100vw - 32px);
+        padding: 7px 18px;
+    }
+
+    .adv-titlecard h1 {
+        font-size: 21px;
+    }
+
+    .adv-mapside {
+        top: 142px;
+        inset-inline-start: 10px;
+        width: min(168px, 42vw);
+        font-size: 0.78em;
+    }
+
+    .adv-mapside .adv-player {
+        padding: 9px 10px;
+        border-radius: 14px;
+    }
+
+    .adv-mapside .adv-player > div:first-child {
+        display: none;
+    }
+
+    .adv-mapbanner {
+        top: 10px;
+        width: calc(100vw - 28px);
+    }
+
+    .adv-mapbanner .adv-banner {
+        border-radius: 14px;
+        padding: 9px 12px;
+        font-size: 1.05em;
     }
 }

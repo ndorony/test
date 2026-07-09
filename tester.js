@@ -35,11 +35,11 @@ function render(object) {
         case "image":
             return `<img class="field-image" src="${object.value}" alt="" loading="lazy">`;
         case "audio":
-        return `<a class="brand-logo" onclick="audio('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
+        return `<button type="button" class="audio-prompt" onclick="audio('${object.value}')" aria-label="השמע"><i class="medium material-icons">play_circle_filled</i></button>`;
         case "text_to_speech":
-            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')">${object.value}</a>`;
+            return `<button type="button" class="audio-prompt audio-prompt-text" onclick="text_to_speech('${object.value}')">${object.value}</button>`;
         case "speech":
-            return `<a class="brand-logo" onclick="text_to_speech('${object.value}')"><i class="medium material-icons">play_circle_filled</i></a>`;
+            return `<button type="button" class="audio-prompt" onclick="text_to_speech('${object.value}')" aria-label="השמע"><i class="medium material-icons">play_circle_filled</i></button>`;
         default:
             return null;
     }
@@ -48,6 +48,30 @@ function render(object) {
 function audio(url){
     const sound = new Audio(url);
     sound.play();
+}
+
+const GAME_NO_CALLOUT_SELECTOR = [
+    '.audio-prompt',
+    '.answer-option',
+    '.result',
+    '.falling-answer',
+    '.shooter-area',
+    '.ds3-wrap',
+    '.adv-screen',
+].join(',');
+
+function shouldBlockGameCallout(target) {
+    return !!(target && target.closest && target.closest(GAME_NO_CALLOUT_SELECTOR));
+}
+
+if (typeof document !== 'undefined' && document.addEventListener) {
+    ['contextmenu', 'selectstart', 'dragstart'].forEach(eventName => {
+        document.addEventListener(eventName, event => {
+            if (shouldBlockGameCallout(event.target)) {
+                event.preventDefault();
+            }
+        }, {capture: true});
+    });
 }
 
 function isHebrew(str) {
@@ -195,10 +219,6 @@ const updateWeightForKey = (key, index, change) => {
     // Retrieve the current weights from localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
     recordAttemptResult(key, index, change < 0);
-    // Adventure mode: report the answer for XP / world-completion tracking (adventure.js)
-    if (typeof onAdventureAnswer === 'function') {
-        onAdventureAnswer(key, change < 0);
-    }
     if (typeof gtag === 'function') {
         var _appItem = getItemById(apps, key);
         gtag('event', 'question_answered', {
@@ -208,6 +228,9 @@ const updateWeightForKey = (key, index, change) => {
         });
     }
     if (!storedWeights) {
+        if (typeof onAdventureAnswer === 'function') {
+            onAdventureAnswer(key, change < 0);
+        }
         return
     }
 
@@ -224,6 +247,12 @@ const updateWeightForKey = (key, index, change) => {
     if (typeof firebaseSyncLocalStorageKey === 'function') firebaseSyncLocalStorageKey(uwKey, uwVal);
 
     setCurrentLevelProgress(key, weights);
+
+    // Adventure mode must see the post-answer weights so world completion is
+    // recorded when the final item reaches zero.
+    if (typeof onAdventureAnswer === 'function') {
+        onAdventureAnswer(key, change < 0);
+    }
 
     return weights;
 }

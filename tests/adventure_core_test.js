@@ -226,6 +226,14 @@ run(`setLocalStorage('adv_player', {xp: 55})`);
 check('reaching level 2 unlocks colors', run(`isWorldUnlocked(getWorldById('colors'))`));
 run(`setLocalStorage('adv-numbers_completed', true)`);
 check('a completed world stays unlocked regardless of level', run(`isWorldUnlocked(getWorldById('numbers'))`));
+run(`
+    Array.from(localStorage._map.keys()).filter(k => k.includes('adv-') || k.includes('adv_')).forEach(k => localStorage.removeItem(k));
+    const completionWeights = getDataList('ADV_WORLD:hebrew1').map((_, i, arr) => i === arr.length - 1 ? 1 : 0);
+    localStorage.setItem(getWeightsKey('adv-hebrew1'), JSON.stringify(completionWeights));
+    updateWeightForKey('adv-hebrew1-1', completionWeights.length - 1, -1);
+`);
+check('final correct answer marks the adventure world completed', run(`isWorldCompleted('hebrew1')`));
+run(`Array.from(localStorage._map.keys()).filter(k => k.includes('adv-') || k.includes('adv_')).forEach(k => localStorage.removeItem(k))`);
 
 // alphabet world content
 check('hebrew1 = letters א–ה (range filter)',
