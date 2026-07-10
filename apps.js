@@ -294,7 +294,20 @@ apps =  {
         {icon: 'sports_kabaddi', name:'דו-קרב - מילים חדשות', type: 'app', appType: 'duel_shooter', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - חיות', type: 'app', appType: 'wizard_duel', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - מילים חדשות', type: 'app', appType: 'wizard_duel', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
-        {icon: 'water_drop', name:'מסע המים - מילות שאלה', type: 'app', appType: 'water_pipeline', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פתחו את החסימות והחזירו את המים!'},
+        {
+          name: 'מילות מפתח בפייתון',
+          type: 'menu',
+          items: [
+            {icon: 'format_shapes', name:'בחירה מרובה', type:'app', appType:'mcq', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew'},
+            {icon: 'sports_esports', name:'מטווח בלונים', type:'app', appType:'balloon_shooter', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:3, title:'פגע בפירוש הנכון'},
+            {icon: 'directions_run', name:'הרפתקת ריצה', type:'app', appType:'platformer', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:6, title:'רוץ אל הפירוש הנכון'},
+            {icon: 'sports_esports', name:'מבוך האוצר', type:'app', appType:'treasure_maze', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:6, title:'בחר את הדלת הנכונה'},
+            {icon: 'timeline', name:'חבר במילים', type:'app', appType:'word_link', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:6, title:'חבר בין מילת המפתח לפירוש שלה'},
+            {icon: 'sports_kabaddi', name:'דו-קרב', type:'app', appType:'duel_shooter', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:3, title:'ענה נכון ונצח בדו-קרב!'},
+            {icon: 'auto_fix_high', name:'דו-קרב הקוסמים', type:'app', appType:'wizard_duel', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:3, title:'ענה נכון והטל קסמים!'},
+            {icon: 'water_drop', name:'מסע המים', type: 'app', appType: 'water_pipeline', listName: 'PYTHON_KEYWORDS', questionIndex: 'keyword', resultIndex: 'hebrew', setItems: 3, title: 'פתחו את החסימות והחזירו את המים!'},
+          ]
+        }
       ]
     },
     {

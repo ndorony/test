@@ -1104,6 +1104,117 @@ QUESTION : [
   'question_word_hebrew_english': {'type': 'text', 'value': 'האוּ'},
   'emoji': {'type': 'text', 'value': '🛠️'}}],
 
+PYTHON_KEYWORDS : [
+    {
+        'keyword': {'type': 'text', 'value': 'def'},
+        'hebrew': {'type': 'text', 'value': 'הגדרת פונקציה'},
+        'pronunciation': {'type': 'text', 'value': 'דֶף'},
+        'meaning': {'type': 'text', 'value': 'Define a function'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'class'},
+        'hebrew': {'type': 'text', 'value': 'מחלקה'},
+        'pronunciation': {'type': 'text', 'value': 'קְלַאס'},
+        'meaning': {'type': 'text', 'value': 'Define a class'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'return'},
+        'hebrew': {'type': 'text', 'value': 'החזר'},
+        'pronunciation': {'type': 'text', 'value': 'רִיטֶרְן'},
+        'meaning': {'type': 'text', 'value': 'Return a value'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'if'},
+        'hebrew': {'type': 'text', 'value': 'אם'},
+        'pronunciation': {'type': 'text', 'value': 'אִיף'},
+        'meaning': {'type': 'text', 'value': 'Conditional'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'elif'},
+        'hebrew': {'type': 'text', 'value': 'אחרת אם'},
+        'pronunciation': {'type': 'text', 'value': 'אֶלִיף'},
+        'meaning': {'type': 'text', 'value': 'Else if'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'else'},
+        'hebrew': {'type': 'text', 'value': 'אחרת'},
+        'pronunciation': {'type': 'text', 'value': 'אֶלְס'},
+        'meaning': {'type': 'text', 'value': 'Otherwise'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'for'},
+        'hebrew': {'type': 'text', 'value': 'לולאת עבור'},
+        'pronunciation': {'type': 'text', 'value': 'פוֹר'},
+        'meaning': {'type': 'text', 'value': 'Loop over items'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'while'},
+        'hebrew': {'type': 'text', 'value': 'כל עוד'},
+        'pronunciation': {'type': 'text', 'value': 'וַוַייל'},
+        'meaning': {'type': 'text', 'value': 'Loop while true'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'break'},
+        'hebrew': {'type': 'text', 'value': 'צא מהלולאה'},
+        'pronunciation': {'type': 'text', 'value': 'בְּרֵייק'},
+        'meaning': {'type': 'text', 'value': 'Exit loop'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'continue'},
+        'hebrew': {'type': 'text', 'value': 'דלג לאיטרציה הבאה'},
+        'pronunciation': {'type': 'text', 'value': 'קוֹנְטִינְיוּ'},
+        'meaning': {'type': 'text', 'value': 'Next iteration'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'import'},
+        'hebrew': {'type': 'text', 'value': 'ייבוא מודול'},
+        'pronunciation': {'type': 'text', 'value': 'אִימְפּוֹרְט'},
+        'meaning': {'type': 'text', 'value': 'Import module'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'from'},
+        'hebrew': {'type': 'text', 'value': 'מ־'},
+        'pronunciation': {'type': 'text', 'value': 'פְרוֹם'},
+        'meaning': {'type': 'text', 'value': 'Import from'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'try'},
+        'hebrew': {'type': 'text', 'value': 'נסה'},
+        'pronunciation': {'type': 'text', 'value': 'טְרַיי'},
+        'meaning': {'type': 'text', 'value': 'Try block'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'except'},
+        'hebrew': {'type': 'text', 'value': 'תפוס חריגה'},
+        'pronunciation': {'type': 'text', 'value': 'אֶקְסֶפְּט'},
+        'meaning': {'type': 'text', 'value': 'Handle exception'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'raise'},
+        'hebrew': {'type': 'text', 'value': 'זרוק חריגה'},
+        'pronunciation': {'type': 'text', 'value': 'רֵייז'},
+        'meaning': {'type': 'text', 'value': 'Raise exception'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'with'},
+        'hebrew': {'type': 'text', 'value': 'עם מנהל הקשר'},
+        'pronunciation': {'type': 'text', 'value': 'וִית'},
+        'meaning': {'type': 'text', 'value': 'Context manager'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'yield'},
+        'hebrew': {'type': 'text', 'value': 'החזר מגנרטור'},
+        'pronunciation': {'type': 'text', 'value': 'יִילְד'},
+        'meaning': {'type': 'text', 'value': 'Generator value'},
+    },
+    {
+        'keyword': {'type': 'text', 'value': 'lambda'},
+        'hebrew': {'type': 'text', 'value': 'פונקציה אנונימית'},
+        'pronunciation': {'type': 'text', 'value': 'לַמְדָה'},
+        'meaning': {'type': 'text', 'value': 'Anonymous function'},
+    },
+],
+
  hebrewAlphabet : [
     {
         letter: {type: "text", value: "א"},
