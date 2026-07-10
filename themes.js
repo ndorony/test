@@ -73,5 +73,20 @@ const themeOptions = {
     progressBar: {
       background: 'linear-gradient(to right, #333333 0%, #444444 50%, #2F4F4F 75%, #555555 100%)'
     }
+  },
+  code: {
+    name: 'קוד',
+    colors: {
+      primary: '#00FF41',      // Matrix neon green
+      secondary: '#008F11',    // deeper terminal green
+      tertiary: '#0D2818',     // dark green-black panel
+      accent: '#39FF14',       // bright neon accent
+      background: '#050A05',    // near-black terminal background
+      text: '#00FF41',
+      disabledText: '#2F5F3A' // Dim green for Disabled Text
+    },
+    progressBar: {
+      background: 'linear-gradient(to right, #003b00 0%, #008F11 45%, #00FF41 75%, #39FF14 100%)'
+    }
   }
 };

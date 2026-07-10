@@ -46,6 +46,145 @@ function getAdventureXpInLevel(xp) {
     return xp % ADVENTURE_XP_PER_LEVEL;
 }
 
+// --- Adventure theme kits (the "which adventure" the child plays) ---
+//
+// An adventure = a full visual skin over the SAME learning worlds. Each kit
+// reuses one of the color themes from themes.js (so the mini-games and the
+// regular menu get themed too via setTheme) and adds adventure-flavored
+// presentation: a name, an emoji, a subtitle, a hero and a companion set.
+// Learning progress is shared across all kits — switching adventure changes
+// only the look, never what the child has learned.
+//
+// To add an adventure: add a color theme to themes.js and an entry here.
+// The visual variables per kit live in adventure.css under body.adv-theme-<id>.
+
+const ADVENTURE_THEME_KITS = {
+    unicorn: {
+        id: 'unicorn', theme: 'unicorn', name: 'ממלכת הקסם', emoji: '🦄',
+        subtitle: 'איים מרחפים, קשתות וקסם ורוד',
+        hero: '🧚', companions: ['🦄', '🦋', '🐱'],
+        // ambient = drifting particles behind the mini-games (see AdventureFrame)
+        ambient: ['✨', '🌸', '💖', '⭐'],
+    },
+    space: {
+        id: 'space', theme: 'space', name: 'מסע בין הכוכבים', emoji: '🚀',
+        subtitle: 'טסים בין כוכבים, חייזרים וחלליות',
+        hero: '🧑‍🚀', companions: ['👽', '🛸', '🪐'],
+        ambient: ['⭐', '✨', '🌟', '🪐'],
+    },
+    code: {
+        id: 'code', theme: 'code', name: 'עולם הקוד', emoji: '🖥️',
+        subtitle: 'גשם של אותיות ירוקות בתוך המטריקס',
+        hero: '🧑‍💻', companions: ['🤖', '👾', '🦾'],
+        ambient: ['🟩', '💚', '✳️', '👾'],
+    },
+    dark: {
+        id: 'dark', theme: 'dark', name: 'ממלכת הלילה', emoji: '🌙',
+        subtitle: 'הרפתקה שקטה תחת שמי לילה וכוכבים',
+        hero: '🦸', companions: ['🦉', '🐺', '🦇'],
+        ambient: ['⭐', '✨', '🌙', '💫'],
+    },
+    soldiers: {
+        id: 'soldiers', theme: 'soldiers', name: 'מחנה הגיבורים', emoji: '🎖️',
+        subtitle: 'משימות אמיצות במחנה ההרפתקנים',
+        hero: '🦸', companions: ['🐕', '🦅', '🐎'],
+        ambient: ['🍃', '🌿', '⭐', '✨'],
+    },
+    base: {
+        id: 'base', theme: 'base', name: 'עולם התכלת', emoji: '🌊',
+        subtitle: 'מסע רגוע במים טורקיז שקטים',
+        hero: '🧒', companions: ['🐬', '🐢', '🐠'],
+        ambient: ['🫧', '💧', '✨', '🐚'],
+    },
+};
+
+// Display order in the picker (unicorn stays first — the original adventure)
+const ADVENTURE_THEME_ORDER = ['unicorn', 'space', 'code', 'dark', 'soldiers', 'base'];
+const ADVENTURE_DEFAULT_THEME = 'unicorn';
+
+function getAdventureThemeId() {
+    const id = getLocalStorage('adv_current_theme', ADVENTURE_DEFAULT_THEME);
+    return ADVENTURE_THEME_KITS[id] ? id : ADVENTURE_DEFAULT_THEME;
+}
+
+function getAdventureThemeKit(id) {
+    return ADVENTURE_THEME_KITS[id || getAdventureThemeId()] || ADVENTURE_THEME_KITS[ADVENTURE_DEFAULT_THEME];
+}
+
+// Switch the active adventure: persist the choice, apply the matching color
+// theme (so mini-games + menu match the skin), record the play, and reskin.
+function setAdventureThemeId(id) {
+    if (!ADVENTURE_THEME_KITS[id]) {
+        return;
+    }
+    setLocalStorage('adv_current_theme', id);
+    if (typeof setTheme === 'function') {
+        setTheme(ADVENTURE_THEME_KITS[id].theme);
+    }
+    recordAdventurePlay(id);
+    applyAdventureSkin(id);
+}
+
+// Put the theme-skin class on <body> so the adventure.css variable overrides
+// apply to every adventure screen and the in-game frame. Idempotent and safe to
+// call on every adventure route enter; harmless on non-adventure screens (the
+// classes only feed .adv-* rules).
+function applyAdventureSkin(id) {
+    if (typeof document === 'undefined' || !document.body) {
+        return;
+    }
+    const themeId = id || getAdventureThemeId();
+    Array.from(document.body.classList).forEach(cls => {
+        if (cls.indexOf('adv-theme-') === 0) {
+            document.body.classList.remove(cls);
+        }
+    });
+    document.body.classList.add('adv-theme-' + themeId);
+}
+
+// --- Previous adventures: a per-kit play record for the "history" panel ---
+
+function getAdventureHistory() {
+    return getLocalStorage('adv_theme_history', {});
+}
+
+function recordAdventurePlay(id) {
+    const history = getAdventureHistory();
+    const now = Date.now();
+    const entry = history[id] || {plays: 0, firstPlayed: now};
+    entry.plays = (entry.plays || 0) + 1;
+    entry.lastPlayed = now;
+    if (!entry.firstPlayed) {
+        entry.firstPlayed = now;
+    }
+    history[id] = entry;
+    setLocalStorage('adv_theme_history', history);
+    return entry;
+}
+
+// Overall progress, shared across all adventures (worlds completed, stars,
+// coins, level) — the meat of the "previous adventures" summary.
+function getAdventureOverallProgress() {
+    let worldsDone = 0, starsEarned = 0, starsPossible = 0;
+    WORLDS.forEach(world => {
+        if (isWorldCompleted(world.id)) {
+            worldsDone += 1;
+        }
+        starsPossible += (world.encounters ? world.encounters.length : 0) * 3;
+        const map = getWorldStars(world.id) || {};
+        Object.keys(map).forEach(key => { starsEarned += map[key]; });
+    });
+    const player = getAdventurePlayer();
+    return {
+        worldsDone: worldsDone,
+        worldsTotal: WORLDS.length,
+        starsEarned: starsEarned,
+        starsPossible: starsPossible,
+        coins: player.coins || 0,
+        level: getAdventureLevel(player.xp || 0),
+    };
+}
+
 // --- Avatar (character creator) ---
 //
 // The avatar is layered: base character + aura color + hat + companion.
@@ -470,7 +609,7 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
                   :style="section.field === 'color' ? {background: option.value} : {}"
                   @click="pick(section.field, option)">
               <template v-if="section.field !== 'color'">{{ option.value || '✖' }}</template>
-              <span v-if="!option.unlocked" class="adv-option-lock">🔒{{ option.level }}</span>
+              <span v-if="!option.unlocked" class="adv-option-lock">🔒{{ option.lockLabel }}</span>
             </span>
           </div>
         </div>
@@ -478,7 +617,7 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
           <span class="adv-sprite adv-float">🚀</span>
           <div class="adv-card-title">יוצאים להרפתקה! ▶</div>
         </div>
-        <router-link v-else to="/adventure" class="adv-back">→ חזרה למפת העולמות</router-link>
+        <router-link v-else to="/adventure/map" class="adv-back">→ חזרה למפת העולמות</router-link>
       </div>
     </div>`,
     data: function () {
@@ -494,6 +633,9 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
             ],
         };
     },
+    created: function () {
+        applyAdventureSkin();
+    },
     methods: {
         startAdventure: function () {
             setLocalStorage('adv_onboarded', true);
@@ -503,11 +645,33 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
             this.$router.push('/adventure');
         },
         buildOptions: function (field) {
-            return ADVENTURE_AVATAR_OPTIONS[field].map(option => ({
+            const base = ADVENTURE_AVATAR_OPTIONS[field].map(option => ({
                 value: option.value,
-                level: option.level,
+                lockLabel: option.level,   // 🔒 hint = required level
                 unlocked: isAvatarOptionUnlocked(option),
             }));
+            if (field !== 'companion') {
+                return base;
+            }
+            // Each adventure contributes its own themed companions, unlocked once
+            // the child has played (or is currently in) that adventure. The 🔒
+            // hint becomes the adventure's emoji instead of a level number.
+            const seen = {};
+            base.forEach(option => { seen[option.value] = true; });
+            const history = getAdventureHistory();
+            const currentId = getAdventureThemeId();
+            ADVENTURE_THEME_ORDER.forEach(id => {
+                const kit = ADVENTURE_THEME_KITS[id];
+                const unlocked = id === currentId || !!history[id];
+                (kit.companions || []).forEach(value => {
+                    if (seen[value]) {
+                        return;
+                    }
+                    seen[value] = true;
+                    base.push({value: value, lockLabel: kit.emoji, unlocked: unlocked});
+                });
+            });
+            return base;
         },
         pick: function (field, option) {
             if (!option.unlocked) {
@@ -625,6 +789,7 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
       <div class="adv-hud adv-coins">🪙 {{ coins }}</div>
       <div class="adv-hud adv-starshud">⭐ {{ starsEarned }}/{{ starsPossible }}</div>
       <router-link to="/adventure/avatar" class="adv-iconbtn adv-wardrobe" title="ארון החפצים">👗</router-link>
+      <router-link to="/adventure" class="adv-iconbtn adv-pick" title="בחירת הרפתקה">🗺️</router-link>
       <router-link to="/" class="adv-iconbtn adv-home" title="חזרה לתפריט הרגיל">🏠</router-link>
       <div class="adv-titlecard">
         <h1>ממלכת הקסם</h1>
@@ -640,6 +805,7 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
             this.$router.replace('/adventure/avatar?first=1');
             return;
         }
+        applyAdventureSkin();
         this.ready = true;
         this.nextStep = getNextGuidedStep();
         var currentWorldId = this.nextStep ? this.nextStep.worldId : null;
@@ -760,7 +926,7 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
       <div class="adv-mapfoot">
         <adventure-companion :message="companionMessage"></adventure-companion>
       </div>
-      <router-link to="/adventure" class="adv-mapback">🗺️ למפת העולמות</router-link>
+      <router-link to="/adventure/map" class="adv-mapback">🗺️ למפת העולמות</router-link>
     </div>`,
     data: function () {
         return {
@@ -778,9 +944,10 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
     created: function () {
         const world = getWorldById(this.$route.params.worldId);
         if (!world || !isWorldUnlocked(world)) {
-            this.$router.push('/adventure');
+            this.$router.push('/adventure/map');
             return;
         }
+        applyAdventureSkin();
         this.world = world;
         this.artClass = world.art && world.art.bg ? 'adv-art-' + world.art.bg : '';
         ensureWorldWeights(world);
@@ -856,6 +1023,13 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
 var AdventureFrame = Vue.component('adventure-frame', {
     template: `
     <div v-if="parsed" class="adv-frame" dir="rtl">
+      <!-- Themed ambient particles drifting behind the mini-game. Purely
+           decorative (pointer-events: none) and driven by the active adventure
+           theme, so every game adapts to the chosen kit without any change to
+           the game components themselves. -->
+      <div class="adv-ambient" aria-hidden="true">
+        <span v-for="p in particles" :key="p.id" class="adv-particle" :style="p.style">{{ p.emoji }}</span>
+      </div>
       <div class="adv-frame-bar">
         <span class="adv-frame-title">{{ parsed.world.emoji }} {{ parsed.world.name }}</span>
         <a class="adv-frame-exit" @click="exit">🗺️ חזרה לשביל</a>
@@ -876,8 +1050,31 @@ var AdventureFrame = Vue.component('adventure-frame', {
             this.$route.path; // re-read the avatar when navigating
             return getAdventureAvatar().companion;
         },
+        // A gentle field of falling, theme-specific particles. Regenerated on
+        // navigation (reads $route.path); positions/speeds are randomized once
+        // per screen so it never reshuffles mid-game.
+        particles: function () {
+            this.$route.path;
+            const set = getAdventureThemeKit().ambient || ['✨'];
+            const list = [];
+            for (let i = 0; i < 12; i++) {
+                list.push({
+                    id: i,
+                    emoji: set[i % set.length],
+                    style: {
+                        left: Math.round(Math.random() * 96) + '%',
+                        fontSize: (12 + Math.round(Math.random() * 16)) + 'px',
+                        animationDuration: (7 + Math.random() * 9).toFixed(1) + 's',
+                        animationDelay: (-Math.random() * 12).toFixed(1) + 's',
+                        opacity: (0.15 + Math.random() * 0.25).toFixed(2),
+                    },
+                });
+            }
+            return list;
+        },
     },
     created: function () {
+        applyAdventureSkin();
         this._onAnswer = event => this.react(event.detail.correct);
         window.addEventListener('adventure-answer', this._onAnswer);
     },
@@ -903,10 +1100,141 @@ var AdventureFrame = Vue.component('adventure-frame', {
     },
 });
 
+// A themed preview gradient for an adventure card, derived from the kit's
+// color theme in themes.js so each card carries its own vibe.
+function getAdventureKitPreview(kit) {
+    const colors = (typeof themeOptions !== 'undefined' && themeOptions[kit.theme])
+        ? themeOptions[kit.theme].colors : null;
+    if (!colors) {
+        return 'linear-gradient(135deg, #ffd6e7, #c5b3ff)';
+    }
+    return `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`;
+}
+
+// Kid-readable relative time in Hebrew for the "previous adventures" list.
+function adventureRelativeTime(timestamp) {
+    if (!timestamp) {
+        return '';
+    }
+    const days = Math.floor((Date.now() - timestamp) / 86400000);
+    if (days <= 0) {
+        return 'היום';
+    }
+    if (days === 1) {
+        return 'אתמול';
+    }
+    if (days < 7) {
+        return `לפני ${days} ימים`;
+    }
+    if (days < 30) {
+        const weeks = Math.floor(days / 7);
+        return weeks === 1 ? 'לפני שבוע' : `לפני ${weeks} שבועות`;
+    }
+    const months = Math.floor(days / 30);
+    return months === 1 ? 'לפני חודש' : `לפני ${months} חודשים`;
+}
+
+// The adventure picker: the top-level "which adventure" menu. Lets the child
+// choose a themed adventure (skin over the shared learning worlds) and shows a
+// summary of the adventures they've already played.
+var AdventurePickerComponent = Vue.component('adventure-picker', {
+    template: `
+    <div class="adv-screen adv-pickscreen" dir="rtl" v-if="ready">
+      <adventure-clouds></adventure-clouds>
+      <div class="adv-content">
+        <div class="adv-title">🗺️ בוחרים הרפתקה</div>
+        <adventure-player-card></adventure-player-card>
+
+        <div class="adv-pickgrid">
+          <div v-for="kit in kits" :key="kit.id"
+               class="adv-pickcard" :class="{'adv-pickcard-current': kit.id === currentId}"
+               :style="{background: kit.preview}"
+               @click="choose(kit)">
+            <div class="adv-pickcard-emoji adv-float">{{ kit.emoji }}</div>
+            <div class="adv-pickcard-body">
+              <div class="adv-pickcard-name">{{ kit.name }}</div>
+              <div class="adv-pickcard-sub">{{ kit.subtitle }}</div>
+              <div class="adv-pickcard-meta">
+                <span v-if="kit.id === currentId" class="adv-chip adv-chip-current">✔ ההרפתקה שלי</span>
+                <span v-else-if="kit.lastPlayedText" class="adv-chip">🕘 {{ kit.lastPlayedText }}</span>
+                <span v-else class="adv-chip adv-chip-new">✨ חדש</span>
+              </div>
+            </div>
+            <div class="adv-pickcard-companions">
+              <span v-for="c in kit.companions" :key="c">{{ c }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="adv-section-label">📜 ההרפתקאות שלי עד עכשיו</div>
+        <div class="adv-histstats">
+          <div class="adv-histstat"><b>{{ overall.level }}</b><span>רמה</span></div>
+          <div class="adv-histstat"><b>🪙 {{ overall.coins }}</b><span>מטבעות</span></div>
+          <div class="adv-histstat"><b>⭐ {{ overall.starsEarned }}</b><span>כוכבים</span></div>
+          <div class="adv-histstat"><b>{{ overall.worldsDone }}/{{ overall.worldsTotal }}</b><span>עולמות</span></div>
+        </div>
+        <div v-if="played.length" class="adv-histlist">
+          <div v-for="h in played" :key="h.id" class="adv-histrow" @click="choose(h)">
+            <span class="adv-histemoji">{{ h.emoji }}</span>
+            <span class="adv-histname">{{ h.name }}</span>
+            <span class="adv-histwhen">{{ h.lastPlayedText }} · שוחק {{ h.plays }} פעמים</span>
+          </div>
+        </div>
+        <div v-else class="adv-histempty">עוד לא יצאתם להרפתקה — בחרו אחת למעלה ותתחילו! 🚀</div>
+
+        <router-link to="/" class="adv-back">🏠 חזרה לתפריט הרגיל</router-link>
+      </div>
+    </div>`,
+    data: function () {
+        return {ready: false, kits: [], played: [], overall: {}, currentId: ADVENTURE_DEFAULT_THEME};
+    },
+    created: function () {
+        // First run: build a character before choosing an adventure
+        if (!getLocalStorage('adv_onboarded', false)) {
+            this.$router.replace('/adventure/avatar?first=1');
+            return;
+        }
+        applyAdventureSkin();
+        this.ready = true;
+        this.currentId = getAdventureThemeId();
+        this.overall = getAdventureOverallProgress();
+        const history = getAdventureHistory();
+        this.kits = ADVENTURE_THEME_ORDER.map(id => {
+            const kit = ADVENTURE_THEME_KITS[id];
+            const record = history[id];
+            return Object.assign({}, kit, {
+                preview: getAdventureKitPreview(kit),
+                plays: record ? record.plays : 0,
+                lastPlayedText: record ? adventureRelativeTime(record.lastPlayed) : '',
+            });
+        });
+        this.played = Object.keys(history)
+            .filter(id => ADVENTURE_THEME_KITS[id])
+            .map(id => Object.assign({}, ADVENTURE_THEME_KITS[id], {
+                plays: history[id].plays,
+                lastPlayed: history[id].lastPlayed,
+                lastPlayedText: adventureRelativeTime(history[id].lastPlayed),
+            }))
+            .sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0));
+    },
+    methods: {
+        choose: function (kit) {
+            setAdventureThemeId(kit.id);
+            // Keep the global app chrome (body background) in sync with the new
+            // color theme, not just the adventure screens.
+            if (this.$root && typeof this.$root.updateTheme === 'function') {
+                this.$root.updateTheme();
+            }
+            this.$router.push('/adventure/map');
+        },
+    },
+});
+
 // Hook for the routes list in tester.js
 function getAdventureRoutes() {
     return [
-        {path: '/adventure', component: AdventureHomeComponent},
+        {path: '/adventure', component: AdventurePickerComponent},
+        {path: '/adventure/map', component: AdventureHomeComponent},
         {path: '/adventure/avatar', component: AdventureAvatarComponent},
         {path: '/adventure/world/:worldId', component: AdventureWorldComponent},
     ];

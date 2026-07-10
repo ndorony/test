@@ -1,5 +1,61 @@
 {
   "style_base": "Children's educational game background art, soft pastel fairy-tale style. Dreamy palette of light pink (#ffd9ec), lavender (#d0bfff), baby blue (#a5d8ff), mint (#c0f0c8) and warm cream. Rounded, friendly shapes, gentle gradients, soft painterly lighting like a sunrise. Magical sparkles, small clouds and rainbows. Absolutely no text, no letters, no numbers, no characters, no people, no animals. Wide empty area in the center for UI overlay. Flat illustration with soft depth, high detail, consistent with a unicorn fantasy kingdom for ages 4-7.",
+  "themes": {
+    "space": {
+      "dir": "space",
+      "style_base": "Children's educational game background art, dreamy outer-space fantasy for ages 4-7. Palette of midnight blue (#0b1026), royal blue (#1E90FF), indigo and soft violet, with warm gold (#ffd700) star accents. Soft painterly nebulae, twinkling stars, small friendly planets with rings, gentle glow. Rounded friendly shapes, soft depth, calm and inviting. Absolutely no text, no letters, no numbers, no characters, no people, no astronauts, no animals. Wide empty calm area in the center for UI overlay."
+    },
+    "code": {
+      "dir": "code",
+      "style_base": "Children's educational game background art, friendly gentle digital 'Matrix' theme for ages 4-7. Palette of near-black (#050a05) and dark green with bright neon green (#00ff41, #39ff14) glow. Soft cascading columns of abstract glowing green dots and short dashes like gentle digital rain, faint grid lines, soft bloom. Rounded friendly shapes, calm and never scary. Absolutely no readable text, no letters, no numbers, no characters, no people, no robots, no animals. Wide empty calm dark area in the center for UI overlay."
+    },
+    "dark": {
+      "dir": "dark",
+      "style_base": "Children's educational game background art, gentle starry-night fantasy for ages 4-7. Palette of deep indigo (#0b0b12), soft purple (#BB86FC), midnight blue, with warm soft moonlight. Twinkling stars, a friendly crescent moon glow, soft clouds and a faint aurora. Rounded friendly shapes, calm bedtime mood, soft depth. Absolutely no text, no letters, no numbers, no characters, no people, no animals. Wide empty calm area in the center for UI overlay."
+    },
+    "soldiers": {
+      "dir": "soldiers",
+      "style_base": "Children's educational game background art, friendly adventure-camp / explorer theme for ages 4-7. Palette of olive green (#4B5320), khaki (#BDB76B), warm sand and soft silver, with gold (#FFD700) badge accents. Rolling grassy hills, small camp tents, plain flags, a warm campfire glow, a wooden lookout, gentle daylight. Rounded friendly shapes, soft depth, brave cheerful mood. Absolutely no text, no letters, no numbers, no characters, no people, no soldiers, no weapons, no animals. Wide empty calm area in the center for UI overlay."
+    }
+  },
+  "theme_assets": [
+    {
+      "id": "home_bg",
+      "file": "home_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompts": {
+        "space": "Small floating planets and moons connected by a soft trail of glowing stardust, a distant ringed planet and a soft nebula. Vertical composition, the middle third calm and open for menu cards.",
+        "code": "A friendly digital world of softly glowing green data streams flowing between floating dark platforms connected by a glowing path, gentle bloom over a dark background. Vertical composition, the middle third calm and open for menu cards.",
+        "dark": "A peaceful night sky over floating islands connected by a soft glowing path, a friendly crescent moon and a faint purple aurora with twinkling stars. Vertical composition, the middle third calm and open for menu cards.",
+        "soldiers": "Rolling green-and-khaki adventure hills with small camp tents and plain flags connected by a winding trail, a wooden lookout tower and a warm campfire glow. Vertical composition, the middle third calm and open for menu cards."
+      }
+    },
+    {
+      "id": "world_bg",
+      "file": "world_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompts": {
+        "space": "A calm cosmic garden on a small floating asteroid with glowing crystal plants under a starry nebula sky. Vertical composition, calm open center.",
+        "code": "A calm dark digital grid landscape with soft glowing green particles rising gently like light rain. Vertical composition, calm open center.",
+        "dark": "A quiet moonlit garden on a floating island with soft glowing night flowers under a starry purple sky. Vertical composition, calm open center.",
+        "soldiers": "A cozy explorer campsite clearing on a grassy hill with a tent, plain pennant flags and a gentle campfire under soft daylight. Vertical composition, calm open center."
+      }
+    },
+    {
+      "id": "avatar_bg",
+      "file": "avatar_bg.jpg",
+      "size": "1024x1536",
+      "purpose": "background",
+      "prompts": {
+        "space": "A cozy little spaceship cabin interior with a round window showing stars and a soft round mirror, gentle glow. Vertical composition, calm open center.",
+        "code": "A cozy dark computer nook with soft glowing green screens and gentle bloom around an empty round frame. Vertical composition, calm open center.",
+        "dark": "A cozy moonlit bedroom-castle nook with a round mirror and soft starlight through a window. Vertical composition, calm open center.",
+        "soldiers": "A cozy explorer's tent interior with an open trunk, a round mirror and hanging gear silhouettes, warm lantern glow. Vertical composition, calm open center."
+      }
+    }
+  ],
   "assets": [
     {
       "id": "home_bg",

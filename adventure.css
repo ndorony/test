@@ -2,14 +2,45 @@
    Placeholder-friendly: everything works with emoji/CSS now and will keep
    working when AI-generated art replaces the visuals (same classes). */
 
+/* --- Theme variables ---------------------------------------------------------
+   Every adventure ("which adventure the child plays") is a full re-skin over the
+   SAME learning worlds. The defaults below are the original unicorn look; each
+   body.adv-theme-<id> block near the bottom overrides them. The class is set by
+   applyAdventureSkin() in adventure.js. Variables live on :root so they cascade
+   to both the .adv-screen router views and the fixed .adv-frame overlays. */
+:root {
+    --adv-sky: linear-gradient(180deg, #a5d8ff 0%, #d0bfff 55%, #ffd6e7 100%);
+    --adv-ink: #3b2d5c;                    /* body text on screens */
+    --adv-ink-strong: #4c3585;             /* titles / section labels */
+    --adv-scrim: rgba(255, 255, 255, 0.28);/* content panel over painted art */
+    --adv-card-bg: rgba(255, 255, 255, 0.92);
+    --adv-card-ink: #4c3585;
+    --adv-chip-bg: #f3f0ff;                 /* option chips / neutral pills */
+    --adv-panel: linear-gradient(135deg, #845ef7, #b388ff); /* player card + frame bar */
+    --adv-panel-ink: #ffffff;
+    --adv-accent: #ffc828;                  /* gold highlight / selection */
+    --adv-accent-glow: rgba(255, 215, 0, 0.85);
+    --adv-xp: linear-gradient(90deg, #ffd43b, #ffec99);
+    --adv-banner: linear-gradient(90deg, #ffd43b, #ffa8a8, #d0bfff);
+    --adv-cta: linear-gradient(100deg, #fff0c9, #ffd9ec 60%, #e5d5ff);
+    --adv-medal: radial-gradient(circle at 36% 30%, #fff, #ffd3ec 60%, #ff9ed4);
+    --adv-medal-ink: #5a1470;
+    --adv-medal-done: radial-gradient(circle at 36% 30%, #fff, #ffe0a0 55%, #f6b64a);
+    --adv-map-ink: #7a1f8f;                 /* title-card headings / map back */
+    --adv-glass: rgba(255, 255, 255, 0.66); /* HUD / icon buttons / title card */
+    --adv-glass-ink: #5a1470;
+    --adv-screen-font: 'Segoe UI', 'Arial Hebrew', sans-serif;
+}
+
 /* --- Screen scaffolding: soft pastel sky, full-bleed --- */
 
 .adv-screen {
     min-height: 100vh;
-    background: linear-gradient(180deg, #a5d8ff 0%, #d0bfff 55%, #ffd6e7 100%);
+    background: var(--adv-sky);
     overflow: hidden;
     position: relative;
-    color: #3b2d5c;
+    color: var(--adv-ink);
+    font-family: var(--adv-screen-font);
 }
 
 .adv-screen .adv-content {
@@ -39,21 +70,21 @@
 
 /* A translucent scrim keeps text readable over busy painted backgrounds */
 .adv-screen[class*="adv-art-"] .adv-content {
-    background: rgba(255, 255, 255, 0.28);
+    background: var(--adv-scrim);
     border-radius: 22px;
     backdrop-filter: blur(1.5px);
 }
 
 /* Guided call-to-action card + section label + earned stars row */
 .adv-cta {
-    background: linear-gradient(100deg, #fff0c9, #ffd9ec 60%, #e5d5ff);
-    border: 3px solid #ffc828;
+    background: var(--adv-cta);
+    border: 3px solid var(--adv-accent);
 }
 .adv-section-label {
     font-weight: bold;
     font-size: 1.05em;
     margin: 18px 4px 8px;
-    color: #4c3585;
+    color: var(--adv-ink-strong);
 }
 .adv-stars {
     font-size: 0.95em;
@@ -139,7 +170,7 @@
 /* Celebration banner sliding from the top */
 .adv-banner {
     animation: adv-banner-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    background: linear-gradient(90deg, #ffd43b, #ffa8a8, #d0bfff);
+    background: var(--adv-banner);
     border-radius: 16px;
     padding: 14px;
     text-align: center;
@@ -157,7 +188,8 @@
 /* --- Cards (worlds / path steps) --- */
 
 .adv-card {
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--adv-card-bg);
+    color: var(--adv-card-ink);
     border-radius: 18px;
     padding: 14px 16px;
     margin-bottom: 14px;
@@ -185,7 +217,7 @@
 }
 
 .adv-card.adv-current {
-    border: 3px solid #ffc828;
+    border: 3px solid var(--adv-accent);
 }
 
 .adv-sprite {
@@ -206,10 +238,10 @@
 /* --- Player card + XP bar --- */
 
 .adv-player {
-    background: linear-gradient(135deg, #845ef7, #b388ff);
+    background: var(--adv-panel);
     border-radius: 18px;
     padding: 14px 16px;
-    color: white;
+    color: var(--adv-panel-ink);
     margin-bottom: 16px;
     box-shadow: 0 4px 14px rgba(80, 50, 140, 0.3);
 }
@@ -223,7 +255,7 @@
 }
 
 .adv-xp-fill {
-    background: linear-gradient(90deg, #ffd43b, #ffec99);
+    background: var(--adv-xp);
     height: 100%;
     border-radius: 10px;
     transition: width 0.6s ease;
@@ -263,7 +295,7 @@
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: #f3f0ff;
+    background: var(--adv-chip-bg);
     font-size: 1.7em;
     cursor: pointer;
     border: 3px solid transparent;
@@ -275,8 +307,8 @@
 }
 
 .adv-option-selected {
-    border-color: #ffc828;
-    box-shadow: 0 0 8px rgba(255, 200, 40, 0.7);
+    border-color: var(--adv-accent);
+    box-shadow: 0 0 8px var(--adv-accent-glow);
 }
 
 .adv-option.adv-locked {
@@ -329,6 +361,7 @@
 
 .adv-bubble {
     background: white;
+    color: #3b2d5c; /* always dark on the white bubble, regardless of theme */
     border-radius: 16px;
     padding: 10px 14px;
     box-shadow: 0 3px 10px rgba(80, 50, 140, 0.18);
@@ -341,7 +374,7 @@
     font-size: 1.8em;
     font-weight: bold;
     margin: 10px 0 16px;
-    color: #4c3585;
+    color: var(--adv-ink-strong);
     text-shadow: 0 2px 0 rgba(255, 255, 255, 0.6);
 }
 
@@ -349,7 +382,7 @@
     display: block;
     text-align: center;
     margin-top: 18px;
-    color: #4c3585;
+    color: var(--adv-ink-strong);
     font-weight: bold;
 }
 
@@ -366,8 +399,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 14px;
-    background: linear-gradient(90deg, #845ef7, #b388ff);
-    color: white;
+    background: var(--adv-panel);
+    color: var(--adv-panel-ink);
     box-shadow: 0 2px 10px rgba(80, 50, 140, 0.35);
 }
 
@@ -403,6 +436,32 @@
 .adv-frame-companion .adv-sprite {
     font-size: 2.6em;
     filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.25));
+}
+
+/* --- Themed ambient particles behind the mini-games (AdventureFrame) --- */
+
+.adv-ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;          /* above game content, below the frame bar (1200) */
+    pointer-events: none;   /* never intercept game input */
+    overflow: hidden;
+}
+
+.adv-particle {
+    position: absolute;
+    top: 0;
+    line-height: 1;
+    will-change: transform;
+    animation-name: adv-particle-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes adv-particle-fall {
+    0%   { transform: translateY(-12vh) rotate(0deg); }
+    100% { transform: translateY(112vh) rotate(220deg); }
 }
 
 /* --- Art-map skin: interactive markers over the painted background art ---
@@ -463,8 +522,8 @@
     place-items: center;
     font-size: 33px;
     font-weight: 900;
-    color: #5a1470;
-    background: radial-gradient(circle at 36% 30%, #fff, #ffd3ec 60%, #ff9ed4);
+    color: var(--adv-medal-ink);
+    background: var(--adv-medal);
     border: 4px solid #fff;
     box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 10px 22px rgba(80, 20, 60, 0.4), inset 0 3px 8px rgba(255, 255, 255, 0.6);
 }
@@ -503,7 +562,7 @@
     margin-top: 8px;
     font-size: 13px;
     font-weight: 800;
-    color: #5a1470;
+    color: var(--adv-medal-ink);
     white-space: nowrap;
     background: rgba(255, 255, 255, 0.84);
     border: 1px solid rgba(255, 140, 200, 0.6);
@@ -523,7 +582,7 @@
     margin-top: 5px;
     font-size: 12.5px;
     font-weight: 900;
-    color: #b8007a;
+    color: var(--adv-map-ink);
     background: rgba(255, 255, 255, 0.9);
     padding: 3px 12px;
     border-radius: 99px;
@@ -532,7 +591,7 @@
 
 /* Done: gold medal + crown */
 .adv-mapmk.adv-done .adv-medal {
-    background: radial-gradient(circle at 36% 30%, #fff, #ffe0a0 55%, #f6b64a);
+    background: var(--adv-medal-done);
 }
 
 .adv-crown {
@@ -568,14 +627,14 @@
     width: 86px;
     height: 86px;
     font-size: 38px;
-    box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 0 0 6px rgba(255, 215, 0, 0.85), 0 0 30px 8px rgba(255, 215, 0, 0.5), inset 0 3px 8px rgba(255, 255, 255, 0.6);
+    box-shadow: 0 6px 0 rgba(200, 90, 160, 0.7), 0 0 0 6px var(--adv-accent-glow), 0 0 30px 8px var(--adv-accent-glow), inset 0 3px 8px rgba(255, 255, 255, 0.6);
 }
 
 .adv-mapmk.adv-current .adv-ring {
     position: absolute;
     inset: -14px;
     border-radius: 50%;
-    border: 4px solid rgba(255, 215, 0, 0.85);
+    border: 4px solid var(--adv-accent-glow);
     animation: adv-mkpulse 1.6s ease-in-out infinite;
 }
 
@@ -607,13 +666,13 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.66);
+    background: var(--adv-glass);
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.7);
     padding: 7px 14px;
     border-radius: 99px;
     font-weight: 800;
-    color: #5a1470;
+    color: var(--adv-glass-ink);
     box-shadow: 0 4px 14px rgba(120, 60, 120, 0.25);
 }
 
@@ -630,17 +689,18 @@
     border: 0;
     cursor: pointer;
     font-size: 19px;
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--adv-glass);
     backdrop-filter: blur(6px);
     box-shadow: 0 4px 14px rgba(120, 60, 120, 0.25);
     display: grid;
     place-items: center;
     text-decoration: none;
-    color: inherit;
+    color: var(--adv-glass-ink);
 }
 
 .adv-iconbtn.adv-wardrobe { inset-inline-start: 118px; }
-.adv-iconbtn.adv-home { inset-inline-start: 166px; }
+.adv-iconbtn.adv-pick { inset-inline-start: 166px; }
+.adv-iconbtn.adv-home { inset-inline-start: 214px; }
 
 .adv-titlecard {
     position: absolute;
@@ -649,7 +709,7 @@
     transform: translateX(-50%);
     z-index: 6;
     text-align: center;
-    background: rgba(255, 255, 255, 0.55);
+    background: var(--adv-glass);
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.7);
     padding: 8px 26px;
@@ -660,13 +720,13 @@
 
 .adv-titlecard h1 {
     font-size: 25px;
-    color: #7a1f8f;
+    color: var(--adv-map-ink);
     font-weight: 900;
 }
 
 .adv-titlecard p {
     font-size: 13px;
-    color: #9a5aa8;
+    color: var(--adv-glass-ink);
     font-weight: 700;
     margin-top: 2px;
 }
@@ -727,19 +787,376 @@
     padding: 10px 20px;
     border-radius: 99px;
     border: 1px solid rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--adv-glass);
     backdrop-filter: blur(6px);
-    color: #7a1f8f;
+    color: var(--adv-map-ink);
     box-shadow: 0 6px 18px rgba(120, 60, 120, 0.3);
     text-decoration: none;
+}
+
+/* --- Adventure picker: the "which adventure" chooser + previous adventures --- */
+
+.adv-pickscreen .adv-content {
+    max-width: 640px;
+}
+
+.adv-pickgrid {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 6px;
+}
+
+.adv-pickcard {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(60, 30, 70, 0.28);
+    border: 3px solid transparent;
+    overflow: hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.adv-pickcard:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 26px rgba(60, 30, 70, 0.36);
+}
+
+.adv-pickcard-current {
+    border-color: var(--adv-accent);
+    box-shadow: 0 0 0 3px var(--adv-accent-glow), 0 8px 22px rgba(60, 30, 70, 0.34);
+}
+
+.adv-pickcard-emoji {
+    font-size: 2.8em;
+    line-height: 1;
+    flex-shrink: 0;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
+}
+
+.adv-pickcard-body {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c2340;
+    border-radius: 14px;
+    padding: 8px 12px;
+    min-width: 0;
+}
+
+.adv-pickcard-name {
+    font-size: 1.15em;
+    font-weight: 900;
+}
+
+.adv-pickcard-sub {
+    font-size: 0.82em;
+    opacity: 0.85;
+    margin: 2px 0 6px;
+}
+
+.adv-chip {
+    display: inline-block;
+    font-size: 0.72em;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: 99px;
+    background: #efeaf7;
+    color: #5a3585;
+}
+
+.adv-chip-current { background: #ffe38a; color: #6b4a00; }
+.adv-chip-new { background: #d6ffe0; color: #0a6b28; }
+
+.adv-pickcard-companions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 1.3em;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+
+.adv-histstats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.adv-histstat {
+    background: var(--adv-card-bg);
+    color: var(--adv-card-ink);
+    border-radius: 14px;
+    padding: 10px 4px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(80, 50, 140, 0.16);
+}
+
+.adv-histstat b { display: block; font-size: 1.2em; font-weight: 900; }
+.adv-histstat span { font-size: 0.72em; opacity: 0.8; }
+
+.adv-histlist {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.adv-histrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--adv-card-bg);
+    color: var(--adv-card-ink);
+    border-radius: 14px;
+    padding: 8px 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(80, 50, 140, 0.14);
+    transition: transform 0.15s;
+}
+
+.adv-histrow:hover { transform: translateY(-2px); }
+.adv-histemoji { font-size: 1.5em; }
+.adv-histname { font-weight: 800; flex: 1; }
+.adv-histwhen { font-size: 0.78em; opacity: 0.8; }
+
+.adv-histempty {
+    background: var(--adv-card-bg);
+    color: var(--adv-card-ink);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* --- Per-adventure theme skins: override the variables from :root ---------- */
+
+body.adv-theme-space {
+    --adv-sky: linear-gradient(180deg, #0b1026 0%, #131a3a 52%, #241b4a 100%);
+    --adv-ink: #dbe4ff;
+    --adv-ink-strong: #ffffff;
+    --adv-scrim: rgba(18, 24, 58, 0.55);
+    --adv-card-bg: rgba(28, 34, 74, 0.92);
+    --adv-card-ink: #e8ecff;
+    --adv-chip-bg: #1b2350;
+    --adv-panel: linear-gradient(135deg, #1E90FF, #000080);
+    --adv-panel-ink: #ffffff;
+    --adv-accent: #ffd700;
+    --adv-accent-glow: rgba(255, 215, 0, 0.85);
+    --adv-xp: linear-gradient(90deg, #ffd43b, #ffec99);
+    --adv-banner: linear-gradient(90deg, #1E90FF, #7b5cff, #ffd700);
+    --adv-cta: linear-gradient(100deg, #1b2350, #24306b 60%, #3b2d7a);
+    --adv-medal: radial-gradient(circle at 36% 30%, #cfe4ff, #4a9bff 60%, #1E90FF);
+    --adv-medal-ink: #071033;
+    --adv-map-ink: #cfe0ff;
+    --adv-glass: rgba(20, 28, 64, 0.6);
+    --adv-glass-ink: #dbe4ff;
+}
+
+body.adv-theme-code {
+    --adv-sky: linear-gradient(180deg, #010a01 0%, #041504 55%, #001200 100%);
+    --adv-ink: #00ff41;
+    --adv-ink-strong: #39ff14;
+    --adv-scrim: rgba(0, 20, 0, 0.55);
+    --adv-card-bg: rgba(4, 20, 8, 0.92);
+    --adv-card-ink: #7cff9c;
+    --adv-chip-bg: #06240f;
+    --adv-panel: linear-gradient(135deg, #008F11, #003b00);
+    --adv-panel-ink: #b9ffca;
+    --adv-accent: #39ff14;
+    --adv-accent-glow: rgba(57, 255, 20, 0.8);
+    --adv-xp: linear-gradient(90deg, #00ff41, #39ff14);
+    --adv-banner: linear-gradient(90deg, #003b00, #008F11, #00ff41);
+    --adv-cta: linear-gradient(100deg, #06240f, #0b3d19 60%, #063b06);
+    --adv-medal: radial-gradient(circle at 36% 30%, #d6ffe0, #35c94e 60%, #008F11);
+    --adv-medal-ink: #012905;
+    --adv-medal-done: radial-gradient(circle at 36% 30%, #eaffef, #7CFC00 55%, #00b81e);
+    --adv-map-ink: #00ff41;
+    --adv-glass: rgba(0, 25, 5, 0.62);
+    --adv-glass-ink: #00ff41;
+}
+
+/* Matrix flourish: monospace type + faint terminal scanline / code-rain grid */
+body.adv-theme-code .adv-screen {
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+/* Only on screens WITHOUT painted art (e.g. the picker) — painted map/world/
+   avatar screens carry their own art and stay clean. */
+body.adv-theme-code .adv-screen:not([class*="adv-art-"])::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.06) 0 2px, transparent 2px 4px),
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.05) 0 3px, transparent 3px 26px);
+    opacity: 0.7;
+}
+
+/* Space & night skins: a tiled CSS starfield behind the content (art-less screens) */
+body.adv-theme-space .adv-screen:not([class*="adv-art-"])::before,
+body.adv-theme-dark .adv-screen:not([class*="adv-art-"])::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, #ffffff, transparent),
+        radial-gradient(1px 1px at 90px 80px, #ffffff, transparent),
+        radial-gradient(1.5px 1.5px at 160px 120px, #cfe0ff, transparent),
+        radial-gradient(1px 1px at 50px 160px, #ffffff, transparent),
+        radial-gradient(1.5px 1.5px at 130px 40px, #fff6d0, transparent);
+    background-size: 200px 200px;
+    background-repeat: repeat;
+    opacity: 0.85;
+    animation: adv-twinkle 4s ease-in-out infinite;
+}
+
+@keyframes adv-twinkle {
+    0%, 100% { opacity: 0.85; }
+    50%      { opacity: 0.5; }
+}
+
+body.adv-theme-dark {
+    --adv-sky: linear-gradient(180deg, #0b0b12 0%, #16121f 55%, #1c1c1c 100%);
+    --adv-ink: #d8d3e6;
+    --adv-ink-strong: #efeaf7;
+    --adv-scrim: rgba(20, 18, 28, 0.55);
+    --adv-card-bg: rgba(30, 28, 40, 0.92);
+    --adv-card-ink: #e6e0f2;
+    --adv-chip-bg: #24202f;
+    --adv-panel: linear-gradient(135deg, #3a2f52, #1e1e1e);
+    --adv-panel-ink: #efeaf7;
+    --adv-accent: #BB86FC;
+    --adv-accent-glow: rgba(187, 134, 252, 0.8);
+    --adv-xp: linear-gradient(90deg, #BB86FC, #d7b8ff);
+    --adv-banner: linear-gradient(90deg, #3a2f52, #6d4fa0, #BB86FC);
+    --adv-cta: linear-gradient(100deg, #24202f, #322a45 60%, #3a2f52);
+    --adv-medal: radial-gradient(circle at 36% 30%, #efe6ff, #9a6ff0 60%, #7a4fd0);
+    --adv-medal-ink: #180d2e;
+    --adv-map-ink: #d7b8ff;
+    --adv-glass: rgba(28, 24, 38, 0.6);
+    --adv-glass-ink: #d8d3e6;
+}
+
+body.adv-theme-soldiers {
+    --adv-sky: linear-gradient(180deg, #cdd3ad 0%, #b6bd8f 55%, #9aa574 100%);
+    --adv-ink: #33380f;
+    --adv-ink-strong: #2a2f0a;
+    --adv-scrim: rgba(240, 240, 224, 0.42);
+    --adv-card-bg: rgba(247, 247, 235, 0.94);
+    --adv-card-ink: #3a4012;
+    --adv-chip-bg: #e7e6cf;
+    --adv-panel: linear-gradient(135deg, #4B5320, #6b7333);
+    --adv-panel-ink: #f7f7e8;
+    --adv-accent: #FFD700;
+    --adv-accent-glow: rgba(255, 215, 0, 0.85);
+    --adv-xp: linear-gradient(90deg, #FFD700, #fff0a8);
+    --adv-banner: linear-gradient(90deg, #6b7333, #a9a557, #FFD700);
+    --adv-cta: linear-gradient(100deg, #e7e6cf, #d8d9b0 60%, #c7c98c);
+    --adv-medal: radial-gradient(circle at 36% 30%, #f4f2d6, #b9b46a 60%, #8f8a3f);
+    --adv-medal-ink: #2f330d;
+    --adv-map-ink: #3a4012;
+    --adv-glass: rgba(240, 240, 220, 0.62);
+    --adv-glass-ink: #33380f;
+}
+
+body.adv-theme-base {
+    --adv-sky: linear-gradient(180deg, #b0e0e6 0%, #8fccd4 55%, #cfe8ea 100%);
+    --adv-ink: #043b3e;
+    --adv-ink-strong: #00494d;
+    --adv-scrim: rgba(255, 255, 255, 0.4);
+    --adv-card-bg: rgba(255, 255, 255, 0.94);
+    --adv-card-ink: #05494d;
+    --adv-chip-bg: #d9eff0;
+    --adv-panel: linear-gradient(135deg, #006064, #4a8c90);
+    --adv-panel-ink: #ffffff;
+    --adv-accent: #00bcd4;
+    --adv-accent-glow: rgba(0, 188, 212, 0.75);
+    --adv-xp: linear-gradient(90deg, #26c6da, #a7ecf3);
+    --adv-banner: linear-gradient(90deg, #006064, #26a69a, #80deea);
+    --adv-cta: linear-gradient(100deg, #d9eff0, #bfe6e8 60%, #a7dade);
+    --adv-medal: radial-gradient(circle at 36% 30%, #dff6f7, #4fbcc4 60%, #00838f);
+    --adv-medal-ink: #013b3e;
+    --adv-map-ink: #006064;
+    --adv-glass: rgba(255, 255, 255, 0.6);
+    --adv-glass-ink: #044f52;
+}
+
+/* The painted background art is unicorn-specific (pastel fairy islands). Under
+   any other adventure skin, fall back to that skin's themed gradient instead of
+   the mismatched art. The per-theme rules below layer real generated art on top
+   of that gradient (the gradient stays as a graceful fallback if a file is
+   missing). Each theme has three backgrounds: home (map/picker overview),
+   world (all world screens), and avatar (wardrobe). */
+body:not(.adv-theme-unicorn) .adv-screen[class*="adv-art-"] {
+    background-image: var(--adv-sky);
+}
+
+body.adv-theme-space .adv-screen.adv-art-home {
+    background-image: url('assets/adventure/art/space/home_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-space .adv-screen.adv-art-avatar {
+    background-image: url('assets/adventure/art/space/avatar_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-space .adv-screen[class*="adv-art-world_"] {
+    background-image: url('assets/adventure/art/space/world_bg.jpg'), var(--adv-sky);
+}
+
+body.adv-theme-code .adv-screen.adv-art-home {
+    background-image: url('assets/adventure/art/code/home_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-code .adv-screen.adv-art-avatar {
+    background-image: url('assets/adventure/art/code/avatar_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-code .adv-screen[class*="adv-art-world_"] {
+    background-image: url('assets/adventure/art/code/world_bg.jpg'), var(--adv-sky);
+}
+
+body.adv-theme-dark .adv-screen.adv-art-home {
+    background-image: url('assets/adventure/art/dark/home_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-dark .adv-screen.adv-art-avatar {
+    background-image: url('assets/adventure/art/dark/avatar_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-dark .adv-screen[class*="adv-art-world_"] {
+    background-image: url('assets/adventure/art/dark/world_bg.jpg'), var(--adv-sky);
+}
+
+body.adv-theme-soldiers .adv-screen.adv-art-home {
+    background-image: url('assets/adventure/art/soldiers/home_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-soldiers .adv-screen.adv-art-avatar {
+    background-image: url('assets/adventure/art/soldiers/avatar_bg.jpg'), var(--adv-sky);
+}
+body.adv-theme-soldiers .adv-screen[class*="adv-art-world_"] {
+    background-image: url('assets/adventure/art/soldiers/world_bg.jpg'), var(--adv-sky);
+}
+
+/* Pastel drifting clouds only suit the light/fairy skins */
+body.adv-theme-space .adv-cloud,
+body.adv-theme-code .adv-cloud,
+body.adv-theme-dark .adv-cloud {
+    display: none;
 }
 
 /* --- Accessibility: respect reduced motion --- */
 
 @media (prefers-reduced-motion: reduce) {
     .adv-float, .adv-pulse, .adv-pop, .adv-bounce, .adv-shake, .adv-cloud, .adv-banner,
-    .adv-mapmk.adv-current .adv-ring, .adv-mapmk.adv-current .adv-hero {
+    .adv-mapmk.adv-current .adv-ring, .adv-mapmk.adv-current .adv-hero,
+    body.adv-theme-space .adv-screen:not([class*="adv-art-"])::before,
+    body.adv-theme-dark .adv-screen:not([class*="adv-art-"])::before {
         animation: none;
+    }
+    .adv-ambient {
+        display: none; /* the falling particles are motion — hide them entirely */
     }
 }
 
