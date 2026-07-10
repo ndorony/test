@@ -122,7 +122,7 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
         encounters: [
             {type: 'learn'},
             {type: 'game', game: 'mcq'},
-            {type: 'game', game: 'falling_answers'},
+            {type: 'game', game: 'water_pipeline'},
             {type: 'game', game: 'mcq', questionIndex: 'emoji', resultIndex: 'english_name'},
             {type: 'final', game: 'mcq'},
         ],

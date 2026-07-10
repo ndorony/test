@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v33';
+const CACHE_NAME = 'my-app-cache-v37';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -9,9 +9,11 @@ const CORE_ASSETS = [
   '/worlds.js',
   '/adventure.js',
   '/adventure.css',
+  '/games/water-pipeline.js',
+  '/games/water-pipeline.css',
   '/themes.js',
   '/storage.js',
-  '/tester.js?v=17',
+  '/tester.js?v=18',
   '/sounds/success.mp3',
   '/sounds/failure.mp3',
   '/assets/svg/tall.svg',

@@ -294,6 +294,7 @@ apps =  {
         {icon: 'sports_kabaddi', name:'דו-קרב - מילים חדשות', type: 'app', appType: 'duel_shooter', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - חיות', type: 'app', appType: 'wizard_duel', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - מילים חדשות', type: 'app', appType: 'wizard_duel', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
+        {icon: 'water_drop', name:'מסע המים - מילות שאלה', type: 'app', appType: 'water_pipeline', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פתחו את החסימות והחזירו את המים!'},
       ]
     },
     {

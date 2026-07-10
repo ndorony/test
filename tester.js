@@ -9787,6 +9787,13 @@ const Login = {
 };
 
 
+// Standalone games are loaded before tester.js and instantiated here, after
+// BaseGameComponent exists but before the router is finalized.
+var WaterPipelineComponent = null;
+if (typeof createWaterPipelineComponent === 'function') {
+    WaterPipelineComponent = createWaterPipelineComponent(BaseGameComponent);
+}
+
 const routes = [
     {path: '/', component: MenuComponent,},
     {path: '/user', component: UserComponent},
@@ -9811,6 +9818,10 @@ const routes = [
     {path: '/signUp', component: SignUp},
     {path: '/login', component: Login },
 ]
+
+if (WaterPipelineComponent) {
+    routes.push({path: '/play/water_pipeline/:currentAppId', component: WaterPipelineComponent, props: true});
+}
 
 // Adventure mode routes (adventure.js) — appended only when the module is loaded
 if (typeof getAdventureRoutes === 'function') {

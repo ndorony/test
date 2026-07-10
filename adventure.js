@@ -442,6 +442,7 @@ const ADVENTURE_GAME_NAMES = {
     platformer: 'הרפתקת קפיצות',
     treasure_maze: 'מבוך האוצר',
     word_link: 'חיבור מילים',
+    water_pipeline: 'מסע המים',
 };
 
 function getEncounterDisplay(world, encounter, index) {

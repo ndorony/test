@@ -21,6 +21,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link rel="stylesheet" href="./adventure.css">
+    <link rel="stylesheet" href="./games/water-pipeline.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
     <style>
@@ -1359,7 +1360,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="./firebase.js"></script>
 
-<script src="./tester.js?v=17"></script>
+<!-- Large standalone game modules expose guarded component factories. -->
+<script src="./games/water-pipeline.js"></script>
+<script src="./tester.js?v=18"></script>
 
 <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
 </body>
