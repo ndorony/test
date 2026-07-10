@@ -98,37 +98,27 @@ const ADVENTURE_THEME_KITS = {
     },
 };
 
-// Display order in the picker (unicorn stays first — the original adventure)
+// Theme ids that also have an adventure kit (used for ambient particles etc.)
 const ADVENTURE_THEME_ORDER = ['unicorn', 'space', 'code', 'dark', 'soldiers', 'base'];
-const ADVENTURE_DEFAULT_THEME = 'unicorn';
+
+// --- Theme = a single GLOBAL choice (the settings-page theme picker) ---
+//
+// The color theme is set in ONE place (Settings) and skins EVERYTHING: the
+// regular menu, the mini-games, and the adventure. The adventure never picks a
+// theme of its own — it just reads the global theme and reskins accordingly.
 
 function getAdventureThemeId() {
-    const id = getLocalStorage('adv_current_theme', ADVENTURE_DEFAULT_THEME);
-    return ADVENTURE_THEME_KITS[id] ? id : ADVENTURE_DEFAULT_THEME;
+    const id = getLocalStorage('theme', 'base');
+    return ADVENTURE_THEME_KITS[id] ? id : 'base';
 }
 
 function getAdventureThemeKit(id) {
-    return ADVENTURE_THEME_KITS[id || getAdventureThemeId()] || ADVENTURE_THEME_KITS[ADVENTURE_DEFAULT_THEME];
+    return ADVENTURE_THEME_KITS[id || getAdventureThemeId()] || ADVENTURE_THEME_KITS['base'];
 }
 
-// Switch the active adventure: persist the choice, apply the matching color
-// theme (so mini-games + menu match the skin), record the play, and reskin.
-function setAdventureThemeId(id) {
-    if (!ADVENTURE_THEME_KITS[id]) {
-        return;
-    }
-    setLocalStorage('adv_current_theme', id);
-    if (typeof setTheme === 'function') {
-        setTheme(ADVENTURE_THEME_KITS[id].theme);
-    }
-    recordAdventurePlay(id);
-    applyAdventureSkin(id);
-}
-
-// Put the theme-skin class on <body> so the adventure.css variable overrides
-// apply to every adventure screen and the in-game frame. Idempotent and safe to
-// call on every adventure route enter; harmless on non-adventure screens (the
-// classes only feed .adv-* rules).
+// Put the theme-skin class on <body> (from the global theme) so the
+// adventure.css variable overrides apply everywhere. Idempotent; safe to call
+// on every route enter and on theme change.
 function applyAdventureSkin(id) {
     if (typeof document === 'undefined' || !document.body) {
         return;
@@ -142,14 +132,65 @@ function applyAdventureSkin(id) {
     document.body.classList.add('adv-theme-' + themeId);
 }
 
-// --- Previous adventures: a per-kit play record for the "history" panel ---
+// --- Adventures = learning-content tracks (NOT skins) ---
+//
+// Each user has ONE active adventure at a time (a group of worlds sharing a
+// subject). There is a "switch adventure" screen to change it; the child does
+// not pick one every session. (Longer term this will be driven by a short
+// "what do you want to learn?" survey that auto-selects worlds.)
 
-function getAdventureHistory() {
-    return getLocalStorage('adv_theme_history', {});
+const ADVENTURE_GROUPS = [
+    {
+        id: 'hebrew', name: 'אותיות עברית', emoji: '🔤',
+        subtitle: 'כל אותיות העברית — משמות האותיות ועד ניקוד',
+        worldIds: ['hebrew1', 'hebrew2', 'hebrew3', 'hebrew4', 'hebrew5', 'hebrew6', 'hebrewreview', 'aleph'],
+    },
+    {
+        id: 'englishmath', name: 'אנגלית וחשבון', emoji: '🔢',
+        subtitle: 'מילים באנגלית — צבעים, חיות ומספרים',
+        worldIds: ['colors', 'animals', 'numbers'],
+    },
+];
+const ADVENTURE_DEFAULT_GROUP = 'hebrew';
+
+function getAdventureGroups() {
+    return ADVENTURE_GROUPS;
 }
 
-function recordAdventurePlay(id) {
-    const history = getAdventureHistory();
+function getGroupById(id) {
+    return ADVENTURE_GROUPS.find(group => group.id === id) || null;
+}
+
+function getGroupWorlds(group) {
+    return (group ? group.worldIds : []).map(getWorldById).filter(Boolean);
+}
+
+function getActiveGroupId() {
+    const id = getLocalStorage('adv_active_group', ADVENTURE_DEFAULT_GROUP);
+    return getGroupById(id) ? id : ADVENTURE_DEFAULT_GROUP;
+}
+
+function getActiveGroup() {
+    return getGroupById(getActiveGroupId());
+}
+
+// Switch the user's one active adventure and record the play.
+function setActiveGroupId(id) {
+    if (!getGroupById(id)) {
+        return;
+    }
+    setLocalStorage('adv_active_group', id);
+    recordGroupPlay(id);
+}
+
+// --- Previous adventures: a per-group play record for the "history" panel ---
+
+function getAdventureGroupHistory() {
+    return getLocalStorage('adv_group_history', {});
+}
+
+function recordGroupPlay(id) {
+    const history = getAdventureGroupHistory();
     const now = Date.now();
     const entry = history[id] || {plays: 0, firstPlayed: now};
     entry.plays = (entry.plays || 0) + 1;
@@ -158,15 +199,14 @@ function recordAdventurePlay(id) {
         entry.firstPlayed = now;
     }
     history[id] = entry;
-    setLocalStorage('adv_theme_history', history);
+    setLocalStorage('adv_group_history', history);
     return entry;
 }
 
-// Overall progress, shared across all adventures (worlds completed, stars,
-// coins, level) — the meat of the "previous adventures" summary.
-function getAdventureOverallProgress() {
+// Progress within a single adventure group (worlds completed + stars).
+function getGroupProgress(group) {
     let worldsDone = 0, starsEarned = 0, starsPossible = 0;
-    WORLDS.forEach(world => {
+    getGroupWorlds(group).forEach(world => {
         if (isWorldCompleted(world.id)) {
             worldsDone += 1;
         }
@@ -174,15 +214,18 @@ function getAdventureOverallProgress() {
         const map = getWorldStars(world.id) || {};
         Object.keys(map).forEach(key => { starsEarned += map[key]; });
     });
-    const player = getAdventurePlayer();
     return {
         worldsDone: worldsDone,
-        worldsTotal: WORLDS.length,
+        worldsTotal: getGroupWorlds(group).length,
         starsEarned: starsEarned,
         starsPossible: starsPossible,
-        coins: player.coins || 0,
-        level: getAdventureLevel(player.xp || 0),
     };
+}
+
+// Overall player stats for the switch screen header.
+function getAdventureOverallProgress() {
+    const player = getAdventurePlayer();
+    return {coins: player.coins || 0, level: getAdventureLevel(player.xp || 0)};
 }
 
 // --- Avatar (character creator) ---
@@ -284,8 +327,9 @@ function getWorldUnlockText(world) {
 
 // The single "next thing to do": the first unlocked-but-uncompleted world,
 // at its current encounter pointer. Returns null when everything is done.
-function getNextGuidedStep() {
-    for (const world of WORLDS) {
+function getNextGuidedStep(worlds) {
+    const list = worlds || WORLDS;
+    for (const world of list) {
         if (!isWorldUnlocked(world) || isWorldCompleted(world.id)) {
             continue;
         }
@@ -618,7 +662,7 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
           <span class="adv-sprite adv-float">🚀</span>
           <div class="adv-card-title">יוצאים להרפתקה! ▶</div>
         </div>
-        <router-link v-else to="/adventure/map" class="adv-back">→ חזרה למפת העולמות</router-link>
+        <router-link v-else to="/adventure" class="adv-back">→ חזרה למפת העולמות</router-link>
       </div>
     </div>`,
     data: function () {
@@ -654,22 +698,17 @@ var AdventureAvatarComponent = Vue.component('adventure-avatar-editor', {
             if (field !== 'companion') {
                 return base;
             }
-            // Each adventure contributes its own themed companions, unlocked once
-            // the child has played (or is currently in) that adventure. The 🔒
-            // hint becomes the adventure's emoji instead of a level number.
+            // Extra companions borrowed from every theme kit — always available
+            // (the theme is a free global choice, so these aren't gated).
             const seen = {};
             base.forEach(option => { seen[option.value] = true; });
-            const history = getAdventureHistory();
-            const currentId = getAdventureThemeId();
             ADVENTURE_THEME_ORDER.forEach(id => {
-                const kit = ADVENTURE_THEME_KITS[id];
-                const unlocked = id === currentId || !!history[id];
-                (kit.companions || []).forEach(value => {
+                (ADVENTURE_THEME_KITS[id].companions || []).forEach(value => {
                     if (seen[value]) {
                         return;
                     }
                     seen[value] = true;
-                    base.push({value: value, lockLabel: kit.emoji, unlocked: unlocked});
+                    base.push({value: value, lockLabel: '', unlocked: true});
                 });
             });
             return base;
@@ -790,15 +829,15 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
       <div class="adv-hud adv-coins">🪙 {{ coins }}</div>
       <div class="adv-hud adv-starshud">⭐ {{ starsEarned }}/{{ starsPossible }}</div>
       <router-link to="/adventure/avatar" class="adv-iconbtn adv-wardrobe" title="ארון החפצים">👗</router-link>
-      <router-link to="/adventure" class="adv-iconbtn adv-pick" title="בחירת הרפתקה">🗺️</router-link>
+      <router-link to="/adventure/switch" class="adv-iconbtn adv-pick" title="החלפת הרפתקה">🧭</router-link>
       <router-link to="/" class="adv-iconbtn adv-home" title="חזרה לתפריט הרגיל">🏠</router-link>
       <div class="adv-titlecard">
-        <h1>ממלכת הקסם</h1>
+        <h1>{{ groupName }}</h1>
         <p>{{ subtitle }}</p>
       </div>
     </div>`,
     data: function () {
-        return {ready: false, nextStep: null, worlds: [], coins: 0, starsEarned: 0, starsPossible: 0, heroEmoji: '🧚'};
+        return {ready: false, nextStep: null, worlds: [], coins: 0, starsEarned: 0, starsPossible: 0, heroEmoji: '🧚', groupName: ''};
     },
     created: function () {
         // First run: send the child to build a character before anything else
@@ -808,14 +847,18 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
         }
         applyAdventureSkin();
         this.ready = true;
-        this.nextStep = getNextGuidedStep();
+        // The map shows the user's ONE active adventure (a content group).
+        var group = getActiveGroup();
+        var groupWorlds = getGroupWorlds(group);
+        this.groupName = group ? group.name : 'ההרפתקה שלי';
+        this.nextStep = getNextGuidedStep(groupWorlds);
         var currentWorldId = this.nextStep ? this.nextStep.worldId : null;
         var player = getAdventurePlayer();
         this.coins = player.coins || 0;
         this.heroEmoji = getAdventureAvatar().base || '🧚';
-        // Total stars earned vs. achievable, for the HUD (presentation only)
+        // Stars earned vs. achievable within this adventure (HUD only)
         var earned = 0, possible = 0;
-        WORLDS.forEach(function (world) {
+        groupWorlds.forEach(function (world) {
             possible += (world.encounters ? world.encounters.length : 0) * 3;
             var map = getWorldStars(world.id) || {};
             Object.keys(map).forEach(function (k) { earned += map[k]; });
@@ -824,7 +867,7 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
         this.starsPossible = possible;
         // Build the marker view-model. State logic is unchanged (same helpers);
         // only the visual mapping (done/current/available/locked) is new.
-        this.worlds = WORLDS.map(function (world) {
+        this.worlds = groupWorlds.map(function (world) {
             var completed = isWorldCompleted(world.id);
             var unlocked = isWorldUnlocked(world);
             var state;
@@ -855,9 +898,11 @@ var AdventureHomeComponent = Vue.component('adventure-home', {
             return this.nextStep ? 'שוטו בין האיים והמשיכו במסע ✨' : 'סיימתם את כל ההרפתקה! 🏆';
         },
         markers: function () {
+            // A group is a subset of worlds, so the hand-tuned full-map positions
+            // no longer line up — use the generated winding path (bottom → top).
             var total = this.worlds.length;
             return this.worlds.map(function (world, i) {
-                var pos = advMarkerPos(HOME_MARKER_POS, i, total);
+                var pos = advMarkerPos([], i, total);
                 return Object.assign({}, world, {index: i, x: pos.x, y: pos.y});
             });
         },
@@ -927,7 +972,7 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
       <div class="adv-mapfoot">
         <adventure-companion :message="companionMessage"></adventure-companion>
       </div>
-      <router-link to="/adventure/map" class="adv-mapback">🗺️ למפת העולמות</router-link>
+      <router-link to="/adventure" class="adv-mapback">🗺️ למפת העולמות</router-link>
     </div>`,
     data: function () {
         return {
@@ -945,7 +990,7 @@ var AdventureWorldComponent = Vue.component('adventure-world', {
     created: function () {
         const world = getWorldById(this.$route.params.worldId);
         if (!world || !isWorldUnlocked(world)) {
-            this.$router.push('/adventure/map');
+            this.$router.push('/adventure');
             return;
         }
         applyAdventureSkin();
@@ -1135,50 +1180,49 @@ function adventureRelativeTime(timestamp) {
     return months === 1 ? 'לפני חודש' : `לפני ${months} חודשים`;
 }
 
-// The adventure picker: the top-level "which adventure" menu. Lets the child
-// choose a themed adventure (skin over the shared learning worlds) and shows a
-// summary of the adventures they've already played.
-var AdventurePickerComponent = Vue.component('adventure-picker', {
+// The "switch adventure" screen: each user has ONE active adventure (a
+// learning-content group of worlds). This screen lets them switch which one is
+// active and shows a summary of what they've done in each. The visual theme is
+// NOT chosen here — it's the global settings theme.
+var AdventureSwitchComponent = Vue.component('adventure-switch', {
     template: `
     <div class="adv-screen adv-pickscreen" dir="rtl" v-if="ready">
       <adventure-clouds></adventure-clouds>
       <div class="adv-content">
-        <div class="adv-title">🗺️ בוחרים הרפתקה</div>
+        <div class="adv-title">🧭 ההרפתקה שלי</div>
         <adventure-player-card></adventure-player-card>
 
+        <div class="adv-section-label">מה לומדים? בחרו הרפתקה</div>
         <div class="adv-pickgrid">
-          <div v-for="kit in kits" :key="kit.id"
-               class="adv-pickcard" :class="{'adv-pickcard-current': kit.id === currentId}"
-               :style="{background: kit.preview}"
-               @click="choose(kit)">
-            <div class="adv-pickcard-emoji adv-float">{{ kit.emoji }}</div>
+          <div v-for="g in groups" :key="g.id"
+               class="adv-pickcard" :class="{'adv-pickcard-current': g.id === activeId}"
+               :style="{background: preview}"
+               @click="choose(g)">
+            <div class="adv-pickcard-emoji adv-float">{{ g.emoji }}</div>
             <div class="adv-pickcard-body">
-              <div class="adv-pickcard-name">{{ kit.name }}</div>
-              <div class="adv-pickcard-sub">{{ kit.subtitle }}</div>
+              <div class="adv-pickcard-name">{{ g.name }}</div>
+              <div class="adv-pickcard-sub">{{ g.subtitle }}</div>
               <div class="adv-pickcard-meta">
-                <span v-if="kit.id === currentId" class="adv-chip adv-chip-current">✔ ההרפתקה שלי</span>
-                <span v-else-if="kit.lastPlayedText" class="adv-chip">🕘 {{ kit.lastPlayedText }}</span>
+                <span v-if="g.id === activeId" class="adv-chip adv-chip-current">✔ ההרפתקה הפעילה</span>
+                <span v-else-if="g.lastPlayedText" class="adv-chip">🕘 {{ g.lastPlayedText }}</span>
                 <span v-else class="adv-chip adv-chip-new">✨ חדש</span>
+                <span class="adv-chip">🌍 {{ g.progress.worldsDone }}/{{ g.progress.worldsTotal }}</span>
+                <span class="adv-chip">⭐ {{ g.progress.starsEarned }}</span>
               </div>
-            </div>
-            <div class="adv-pickcard-companions">
-              <span v-for="c in kit.companions" :key="c">{{ c }}</span>
             </div>
           </div>
         </div>
 
         <div class="adv-section-label">📜 ההרפתקאות שלי עד עכשיו</div>
-        <div class="adv-histstats">
+        <div class="adv-histstats" style="grid-template-columns: repeat(2, 1fr);">
           <div class="adv-histstat"><b>{{ overall.level }}</b><span>רמה</span></div>
           <div class="adv-histstat"><b>🪙 {{ overall.coins }}</b><span>מטבעות</span></div>
-          <div class="adv-histstat"><b>⭐ {{ overall.starsEarned }}</b><span>כוכבים</span></div>
-          <div class="adv-histstat"><b>{{ overall.worldsDone }}/{{ overall.worldsTotal }}</b><span>עולמות</span></div>
         </div>
         <div v-if="played.length" class="adv-histlist">
           <div v-for="h in played" :key="h.id" class="adv-histrow" @click="choose(h)">
             <span class="adv-histemoji">{{ h.emoji }}</span>
             <span class="adv-histname">{{ h.name }}</span>
-            <span class="adv-histwhen">{{ h.lastPlayedText }} · שוחק {{ h.plays }} פעמים</span>
+            <span class="adv-histwhen">{{ h.lastPlayedText }} · {{ h.progress.worldsDone }}/{{ h.progress.worldsTotal }} עולמות</span>
           </div>
         </div>
         <div v-else class="adv-histempty">עוד לא יצאתם להרפתקה — בחרו אחת למעלה ותתחילו! 🚀</div>
@@ -1187,46 +1231,39 @@ var AdventurePickerComponent = Vue.component('adventure-picker', {
       </div>
     </div>`,
     data: function () {
-        return {ready: false, kits: [], played: [], overall: {}, currentId: ADVENTURE_DEFAULT_THEME};
+        return {ready: false, groups: [], played: [], overall: {}, activeId: '', preview: ''};
     },
     created: function () {
-        // First run: build a character before choosing an adventure
         if (!getLocalStorage('adv_onboarded', false)) {
             this.$router.replace('/adventure/avatar?first=1');
             return;
         }
         applyAdventureSkin();
         this.ready = true;
-        this.currentId = getAdventureThemeId();
+        this.activeId = getActiveGroupId();
         this.overall = getAdventureOverallProgress();
-        const history = getAdventureHistory();
-        this.kits = ADVENTURE_THEME_ORDER.map(id => {
-            const kit = ADVENTURE_THEME_KITS[id];
-            const record = history[id];
-            return Object.assign({}, kit, {
-                preview: getAdventureKitPreview(kit),
-                plays: record ? record.plays : 0,
+        this.preview = getAdventureKitPreview(getAdventureThemeKit());
+        const history = getAdventureGroupHistory();
+        this.groups = getAdventureGroups().map(group => {
+            const record = history[group.id];
+            return Object.assign({}, group, {
+                progress: getGroupProgress(group),
                 lastPlayedText: record ? adventureRelativeTime(record.lastPlayed) : '',
             });
         });
         this.played = Object.keys(history)
-            .filter(id => ADVENTURE_THEME_KITS[id])
-            .map(id => Object.assign({}, ADVENTURE_THEME_KITS[id], {
-                plays: history[id].plays,
+            .filter(id => getGroupById(id))
+            .map(id => Object.assign({}, getGroupById(id), {
                 lastPlayed: history[id].lastPlayed,
                 lastPlayedText: adventureRelativeTime(history[id].lastPlayed),
+                progress: getGroupProgress(getGroupById(id)),
             }))
             .sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0));
     },
     methods: {
-        choose: function (kit) {
-            setAdventureThemeId(kit.id);
-            // Keep the global app chrome (body background) in sync with the new
-            // color theme, not just the adventure screens.
-            if (this.$root && typeof this.$root.updateTheme === 'function') {
-                this.$root.updateTheme();
-            }
-            this.$router.push('/adventure/map');
+        choose: function (group) {
+            setActiveGroupId(group.id);
+            this.$router.push('/adventure');
         },
     },
 });
@@ -1234,8 +1271,8 @@ var AdventurePickerComponent = Vue.component('adventure-picker', {
 // Hook for the routes list in tester.js
 function getAdventureRoutes() {
     return [
-        {path: '/adventure', component: AdventurePickerComponent},
-        {path: '/adventure/map', component: AdventureHomeComponent},
+        {path: '/adventure', component: AdventureHomeComponent},
+        {path: '/adventure/switch', component: AdventureSwitchComponent},
         {path: '/adventure/avatar', component: AdventureAvatarComponent},
         {path: '/adventure/world/:worldId', component: AdventureWorldComponent},
     ];

@@ -3271,10 +3271,73 @@ const MAZE_ATMOSPHERES = {
         rainbow: true,
         scenarios: MAZE_UNICORN_SCENARIOS,
     },
+    // --- Adventure theme atmospheres (match the adventure skins in themes.js) ---
+    // Each mirrors the proven 'night' structure, re-tinting the sky, fog, light
+    // and (for the vivid themes) the stone/wood textures. All reuse the standard
+    // scenarios — only the mood changes.
+    space: {
+        fog: [0x0a1030, 10, 55], skyTop: 0x05081a, skyBottom: 0x1a2050,
+        stars: 0xcfe0ff, starSize: 1.9,
+        moonInner: 'rgba(210,230,255,1)', moonOuter: 'rgba(120,150,255,0)',
+        hemiSky: 0x2a3a7a, hemiGround: 0x0a0a1a, hemiIntensity: 0.65,
+        dirColor: 0x9fb4ff, dirIntensity: 0.6,
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0x8fd0ff,
+        exposure: 1.15,
+        stonePalette: {bg: '#2a3a6e', shades: ['#3b4f8f', '#1e2a55', '#4a5fa0', '#2f4080']},
+        cobblePalette: {bg: '#334072', shades: ['#26315e', '#43539a', '#1c2547', '#3a4a86']},
+        woodPalette: {base: '#3a4570', grain: [90, 110, 180]},
+        scenarios: MAZE_SCENARIOS,
+    },
+    code: {
+        // Friendly 'Matrix' — dark with neon-green glow (themes.js code theme)
+        fog: [0x001400, 8, 48], skyTop: 0x001000, skyBottom: 0x003318,
+        stars: 0x66ff88, starSize: 1.7,
+        moonInner: 'rgba(180,255,200,1)', moonOuter: 'rgba(0,200,80,0)',
+        hemiSky: 0x0a4020, hemiGround: 0x001000, hemiIntensity: 0.6,
+        dirColor: 0x39ff5a, dirIntensity: 0.6,
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0x39ff14,
+        exposure: 1.1,
+        stonePalette: {bg: '#0d3a1a', shades: ['#125024', '#0a2e15', '#1a6b30', '#0f4520']},
+        cobblePalette: {bg: '#0f3d1c', shades: ['#0a2e15', '#166028', '#083510', '#125024']},
+        woodPalette: {base: '#0f4020', grain: [40, 120, 60]},
+        scenarios: MAZE_SCENARIOS,
+    },
+    dark: {
+        // Night kingdom — the classic night with soft purple moonlight
+        fog: [0x120c22, 8, 46], skyTop: 0x08050f, skyBottom: 0x241a3a,
+        stars: 0xe0d0ff, starSize: 1.6,
+        moonInner: 'rgba(240,230,255,1)', moonOuter: 'rgba(187,134,252,0)',
+        hemiSky: 0x3a2f6e, hemiGround: 0x14100c, hemiIntensity: 0.55,
+        dirColor: 0xb69fe8, dirIntensity: 0.5,
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0xbb86fc,
+        exposure: 1.1,
+        scenarios: MAZE_SCENARIOS,
+    },
+    soldiers: {
+        // Adventure camp — warm daylight over olive/khaki stone and wood
+        fog: [0xcdd3ad, 20, 82], skyTop: 0x8fb0c0, skyBottom: 0xdce0c0,
+        stars: 0xffffff, starSize: 1.0,
+        moonInner: 'rgba(255,250,220,1)', moonOuter: 'rgba(255,220,120,0)', // warm sun
+        hemiSky: 0xdfe6c0, hemiGround: 0x6b7333, hemiIntensity: 1.2,
+        dirColor: 0xfff3d0, dirIntensity: 1.0,
+        floorTint: 0xffffff, wallTint: 0xffffff, firefly: 0xffe08a,
+        exposure: 1.3,
+        stonePalette: {bg: '#6b7333', shades: ['#7d8540', '#5a6129', '#8f9850', '#4e5522']},
+        cobblePalette: {bg: '#847a55', shades: ['#6b6440', '#9a8f66', '#5a5238', '#7d7350']},
+        woodPalette: {base: '#8a6a3a', grain: [120, 90, 50]},
+        scenarios: MAZE_SCENARIOS,
+    },
+};
+
+// Map an adventure/app color theme (themes.js key) to a maze atmosphere.
+// Themes without an entry (incl. the default 'base') keep the classic night.
+const MAZE_THEME_ATMOSPHERE = {
+    unicorn: 'unicorn', space: 'space', code: 'code', dark: 'dark', soldiers: 'soldiers',
 };
 
 function getMazeAtmosphere() {
-    return getLocalStorage('theme', 'base') === 'unicorn' ? MAZE_ATMOSPHERES.unicorn : MAZE_ATMOSPHERES.night;
+    const key = MAZE_THEME_ATMOSPHERE[getLocalStorage('theme', 'base')];
+    return (key && MAZE_ATMOSPHERES[key]) ? MAZE_ATMOSPHERES[key] : MAZE_ATMOSPHERES.night;
 }
 
 // Swappable companion characters for the maze. All are CC0/free rigged models
@@ -9865,6 +9928,30 @@ router.beforeEach((to, from, next) => {
 });
 
 
+// The single global theme (chosen in Settings) skins the whole app. When a
+// theme has adventure background art, the regular menu reuses it as a soft
+// backdrop too — so "the theme kit colors everything", not just the adventure.
+const THEME_MENU_BG = {
+    unicorn: 'assets/adventure/art/home_bg.jpg',
+    space: 'assets/adventure/art/space/home_bg.jpg',
+    code: 'assets/adventure/art/code/home_bg.jpg',
+    dark: 'assets/adventure/art/dark/home_bg.jpg',
+    soldiers: 'assets/adventure/art/soldiers/home_bg.jpg',
+    // base: no art — a plain themed color background
+};
+
+function hexToRgba(hex, alpha) {
+    let h = String(hex || '').replace('#', '');
+    if (h.length === 3) {
+        h = h.split('').map(c => c + c).join('');
+    }
+    const n = parseInt(h, 16);
+    if (isNaN(n)) {
+        return `rgba(255, 255, 255, ${alpha})`;
+    }
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
 var app = new Vue({
     router,
     data() {
@@ -9877,6 +9964,11 @@ var app = new Vue({
     methods: {
         updateTheme(){
            this.theme = getTheme();
+           // Reskin the adventure surfaces (body theme class) from the same
+           // global theme, then repaint the regular-menu chrome.
+           if (typeof applyAdventureSkin === 'function') {
+               applyAdventureSkin();
+           }
            this.changeGlobalStyle();
         }, addGlobalStyle() {
           const style = document.createElement('style');
@@ -9901,9 +9993,22 @@ var app = new Vue({
         },
         changeGlobalStyle() {
           const style = document.getElementById('dynamic-global-style');
+          const bg = this.theme.colors.background;
+          const art = THEME_MENU_BG[getLocalStorage('theme', 'base')];
+          // With theme art, layer it under a soft scrim (the theme bg colour at
+          // ~62% opacity) so menu text stays readable; otherwise a flat colour.
+          let bodyBg = `background-color: ${bg};`;
+          if (art) {
+              const scrim = hexToRgba(bg, 0.62);
+              bodyBg = `background-color: ${bg};
+                  background-image: linear-gradient(${scrim}, ${scrim}), url('${art}');
+                  background-size: cover;
+                  background-position: center;
+                  background-attachment: fixed;`;
+          }
             style.innerHTML = `
                body {
-                  background-color: ${this.theme.colors.background}; /* Hex color code */
+                  ${bodyBg}
                 }
 
                 .dropdown-content li > a, .dropdown-content li > span {
@@ -9937,6 +10042,12 @@ var app = new Vue({
             localStorage.clear();
         }
         this.addGlobalStyle();
+        // Apply the saved theme (background art + skin class) on first load, not
+        // only after the user opens Settings and changes it.
+        if (typeof applyAdventureSkin === 'function') {
+            applyAdventureSkin();
+        }
+        this.changeGlobalStyle();
         localStorage.setItem('en_version', 0.1)
        document.getElementById('loading-screen').classList.add('hidden');
     }
