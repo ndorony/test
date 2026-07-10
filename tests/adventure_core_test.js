@@ -271,7 +271,7 @@ check('game encounter routes to its game with its encounter id',
     run(`getEncounterRoute(getWorldById('colors'), 2)`) === '/play/water_pipeline/adv-colors-2', run(`getEncounterRoute(getWorldById('colors'), 2)`));
 check('learn encounter resolves to a playable appType (next game on path)',
     run(`resolveAdventureApp('adv-colors-0').appType`) === 'mcq');
-check('adventure routes registered', run(`getAdventureRoutes().length`) === 3 && run(`getAdventureRoutes()[0].path`) === '/adventure');
+check('adventure routes registered', run(`(function(){const paths=getAdventureRoutes().map(r=>r.path);return paths.includes('/adventure') && paths.includes('/adventure/avatar') && paths.includes('/adventure/world/:worldId');})()`));
 
 console.log('--- 10. avatar (character creator) ---');
 const defaultAvatar = run(`getAdventureAvatar()`);

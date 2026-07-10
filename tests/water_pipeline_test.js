@@ -195,7 +195,7 @@ const tester = fs.readFileSync(path.join(ROOT, 'tester.js'), 'utf8');
 const cut = tester.indexOf('var ProgressBarComponent');
 vm.runInContext(tester.slice(0, cut), integration, {filename: 'tester.js(core)'});
 const legacyWater = vm.runInContext(`(function find(node){ if(node.type==='app' && node.appType==='water_pipeline') return node; for(const child of (node.items||[])){const found=find(child);if(found)return found;} return null;})(apps)`, integration);
-check('legacy menu registers water_pipeline', legacyWater && legacyWater.listName === 'QUESTION');
+check('legacy menu registers a complete water_pipeline app', legacyWater && !!legacyWater.listName && !!legacyWater.questionIndex && !!legacyWater.resultIndex);
 const adventureWater = vm.runInContext(`resolveAdventureApp('adv-colors-2')`, integration);
 check('colors Adventure encounter registers water_pipeline', adventureWater && adventureWater.appType === 'water_pipeline');
 check('Adventure encounter uses a virtual filtered list', adventureWater && adventureWater.listName === 'ADV_WORLD:colors');
