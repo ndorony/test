@@ -1,5 +1,10 @@
 # מצב הרפתקה — תכנון
 
+> **Status: historical product concept.** This predates the current Adventure
+> implementation. Use `AGENTS.md` and `GAME_TECH_GUIDE.md` for engineering
+> rules; use `worlds.js`, `adventure.js`, and current tests for implemented
+> behavior.
+
 מסמך תכנון למצב משחק חדש ("הרפתקה") שחי **במקביל** למצב התפריטים הקיים.
 במקום לבחור פעילות מתפריט, הילד חי בתוך עולם משחק: דמות אישית שהוא מעצב,
 בסיס, מפת עולמות והתקדמות — כשכל הלמידה (רנדום ממושקל + פתיחה הדרגתית)

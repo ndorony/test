@@ -140,12 +140,17 @@ There are 2 types of items:
 | `common` | Match Game | Match pairs of related items |
 | `draw_letter` | Draw Letter | Draw a letter on canvas |
 | `falling_answers` | Falling Answers | Click the right answer as it falls |
+| `word_link` | Word Link | Build or connect the answer from word/letter choices |
 | `s2t` | Speech to Text | Say the answer out loud |
 | `balloon_shooter` | 3D Balloon Range | First-person shooting range (Three.js) - shoot the balloon with the right answer |
 | `platformer` | Learning Platformer | 2D Mario-style level (Phaser 3) - run and jump into the block with the right answer |
 | `treasure_maze` | 3D Treasure Maze | First-person night maze (Three.js) - 3 gates, pick the door with the right answer to advance |
 | `duel_shooter` | 3D Duel Shooter | Fullscreen 3D showdown (Three.js): crouch behind sandbags while the boss lays suppressing fire, pick answer-bullets off an in-world ammo rack (correct = golden bolt, 3-streak = double-damage super bolt, wrong = dud), then sprint out of cover for the duel against animated KayKit skeleton bosses + dragon. Switchable hero (mage/rogue/knight/robot). Duds fizzle and give the boss a shot back. 10 HP per side |
 | `wizard_duel` | Wizard Duel | Prodigy-style turn battle: painted cartoon scene, animated 3D mage vs monster bosses (orc/ghost/dragon), question in a burning magic circle, big answer buttons. Correct = fireball at the boss (3-streak = critical x2), wrong = the boss strikes you. Hero 100 HP, bosses 30/45/60 |
+| `water_pipeline` | Water Journey | Full-screen segment-based pipe journey with three generated-question blockages |
+
+For a new interaction type, do not extend this table as your first step. Start at
+`AGENTS.md`, complete `NEW_GAME_TEMPLATE.md`, and follow `NEW_GAME_WORKFLOW.md`.
 
 ### Key Configuration Fields
 

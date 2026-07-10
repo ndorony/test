@@ -1,5 +1,10 @@
 # Adventure Screens — Design Brief (for Claude Design)
 
+> **Status: historical design brief.** It is useful for the rationale behind the
+> current Adventure screens, but its fixed theme matrix is stale. Read theme keys
+> from `themes.js` and use `AGENTS.md`/`GAME_STYLE_GUIDE.md` for current
+> work.
+
 A design brief for the two adventure screens of the app. The goal is a **fresh,
 high-craft visual design** for both screens across **all 5 themes**. Previous
 in-house attempts (a Candy-Crush-style medallion ladder, and a floating-islands

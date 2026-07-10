@@ -1,5 +1,9 @@
 # Adventure Map Skin — themed world/level maps
 
+> **Status: obsolete visual proposal.** The later
+> `ADVENTURE_SCREENS_DESIGN_BRIEF.md` records that this direction was rejected.
+> Keep this file only as design history; it is not an implementation guide.
+
 Turn the adventure screens from vertical **card lists** (which read like a menu)
 into **themed game-world maps**: the level/encounter steps sit as medallion
 **nodes on a winding path**, and the whole scene re-skins per theme — bases on a

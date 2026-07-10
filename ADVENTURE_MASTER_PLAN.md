@@ -1,5 +1,10 @@
 # Master Plan: Completing the Guided Adventure Game
 
+> **Status: historical execution plan.** Many phases are implemented and literal
+> file descriptions, theme counts, cache versions, and test counts below are now
+> stale. Do not execute this plan sequentially. Start with `AGENTS.md`; current
+> source and tests define Adventure behavior.
+
 This document is the **complete execution plan** for turning the app into a
 guided learning game built around worlds, replacing the current menu mode as
 the default experience. It is written so that an engineer (or coding agent)
