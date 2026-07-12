@@ -7436,3 +7436,31 @@ function getUniqueElements(word) {
 
     return uniqueElements;
 }
+
+
+// Factory Tycoon (games/factory-tycoon.js) tech tree. Each item is one
+// confirmable upgrade; "machine"/"level"/"kind"/"cost" drive the simulation,
+// "name"/"detail" are shown by the confirmUpgrade() dialog. Kept in build
+// order (sawmill -> workshop -> packaging, then workers/conveyors/decor) so
+// each batch of `setItems` unlocks a coherent next step for the factory.
+DATA.FACTORY_UPGRADES = [
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 2'}, detail: {type: 'text', value: 'להב מהיר יותר חותך קורות לעץ מהר יותר.'}, machine: 'sawmill', level: 2, kind: 'upgrade', cost: 50},
+    {name: {type: 'text', value: 'הנחת מסוע ראשון'}, detail: {type: 'text', value: 'מסוע נע יוביל קרשים אל תחנת העבודה הבאה.'}, machine: 'conveyor1', level: 1, kind: 'build', cost: 30},
+    {name: {type: 'text', value: 'גיוס עובד ראשון'}, detail: {type: 'text', value: 'זוג ידיים נוסף להעביר סחורה בין תחנות.'}, machine: 'worker1', level: 1, kind: 'hire', cost: 80},
+    {name: {type: 'text', value: 'בניית מגרסת הרכבה'}, detail: {type: 'text', value: 'תחנה חדשה שהופכת קרשים לחלקי צעצוע.'}, machine: 'workshop', level: 1, kind: 'build', cost: 120},
+
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 3'}, detail: {type: 'text', value: 'עוד עוצמה, עוד קורות בדקה.'}, machine: 'sawmill', level: 3, kind: 'upgrade', cost: 140},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 2'}, detail: {type: 'text', value: 'זרועות הרכבה נוספות מייצרות מהר יותר.'}, machine: 'workshop', level: 2, kind: 'upgrade', cost: 160},
+    {name: {type: 'text', value: 'הנחת מסוע שני'}, detail: {type: 'text', value: 'קו הובלה שני מקצר את הדרך למחסן.'}, machine: 'conveyor2', level: 1, kind: 'build', cost: 90},
+    {name: {type: 'text', value: 'גיוס עובד שני'}, detail: {type: 'text', value: 'עוד עובד, פחות המתנה על הפס.'}, machine: 'worker2', level: 1, kind: 'hire', cost: 220},
+
+    {name: {type: 'text', value: 'בניית עמדת אריזה'}, detail: {type: 'text', value: 'תחנה סופית שאורזת צעצועים מוכנים למשלוח.'}, machine: 'packaging', level: 1, kind: 'build', cost: 260},
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 2'}, detail: {type: 'text', value: 'קופסאות נסגרות ונשלחות מהר יותר.'}, machine: 'packaging', level: 2, kind: 'upgrade', cost: 200},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 3'}, detail: {type: 'text', value: 'תחנת ההרכבה המהירה ביותר עד כה.'}, machine: 'workshop', level: 3, kind: 'upgrade', cost: 240},
+    {name: {type: 'text', value: 'בניית מחסן אחסון'}, detail: {type: 'text', value: 'מקום לאחסן תוצרת בזמן שהפס עובד.'}, machine: 'storage', level: 1, kind: 'build', cost: 150},
+
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 4'}, detail: {type: 'text', value: 'המסור המהיר ביותר במפעל.'}, machine: 'sawmill', level: 4, kind: 'upgrade', cost: 320},
+    {name: {type: 'text', value: 'גיוס עובד שלישי'}, detail: {type: 'text', value: 'צוות שלם עכשיו רץ בין כל התחנות.'}, machine: 'worker3', level: 1, kind: 'hire', cost: 380},
+    {name: {type: 'text', value: 'תלייה שלט מפעל'}, detail: {type: 'text', value: 'שלט מואר עם שם המפעל, לגאווה.'}, machine: 'sign', level: 1, kind: 'decorate', cost: 100},
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 3'}, detail: {type: 'text', value: 'קו הייצור השלם רץ במהירות המרבית.'}, machine: 'packaging', level: 3, kind: 'upgrade', cost: 420},
+];

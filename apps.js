@@ -360,5 +360,12 @@ apps =  {
         {icon: 'sports_esports', name:'מבוך התיאורים', type: 'app', appType: 'treasure_maze', listName: 'BIG_VACATION_SIZES', questionIndex: 'english_name', resultIndex: 'picture', setItems: 1, title: 'הקשב למילה ובחר את הדלת הנכונה'},
       ]
     },
+    {
+      name: 'מפעל',
+      type: 'menu',
+      items: [
+        {icon: 'precision_manufacturing', name:'מפעל הצעצועים', type: 'app', appType: 'factory_tycoon', listName: 'FACTORY_UPGRADES', questionIndex: 'name', resultIndex: 'name', setItems: 4, title: 'בנו ושדרגו מפעל צעצועים חי'},
+      ]
+    },
   ]
 };
