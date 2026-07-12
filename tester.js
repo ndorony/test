@@ -9857,6 +9857,11 @@ if (typeof createWaterPipelineComponent === 'function') {
     WaterPipelineComponent = createWaterPipelineComponent(BaseGameComponent);
 }
 
+var FactoryTycoonComponent = null;
+if (typeof createFactoryTycoonComponent === 'function') {
+    FactoryTycoonComponent = createFactoryTycoonComponent(BaseGameComponent);
+}
+
 const routes = [
     {path: '/', component: MenuComponent,},
     {path: '/user', component: UserComponent},
@@ -9884,6 +9889,10 @@ const routes = [
 
 if (WaterPipelineComponent) {
     routes.push({path: '/play/water_pipeline/:currentAppId', component: WaterPipelineComponent, props: true});
+}
+
+if (FactoryTycoonComponent) {
+    routes.push({path: '/play/factory_tycoon/:currentAppId', component: FactoryTycoonComponent, props: true});
 }
 
 // Adventure mode routes (adventure.js) — appended only when the module is loaded
