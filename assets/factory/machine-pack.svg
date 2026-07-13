@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 290 260">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a495ff"/><stop offset=".5" stop-color="#8e7cf2"/><stop offset="1" stop-color="#6a58c9"/>
+    </linearGradient>
+    <linearGradient id="hop3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#93a5c4"/><stop offset="1" stop-color="#5d6d8c"/>
+    </linearGradient>
+    <pattern id="hz3" width="18" height="14" patternUnits="userSpaceOnUse" patternTransform="skewX(-30)">
+      <rect width="18" height="14" fill="#ffcb44"/><rect width="9" height="14" fill="#333a4e"/>
+    </pattern>
+  </defs>
+  <!-- feet -->
+  <path d="M36 236h30l6 16H30Z" fill="#333a4e" stroke="#2b3145" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M222 236h30l6 16h-42Z" fill="#333a4e" stroke="#2b3145" stroke-width="3" stroke-linejoin="round"/>
+  <!-- tunnel body -->
+  <rect x="20" y="112" width="250" height="126" rx="14" fill="url(#body)" stroke="#2b3145" stroke-width="3.5"/>
+  <path d="M20 196h250v28a14 14 0 0 1-14 14H34a14 14 0 0 1-14-14Z" fill="#5346a0" opacity=".5"/>
+  <path d="M32 118h226v7H32Z" fill="#cdc4ff" opacity=".85"/>
+  <!-- exit arch (left) -->
+  <path d="M20 150h30v66H20Z" fill="#2d2645" stroke="#2b3145" stroke-width="3"/>
+  <path d="M20 150c14 0 30 8 30 22v44H20Z" fill="#1d1830"/>
+  <!-- inspection window with rollers -->
+  <rect x="78" y="140" width="130" height="62" rx="10" fill="#241d3d" stroke="#2b3145" stroke-width="3.5"/>
+  <g stroke="#2b3145" stroke-width="2.5" fill="#8e7cf2">
+    <circle cx="104" cy="184" r="10"/><circle cx="142" cy="184" r="10"/><circle cx="180" cy="184" r="10"/>
+  </g>
+  <path d="M84 146h118v10H84Z" fill="#4b3f85"/>
+  <!-- hazard band -->
+  <rect x="20" y="224" width="250" height="14" fill="url(#hz3)" stroke="#2b3145" stroke-width="3"/>
+  <!-- control panel -->
+  <rect x="222" y="140" width="38" height="66" rx="8" fill="#e9eef7" stroke="#2b3145" stroke-width="3"/>
+  <circle cx="241" cy="158" r="7" fill="#57d06b" stroke="#2b3145" stroke-width="2.5"/>
+  <circle cx="241" cy="178" r="7" fill="#ff6b5e" stroke="#2b3145" stroke-width="2.5"/>
+  <rect x="230" y="192" width="22" height="8" rx="4" fill="#5d6d8c" stroke="#2b3145" stroke-width="2"/>
+  <!-- tape bridge -->
+  <path d="M96 112V76a12 12 0 0 1 12-12h74a12 12 0 0 1 12 12v36" fill="#6a58c9" stroke="#2b3145" stroke-width="3.5"/>
+  <rect x="118" y="84" width="54" height="20" rx="6" fill="#463a80" stroke="#2b3145" stroke-width="3"/>
+  <!-- top hopper (chute inlet, right) -->
+  <path d="M196 26h82l-16 50h-50Z" fill="url(#hop3)" stroke="#2b3145" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M202 32h70l-5 12h-60Z" fill="#2f3a52"/>
+  <path d="M212 76h50v36h-50Z" fill="#46536e" stroke="#2b3145" stroke-width="3"/>
+  <rect x="200" y="22" width="74" height="10" rx="5" fill="#aebdd8" stroke="#2b3145" stroke-width="3"/>
+  <!-- status lamp -->
+  <circle cx="40" cy="132" r="9" fill="#57d06b" stroke="#2b3145" stroke-width="3"/>
+  <g fill="#5346a0" stroke="#2b3145" stroke-width="2">
+    <circle cx="34" cy="222" r="3.5"/><circle cx="256" cy="222" r="3.5"/><circle cx="68" cy="128" r="3.5"/>
+  </g>
+</svg>

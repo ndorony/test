@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 520">
+  <defs>
+    <linearGradient id="chw" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9aabc9"/><stop offset=".5" stop-color="#6d7d9d"/><stop offset="1" stop-color="#46536e"/>
+    </linearGradient>
+    <pattern id="hz4" width="18" height="14" patternUnits="userSpaceOnUse" patternTransform="skewX(-30)">
+      <rect width="18" height="14" fill="#ffcb44"/><rect width="9" height="14" fill="#333a4e"/>
+    </pattern>
+  </defs>
+  <!-- slide body, drawn straight then rotated onto the diagonal (descends to the left) -->
+  <g transform="translate(206 16) rotate(106)">
+    <!-- far side wall -->
+    <rect x="0" y="-46" width="486" height="26" rx="8" fill="url(#chw)" stroke="#2b3145" stroke-width="3.5"/>
+    <!-- slide floor -->
+    <rect x="0" y="-22" width="486" height="36" rx="6" fill="#3d4560" stroke="#2b3145" stroke-width="3.5"/>
+    <path d="M10 -15h466" stroke="#59627d" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+    <path d="M10 1h466" stroke="#2f3549" stroke-width="5" stroke-linecap="round"/>
+    <!-- near side lip -->
+    <rect x="0" y="14" width="486" height="16" rx="6" fill="url(#chw)" stroke="#2b3145" stroke-width="3.5"/>
+    <!-- ribs -->
+    <g fill="#46536e" stroke="#2b3145" stroke-width="2.5">
+      <rect x="66" y="-50" width="12" height="84" rx="4"/>
+      <rect x="184" y="-50" width="12" height="84" rx="4"/>
+      <rect x="302" y="-50" width="12" height="84" rx="4"/>
+      <rect x="420" y="-50" width="12" height="84" rx="4"/>
+    </g>
+    <g fill="#aebdd8">
+      <circle cx="72" cy="-42" r="2.4"/><circle cx="190" cy="-42" r="2.4"/><circle cx="308" cy="-42" r="2.4"/><circle cx="426" cy="-42" r="2.4"/>
+    </g>
+    <!-- intake mouth -->
+    <rect x="-10" y="-54" width="20" height="88" rx="8" fill="#aebdd8" stroke="#2b3145" stroke-width="3.5"/>
+    <!-- exit lip -->
+    <rect x="464" y="-54" width="26" height="88" rx="8" fill="url(#hz4)" stroke="#2b3145" stroke-width="3.5"/>
+  </g>
+</svg>
