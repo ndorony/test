@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370 220">
+  <defs>
+    <linearGradient id="cargo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd977"/><stop offset=".5" stop-color="#ffc44e"/><stop offset="1" stop-color="#e09a2a"/>
+    </linearGradient>
+    <linearGradient id="cabt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5fc6de"/><stop offset=".55" stop-color="#3ba7c2"/><stop offset="1" stop-color="#2a7f96"/>
+    </linearGradient>
+  </defs>
+  <!-- cargo box -->
+  <rect x="112" y="16" width="246" height="128" rx="12" fill="url(#cargo)" stroke="#2b3145" stroke-width="4"/>
+  <path d="M112 110h246v34a12 12 0 0 1-12 12H124a12 12 0 0 1-12-12Z" fill="#c9821e" opacity=".55"/>
+  <path d="M124 22h222v9H124Z" fill="#ffeebc" opacity=".9"/>
+  <!-- roll door lines at back -->
+  <g stroke="#b47716" stroke-width="3">
+    <path d="M330 30v106"/><path d="M342 30v106"/>
+  </g>
+  <!-- gear decal -->
+  <circle cx="216" cy="78" r="30" fill="#fff4d6" stroke="#c9821e" stroke-width="4"/>
+  <path fill="#e0932b" d="M216 56l4 8a16 16 0 0 1 6 3l9-2 4 7-6 6a16 16 0 0 1 0 7l6 6-4 7-9-2a16 16 0 0 1-6 3l-4 8-4-8a16 16 0 0 1-6-3l-9 2-4-7 6-6a16 16 0 0 1 0-7l-6-6 4-7 9 2a16 16 0 0 1 6-3Z"/>
+  <circle cx="216" cy="78" r="7" fill="#fff4d6"/>
+  <!-- cab -->
+  <path d="M112 62H58c-12 0-20 6-26 16L18 102c-4 7-6 13-6 22v20a12 12 0 0 0 12 12h88Z" fill="url(#cabt)" stroke="#2b3145" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M100 70H62c-8 0-13 4-17 11l-11 21h66Z" fill="#bfe9f4" stroke="#2b3145" stroke-width="3.5"/>
+  <path d="M100 74v24H44l8-14c3-6 7-10 14-10Z" fill="#e6f7fc" opacity=".7"/>
+  <!-- door + handle -->
+  <path d="M104 66v88" stroke="#22677a" stroke-width="3.5"/>
+  <rect x="86" y="110" width="16" height="6" rx="3" fill="#22677a"/>
+  <!-- mirror -->
+  <path d="M20 84l-10-8" stroke="#2b3145" stroke-width="4" stroke-linecap="round"/>
+  <rect x="2" y="66" width="10" height="16" rx="4" fill="#46536e" stroke="#2b3145" stroke-width="2.5"/>
+  <!-- bumper + lights -->
+  <rect x="4" y="146" width="30" height="14" rx="7" fill="#c2cde2" stroke="#2b3145" stroke-width="3"/>
+  <circle cx="20" cy="126" r="8" fill="#ffe9a8" stroke="#2b3145" stroke-width="3"/>
+  <!-- chassis -->
+  <rect x="14" y="152" width="344" height="18" rx="8" fill="#333a4e" stroke="#2b3145" stroke-width="3.5"/>
+  <!-- mudguards -->
+  <path d="M52 170a34 34 0 0 1 68 0Z" fill="#2a7f96" stroke="#2b3145" stroke-width="3.5"/>
+  <path d="M238 170a34 34 0 0 1 68 0Z" fill="#c9821e" stroke="#2b3145" stroke-width="3.5"/>
+</svg>

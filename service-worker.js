@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v39';
+const CACHE_NAME = 'my-app-cache-v40';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -38,7 +38,16 @@ const ADVENTURE_ART = ['home_bg', 'world_letters_bg', 'world_review_bg', 'world_
   'world_english_bg', 'avatar_bg', 'frame_bg', 'transition_clouds', 'reward_burst']
   .map(name => `/assets/adventure/art/${name}.jpg`);
 
-const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS).concat(ADVENTURE_ART);
+const FACTORY_ART = ['machine-saw', 'saw-blade', 'machine-press', 'press-ram', 'machine-pack',
+  'tape-roll', 'gear', 'belt-tile', 'rail-tile', 'roller', 'conveyor-leg', 'chute', 'truck',
+  'wheel', 'worker-head-a', 'worker-head-b', 'worker-head-c', 'worker-torso-a', 'worker-torso-b',
+  'worker-torso-c', 'worker-arm-a', 'worker-arm-b', 'worker-arm-c', 'worker-leg', 'product-log',
+  'product-plank', 'product-toy', 'product-box', 'pallet', 'crate', 'barrel', 'cone', 'shelf',
+  'window', 'lamp', 'fan-frame', 'fan-blades', 'pipes', 'sign', 'dock-door', 'coin', 'puff',
+  'spark', 'hazard-tile']
+  .map(name => `/assets/factory/${name}.svg`);
+
+const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS).concat(ADVENTURE_ART).concat(FACTORY_ART);
 
 self.addEventListener('install', event => {
   self.skipWaiting();

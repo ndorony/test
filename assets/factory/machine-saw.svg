@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 250">
+  <defs>
+    <linearGradient id="cab" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4cc4b9"/><stop offset=".55" stop-color="#35b0a5"/><stop offset="1" stop-color="#25877e"/>
+    </linearGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c8d4e8"/><stop offset="1" stop-color="#8395b4"/>
+    </linearGradient>
+    <linearGradient id="hop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#93a5c4"/><stop offset="1" stop-color="#5d6d8c"/>
+    </linearGradient>
+    <linearGradient id="guard" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb45e"/><stop offset="1" stop-color="#e07f28"/>
+    </linearGradient>
+    <pattern id="hz" width="18" height="14" patternUnits="userSpaceOnUse" patternTransform="skewX(-30)">
+      <rect width="18" height="14" fill="#ffcb44"/><rect width="9" height="14" fill="#333a4e"/>
+    </pattern>
+  </defs>
+  <!-- feet -->
+  <path d="M30 226h30l6 16H24Z" fill="#333a4e" stroke="#2b3145" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M200 226h30l6 16h-42Z" fill="#333a4e" stroke="#2b3145" stroke-width="3" stroke-linejoin="round"/>
+  <!-- main cabinet -->
+  <rect x="20" y="102" width="220" height="128" rx="10" fill="url(#cab)" stroke="#2b3145" stroke-width="3.5"/>
+  <!-- cabinet shading -->
+  <path d="M20 176h220v44a10 10 0 0 1-10 10H30a10 10 0 0 1-10-10Z" fill="#1c6b63" opacity=".45"/>
+  <path d="M30 108h200a0 0 0 0 1 0 0v6H30a0 0 0 0 1 0 0Z" fill="#8fe5dc" opacity=".7"/>
+  <!-- hazard band -->
+  <rect x="20" y="206" width="220" height="16" fill="url(#hz)" stroke="#2b3145" stroke-width="3"/>
+  <!-- vents -->
+  <g fill="#17554f" stroke="#2b3145" stroke-width="2">
+    <rect x="168" y="150" width="52" height="7" rx="3.5"/>
+    <rect x="168" y="163" width="52" height="7" rx="3.5"/>
+    <rect x="168" y="176" width="52" height="7" rx="3.5"/>
+  </g>
+  <!-- control panel -->
+  <rect x="34" y="140" width="66" height="52" rx="8" fill="#e9eef7" stroke="#2b3145" stroke-width="3"/>
+  <circle cx="52" cy="158" r="7" fill="#ff6b5e" stroke="#2b3145" stroke-width="2.5"/>
+  <circle cx="74" cy="158" r="7" fill="#57d06b" stroke="#2b3145" stroke-width="2.5"/>
+  <rect x="44" y="172" width="44" height="9" rx="4.5" fill="#5d6d8c" stroke="#2b3145" stroke-width="2"/>
+  <!-- cutting deck -->
+  <rect x="8" y="84" width="244" height="20" rx="6" fill="url(#deck)" stroke="#2b3145" stroke-width="3.5"/>
+  <rect x="14" y="88" width="232" height="4" rx="2" fill="#e8eefb" opacity=".8"/>
+  <!-- blade slit -->
+  <rect x="118" y="84" width="34" height="20" fill="#252c3f" stroke="#2b3145" stroke-width="2.5"/>
+  <!-- hopper -->
+  <path d="M18 18h76l-14 48H32Z" fill="url(#hop)" stroke="#2b3145" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M24 24h64l-4 12H27Z" fill="#2f3a52"/>
+  <path d="M32 66h48v18H32Z" fill="#46536e" stroke="#2b3145" stroke-width="3"/>
+  <rect x="22" y="14" width="68" height="10" rx="5" fill="#aebdd8" stroke="#2b3145" stroke-width="3"/>
+  <!-- blade guard hood -->
+  <path d="M100 84a38 38 0 0 1 70 0l-8 0a30 30 0 0 0-54 0Z" fill="url(#guard)" stroke="#2b3145" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M104 84a34 34 0 0 1 10-20l6 6a26 26 0 0 0-8 14Z" fill="#ffd9a1" opacity=".85"/>
+  <!-- exhaust stub -->
+  <rect x="206" y="52" width="22" height="34" rx="6" fill="#5d6d8c" stroke="#2b3145" stroke-width="3"/>
+  <rect x="200" y="44" width="34" height="12" rx="6" fill="#8fa0bf" stroke="#2b3145" stroke-width="3"/>
+  <!-- status lamp -->
+  <circle cx="222" cy="120" r="9" fill="#57d06b" stroke="#2b3145" stroke-width="3"/>
+  <!-- bolts -->
+  <g fill="#1c6b63" stroke="#2b3145" stroke-width="2">
+    <circle cx="32" cy="114" r="3.5"/><circle cx="32" cy="196" r="3.5"/><circle cx="152" cy="196" r="3.5"/><circle cx="152" cy="118" r="3.5"/>
+  </g>
+</svg>
