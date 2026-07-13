@@ -364,7 +364,7 @@ apps =  {
       name: 'מפעל',
       type: 'menu',
       items: [
-        {icon: 'precision_manufacturing', name:'מפעל הצעצועים', type: 'app', appType: 'factory_tycoon', listName: 'FACTORY_UPGRADES', questionIndex: 'name', resultIndex: 'name', setItems: 4, quizListName: 'ENGLISH_CHAPTER4_ALL', quizQuestionIndex: 'english_name', quizResultIndex: 'hebrew', title: 'ענו נכון על שאלות פרק 4 כדי לשדרג את המפעל'},
+        {icon: 'precision_manufacturing', name:'מפעל הצעצועים', type: 'app', appType: 'factory_tycoon', listName: 'FACTORY_UPGRADES', questionIndex: 'name', resultIndex: 'name', setItems: 4, quizListName: 'ENGLISH_CHAPTER4_ALL', quizQuestionIndex: 'english_name', quizResultIndex: 'hebrew', quizSetItems: 10, title: 'ענו נכון על שאלות פרק 4 כדי לשדרג את המפעל'},
       ]
     },
   ]

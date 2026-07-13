@@ -146,10 +146,14 @@
     }
 
     // ---- educational question engine ------------------------------------------
-    // Every upgrade must be earned by answering a vocabulary question. The quiz
-    // list is configurable per app entry (quizListName/quizQuestionIndex/
-    // quizResultIndex in apps.js) and defaults to the Chapter 4 word list.
-    var FT_QUIZ_DEFAULTS = {listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew'};
+    // Every upgrade must be earned by answering a vocabulary question served by
+    // the shared learning engine (generateFromList): weighted selection prefers
+    // weak words, batches unlock via setItems, and every answer is reported with
+    // updateWeightForKey under a dedicated "<appId>_quiz" knowledge key — the
+    // same mechanism as MCQComponent, independent of the factory tech tree. The
+    // quiz list is configurable per app entry (quizListName/quizQuestionIndex/
+    // quizResultIndex/quizSetItems in apps.js) and defaults to Chapter 4 words.
+    var FT_QUIZ_DEFAULTS = {listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10};
     var FT_QUIZ_DELAYS = {correct: 700, wrong: 1700};
 
     function resolveFactoryQuiz(app) {
@@ -157,43 +161,8 @@
         return {
             listName: app.quizListName || FT_QUIZ_DEFAULTS.listName,
             questionIndex: app.quizQuestionIndex || FT_QUIZ_DEFAULTS.questionIndex,
-            resultIndex: app.quizResultIndex || FT_QUIZ_DEFAULTS.resultIndex
-        };
-    }
-
-    function buildUpgradeQuestion(list, questionIndex, resultIndex, rng) {
-        rng = rng || Math.random;
-        if (!Array.isArray(list) || !list.length) return null;
-        var qi = Math.floor(rng() * list.length);
-        var item = list[qi];
-        if (!item || !item[questionIndex] || !item[resultIndex]) return null;
-        var answer = item[resultIndex].value;
-        if (typeof answer !== 'string' || !answer) return null;
-        var seen = {};
-        seen[answer] = true;
-        var pool = [];
-        list.forEach(function (other, index) {
-            if (index === qi || !other || !other[resultIndex]) return;
-            var value = other[resultIndex].value;
-            if (typeof value !== 'string' || !value || seen[value]) return;
-            seen[value] = true;
-            pool.push(value);
-        });
-        function shuffle(arr) {
-            for (var i = arr.length - 1; i > 0; i--) {
-                var j = Math.floor(rng() * (i + 1));
-                var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-            }
-            return arr;
-        }
-        if (!pool.length) return null;
-        var options = shuffle([answer].concat(shuffle(pool).slice(0, 3)));
-        var promptField = item[questionIndex];
-        return {
-            prompt: promptField.value,
-            speak: promptField.type === 'text_to_speech' || promptField.type === 'speech',
-            answer: answer,
-            options: options
+            resultIndex: app.quizResultIndex || FT_QUIZ_DEFAULTS.resultIndex,
+            setItems: typeof app.quizSetItems === 'number' ? app.quizSetItems : FT_QUIZ_DEFAULTS.setItems
         };
     }
 
@@ -1394,11 +1363,23 @@
                     this.selectedMachine = null;
                     if (this._sceneApi) this._sceneApi.clearSelection();
                 },
+                quizKey: function () { return this.currentAppId + '_quiz'; },
                 makeUpgradeQuestion: function () {
                     var quiz = resolveFactoryQuiz(this.currentApp);
-                    var list = null;
-                    try { list = getDataList(quiz.listName); } catch (e) {}
-                    return buildUpgradeQuestion(list, quiz.questionIndex, quiz.resultIndex);
+                    var generated = null;
+                    try {
+                        // questionType 'text' renders the prompt as plain text for the
+                        // modal; generated.action still speaks text_to_speech prompts.
+                        generated = generateFromList(quiz.listName, quiz.questionIndex, quiz.resultIndex, this.quizKey(), quiz.setItems, 'text');
+                    } catch (e) {}
+                    if (!generated || !Array.isArray(generated.options) || generated.options.length < 2) return null;
+                    return {
+                        prompt: generated.question,
+                        answer: generated.result,
+                        options: this.shuffle(generated.options.slice()),
+                        action: generated.action,
+                        index: generated.questionIndex
+                    };
                 },
                 openUpgradeApproval: function (definition) {
                     var self = this;
@@ -1409,13 +1390,13 @@
                         self.pendingUpgrade = definition;
                         self._resolveUpgradeFt = resolve;
                         self.$nextTick(function () { if (self.$refs.confirmBtn) self.$refs.confirmBtn.focus(); });
-                        if (definition.question && definition.question.speak) self.speakQuizPrompt();
+                        if (definition.question) self.speakQuizPrompt();
                     });
                 },
                 speakQuizPrompt: function () {
                     var q = this.pendingUpgrade && this.pendingUpgrade.question;
-                    if (q && q.speak && typeof text_to_speech === 'function') {
-                        try { text_to_speech(q.prompt); } catch (e) {}
+                    if (q && typeof q.action === 'function') {
+                        try { q.action(); } catch (e) {}
                     }
                 },
                 quizOptionClass: function (option) {
@@ -1431,6 +1412,11 @@
                     this.quizChoice = option;
                     this.quizCorrect = option === q.answer;
                     try { (this.quizCorrect ? successSound : failureSound).play(); } catch (e) {}
+                    // Report the answer to the learning engine under the quiz key,
+                    // mirroring MCQComponent (-1 mastered a step, +1 needs practice).
+                    if (typeof q.index === 'number') {
+                        updateWeightForKey(this.quizKey(), q.index, this.quizCorrect ? -1 : 1);
+                    }
                     var self = this, accepted = this.quizCorrect;
                     this._quizTimerFt = setTimeout(function () {
                         self.resolveUpgradeChoice(accepted);
@@ -1523,7 +1509,6 @@
     global.resolveFactoryTheme = resolveFactoryTheme;
     global.getFactoryUpgradeDefinition = getUpgradeDefinition;
     global.resolveFactoryQuiz = resolveFactoryQuiz;
-    global.buildFactoryUpgradeQuestion = buildUpgradeQuestion;
     global.FT_QUIZ_DELAYS = FT_QUIZ_DELAYS;
     global.FactoryUpgradeApprovalService = UpgradeApprovalService;
     global.createFactoryTycoonComponent = createFactoryTycoonComponent;
