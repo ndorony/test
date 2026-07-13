@@ -56,6 +56,21 @@
 .ft-modal-actions .confirm{color:#3d2800;background:linear-gradient(180deg,#ffdf7e,#f5b02c);box-shadow:0 4px 0 #c07f12}
 .ft-modal-actions .confirm:active{transform:translateY(3px);box-shadow:0 1px 0 #c07f12}
 
+/* educational quiz inside the upgrade modal */
+.ft-quiz-callout{margin:0 0 8px;font-size:13.5px;font-weight:800;opacity:.85}
+.ft-quiz-prompt{display:block;width:100%;border:0;border-radius:14px;padding:12px 10px;margin:0 0 10px;font-size:clamp(19px,5vw,24px);font-weight:900;direction:ltr;background:rgba(125,138,170,.16);color:inherit;cursor:pointer}
+.ft-quiz-prompt:active{transform:scale(.985)}
+.ft-quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px}
+.ft-quiz-options button{border:0;border-radius:13px;padding:12px 8px;font-size:15px;font-weight:800;background:rgba(125,138,170,.2);color:inherit;cursor:pointer;transition:transform .12s ease,background .16s ease}
+.ft-quiz-options button:active:not(:disabled){transform:scale(.96)}
+.ft-quiz-options button:disabled{cursor:default}
+.ft-quiz-options button.correct{background:#2f9e52;color:#fff}
+.ft-quiz-options button.wrong{background:#d64545;color:#fff}
+.ft-quiz-options button:focus-visible{outline:3px solid var(--ft-glow);outline-offset:2px}
+.ft-quiz-feedback{margin:0 0 10px;min-height:18px;font-size:13.5px;font-weight:800;text-align:center}
+.ft-quiz-feedback.ok{color:#2f9e52}
+.ft-quiz-feedback.bad{color:#d64545}
+
 .ft-sr-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* larger screens: sheet becomes a floating card so the scene stays visible */

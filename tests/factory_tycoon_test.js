@@ -194,7 +194,106 @@ ctx.successSound = {play() {}};
     await methods.attemptUpgrade.call(stageContinues, 0);
     check('reloadProgress() === true saves score and continues', saveScoreCalls === 1);
 
-    console.log('--- 5. legacy registration ---');
+    console.log('--- 5. quiz question builder (Chapter 4) ---');
+    const quizDefaults = ctx.resolveFactoryQuiz({});
+    check('quiz defaults to the Chapter 4 word list',
+        quizDefaults.listName === 'ENGLISH_CHAPTER4_ALL' && quizDefaults.questionIndex === 'english_name' && quizDefaults.resultIndex === 'hebrew',
+        JSON.stringify(quizDefaults));
+    const quizCustom = ctx.resolveFactoryQuiz({quizListName: 'L', quizQuestionIndex: 'q', quizResultIndex: 'r'});
+    check('quiz config is overridable per app entry',
+        quizCustom.listName === 'L' && quizCustom.questionIndex === 'q' && quizCustom.resultIndex === 'r');
+
+    const vocab = [
+        {hebrew: {type: 'text', value: 'אומנות'}, english_name: {type: 'text_to_speech', value: 'Art'}},
+        {hebrew: {type: 'text', value: 'מוזיקה'}, english_name: {type: 'text_to_speech', value: 'Music'}},
+        {hebrew: {type: 'text', value: 'להקה'}, english_name: {type: 'text_to_speech', value: 'Band'}},
+        {hebrew: {type: 'text', value: 'גיטרה'}, english_name: {type: 'text_to_speech', value: 'Guitar'}},
+        {hebrew: {type: 'text', value: 'זמר'}, english_name: {type: 'text_to_speech', value: 'Singer'}},
+    ];
+    const question = ctx.buildFactoryUpgradeQuestion(vocab, 'english_name', 'hebrew', () => 0);
+    check('question prompt comes from the configured question field', question && question.prompt === 'Art', JSON.stringify(question));
+    check('a text_to_speech question field is marked spoken', question && question.speak === true);
+    check('the answer is the matching translation', question && question.answer === 'אומנות');
+    check('question has 4 unique options including the answer',
+        question && question.options.length === 4 && new Set(question.options).size === 4 && question.options.includes(question.answer),
+        question && JSON.stringify(question.options));
+    check('an empty list yields no question (plain confirm fallback)',
+        ctx.buildFactoryUpgradeQuestion([], 'english_name', 'hebrew') === null);
+    check('a single-item list yields no question (no distractors possible)',
+        ctx.buildFactoryUpgradeQuestion(vocab.slice(0, 1), 'english_name', 'hebrew', () => 0) === null);
+
+    console.log('--- 6. quiz gate: correct answer approves, wrong answer cancels ---');
+    ctx.FT_QUIZ_DELAYS.correct = 0;
+    ctx.FT_QUIZ_DELAYS.wrong = 0;
+    ctx.failureSound = {play() {}};
+    ctx.getDataList = name => {
+        if (name === 'ENGLISH_CHAPTER4_ALL') return vocab;
+        throw new Error('List does not exist');
+    };
+    function makeQuizInstance(overrides) {
+        return makeUpgradeInstance(definition, Object.assign({
+            $refs: {},
+            confirmUpgrade: methods.confirmUpgrade,
+            nextUpgradeFor: methods.nextUpgradeFor,
+            openUpgradeApproval: methods.openUpgradeApproval,
+            makeUpgradeQuestion: methods.makeUpgradeQuestion,
+            speakQuizPrompt: methods.speakQuizPrompt,
+            answerUpgradeQuestion: methods.answerUpgradeQuestion,
+            resolveUpgradeChoice: methods.resolveUpgradeChoice,
+            dismissUpgrade: methods.dismissUpgrade,
+            quizOptionClass: methods.quizOptionClass,
+        }, overrides));
+    }
+
+    reports.length = 0;
+    const quizRight = makeQuizInstance({});
+    const rightAttempt = methods.attemptUpgrade.call(quizRight, 0);
+    check('opening the upgrade dialog attaches a quiz question',
+        !!(quizRight.pendingUpgrade && quizRight.pendingUpgrade.question), JSON.stringify(quizRight.pendingUpgrade));
+    methods.answerUpgradeQuestion.call(quizRight, quizRight.pendingUpgrade.question.answer);
+    check('a correct choice is recorded as correct', quizRight.quizCorrect === true);
+    await rightAttempt;
+    check('a correct answer purchases the upgrade and reports one weight update',
+        quizRight.purchasedMap[0] === true && quizRight.money === 50 && reports.length === 1, JSON.stringify(reports));
+
+    reports.length = 0;
+    const quizWrong = makeQuizInstance({});
+    const wrongAttempt = methods.attemptUpgrade.call(quizWrong, 0);
+    const wrongOption = quizWrong.pendingUpgrade.question.options.find(option => option !== quizWrong.pendingUpgrade.question.answer);
+    methods.answerUpgradeQuestion.call(quizWrong, wrongOption);
+    methods.answerUpgradeQuestion.call(quizWrong, quizWrong.pendingUpgrade.question.answer);
+    check('the first answer locks in; a second click is ignored',
+        quizWrong.quizChoice === wrongOption && quizWrong.quizCorrect === false);
+    methods.dismissUpgrade.call(quizWrong);
+    check('a scrim tap after answering does not close the reveal early', quizWrong.pendingUpgrade !== null);
+    await wrongAttempt;
+    check('a wrong answer cancels the purchase: money kept, nothing bought, no weight update',
+        quizWrong.money === 100 && !quizWrong.purchasedMap[0] && reports.length === 0);
+
+    reports.length = 0;
+    const quizCancel = makeQuizInstance({});
+    const cancelAttempt = methods.attemptUpgrade.call(quizCancel, 0);
+    methods.dismissUpgrade.call(quizCancel);
+    await cancelAttempt;
+    check('a scrim tap before answering cancels cleanly', quizCancel.money === 100 && reports.length === 0 && quizCancel.pendingUpgrade === null);
+
+    console.log('--- 7. upgrade hints drive the scene "+" badges ---');
+    const hintsRich = makeQuizInstance({money: 100});
+    const richHints = methods.upgradeHints.call(hintsRich);
+    check('a station with a pending upgrade is marked available and affordable',
+        richHints.sawmill && richHints.sawmill.available === true && richHints.sawmill.affordable === true && richHints.sawmill.cost === 50,
+        JSON.stringify(richHints.sawmill));
+    check('a station with no pending upgrade is marked unavailable',
+        richHints.packaging && richHints.packaging.available === false, JSON.stringify(richHints.packaging));
+    const hintsPoor = makeQuizInstance({money: 10});
+    const poorHints = methods.upgradeHints.call(hintsPoor);
+    check('an unaffordable upgrade stays visible but not affordable',
+        poorHints.sawmill.available === true && poorHints.sawmill.affordable === false);
+    const hintsDone = makeQuizInstance({purchasedMap: {0: true}});
+    const doneHints = methods.upgradeHints.call(hintsDone);
+    check('a purchased upgrade no longer advertises a badge', doneHints.sawmill.available === false);
+
+    console.log('--- 8. legacy registration ---');
     function makeStorage() {
         const map = new Map();
         return {
@@ -231,8 +330,18 @@ ctx.successSound = {play() {}};
     );
     check('legacy menu registers a complete factory_tycoon app',
         legacyFactory && legacyFactory.listName === 'FACTORY_UPGRADES' && legacyFactory.setItems === 4, JSON.stringify(legacyFactory));
+    check('the app entry wires the Chapter 4 quiz (list + fields)',
+        legacyFactory && legacyFactory.quizListName === 'ENGLISH_CHAPTER4_ALL' &&
+        legacyFactory.quizQuestionIndex === 'english_name' && legacyFactory.quizResultIndex === 'hebrew',
+        JSON.stringify(legacyFactory));
     check('the registered list resolves through the shared data API and passes validation',
         ctx.validateFactoryUpgrades(integration.DATA.FACTORY_UPGRADES).length === 0);
+    const chapter4List = integration.DATA.ENGLISH_CHAPTER4_ALL;
+    const chapter4Question = ctx.buildFactoryUpgradeQuestion(chapter4List, 'english_name', 'hebrew');
+    check('the real Chapter 4 list builds a full 4-option question',
+        Array.isArray(chapter4List) && chapter4List.length > 0 &&
+        chapter4Question && chapter4Question.options.length === 4 && chapter4Question.options.includes(chapter4Question.answer),
+        JSON.stringify(chapter4Question));
 
     console.log(`\n${passed} passed, ${failed} failed`);
     if (failed) process.exit(1);
