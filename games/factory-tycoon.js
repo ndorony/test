@@ -145,8 +145,29 @@
         };
     }
 
-    // Central upgrade approval adapter. Replace requestUpgradeApproval() with the
-    // educational question engine later; every purchase funnels through here.
+    // ---- educational question engine ------------------------------------------
+    // Every upgrade must be earned by answering a vocabulary question served by
+    // the shared learning engine (generateFromList): weighted selection prefers
+    // weak words, batches unlock via setItems, and every answer is reported with
+    // updateWeightForKey under a dedicated "<appId>_quiz" knowledge key — the
+    // same mechanism as MCQComponent, independent of the factory tech tree. The
+    // quiz list is configurable per app entry (quizListName/quizQuestionIndex/
+    // quizResultIndex/quizSetItems in apps.js) and defaults to Chapter 4 words.
+    var FT_QUIZ_DEFAULTS = {listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10};
+    var FT_QUIZ_DELAYS = {correct: 700, wrong: 1700};
+
+    function resolveFactoryQuiz(app) {
+        app = app || {};
+        return {
+            listName: app.quizListName || FT_QUIZ_DEFAULTS.listName,
+            questionIndex: app.quizQuestionIndex || FT_QUIZ_DEFAULTS.questionIndex,
+            resultIndex: app.quizResultIndex || FT_QUIZ_DEFAULTS.resultIndex,
+            setItems: typeof app.quizSetItems === 'number' ? app.quizSetItems : FT_QUIZ_DEFAULTS.setItems
+        };
+    }
+
+    // Central upgrade approval adapter. Every purchase funnels through here; the
+    // component attaches a quiz question and only resolves true on a correct answer.
     var UpgradeApprovalService = {
         requestUpgradeApproval: function (component, definition) {
             return component.openUpgradeApproval(definition);
@@ -172,7 +193,8 @@
         var palletStack = [];
         var signLights = [], signLit = false;
         var minZoom = 0.2, maxZoom = 1.5;
-        var spawnClock = 0;
+        var spawnClock = 0, badgeClock = 260;
+        var badges = {};         // machine id -> floating "+" upgrade badge
         var pinch = null, dragInfo = null, userTouched = false;
         var dust = [];
         var reduced = bridge.reducedMotion;
@@ -976,6 +998,64 @@
             puffAt(b.centerX, b.centerY, 3, 0xffe9a8, b.width / 4);
         }
 
+        // -- upgrade "+" badges -------------------------------------------------
+        // A floating plus above every station that has a next upgrade: green and
+        // pulsing when affordable, gray with the price when money is still short.
+        function makeBadge(id) {
+            var m = machines[id];
+            if (!m || !m.root) return null;
+            var b = m.root.getBounds ? m.root.getBounds() : new P.Geom.Rectangle(m.root.x, m.root.y, m.w, m.h);
+            var by = b.top - 40;
+            if (by < 48) by = b.bottom + 44;    // the sign hugs the ceiling
+            var c = scene.add.container(b.centerX, by).setDepth(72).setVisible(false);
+            var ring = scene.add.circle(0, 0, 26, 0x57d06b).setStrokeStyle(5, 0x2b3145);
+            var barV = scene.add.rectangle(0, 0, 6.5, 24, 0xffffff);
+            var barH = scene.add.rectangle(0, 0, 24, 6.5, 0xffffff);
+            var cost = scene.add.text(0, 42, '', {
+                fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: '900',
+                color: '#ffffff', stroke: '#2b3145', strokeThickness: 5
+            }).setOrigin(0.5);
+            c.add([ring, barV, barH, cost]);
+            c.setSize(60, 60).setInteractive(new P.Geom.Rectangle(-30, -30, 60, 60), P.Geom.Rectangle.Contains);
+            c.input.cursor = 'pointer';
+            c.on('pointerup', function (pointer) { if (isTap(pointer)) bridge.onBadgeTap(id); });
+            badges[id] = {c: c, ring: ring, cost: cost, affordable: null, shown: false, tween: null};
+            return badges[id];
+        }
+
+        function refreshBadges() {
+            var hints = bridge.getUpgradeHints();
+            Object.keys(hints).forEach(function (id) {
+                var badge = badges[id] || makeBadge(id);
+                if (!badge) return;
+                var hint = hints[id];
+                if (!hint || !hint.available) {
+                    if (badge.shown) {
+                        badge.shown = false;
+                        badge.affordable = null;
+                        if (badge.tween) { badge.tween.stop(); badge.tween = null; }
+                        badge.c.setScale(1).setVisible(false);
+                    }
+                    return;
+                }
+                badge.c.setVisible(true);
+                badge.shown = true;
+                badge.cost.setText(String(hint.cost));
+                if (hint.affordable !== badge.affordable) {
+                    badge.affordable = hint.affordable;
+                    if (badge.tween) { badge.tween.stop(); badge.tween = null; badge.c.setScale(1); }
+                    if (hint.affordable) {
+                        badge.ring.setFillStyle(0x57d06b, 1);
+                        badge.c.setAlpha(1);
+                        if (!reduced) badge.tween = scene.tweens.add({targets: badge.c, scale: 1.16, duration: 470, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'});
+                    } else {
+                        badge.ring.setFillStyle(0x8d99b5, 1);
+                        badge.c.setAlpha(0.88);
+                    }
+                }
+            });
+        }
+
         // -- lifecycle ----------------------------------------------------------------
         scene.create = function () {
             makeSoftTextures();
@@ -997,6 +1077,7 @@
             initialFrame();
             setupInput();
             applyDerived();
+            refreshBadges();
             spawnClock = bridge.cycleDuration() * 0.4; // first log appears quickly
 
             bridge.attach({
@@ -1004,6 +1085,7 @@
                 zoomIn: function () { zoomBy(1.22); },
                 zoomOut: function () { zoomBy(0.82); },
                 applyDerived: applyDerived,
+                refreshBadges: refreshBadges,
                 levelUpFx: levelUpFx,
                 clearSelection: function () { clearSelection(true); },
                 selectMachine: selectMachine
@@ -1040,6 +1122,12 @@
             if (spawnClock >= bridge.cycleDuration() && products.length < 7) {
                 spawnClock = 0;
                 spawnProduct();
+            }
+            // upgrade badges track money/purchases (cheap poll, ~3x per second)
+            badgeClock += dtMs;
+            if (badgeClock >= 320) {
+                badgeClock = 0;
+                refreshBadges();
             }
             // workers
             for (var i = 0; i < workers.length; i++) updateWorker(workers[i], dtMs);
@@ -1100,7 +1188,7 @@
                 </button>
               </section>
               <div class="ft-sr-live" aria-live="polite">{{ liveAnnouncement }}</div>
-              <div v-if="pendingUpgrade" class="ft-modal-scrim" @click.self="resolveUpgradeChoice(false)">
+              <div v-if="pendingUpgrade" class="ft-modal-scrim" @click.self="dismissUpgrade">
                 <section class="ft-modal" role="dialog" aria-modal="true" :aria-label="pendingUpgrade.title">
                   <h2>{{ pendingUpgrade.title }}</h2>
                   <p>{{ pendingUpgrade.description }}</p>
@@ -1109,10 +1197,29 @@
                     <div><dt>רמה חדשה</dt><dd>{{ pendingUpgrade.nextLevel }}</dd></div>
                     <div><dt>מחיר</dt><dd>{{ pendingUpgrade.cost }}</dd></div>
                   </dl>
-                  <div class="ft-modal-actions">
-                    <button type="button" @click="resolveUpgradeChoice(false)">ביטול</button>
-                    <button ref="confirmBtn" type="button" class="confirm" @click="resolveUpgradeChoice(true)">שדרוג</button>
-                  </div>
+                  <template v-if="pendingUpgrade.question">
+                    <p class="ft-quiz-callout">ענו נכון על השאלה כדי לאשר את השדרוג:</p>
+                    <button type="button" class="ft-quiz-prompt" @click="speakQuizPrompt">{{ pendingUpgrade.question.prompt }}</button>
+                    <div class="ft-quiz-options">
+                      <button v-for="option in pendingUpgrade.question.options" :key="option" type="button"
+                        :class="quizOptionClass(option)" :disabled="quizChoice !== null"
+                        @click="answerUpgradeQuestion(option)">{{ option }}</button>
+                    </div>
+                    <p class="ft-quiz-feedback" :class="{ok: quizCorrect, bad: quizChoice !== null && !quizCorrect}">
+                      <template v-if="quizChoice === null">&nbsp;</template>
+                      <template v-else-if="quizCorrect">תשובה נכונה! השדרוג יוצא לדרך</template>
+                      <template v-else>התשובה הנכונה: {{ pendingUpgrade.question.answer }}</template>
+                    </p>
+                    <div class="ft-modal-actions">
+                      <button type="button" :disabled="quizChoice !== null" @click="resolveUpgradeChoice(false)">ביטול</button>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div class="ft-modal-actions">
+                      <button type="button" @click="resolveUpgradeChoice(false)">ביטול</button>
+                      <button ref="confirmBtn" type="button" class="confirm" @click="resolveUpgradeChoice(true)">שדרוג</button>
+                    </div>
+                  </template>
                 </section>
               </div>
             </div>`,
@@ -1124,6 +1231,8 @@
                     money: 40,
                     moneyPop: false,
                     pendingUpgrade: null,
+                    quizChoice: null,
+                    quizCorrect: false,
                     selectedMachine: null,
                     liveAnnouncement: '',
                     reducedMotion: false,
@@ -1196,6 +1305,22 @@
                     }
                     return null;
                 },
+                upgradeHints: function () {
+                    var hints = {};
+                    Object.keys(STATION_INFO).forEach(function (id) {
+                        var next = this.nextUpgradeFor(id);
+                        hints[id] = next
+                            ? {available: true, affordable: this.money >= next.cost, cost: next.cost}
+                            : {available: false};
+                    }, this);
+                    return hints;
+                },
+                handleBadgeTap: function (id) {
+                    var next = this.nextUpgradeFor(id);
+                    if (!next) return;
+                    if (this._sceneApi) this._sceneApi.selectMachine(id);
+                    if (this.money >= next.cost) this.attemptUpgrade(next.index);
+                },
                 // ---- Phaser bootstrap ----
                 bootScene: function () {
                     if (typeof Phaser === 'undefined' || !this.$refs.stage) return;
@@ -1203,9 +1328,11 @@
                     var bridge = {
                         reducedMotion: this.reducedMotion,
                         getDerived: function () { return self.derived; },
+                        getUpgradeHints: function () { return self.upgradeHints(); },
                         cycleDuration: function () { return self.cycleDuration(); },
                         productValue: function () { return self.productValue(); },
                         onSelect: function (id) { self.selectedMachine = id && STATION_INFO[id] ? id : null; },
+                        onBadgeTap: function (id) { self.handleBadgeTap(id); },
                         onDeliver: function (value) { self.completeDelivery(value); },
                         attach: function (api) { self._sceneApi = api; }
                     };
@@ -1236,20 +1363,80 @@
                     this.selectedMachine = null;
                     if (this._sceneApi) this._sceneApi.clearSelection();
                 },
+                quizKey: function () { return this.currentAppId + '_quiz'; },
+                makeUpgradeQuestion: function () {
+                    var quiz = resolveFactoryQuiz(this.currentApp);
+                    var generated = null;
+                    try {
+                        // questionType 'text' renders the prompt as plain text for the
+                        // modal; generated.action still speaks text_to_speech prompts.
+                        generated = generateFromList(quiz.listName, quiz.questionIndex, quiz.resultIndex, this.quizKey(), quiz.setItems, 'text');
+                    } catch (e) {}
+                    if (!generated || !Array.isArray(generated.options) || generated.options.length < 2) return null;
+                    return {
+                        prompt: generated.question,
+                        answer: generated.result,
+                        options: this.shuffle(generated.options.slice()),
+                        action: generated.action,
+                        index: generated.questionIndex
+                    };
+                },
                 openUpgradeApproval: function (definition) {
                     var self = this;
+                    definition.question = this.makeUpgradeQuestion();
+                    this.quizChoice = null;
+                    this.quizCorrect = false;
                     return new Promise(function (resolve) {
                         self.pendingUpgrade = definition;
                         self._resolveUpgradeFt = resolve;
                         self.$nextTick(function () { if (self.$refs.confirmBtn) self.$refs.confirmBtn.focus(); });
+                        if (definition.question) self.speakQuizPrompt();
                     });
                 },
+                speakQuizPrompt: function () {
+                    var q = this.pendingUpgrade && this.pendingUpgrade.question;
+                    if (q && typeof q.action === 'function') {
+                        try { q.action(); } catch (e) {}
+                    }
+                },
+                quizOptionClass: function (option) {
+                    var q = this.pendingUpgrade && this.pendingUpgrade.question;
+                    if (!q || this.quizChoice === null) return '';
+                    if (option === q.answer) return 'correct';
+                    if (option === this.quizChoice) return 'wrong';
+                    return '';
+                },
+                answerUpgradeQuestion: function (option) {
+                    var q = this.pendingUpgrade && this.pendingUpgrade.question;
+                    if (!q || this.quizChoice !== null) return;
+                    this.quizChoice = option;
+                    this.quizCorrect = option === q.answer;
+                    try { (this.quizCorrect ? successSound : failureSound).play(); } catch (e) {}
+                    // Report the answer to the learning engine under the quiz key,
+                    // mirroring MCQComponent (-1 mastered a step, +1 needs practice).
+                    if (typeof q.index === 'number') {
+                        updateWeightForKey(this.quizKey(), q.index, this.quizCorrect ? -1 : 1);
+                    }
+                    var self = this, accepted = this.quizCorrect;
+                    this._quizTimerFt = setTimeout(function () {
+                        self.resolveUpgradeChoice(accepted);
+                    }, accepted ? FT_QUIZ_DELAYS.correct : FT_QUIZ_DELAYS.wrong);
+                },
                 confirmUpgrade: function (item) { return UpgradeApprovalService.requestUpgradeApproval(this, getUpgradeDefinition(item)); },
+                dismissUpgrade: function () {
+                    // scrim taps must not skip a revealed answer, only an unanswered question
+                    if (this.quizChoice !== null) return;
+                    this.resolveUpgradeChoice(false);
+                },
                 resolveUpgradeChoice: function (accepted) {
                     if (!this.pendingUpgrade) return;
+                    clearTimeout(this._quizTimerFt);
+                    this._quizTimerFt = null;
                     var resolve = this._resolveUpgradeFt;
                     this.pendingUpgrade = null;
                     this._resolveUpgradeFt = null;
+                    this.quizChoice = null;
+                    this.quizCorrect = false;
                     if (resolve) resolve(accepted);
                 },
                 attemptUpgrade: async function (index) {
@@ -1303,6 +1490,7 @@
             beforeDestroy: function () {
                 this._destroyedFt = true;
                 clearTimeout(this._moneyTimerFt);
+                clearTimeout(this._quizTimerFt);
                 this.saveMoney();
                 if (this.pendingUpgrade) this.resolveUpgradeChoice(false);
                 if (this._game) {
@@ -1320,6 +1508,8 @@
     global.deriveFactoryState = deriveFactoryState;
     global.resolveFactoryTheme = resolveFactoryTheme;
     global.getFactoryUpgradeDefinition = getUpgradeDefinition;
+    global.resolveFactoryQuiz = resolveFactoryQuiz;
+    global.FT_QUIZ_DELAYS = FT_QUIZ_DELAYS;
     global.FactoryUpgradeApprovalService = UpgradeApprovalService;
     global.createFactoryTycoonComponent = createFactoryTycoonComponent;
 })(typeof window !== 'undefined' ? window : globalThis);

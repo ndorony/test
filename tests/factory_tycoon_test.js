@@ -194,7 +194,129 @@ ctx.successSound = {play() {}};
     await methods.attemptUpgrade.call(stageContinues, 0);
     check('reloadProgress() === true saves score and continues', saveScoreCalls === 1);
 
-    console.log('--- 5. legacy registration ---');
+    console.log('--- 5. quiz config + engine-served questions ---');
+    const quizDefaults = ctx.resolveFactoryQuiz({});
+    check('quiz defaults to the Chapter 4 word list in batches of 10',
+        quizDefaults.listName === 'ENGLISH_CHAPTER4_ALL' && quizDefaults.questionIndex === 'english_name' &&
+        quizDefaults.resultIndex === 'hebrew' && quizDefaults.setItems === 10,
+        JSON.stringify(quizDefaults));
+    const quizCustom = ctx.resolveFactoryQuiz({quizListName: 'L', quizQuestionIndex: 'q', quizResultIndex: 'r', quizSetItems: 3});
+    check('quiz config is overridable per app entry',
+        quizCustom.listName === 'L' && quizCustom.questionIndex === 'q' && quizCustom.resultIndex === 'r' && quizCustom.setItems === 3);
+
+    console.log('--- 6. quiz gate: the shared engine selects and records answers ---');
+    ctx.FT_QUIZ_DELAYS.correct = 0;
+    ctx.FT_QUIZ_DELAYS.wrong = 0;
+    ctx.failureSound = {play() {}};
+    let engineCalls = [];
+    let quizSpoken = 0;
+    ctx.generateFromList = (listName, questionIndex, resultIndex, key, setItems, questionType) => {
+        engineCalls.push({listName, questionIndex, resultIndex, key, setItems, questionType});
+        return {
+            question: 'Art',
+            result: 'אומנות',
+            options: ['אומנות', 'מוזיקה', 'להקה', 'גיטרה'],
+            action: () => { quizSpoken += 1; },
+            questionIndex: 7,
+        };
+    };
+    function makeQuizInstance(overrides) {
+        return makeUpgradeInstance(definition, Object.assign({
+            $refs: {},
+            shuffle: a => a,
+            confirmUpgrade: methods.confirmUpgrade,
+            nextUpgradeFor: methods.nextUpgradeFor,
+            quizKey: methods.quizKey,
+            openUpgradeApproval: methods.openUpgradeApproval,
+            makeUpgradeQuestion: methods.makeUpgradeQuestion,
+            speakQuizPrompt: methods.speakQuizPrompt,
+            answerUpgradeQuestion: methods.answerUpgradeQuestion,
+            resolveUpgradeChoice: methods.resolveUpgradeChoice,
+            dismissUpgrade: methods.dismissUpgrade,
+            quizOptionClass: methods.quizOptionClass,
+        }, overrides));
+    }
+
+    reports.length = 0;
+    engineCalls = [];
+    const quizRight = makeQuizInstance({});
+    const rightAttempt = methods.attemptUpgrade.call(quizRight, 0);
+    check('opening the upgrade dialog asks the shared engine for a question',
+        engineCalls.length === 1 && engineCalls[0].listName === 'ENGLISH_CHAPTER4_ALL' && engineCalls[0].questionIndex === 'english_name' &&
+        engineCalls[0].resultIndex === 'hebrew' && engineCalls[0].setItems === 10 && engineCalls[0].questionType === 'text',
+        JSON.stringify(engineCalls));
+    check('the quiz uses its own knowledge key, separate from the tech tree',
+        engineCalls[0].key === 'ft-test_quiz');
+    check('the engine question is attached to the dialog',
+        !!(quizRight.pendingUpgrade && quizRight.pendingUpgrade.question) && quizRight.pendingUpgrade.question.prompt === 'Art' &&
+        quizRight.pendingUpgrade.question.options.length === 4, JSON.stringify(quizRight.pendingUpgrade));
+    check('opening the dialog speaks the prompt via the engine action', quizSpoken === 1);
+    methods.answerUpgradeQuestion.call(quizRight, quizRight.pendingUpgrade.question.answer);
+    check('a correct choice is recorded as correct', quizRight.quizCorrect === true);
+    await rightAttempt;
+    check('a correct answer reports -1 on the quiz key, like MCQComponent',
+        reports.some(r => r.key === 'ft-test_quiz' && r.index === 7 && r.change === -1), JSON.stringify(reports));
+    check('a correct answer still purchases the upgrade and reports the tech-tree item',
+        quizRight.purchasedMap[0] === true && quizRight.money === 50 &&
+        reports.some(r => r.key === 'ft-test' && r.index === 0 && r.change === -15) && reports.length === 2,
+        JSON.stringify(reports));
+
+    reports.length = 0;
+    const quizWrong = makeQuizInstance({});
+    const wrongAttempt = methods.attemptUpgrade.call(quizWrong, 0);
+    const wrongOption = quizWrong.pendingUpgrade.question.options.find(option => option !== quizWrong.pendingUpgrade.question.answer);
+    methods.answerUpgradeQuestion.call(quizWrong, wrongOption);
+    methods.answerUpgradeQuestion.call(quizWrong, quizWrong.pendingUpgrade.question.answer);
+    check('the first answer locks in; a second click is ignored',
+        quizWrong.quizChoice === wrongOption && quizWrong.quizCorrect === false);
+    methods.dismissUpgrade.call(quizWrong);
+    check('a scrim tap after answering does not close the reveal early', quizWrong.pendingUpgrade !== null);
+    await wrongAttempt;
+    check('a wrong answer reports +1 on the quiz key and cancels the purchase',
+        quizWrong.money === 100 && !quizWrong.purchasedMap[0] &&
+        reports.length === 1 && reports[0].key === 'ft-test_quiz' && reports[0].change === 1,
+        JSON.stringify(reports));
+
+    reports.length = 0;
+    const quizCancel = makeQuizInstance({});
+    const cancelAttempt = methods.attemptUpgrade.call(quizCancel, 0);
+    methods.dismissUpgrade.call(quizCancel);
+    await cancelAttempt;
+    check('a scrim tap before answering cancels cleanly with no reports',
+        quizCancel.money === 100 && reports.length === 0 && quizCancel.pendingUpgrade === null);
+
+    reports.length = 0;
+    ctx.generateFromList = () => { throw new Error('List does not exist'); };
+    const quizFallback = makeQuizInstance({confirmUpgrade: methods.confirmUpgrade});
+    const fallbackAttempt = methods.attemptUpgrade.call(quizFallback, 0);
+    check('an unavailable quiz list falls back to the plain confirm dialog',
+        quizFallback.pendingUpgrade !== null && quizFallback.pendingUpgrade.question === null);
+    methods.resolveUpgradeChoice.call(quizFallback, true);
+    await fallbackAttempt;
+    check('the fallback confirm still purchases through the same gate',
+        quizFallback.purchasedMap[0] === true && reports.length === 1 && reports[0].key === 'ft-test');
+    ctx.generateFromList = (listName, questionIndex, resultIndex, key, setItems, questionType) => {
+        engineCalls.push({listName, questionIndex, resultIndex, key, setItems, questionType});
+        return {question: 'Art', result: 'אומנות', options: ['אומנות', 'מוזיקה', 'להקה', 'גיטרה'], action: () => { quizSpoken += 1; }, questionIndex: 7};
+    };
+
+    console.log('--- 7. upgrade hints drive the scene "+" badges ---');
+    const hintsRich = makeQuizInstance({money: 100});
+    const richHints = methods.upgradeHints.call(hintsRich);
+    check('a station with a pending upgrade is marked available and affordable',
+        richHints.sawmill && richHints.sawmill.available === true && richHints.sawmill.affordable === true && richHints.sawmill.cost === 50,
+        JSON.stringify(richHints.sawmill));
+    check('a station with no pending upgrade is marked unavailable',
+        richHints.packaging && richHints.packaging.available === false, JSON.stringify(richHints.packaging));
+    const hintsPoor = makeQuizInstance({money: 10});
+    const poorHints = methods.upgradeHints.call(hintsPoor);
+    check('an unaffordable upgrade stays visible but not affordable',
+        poorHints.sawmill.available === true && poorHints.sawmill.affordable === false);
+    const hintsDone = makeQuizInstance({purchasedMap: {0: true}});
+    const doneHints = methods.upgradeHints.call(hintsDone);
+    check('a purchased upgrade no longer advertises a badge', doneHints.sawmill.available === false);
+
+    console.log('--- 8. legacy registration ---');
     function makeStorage() {
         const map = new Map();
         return {
@@ -231,8 +353,36 @@ ctx.successSound = {play() {}};
     );
     check('legacy menu registers a complete factory_tycoon app',
         legacyFactory && legacyFactory.listName === 'FACTORY_UPGRADES' && legacyFactory.setItems === 4, JSON.stringify(legacyFactory));
+    check('the app entry wires the Chapter 4 quiz (list + fields + batch size)',
+        legacyFactory && legacyFactory.quizListName === 'ENGLISH_CHAPTER4_ALL' &&
+        legacyFactory.quizQuestionIndex === 'english_name' && legacyFactory.quizResultIndex === 'hebrew' &&
+        legacyFactory.quizSetItems === 10,
+        JSON.stringify(legacyFactory));
     check('the registered list resolves through the shared data API and passes validation',
         ctx.validateFactoryUpgrades(integration.DATA.FACTORY_UPGRADES).length === 0);
+
+    // The quiz rides the real learning engine: weighted selection under its own
+    // knowledge key, seeded and updated exactly like a regular MCQ app.
+    const quizGenerated = vm.runInContext(
+        `generateFromList('ENGLISH_CHAPTER4_ALL', 'english_name', 'hebrew', '5_0_quiz', 10, 'text')`,
+        integration
+    );
+    check('the real engine serves a Chapter 4 question under the quiz key',
+        quizGenerated && typeof quizGenerated.question === 'string' && quizGenerated.options.length === 4 &&
+        quizGenerated.options.includes(quizGenerated.result), JSON.stringify(quizGenerated));
+    check('questionType "text" renders the prompt as plain text for the modal',
+        quizGenerated && !/^</.test(quizGenerated.question));
+    const chapter4Length = integration.DATA.ENGLISH_CHAPTER4_ALL.length;
+    const quizWeights = vm.runInContext(`JSON.parse(localStorage.getItem(getWeightsKey('5_0_quiz')))`, integration);
+    check('quiz weights seed like a regular app: first batch of 10 unlocked, the rest locked',
+        Array.isArray(quizWeights) && quizWeights.length === chapter4Length &&
+        quizWeights.slice(0, 10).every(w => w === 5) && quizWeights.slice(10).every(w => w === -1),
+        JSON.stringify(quizWeights));
+    check('the engine picked the question from the unlocked batch', quizGenerated.questionIndex < 10);
+    vm.runInContext(`updateWeightForKey('5_0_quiz', ${quizGenerated.questionIndex}, -1)`, integration);
+    const afterAnswer = vm.runInContext(`JSON.parse(localStorage.getItem(getWeightsKey('5_0_quiz')))`, integration);
+    check('a reported correct answer lowers that word\'s weight from 5 to 4',
+        afterAnswer[quizGenerated.questionIndex] === 4);
 
     console.log(`\n${passed} passed, ${failed} failed`);
     if (failed) process.exit(1);
