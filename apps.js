@@ -294,6 +294,7 @@ apps =  {
         {icon: 'sports_kabaddi', name:'דו-קרב - מילים חדשות', type: 'app', appType: 'duel_shooter', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - חיות', type: 'app', appType: 'wizard_duel', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - מילים חדשות', type: 'app', appType: 'wizard_duel', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
+        {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - מילים לכיתה ו\'', type: 'app', appType: 'wizard_duel', listName: 'GRADE6_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 8, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
         {
           name: 'מילות מפתח בפייתון',
           type: 'menu',
