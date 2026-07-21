@@ -7566,4 +7566,40 @@ DATA.FACTORY_UPGRADES = [
     {name: {type: 'text', value: 'גיוס עובד שלישי'}, detail: {type: 'text', value: 'צוות שלם עכשיו רץ בין כל התחנות.'}, machine: 'worker3', level: 1, kind: 'hire', cost: 380},
     {name: {type: 'text', value: 'תלייה שלט מפעל'}, detail: {type: 'text', value: 'שלט מואר עם שם המפעל, לגאווה.'}, machine: 'sign', level: 1, kind: 'decorate', cost: 100},
     {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 3'}, detail: {type: 'text', value: 'קו הייצור השלם רץ במהירות המרבית.'}, machine: 'packaging', level: 3, kind: 'upgrade', cost: 420},
+
+    // --- Expansion: the factory keeps growing far past its first shipment ---
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 5'}, detail: {type: 'text', value: 'להב מחושל חדש נוגס בעץ בלי מאמץ.'}, machine: 'sawmill', level: 5, kind: 'upgrade', cost: 460},
+    {name: {type: 'text', value: 'שדרוג המחסן לרמה 2'}, detail: {type: 'text', value: 'מדפים נוספים לאחסון תוצרת בזמן עומס.'}, machine: 'storage', level: 2, kind: 'upgrade', cost: 500},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 4'}, detail: {type: 'text', value: 'עוד זרוע הרכבה מצטרפת לקו.'}, machine: 'workshop', level: 4, kind: 'upgrade', cost: 540},
+    {name: {type: 'text', value: 'גיוס עובד רביעי'}, detail: {type: 'text', value: 'עוד זוג ידיים זריזות על הפס.'}, machine: 'worker4', level: 1, kind: 'hire', cost: 600},
+
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 4'}, detail: {type: 'text', value: 'מכונת אריזה סוגרת קופסאות במהירות.'}, machine: 'packaging', level: 4, kind: 'upgrade', cost: 660},
+    {name: {type: 'text', value: 'שדרוג השלט לרמה 2'}, detail: {type: 'text', value: 'נורות בהירות יותר מאירות את המפעל.'}, machine: 'sign', level: 2, kind: 'decorate', cost: 700},
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 6'}, detail: {type: 'text', value: 'שני להבים חותכים במקביל.'}, machine: 'sawmill', level: 6, kind: 'upgrade', cost: 720},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 5'}, detail: {type: 'text', value: 'תבניות מדויקות, פחות בזבוז.'}, machine: 'workshop', level: 5, kind: 'upgrade', cost: 780},
+
+    {name: {type: 'text', value: 'שדרוג המחסן לרמה 3'}, detail: {type: 'text', value: 'מדף שלישי מכפיל את מקום האחסון.'}, machine: 'storage', level: 3, kind: 'upgrade', cost: 820},
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 5'}, detail: {type: 'text', value: 'סרט אריזה כפול לקופסאות חזקות.'}, machine: 'packaging', level: 5, kind: 'upgrade', cost: 860},
+    {name: {type: 'text', value: 'גיוס עובד חמישי'}, detail: {type: 'text', value: 'המשמרת מתמלאת בעובדים חרוצים.'}, machine: 'worker5', level: 1, kind: 'hire', cost: 900},
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 7'}, detail: {type: 'text', value: 'מסור תעשייתי כבד לחיתוך רציף.'}, machine: 'sawmill', level: 7, kind: 'upgrade', cost: 960},
+
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 6'}, detail: {type: 'text', value: 'זרועות רובוטיות מרכיבות בלי הפסקה.'}, machine: 'workshop', level: 6, kind: 'upgrade', cost: 1000},
+    {name: {type: 'text', value: 'שדרוג המחסן לרמה 4'}, detail: {type: 'text', value: 'מלגזה קטנה מסדרת את המדפים לבד.'}, machine: 'storage', level: 4, kind: 'upgrade', cost: 1040},
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 6'}, detail: {type: 'text', value: 'מכבש אריזה ממתג בין גדלים.'}, machine: 'packaging', level: 6, kind: 'upgrade', cost: 1080},
+    {name: {type: 'text', value: 'שדרוג השלט לרמה 3'}, detail: {type: 'text', value: 'שלט ניאון מהבהב שנראה מכל העיר.'}, machine: 'sign', level: 3, kind: 'decorate', cost: 1140},
+
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 8'}, detail: {type: 'text', value: 'מרכז חיתוך אוטומטי במלואו.'}, machine: 'sawmill', level: 8, kind: 'upgrade', cost: 1200},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 7'}, detail: {type: 'text', value: 'קו הרכבה חכם שמכייל את עצמו.'}, machine: 'workshop', level: 7, kind: 'upgrade', cost: 1260},
+    {name: {type: 'text', value: 'גיוס עובד שישי'}, detail: {type: 'text', value: 'צוות מלא — אף תחנה לא ממתינה.'}, machine: 'worker6', level: 1, kind: 'hire', cost: 1320},
+    {name: {type: 'text', value: 'שדרוג המחסן לרמה 5'}, detail: {type: 'text', value: 'מדפים ממונעים מגיעים עד התקרה.'}, machine: 'storage', level: 5, kind: 'upgrade', cost: 1380},
+
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 7'}, detail: {type: 'text', value: 'זרוע אריזה רובוטית עצמאית.'}, machine: 'packaging', level: 7, kind: 'upgrade', cost: 1440},
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 9'}, detail: {type: 'text', value: 'לייזר מנחה את החיתוך למילימטר.'}, machine: 'sawmill', level: 9, kind: 'upgrade', cost: 1520},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 8'}, detail: {type: 'text', value: 'תא הרכבה כפול לתפוקה עצומה.'}, machine: 'workshop', level: 8, kind: 'upgrade', cost: 1600},
+    {name: {type: 'text', value: 'שדרוג המחסן לרמה 6'}, detail: {type: 'text', value: 'מחסן ענק ששומר על מלאי ליום שלם.'}, machine: 'storage', level: 6, kind: 'upgrade', cost: 1680},
+
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 8'}, detail: {type: 'text', value: 'מפעל אריזה בתוך מפעל.'}, machine: 'packaging', level: 8, kind: 'upgrade', cost: 1780},
+    {name: {type: 'text', value: 'שדרוג המסור לרמה 10'}, detail: {type: 'text', value: 'המסור האולטימטיבי — עץ הופך לקרשים בהרף עין.'}, machine: 'sawmill', level: 10, kind: 'upgrade', cost: 1900},
+    {name: {type: 'text', value: 'שדרוג מגרסת ההרכבה לרמה 9'}, detail: {type: 'text', value: 'מגרסת-על שמרכיבה צעצוע בשנייה.'}, machine: 'workshop', level: 9, kind: 'upgrade', cost: 2040},
+    {name: {type: 'text', value: 'שדרוג עמדת האריזה לרמה 9'}, detail: {type: 'text', value: 'קו האריזה המהיר בעולם — המפעל בשיאו.'}, machine: 'packaging', level: 9, kind: 'upgrade', cost: 2200},
 ];
