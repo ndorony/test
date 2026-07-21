@@ -4,5 +4,23 @@ tmp_server_err.log
 __pycache__/
 pygame_game/saves/
 
+# Offline art-generation inputs (Kenney GLB kits) — regenerable via tools/kenney-*.html,
+# downloaded from kenney.nl, ~MBs each. Never commit; the app ships only the rendered PNGs.
+/carto/
+/castle/
+/graveyard/
+/hexagon/
+/miniarena/
+/miniforest/
+/minidungeon/
+/nature/
+/platformer/
+/survival/
+/town/
+/*.zip
+# Scratch exports left by the art pipeline
+/.assets-temp/
+/.assets-*.jpg
+
 # Secrets — never commit
 .secrets/

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<!--
+  kenney-hexmap-render.html - renders the Knowledge Defense battlefield
+  (assets/knowledge-defense/battlefield.png) from Kenney GLB kits.
+
+  Setup - download + extract these kits from kenney.nl next to this file:
+    hexagon/ (Hexagon Kit)      survival/ (Survival Kit)
+    platformer/ (Platformer Kit)  miniforest/ (Mini Forest)
+  Also save three.min.js (r147) and GLTFLoader.js (r147 examples/js) next to it,
+  then serve over http and shoot it:
+    msedge --headless=new --window-size=1920,1080 --default-background-color=00000000
+           --virtual-time-budget=45000 --screenshot=battlefield.png
+           "http://localhost:8100/kenney-hexmap-render.html"
+  The measured path/plot/castle percentages are written into #out (display:none, so
+  they never bake into the PNG); read them back with --dump-dom and paste into
+  games/knowledge-defense.js. ?zoom= overrides the framing while tuning.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}canvas{display:block}/* #out carries the measured coordinates for --dump-dom; never paint it into the PNG */
+#out{display:none}</style>
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+'use strict';
+const HEX = 'hexagon/Models/GLB format/';
+const SURV = 'survival/Models/GLB format/';
+const PLAT = 'platformer/Models/GLB format/';
+const MINI = 'miniforest/Models/GLB format/';
+// The board fills the whole screen - there is no sky band.
+const W = 1920, H = 1080;
+
+// ---- map definition (flat-top odd-q offset grid) ----
+// Only this region is authored. The camera is framed on it, then scenery hexes are
+// generated outwards to cover whatever the frame still shows — so the board always
+// fills the band edge-to-edge and no transparent corner lets the sky through.
+const Q = new URLSearchParams(location.search);
+const COLS = 18, ROWS = 11;
+// Build a CONNECTED path left->right. East neighbours of (c,r): even c -> {r, r-1}; odd c -> {r, r+1}.
+// Choose, each column, the valid neighbour row closest to a gentle S-profile.
+const PATH = [[0, 5]];
+const profile = c => 5 + 2.2 * Math.sin(c / (COLS - 1) * Math.PI * 1.6);
+for (let c = 1; c < COLS; c++) {
+    const [pc, pr] = PATH[c - 1];
+    const opts = (pc % 2 === 0) ? [pr, pr - 1] : [pr, pr + 1];
+    opts.sort((a, b) => Math.abs(a - profile(c)) - Math.abs(b - profile(c)));
+    PATH.push([c, Math.max(1, Math.min(ROWS - 2, opts[0]))]);
+}
+const pathSet = new Set(PATH.map(p => p[0] + ',' + p[1]));
+
+// terrain features keyed "c,r" (kept off the path)
+const FEATURE = {};
+function feat(kind, cells) { cells.forEach(k => { if (!pathSet.has(k.join(','))) FEATURE[k.join(',')] = kind; }); }
+// a pond in the lower-left
+feat('water', [[2,8],[3,8],[2,9],[3,9],[4,9]]);
+// stone outcrops
+feat('stone', [[6,0],[13,0],[9,1]]);
+feat('hill', [[15,1],[1,2]]);
+// forests scattered as clumps
+feat('forest', [[1,0],[4,1],[8,0],[11,0],[16,2],[17,4],[0,4],[1,7],[5,9],[9,10],[12,10],[16,9],[17,7],[13,8],[7,10]]);
+
+// Scenery outside the authored region: a positional hash, so it is stable for any
+// (c,r) — including negatives — and reproducible across renders.
+function hash(c, r, salt) {
+    let h = Math.imul(c, 374761393) ^ Math.imul(r, 668265263) ^ Math.imul(salt || 0, 2246822519) ^ 0x5bf03635;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function sceneryAt(c, r) {
+    const p = hash(c, r);
+    if (p < .30) return 'forest';
+    if (p < .35) return 'hill';
+    if (p < .38) return 'stone';
+    return 'grass';
+}
+const inPlay = (c, r) => c >= 0 && c < COLS && r >= 0 && r < ROWS;
+
+// ---- props: small kit models dropped on top of the hexes to dress the board ----
+// Each model is scaled at load time to fit BOTH a footprint (`w`) and a height
+// (`h`), given as fractions of the hex width - capping only the footprint lets
+// flat, tall models (banners, frames) tower over the board. Mixing kits with very
+// different native scales is exactly what these two caps are for.
+// `n` is how many of that prop may share a hex, `weight` its relative frequency.
+const PROPS = [
+    // camps
+    {id:'tent',      file:SURV+'tent.glb',            w:.58, h:.52, n:1, weight:2},
+    {id:'tentCanvas',file:SURV+'tent-canvas.glb',     w:.55, h:.48, n:1, weight:2},
+    {id:'tentM',     file:MINI+'tent.glb',            w:.50, h:.48, n:1, weight:2},
+    {id:'campfire',  file:SURV+'campfire-stand.glb',  w:.34, h:.34, n:1, weight:2},
+    {id:'firepit',   file:SURV+'campfire-pit.glb',    w:.30, h:.16, n:1, weight:2},
+    {id:'bedroll',   file:SURV+'bedroll.glb',         w:.30, h:.14, n:1, weight:1},
+    // camp clutter
+    {id:'log',       file:SURV+'tree-log.glb',        w:.40, h:.20, n:1, weight:3},
+    {id:'logSmall',  file:SURV+'tree-log-small.glb',  w:.26, h:.16, n:2, weight:3},
+    {id:'barrel',    file:SURV+'barrel.glb',          w:.20, h:.26, n:2, weight:3},
+    {id:'chest',     file:SURV+'chest.glb',           w:.24, h:.22, n:1, weight:2},
+    {id:'crate',     file:PLAT+'crate.glb',           w:.22, h:.24, n:2, weight:2},
+    {id:'planks',    file:SURV+'resource-planks.glb', w:.30, h:.16, n:1, weight:2},
+    {id:'firewood',  file:SURV+'resource-wood.glb',   w:.26, h:.18, n:1, weight:2},
+    {id:'signpost',  file:SURV+'signpost.glb',        w:.24, h:.34, n:1, weight:2},
+    {id:'workbench', file:SURV+'workbench.glb',       w:.32, h:.28, n:1, weight:1},
+    {id:'anvil',     file:SURV+'workbench-anvil.glb', w:.26, h:.24, n:1, weight:1},
+    // rocks
+    {id:'rockA',     file:SURV+'rock-a.glb',          w:.26, h:.22, n:2, weight:3},
+    {id:'rockB',     file:SURV+'rock-b.glb',          w:.22, h:.20, n:2, weight:3},
+    {id:'rocksLow',  file:MINI+'rocks-low.glb',       w:.30, h:.22, n:1, weight:3},
+    {id:'stonesM',   file:MINI+'stones.glb',          w:.24, h:.16, n:2, weight:3},
+    {id:'stonesP',   file:PLAT+'stones.glb',          w:.24, h:.16, n:2, weight:3},
+    // trees
+    {id:'treeTall',  file:SURV+'tree-tall.glb',       w:.44, h:.85, n:1, weight:3},
+    {id:'treeAutumn',file:SURV+'tree-autumn.glb',     w:.44, h:.75, n:1, weight:2},
+    {id:'pine',      file:PLAT+'tree-pine.glb',       w:.42, h:.85, n:1, weight:3},
+    {id:'treeM',     file:MINI+'tree.glb',            w:.44, h:.75, n:1, weight:3},
+    {id:'treeHigh',  file:MINI+'tree-high.glb',       w:.42, h:.85, n:1, weight:3},
+    {id:'stump',     file:SURV+'tree-trunk.glb',      w:.22, h:.22, n:2, weight:2},
+    // ground cover
+    {id:'flowers',   file:PLAT+'flowers.glb',         w:.20, h:.16, n:3, weight:5},
+    {id:'flowersTall',file:PLAT+'flowers-tall.glb',   w:.20, h:.20, n:3, weight:4},
+    {id:'mushrooms', file:PLAT+'mushrooms.glb',       w:.18, h:.14, n:3, weight:4},
+    {id:'plantP',    file:PLAT+'plant.glb',           w:.20, h:.18, n:3, weight:4},
+    {id:'plantM',    file:MINI+'plant.glb',           w:.22, h:.20, n:3, weight:4},
+    {id:'grassP',    file:PLAT+'grass.glb',           w:.22, h:.16, n:3, weight:5},
+    {id:'hedge',     file:PLAT+'hedge.glb',           w:.34, h:.26, n:1, weight:2},
+];
+const PROP_TOTAL = PROPS.reduce((s, p) => s + p.weight, 0);
+// how often a bare grass hex gets dressed at all
+const PROP_CHANCE = +Q.get('props') || .42;
+// Global trim on every prop. The hexagon kit draws its own tile decoration (the
+// trees on a forest tile) very small, so props sized purely against the hex read
+// as giants next to them; this pulls the whole set back to that visual language.
+const PROP_SCALE = +Q.get('pscale') || .58;
+
+const FILES = {
+    grass: HEX+'grass.glb', dirt: HEX+'dirt.glb', forest: HEX+'grass-forest.glb',
+    water: HEX+'water.glb', stone: HEX+'stone-rocks.glb', hill: HEX+'grass-hill.glb',
+    castle: HEX+'building-castle.glb', wall: HEX+'building-wall.glb',
+};
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer:true});
+renderer.setSize(W, H); renderer.setClearColor(0x000000, 0); renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(new THREE.AmbientLight(0xffffff, .55));
+const hemi = new THREE.HemisphereLight(0xdfefff, 0xbfae86, .55); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff3dc, .85); sun.position.set(5, 8, 3); scene.add(sun);
+const fill = new THREE.DirectionalLight(0xbcd8ff, .28); fill.position.set(-4, 3, -3); scene.add(fill);
+
+const loader = new THREE.GLTFLoader();
+const load = url => new Promise((res, rej) => loader.load(url, g => res(g.scene), undefined, rej));
+const names = Object.keys(FILES);
+Promise.all([
+    Promise.all(names.map(n => load(FILES[n]).then(s => [n, s]))),
+    Promise.all(PROPS.map(p => load(p.file).then(s => [p.id, s]))),
+])
+.then(([tileEntries, propEntries]) => {
+    const M = Object.fromEntries(tileEntries);
+    const P = Object.fromEntries(propEntries);
+    // Kenney hexes are pointy-top in model space: flats face +/-X (extent 1.0),
+    // points run along +/-Z (extent 1.1547 = 2/sqrt(3)). Spin every tile 90 deg about Y
+    // so the odd-q offset grid below is a true flat-top tessellation.
+    const HEX_ROT = Math.PI / 2;
+    // measure grass hex -> flat-top spacing (extents swap after the rotation)
+    const gb = new THREE.Box3().setFromObject(M.grass), gs = gb.getSize(new THREE.Vector3());
+    const width = gs.z, height = gs.x, topY = gb.max.y;
+    const colStep = width * 0.75, rowStep = height, oddOff = height / 2;
+    function world(c, r){ return {x: c * colStep, z: r * rowStep + (c & 1) * oddOff}; }
+
+    const root = new THREE.Group();
+    function place(kind, c, r){
+        const w = world(c, r); const m = M[kind].clone(true);
+        m.position.set(w.x, 0, w.z); m.rotation.y = HEX_ROT; root.add(m); return m;
+    }
+    const END = PATH[PATH.length - 1];
+
+    // build plots: grass hexes adjacent to the path (auto-pick, spread along the route).
+    // Resolved before anything is laid so the tile pass can keep these cells bare.
+    function eastNeighbors(c,r){ return (c%2===0)?[[c+1,r],[c+1,r-1],[c-1,r],[c-1,r-1],[c,r-1],[c,r+1]]:[[c+1,r],[c+1,r+1],[c-1,r],[c-1,r+1],[c,r-1],[c,r+1]]; }
+    const isFree = (c,r)=> c>=0&&c<COLS&&r>=0&&r<ROWS&&!pathSet.has(c+','+r)&&!FEATURE[c+','+r]&&!(c===END[0]&&r===END[1]);
+    const plotCells=[], usedPlot=new Set();
+    for (let i=2; i<PATH.length-1 && plotCells.length<5; i+=Math.floor((PATH.length-3)/5)||1){
+        const [c,r]=PATH[i];
+        for (const [nc,nr] of eastNeighbors(c,r)) if (isFree(nc,nr) && !usedPlot.has(nc+','+nr)){ plotCells.push([nc,nr]); usedPlot.add(nc+','+nr); break; }
+    }
+
+    // Normalise every prop to its target footprint and remember how far its pivot
+    // sits below the model, so props can be dropped flush onto a hex top.
+    PROPS.forEach(p => {
+        P[p.id].updateMatrixWorld(true);
+        const b = new THREE.Box3().setFromObject(P[p.id]), s = b.getSize(new THREE.Vector3());
+        p.scale = PROP_SCALE * Math.min(
+            (width * p.w) / Math.max(s.x, s.z, 1e-6),
+            (width * p.h) / Math.max(s.y, 1e-6));
+        p.drop = b.min.y * p.scale;
+    });
+    // Dress a hex: 0..n props scattered inside the hex face, rotated at random.
+    function dress(c, r, surfaceY) {
+        if (hash(c, r, 11) > PROP_CHANCE) return;
+        let roll = hash(c, r, 12) * PROP_TOTAL, pick = PROPS[PROPS.length - 1];
+        for (const p of PROPS) { if ((roll -= p.weight) <= 0) { pick = p; break; } }
+        const count = 1 + Math.floor(hash(c, r, 13) * pick.n);
+        const w = world(c, r);
+        for (let i = 0; i < count; i++) {
+            const a = hash(c, r, 20 + i) * Math.PI * 2;
+            const rad = (count === 1 ? hash(c, r, 30 + i) * .16 : .12 + hash(c, r, 30 + i) * .2) * width;
+            // Wrap rather than writing to the model's own scale - several kit scenes
+            // carry a non-identity root transform that must be preserved.
+            const m = new THREE.Group();
+            m.add(P[pick.id].clone(true));
+            m.scale.setScalar(pick.scale);
+            m.rotation.y = hash(c, r, 40 + i) * Math.PI * 2;
+            m.position.set(w.x + Math.cos(a) * rad, surfaceY - pick.drop, w.z + Math.sin(a) * rad);
+            root.add(m);
+        }
+    }
+
+    // ---- camera: orthographic iso framed on the PLAYABLE region ----
+    // Framing first (before any tile is laid) is what lets the scenery pass below
+    // know exactly which cells the frame still shows.
+    const box = new THREE.Box3();
+    for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+        const w = world(c, r);
+        box.expandByPoint(new THREE.Vector3(w.x - width/2, 0, w.z - height/2));
+        box.expandByPoint(new THREE.Vector3(w.x + width/2, topY, w.z + height/2));
+    }
+    const center = box.getCenter(new THREE.Vector3());
+    const yaw = Math.PI/4, pitch = THREE.MathUtils.degToRad(34);
+    const dist = 200;
+    const cam = new THREE.OrthographicCamera(-1,1,1,-1,.1,dist*4);
+    cam.position.set(center.x + dist*Math.cos(pitch)*Math.sin(yaw), center.y + dist*Math.sin(pitch), center.z + dist*Math.cos(pitch)*Math.cos(yaw));
+    cam.lookAt(center); cam.updateMatrixWorld();
+    const inv = cam.matrixWorldInverse;
+    let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+    for (let i=0;i<8;i++){ const cn=new THREE.Vector3(i&1?box.max.x:box.min.x,i&2?box.max.y:box.min.y,i&4?box.max.z:box.min.z).applyMatrix4(inv); minX=Math.min(minX,cn.x);maxX=Math.max(maxX,cn.x);minY=Math.min(minY,cn.y);maxY=Math.max(maxY,cn.y);}
+    const spanX=maxX-minX, spanY=maxY-minY, aspect=W/H;
+    // Fit the playable region to the frame, then zoom in by ZOOM so the route fills
+    // it comfortably; the surrounding scenery is generated to cover the rest.
+    const ZOOM = +Q.get('zoom') || 0.87;
+    let halfX = spanX/2*ZOOM, halfY = spanY/2*ZOOM;
+    if (halfX/halfY < aspect) halfX = halfY*aspect; else halfY = halfX/aspect;
+    const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+    cam.left=cx-halfX; cam.right=cx+halfX; cam.top=cy+halfY; cam.bottom=cy-halfY;
+    cam.updateProjectionMatrix();
+
+    function project(x, y, z){ const v=new THREE.Vector3(x,y,z).project(cam); return {x:(v.x+1)/2*100, y:(1-v.y)/2*100}; }
+
+    // ---- lay tiles: the authored region, plus scenery outwards until the frame is covered ----
+    // A hex is kept when its centre is within PAD% of the frame, so the jagged board
+    // edge always falls outside the crop.
+    const PAD = 12;
+    const REACH = 60;   // cells to probe beyond the authored region in each direction
+    // Keep props off the cells the game draws its own art on.
+    const noProps = new Set(plotCells.map(p => p.join(',')).concat([PATH[0].join(','), END.join(',')]));
+    for (let c = -REACH; c < COLS + REACH; c++) for (let r = -REACH; r < ROWS + REACH; r++) {
+        const w = world(c, r), s = project(w.x, topY, w.z);
+        if (s.x < -PAD || s.x > 100 + PAD || s.y < -PAD || s.y > 100 + PAD) continue;
+        if (c === END[0] && r === END[1]) continue;    // castle occupies the end hex
+        const key = c + ',' + r;
+        if (pathSet.has(key)) { place('dirt', c, r); continue; }
+        const kind = inPlay(c, r) ? (FEATURE[key] || 'grass') : sceneryAt(c, r);
+        place(kind, c, r);
+        // Only flat grass gets dressed - the sculpted tiles carry their own geometry
+        // and their tops sit at a different height.
+        if (kind === 'grass' && !noProps.has(key)) dress(c, r, topY);
+    }
+    // enemy gate (left) and your castle (right)
+    place('wall', PATH[0][0], PATH[0][1]);           // enemy gatehouse over the first path hex
+    place('castle', END[0], END[1]);                 // your castle at the path end
+
+    scene.add(root);
+    renderer.render(scene, cam);
+
+    // ---- project path hex tops + plots -> screen % ----
+    const pathPct = PATH.map(([c,r]) => { const w=world(c,r); return project(w.x, topY, w.z); });
+    const plotPct = plotCells.map(([c,r]) => { const w=world(c,r); return project(w.x, topY, w.z); });
+    const portalPct = (()=>{ const w=world(PATH[0][0],PATH[0][1]); return project(w.x, topY, w.z); })();
+    const castlePct = (()=>{ const w=world(END[0],END[1]); return project(w.x, topY, w.z); })();
+    const round = o => ({x:+o.x.toFixed(1), y:+o.y.toFixed(1)});
+    document.getElementById('out').textContent = 'HEXOUT' + JSON.stringify({
+        path: pathPct.map(round), plots: plotPct.map(round), portal: round(portalPct), castle: round(castlePct)
+    });
+    document.title = 'DONE';
+})
+.catch(e => { document.title = 'ERR-' + e; document.getElementById('out').textContent = 'ERR ' + e; });
+</script>
+</body>
+</html>

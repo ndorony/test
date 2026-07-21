@@ -218,6 +218,7 @@ apps =  {
                     {icon: 'format_shapes', name:'זמן ותדירות', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_TIME_AND_FREQUENCY', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
                     {icon: 'format_shapes', name:'מילים נוספות ומיקום', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_OTHER_AND_LOCATION', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3},
                     {icon: 'format_shapes', name:'הכל', type: 'app', appType: 'mcq', listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10},
+                    {icon: 'security', name:'הגנת הידע', type: 'app', appType: 'knowledge_defense', listName: 'ENGLISH_CHAPTER4_ALL', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 10, title: 'בנו מערך הגנה והצילו את הממלכה'},
                   ]
                 },
                 {
