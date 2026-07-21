@@ -12,7 +12,7 @@
 (function (global) {
     'use strict';
 
-    var FT_DEFAULT_MACHINES = {sawmill: 1, workshop: 1, packaging: 1, conveyor1: 1, conveyor2: 1, worker1: 1, worker2: 1, worker3: 0, storage: 1, sign: 1};
+    var FT_DEFAULT_MACHINES = {sawmill: 1, workshop: 1, packaging: 1, conveyor1: 1, conveyor2: 1, worker1: 1, worker2: 1, worker3: 0, worker4: 0, worker5: 0, worker6: 0, storage: 1, sign: 1};
     var FT_KNOWN_MACHINES = Object.keys(FT_DEFAULT_MACHINES);
     var FT_KINDS = ['upgrade', 'build', 'hire', 'decorate'];
     var FT_BASE_VALUE = 8;
@@ -79,7 +79,7 @@
             machines[item.machine] = Math.max(machines[item.machine] || 0, Number(item.level) || 1);
         });
         var workersHired = (purchasedIndices || []).filter(function (index) {
-            return list[index] && /^worker[123]$/.test(list[index].machine);
+            return list[index] && /^worker[1-6]$/.test(list[index].machine);
         }).length;
         return {
             machines: machines,
@@ -507,12 +507,17 @@
         }
 
         // -- workers ----------------------------------------------------------------
+        // Enough distinct combinations for the full expanded crew (2 on duty + up to
+        // 6 hires = 8). Parts reuse the three A/B/C art sets in fresh pairings.
         var WORKER_SKINS = [
             {head: 'headA', torso: 'torsoA', arm: 'armA', speed: 132},
             {head: 'headB', torso: 'torsoB', arm: 'armB', speed: 118},
             {head: 'headC', torso: 'torsoC', arm: 'armC', speed: 144},
             {head: 'headA', torso: 'torsoB', arm: 'armB', speed: 124},
-            {head: 'headC', torso: 'torsoA', arm: 'armA', speed: 138}
+            {head: 'headC', torso: 'torsoA', arm: 'armA', speed: 138},
+            {head: 'headB', torso: 'torsoC', arm: 'armC', speed: 128},
+            {head: 'headC', torso: 'torsoB', arm: 'armA', speed: 150},
+            {head: 'headA', torso: 'torsoC', arm: 'armB', speed: 120}
         ];
 
         function spawnWorker(index) {
@@ -1155,7 +1160,7 @@
         sign: {name: 'שלט המפעל', description: 'שלט מואר שמקשט את חזית המפעל.', group: 'sign'},
         crew: {name: 'צוות העובדים', description: 'העובדים אוספים קופסאות ומעמיסים על המשאית.', group: 'crew'}
     };
-    var CREW_KEYS = ['worker1', 'worker2', 'worker3'];
+    var CREW_KEYS = ['worker1', 'worker2', 'worker3', 'worker4', 'worker5', 'worker6'];
 
     function createFactoryTycoonComponent(BaseGameComponent) {
         return Vue.component('factory-tycoon', Vue.extend({
@@ -1289,10 +1294,14 @@
                     return this.$route && this.$route.params.currentAppId === this.currentAppId && this.$route.path.indexOf('/play/factory_tycoon/') === 0;
                 },
                 cycleDuration: function () {
+                    // Smaller per-level steps and a lower floor so the deep tech tree
+                    // (sawmill up to L10) keeps speeding the line up instead of pinning
+                    // at the cap after a couple of upgrades.
                     var d = this.derived;
-                    return Math.max(850, FT_BASE_CYCLE - (d.sawmillLevel - 1) * 280 - (d.workshopLevel - 1) * 120 - (d.packagingLevel - 1) * 120);
+                    return Math.max(700, FT_BASE_CYCLE - (d.sawmillLevel - 1) * 150 - (d.workshopLevel - 1) * 80 - (d.packagingLevel - 1) * 80);
                 },
-                productValue: function () { return FT_BASE_VALUE + this.derived.workshopLevel * 5 + this.derived.packagingLevel * 7; },
+                // Every station now contributes, so late upgrades still raise the payout.
+                productValue: function () { return FT_BASE_VALUE + this.derived.sawmillLevel * 2 + this.derived.workshopLevel * 5 + this.derived.packagingLevel * 7; },
                 nextUpgradeFor: function (id) {
                     var keys = id === 'crew' ? CREW_KEYS : [id];
                     for (var k = 0; k < keys.length; k++) {

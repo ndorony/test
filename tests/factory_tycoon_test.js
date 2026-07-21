@@ -82,7 +82,13 @@ check('purchasing indices 0,2,3 upgrades sawmill, hires worker1, builds workshop
     partial.machines.sawmill === 2 && partial.machines.worker1 === 1 && partial.workshopBuilt === true, JSON.stringify(partial));
 check('workersHired counts only hired worker slots', partial.workersHired === 1);
 const everything = ctx.deriveFactoryState(FACTORY_UPGRADES, FACTORY_UPGRADES.map((_, index) => index));
-check('purchasing every item reaches the maxed-out factory', everything.sawmillLevel === 4 && everything.workersHired === 3 && everything.packagingBuilt === true);
+check('purchasing every item reaches the maxed-out factory',
+    everything.sawmillLevel === 10 && everything.workshopLevel === 9 && everything.packagingLevel === 9 &&
+    everything.storageLevel === 6 && everything.workersHired === 6 && everything.packagingBuilt === true,
+    JSON.stringify({saw: everything.sawmillLevel, work: everything.workshopLevel, pack: everything.packagingLevel, store: everything.storageLevel, hired: everything.workersHired}));
+check('the expanded tree is a long progression (44 quiz-gated stages)', FACTORY_UPGRADES.length === 44, FACTORY_UPGRADES.length);
+check('every hireable worker slot (1-6) is reachable and counted',
+    ctx.deriveFactoryState(FACTORY_UPGRADES, FACTORY_UPGRADES.map((_, i) => i)).workersHired === 6);
 check('a later weight reset (site-wide practice-mode loop) cannot be represented as "unbuilt" because state is derived only from purchases, not from weights',
     ctx.deriveFactoryState(FACTORY_UPGRADES, [0]).machines.sawmill === 2);
 
