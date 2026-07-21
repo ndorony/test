@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v41';
+const CACHE_NAME = 'my-app-cache-v47';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -13,6 +13,8 @@ const CORE_ASSETS = [
   '/games/water-pipeline.css',
   '/games/factory-tycoon.js',
   '/games/factory-tycoon.css',
+  '/games/knowledge-defense.js',
+  '/games/knowledge-defense.css',
   '/themes.js',
   '/storage.js',
   '/tester.js?v=19',

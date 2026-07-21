@@ -1,0 +1,34 @@
+Knowledge Defense art assets
+
+Derived from asset packs by Kenney (https://kenney.nl), all licensed
+Creative Commons Zero (CC0) — free for personal and commercial use,
+no attribution required (but appreciated!).
+http://creativecommons.org/publicdomain/zero/1.0/
+
+Sources:
+- Hexagon Kit (https://kenney.nl/assets/hexagon-kit)
+  the whole battlefield board — grass/dirt/water/stone/hill hex tiles, the
+  enemy gatehouse and your castle — tessellated and rendered to battlefield.png.
+- Castle Kit (https://kenney.nl/assets/castle-kit)
+  stone build plots, the catapult and hexagon frost (trebuchet) towers, and
+  several enemies — rendered from the kit's GLB models to isometric PNGs.
+- Mini Forest (https://kenney.nl/assets/mini-forest)
+  the archer tower, plus tents/trees/rocks/plants scattered across the board.
+- Survival Kit (https://kenney.nl/assets/survival-kit)
+  battlefield scenery — tents, campfires, logs, barrels, crates, workbenches,
+  rocks and trees.
+- Platformer Kit (https://kenney.nl/assets/platformer-kit)
+  battlefield scenery — flowers, mushrooms, plants, grass tufts, hedges, crates.
+- Mini Arena (https://kenney.nl/assets/mini-arena)
+  soldier enemy — rendered from GLB.
+- Mini Dungeon (https://kenney.nl/assets/mini-dungeon)
+  orc enemy and the paved-path floor tiles (recoloured) — rendered from GLB.
+- Graveyard Kit (https://kenney.nl/assets/graveyard-kit)
+  skeleton and vampire enemies — rendered from GLB.
+- Nature Kit (https://kenney.nl/assets/nature-kit)
+  trees, stones, bushes, flowers, mushrooms, grass — the kit's own
+  isometric renders.
+- Tower Defense (top-down) (https://kenney.nl/assets/tower-defense-top-down)
+  projectile sprites (shell, spark, rocket) and coin.
+
+Donate: http://support.kenney.nl

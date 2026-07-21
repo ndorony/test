@@ -1,0 +1,780 @@
+/* ============================================================
+   Knowledge Defense — storybook battlefield built around the
+   Kenney castle/nature isometric renders.
+   Theme variables provided by the component:
+   --kd-primary --kd-secondary --kd-accent --kd-text --kd-panel
+   --kd-edge --kd-sky --kd-grass --kd-danger --kd-art-filter
+   ============================================================ */
+
+.kd-game {
+    --kd-gold: #ffd166;
+    --kd-ink: #2c2117;
+    --kd-road-fill: #e3bd82;
+    --kd-road-edge: #8f6b3f;
+    --kd-road-dash: #fff3d1;
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    overflow: hidden;
+    background: #16241c;
+    color: var(--kd-text, #fff);
+    font-family: 'Segoe UI', 'Heebo', 'Noto Sans Hebrew', Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.kd-game * { box-sizing: border-box; }
+.kd-game button { touch-action: manipulation; }
+.kd-game :focus-visible { outline: 3px solid var(--kd-accent, #ffd166); outline-offset: 2px; }
+
+.kd-battlefield {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #8fd0ea 0%, #bfe7df 13%, #74e0c6 21%, #57c6aa 100%);
+}
+
+/* Everything positioned in board coordinates lives in here, so the percentages
+   measured off battlefield.png stay valid. The board is full-bleed - no sky. */
+.kd-field { position: absolute; inset: 0; z-index: 1; }
+
+/* the whole board is the Kenney hex-tile battlefield, stretched to fill */
+.kd-terrain {
+    position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;
+    object-fit: fill; pointer-events: none;
+}
+/* castle life bar overlaid on the objective */
+.kd-castle-hp {
+    position: absolute; z-index: 4; width: clamp(70px, 9vmin, 120px);
+    transform: translate(-50%, -50%); pointer-events: none;
+}
+.kd-castle-hp span {
+    display: block; height: 9px; border-radius: 6px;
+    background: #23150fd9; border: 1px solid #ffffff6b; overflow: hidden;
+    box-shadow: 0 2px 5px #00000059;
+}
+.kd-castle-hp em {
+    display: block; height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, #58c95b, #a5e87b); transition: width .3s;
+}
+.kd-castle-hp.kd-keep-hit { animation: kd-keep-shake .22s; }
+
+/* fireflies / drifting pollen over the meadow */
+.kd-motes { position: absolute; inset: 30% 0 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.kd-motes i {
+    position: absolute; width: 4px; height: 4px; border-radius: 50%;
+    background: #fff3b0; box-shadow: 0 0 7px 2px #ffe9955c;
+    opacity: 0; animation: kd-mote 9s ease-in-out infinite;
+}
+
+/* ---------- meadow ---------- */
+.kd-ground-layer {
+    position: absolute; inset: 26% 0 0; z-index: 1;
+    background:
+        /* dry-earth patches for terrain variety */
+        radial-gradient(13% 16% at 30% 82%, color-mix(in srgb, var(--kd-grass, #62a95a) 45%, #c8a86a) 0%, transparent 70%),
+        radial-gradient(11% 13% at 72% 86%, color-mix(in srgb, var(--kd-grass, #62a95a) 48%, #c8a86a) 0%, transparent 70%),
+        radial-gradient(9% 11% at 90% 30%, color-mix(in srgb, var(--kd-grass, #62a95a) 50%, #c8a86a) 0%, transparent 72%),
+        /* darker grass blotches */
+        radial-gradient(18% 22% at 14% 74%, color-mix(in srgb, var(--kd-grass, #62a95a) 78%, #14330f) 0%, transparent 66%),
+        radial-gradient(16% 20% at 60% 92%, color-mix(in srgb, var(--kd-grass, #62a95a) 80%, #14330f) 0%, transparent 66%),
+        radial-gradient(14% 18% at 82% 66%, color-mix(in srgb, var(--kd-grass, #62a95a) 80%, #14330f) 0%, transparent 66%),
+        /* sunlit highlights */
+        radial-gradient(120% 55% at 50% -8%, color-mix(in srgb, var(--kd-grass, #62a95a) 68%, #f4ffd6) 0%, transparent 55%),
+        radial-gradient(70% 45% at 22% 58%, color-mix(in srgb, var(--kd-grass, #62a95a) 82%, #fffbd9) 0%, transparent 60%),
+        radial-gradient(60% 40% at 74% 42%, color-mix(in srgb, var(--kd-grass, #62a95a) 84%, #ffffff) 0%, transparent 62%),
+        linear-gradient(180deg,
+            color-mix(in srgb, var(--kd-grass, #62a95a) 78%, #e8f7c6) 0%,
+            var(--kd-grass, #62a95a) 42%,
+            color-mix(in srgb, var(--kd-grass, #62a95a) 72%, #14260f) 100%);
+}
+.kd-ground-layer::before { /* distant tree line on the horizon */
+    content: ""; position: absolute; left: 0; right: 0; top: -3.2vmin; height: 3.4vmin;
+    background:
+        radial-gradient(4.5vmin 3vmin at 8% 100%,  color-mix(in srgb, var(--kd-grass, #62a95a) 55%, #1e3a1c) 60%, transparent 61%),
+        radial-gradient(6vmin 3.6vmin at 22% 100%, color-mix(in srgb, var(--kd-grass, #62a95a) 60%, #24471f) 60%, transparent 61%),
+        radial-gradient(5vmin 2.7vmin at 37% 100%, color-mix(in srgb, var(--kd-grass, #62a95a) 55%, #1e3a1c) 60%, transparent 61%),
+        radial-gradient(7vmin 3.2vmin at 55% 100%, color-mix(in srgb, var(--kd-grass, #62a95a) 62%, #24471f) 60%, transparent 61%),
+        radial-gradient(5vmin 3vmin at 72% 100%,   color-mix(in srgb, var(--kd-grass, #62a95a) 55%, #1e3a1c) 60%, transparent 61%),
+        radial-gradient(6.5vmin 3.5vmin at 90% 100%, color-mix(in srgb, var(--kd-grass, #62a95a) 60%, #24471f) 60%, transparent 61%);
+    opacity: .85;
+}
+.kd-ground-layer::after { /* faint stippled turf texture + horizon haze */
+    content: ""; position: absolute; inset: 0;
+    background:
+        linear-gradient(180deg, #ffffff3d, transparent 16%),
+        radial-gradient(#14330f22 18%, transparent 19%) 0 0 / 26px 26px,
+        radial-gradient(#ffffff1c 18%, transparent 19%) 13px 13px / 26px 26px;
+    opacity: .7;
+}
+
+/* cinematic grade above the scene */
+.kd-light-layer {
+    position: absolute; inset: 0; z-index: 10; pointer-events: none;
+    background:
+        radial-gradient(50% 38% at 12% 8%, #fff3c22e, transparent 70%),
+        radial-gradient(125% 125% at 50% 45%, transparent 62%, #100c0640 100%);
+}
+.kd-state-wave .kd-light-layer::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(120% 120% at 50% 50%, transparent 58%, #8c1f2426);
+    animation: kd-battle-light 3.4s ease-in-out infinite;
+}
+
+/* ---------- road ---------- */
+.kd-road { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; filter: drop-shadow(0 6px 4px #14260f4d); }
+.kd-road path { fill: none; stroke-linecap: round; }
+/* darker packed-earth border framing the paved tiles */
+.kd-road-shadow { stroke: var(--kd-road-edge); stroke-width: 84; }
+/* the path itself, paved from Kenney floor tiles laid end-to-end */
+.kd-roadtile {
+    position: absolute; z-index: 2; width: clamp(84px, 17.5vmin, 200px);
+    transform: translate(-50%, -50%); pointer-events: none;
+    filter: drop-shadow(0 2px 1px #14260f2e);
+}
+
+/* ---------- props ---------- */
+.kd-prop {
+    position: absolute; z-index: 3; pointer-events: none;
+    filter: var(--kd-art-filter, none) drop-shadow(0 1.2vmin 1vmin #14260f4d);
+}
+.kd-prop-tree-large { width: 8vmin; transform-origin: 50% 88%; animation: kd-sway 5.2s ease-in-out infinite; }
+.kd-prop-tree-small { width: 6.5vmin; transform-origin: 50% 88%; animation: kd-sway 6.1s ease-in-out infinite; }
+.kd-prop-tree-oak   { width: 7.5vmin; transform-origin: 50% 88%; animation: kd-sway 5.7s ease-in-out infinite; }
+.kd-prop-shrub      { width: 6vmin; transform-origin: 50% 80%; animation: kd-sway 4.6s ease-in-out infinite; }
+.kd-prop-rock-a, .kd-prop-rock-b { width: 5.5vmin; }
+.kd-prop-rock-pile  { width: 9vmin; }
+.kd-prop-flower-red, .kd-prop-flower-yellow { width: 2.8vmin; }
+.kd-prop-mushroom   { width: 3.2vmin; }
+.kd-prop-grass-a    { width: 3.4vmin; }
+
+/* enemy gate: the portal the horde marches out of, at the road's start */
+.kd-portal {
+    position: absolute; z-index: 3; left: 2%; top: 25%;
+    width: clamp(82px, 13vmin, 168px); transform: translate(-36%, -60%);
+}
+.kd-portal img { width: 100%; filter: var(--kd-art-filter, none) drop-shadow(0 1.4vmin 1.2vmin #14260f5c); }
+
+/* ---------- the keep ---------- */
+.kd-keep {
+    position: absolute; z-index: 4; left: 92%; top: 58%;
+    width: clamp(92px, 15vmin, 190px); transform: translate(-50%, -74%);
+    transition: filter .15s;
+}
+.kd-keep img { width: 100%; filter: var(--kd-art-filter, none) drop-shadow(0 1.6vmin 1.4vmin #14260f66); }
+.kd-keep > span {
+    position: absolute; left: 8%; right: 8%; bottom: -6px; height: 9px;
+    border-radius: 6px; background: #23150fd9; border: 1px solid #ffffff59; overflow: hidden;
+}
+.kd-keep > span em {
+    display: block; height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, #58c95b, #a5e87b); transition: width .3s;
+}
+.kd-keep-hit { filter: brightness(1.35) saturate(1.6) drop-shadow(0 0 18px #ff5a4f); animation: kd-keep-shake .22s; }
+
+/* ---------- build sites & towers ---------- */
+.kd-site {
+    position: absolute; z-index: 5;
+    width: clamp(58px, 8.2vmin, 96px); height: clamp(58px, 8.2vmin, 96px);
+    transform: translate(-50%, -52%);
+    border: 0; padding: 0; background: none; cursor: pointer; color: inherit;
+    filter: var(--kd-art-filter, none);
+}
+.kd-site:disabled { cursor: default; }
+.kd-site:focus-visible { border-radius: 18px; }
+.kd-pad { width: 100%; display: block; filter: drop-shadow(0 1vmin .9vmin #14260f4d); transition: transform .18s ease, filter .18s ease; }
+.kd-state-planning .kd-site:not(.kd-site-occupied) .kd-pad { animation: kd-pad-pulse 2.4s ease-in-out infinite; }
+.kd-site:hover:not(:disabled) .kd-pad, .kd-site:focus-visible .kd-pad, .kd-site-active .kd-pad {
+    transform: scale(1.07);
+    filter: drop-shadow(0 1vmin .9vmin #14260f4d) drop-shadow(0 0 14px #ffd971b3);
+}
+.kd-plus {
+    position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    font-size: clamp(18px, 2.6vmin, 26px); font-weight: 900; color: #fff;
+    text-shadow: 0 2px 4px #000000a6; pointer-events: none;
+    animation: kd-plus-bob 2.4s ease-in-out infinite;
+}
+.kd-site:disabled .kd-plus { opacity: .35; animation: none; }
+
+.kd-tower { position: absolute; inset: 0; pointer-events: none; }
+.kd-range {
+    position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    border: 2px dashed #ffe29ad9; border-radius: 50%;
+    background: radial-gradient(circle, #ffe29a24 0 58%, #ffe29a0a 59% 99%, transparent 100%);
+    animation: kd-range-spin 16s linear infinite;
+}
+/* The defence is the siege engine alone - no tower block - so it sits ON the build
+   pad rather than replacing it, and idles with a slow sway. */
+.kd-tower img {
+    /* Bottom edge lands on the pad's plinth top, ~24% down the site box. Sized by
+       height, not width, so engines with different silhouettes read at one scale. */
+    position: absolute; left: 50%; bottom: 74%; height: 66%; width: auto;
+    transform-origin: 50% 100%;
+    filter: var(--kd-art-filter, none) drop-shadow(0 .8vmin .7vmin #14260f59);
+    transition: height .2s;
+    animation: kd-engine-idle 3.2s ease-in-out infinite;
+}
+.kd-level-2 img { height: 76%; }
+.kd-level-3 img { height: 86%; }
+.kd-reduced .kd-tower img { animation: none; transform: translateX(-50%); }
+.kd-tower::after {
+    position: absolute; left: 50%; top: -16%; transform: translateX(-50%);
+    color: var(--kd-gold); font-size: clamp(11px, 1.7vmin, 16px); letter-spacing: .2em;
+    text-shadow: 0 1px 3px #000000a6;
+}
+.kd-level-2::after { content: "✦"; }
+.kd-level-3::after { content: "✦✦"; }
+.kd-tower b {
+    position: absolute; inset-inline-end: -6%; top: 4%; z-index: 2;
+    width: 22px; height: 22px; display: grid; place-items: center;
+    border-radius: 50%; font-size: 12px; font-weight: 900; color: #3a2508;
+    background: linear-gradient(#ffe9ad, #f7bd4e); border: 1px solid #fff;
+    box-shadow: 0 2px 5px #0000008c;
+}
+.kd-tower em {
+    position: absolute; left: 24%; right: 24%; bottom: 70%; height: 9%;
+    border-radius: 50%; background: radial-gradient(#0e180a66, transparent 70%);
+}
+.kd-firing img { animation: kd-recoil .22s ease-out; }
+.kd-tower-crystal img { filter: var(--kd-art-filter, none) drop-shadow(0 .8vmin .7vmin #14260f59) drop-shadow(0 0 10px #9fdcff7d); }
+
+/* ---------- enemies ---------- */
+.kd-enemy, .kd-corpse {
+    position: absolute; z-index: 6;
+    width: clamp(52px, 8vmin, 92px); height: clamp(52px, 8vmin, 92px);
+    pointer-events: none;
+}
+.kd-enemy-body, .kd-corpse-body {
+    position: absolute; inset: 0; display: block; transform-origin: 50% 92%;
+}
+.kd-enemy-body { animation: kd-walk .52s ease-in-out infinite; }
+.kd-enemy-body img, .kd-corpse-body img {
+    position: absolute; left: 0; bottom: 6%; width: 100%;
+    filter: var(--kd-art-filter, none) drop-shadow(0 .9vmin .8vmin #14260f59);
+}
+.kd-enemy-shadow {
+    position: absolute; left: 14%; right: 14%; bottom: 2%; height: 14%;
+    border-radius: 50%; background: radial-gradient(#0e180a73, transparent 72%);
+    animation: kd-shadow-pulse .52s ease-in-out infinite;
+}
+.kd-enemy-hp {
+    position: absolute; left: 10%; right: 10%; top: -9px; height: 7px;
+    border-radius: 5px; background: #23150fd9; border: 1px solid #ffffff59; overflow: hidden;
+}
+.kd-enemy-hp em {
+    display: block; height: 100%; background: linear-gradient(90deg, #58c95b, #a5e87b);
+    transition: width .12s;
+}
+.kd-enemy-runner .kd-enemy-body { animation-duration: .38s; }
+.kd-enemy-guard .kd-enemy-body, .kd-enemy-captain .kd-enemy-body { animation-duration: .74s; }
+.kd-enemy-captain { width: clamp(76px, 11.5vmin, 132px); height: clamp(76px, 11.5vmin, 132px); z-index: 7; }
+.kd-enemy-captain > b {
+    position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+    padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 900;
+    color: #fff; letter-spacing: .12em; background: linear-gradient(#e0523d, #8c2418);
+    border: 1px solid #ffb37a80; box-shadow: 0 2px 6px #00000080;
+    animation: kd-boss-tag 1.4s ease-in-out infinite;
+}
+.kd-hit .kd-enemy-body img { filter: var(--kd-art-filter, none) brightness(1.5) saturate(.7) drop-shadow(0 0 6px #ffffffcc); }
+.kd-hit .kd-enemy-body { animation: kd-hit-knock .1s ease-out; }
+.kd-slowed .kd-enemy-body img { filter: var(--kd-art-filter, none) brightness(1.06) drop-shadow(0 0 8px #7fd0ff) drop-shadow(0 .9vmin .8vmin #14260f59); }
+.kd-slowed .kd-enemy-body { animation-duration: .95s; }
+.kd-slowed::after {
+    content: "❄"; position: absolute; top: -4px; inset-inline-end: -2px;
+    font-size: 13px; color: #bfe8ff; text-shadow: 0 1px 3px #0009;
+    animation: kd-plus-bob 1.6s ease-in-out infinite;
+}
+/* death poof */
+.kd-corpse { z-index: 5; }
+.kd-corpse-body { animation: kd-die .55s cubic-bezier(.3, .7, .4, 1) forwards; }
+.kd-corpse-body img { filter: var(--kd-art-filter, none) drop-shadow(0 .9vmin .8vmin #14260f4d) saturate(.8); }
+
+/* ---------- projectiles & effects ---------- */
+.kd-projectile {
+    position: absolute; z-index: 7; width: 20px; height: 20px;
+    transform: translate(-50%, -50%); pointer-events: none;
+}
+.kd-shot-archer  { width: 17px; filter: drop-shadow(0 0 6px #ffd166) brightness(1.2); }
+.kd-shot-rocket  { filter: drop-shadow(0 2px 3px #00000073); animation: kd-range-spin 1s linear infinite; }
+.kd-shot-crystal { width: 17px; filter: hue-rotate(160deg) brightness(1.25) drop-shadow(0 0 7px #7fd0ff); }
+
+.kd-fx {
+    position: absolute; z-index: 8; width: 10px; height: 10px; margin: -5px;
+    border-radius: 50%; pointer-events: none; background: var(--kd-gold);
+}
+.kd-fx-build     { background: #ffd166; box-shadow: 0 0 8px #ffd166; }
+.kd-fx-upgrade   { background: #c69cff; box-shadow: 0 0 8px #c69cff; }
+.kd-fx-impact    { background: #fff; box-shadow: 0 0 6px #fff; width: 7px; height: 7px; }
+.kd-fx-explosion { background: radial-gradient(#fff3b0, #ff9f43); box-shadow: 0 0 12px #ff9f43; width: 13px; height: 13px; }
+.kd-fx-destroy   { background: radial-gradient(#fff7d6, #ffd166); box-shadow: 0 0 9px #ffc95c; }
+.kd-fx-danger    { background: #ff5a4f; box-shadow: 0 0 10px #ff5a4f; }
+.kd-fx-victory   { background: #ffe58a; box-shadow: 0 0 10px #ffe58a; }
+.kd-fx-research  { background: #8fd8ff; box-shadow: 0 0 9px #8fd8ff; }
+.kd-fx-frost     { background: #bfe8ff; box-shadow: 0 0 9px #bfe8ff; }
+.kd-fx-flash     { width: 16px; height: 16px; background: radial-gradient(#fffefb, #ffd166 55%, transparent 70%); box-shadow: 0 0 12px #ffcf6b; animation: kd-flash .16s ease-out forwards; }
+
+.kd-reward-float {
+    position: absolute; z-index: 9; pointer-events: none;
+    font-weight: 900; font-size: clamp(13px, 2vmin, 19px); color: #ffe9a8;
+    text-shadow: 0 1px 2px #000, 0 3px 8px #000000a6; white-space: nowrap;
+    animation: kd-reward 1.1s ease-out forwards;
+}
+
+/* ---------- HUD ---------- */
+.kd-hud {
+    position: absolute; z-index: 20; top: 10px; inset-inline: 10px;
+    display: flex; align-items: center; gap: 12px;
+    min-height: 58px; padding: 8px 14px; border-radius: 18px;
+    color: #fff;
+    background: linear-gradient(180deg, #2a2019f0, #3d2f23e6);
+    border: 1px solid #ffffff2e;
+    box-shadow: 0 10px 26px #00000073, inset 0 0 0 1px #f7d98c1f;
+    backdrop-filter: blur(6px);
+}
+.kd-hud-button {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 14px;
+    border: 1px solid #ffffff40; background: #ffffff14; color: #fff;
+    font: inherit; font-size: 1.15rem; font-weight: 800; cursor: pointer;
+    transition: background .15s, transform .12s;
+}
+.kd-hud-button:hover { background: #ffffff2b; transform: translateY(-1px); }
+.kd-hud-button:active { transform: translateY(1px); }
+.kd-wave { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.kd-wave small { opacity: .75; font-size: .76rem; letter-spacing: .04em; }
+.kd-wave strong { font-size: 1rem; line-height: 1.1; white-space: nowrap; }
+.kd-wave i {
+    display: block; height: 7px; max-width: 280px; margin-top: 2px; border-radius: 6px;
+    background: #00000059; border: 1px solid #ffffff21; overflow: hidden;
+}
+.kd-wave em {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--kd-primary, #4c8c46), var(--kd-accent, #ffd166));
+    transition: width .35s;
+}
+.kd-resources { display: flex; gap: 8px; font-variant-numeric: tabular-nums; }
+.kd-resources span {
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border-radius: 999px; background: #00000052; border: 1px solid #ffffff1c;
+    font-weight: 800; white-space: nowrap;
+}
+.kd-resources span:nth-child(1) b { color: #ffd166; }
+.kd-resources span:nth-child(2) b { color: #c9a6ff; }
+.kd-resources span:nth-child(3) b { color: #ff8a80; }
+
+.kd-objectives {
+    position: absolute; z-index: 21; top: 80px; inset-inline-end: 12px;
+    display: flex; flex-direction: column; gap: 7px;
+    width: min(290px, 84vw); padding: 14px 16px; border-radius: 16px;
+    background: #241c17f2; border: 1px solid #f7d98c40; color: #f3e8d2;
+    box-shadow: 0 14px 34px #000000a6;
+}
+.kd-objectives strong { color: #ffe9b0; }
+.kd-objectives span { opacity: .9; font-size: .92rem; }
+.kd-objectives button {
+    position: absolute; top: 8px; inset-inline-start: 8px; width: 30px; height: 30px;
+    border: 0; border-radius: 50%; background: #ffffff1a; color: #fff; font-size: 1rem; cursor: pointer;
+}
+
+.kd-state-research-question .kd-hint, .kd-state-research-choice .kd-hint,
+.kd-state-victory .kd-hint, .kd-state-defeat .kd-hint, .kd-state-briefing .kd-hint { display: none; }
+.kd-hint {
+    position: absolute; z-index: 21; top: 82px; left: 50%; transform: translateX(-50%);
+    max-width: min(560px, 86vw); padding: 9px 22px; border-radius: 999px;
+    background: #1d1610ee; border: 1px solid #ffd16659; color: #ffe9b8;
+    font-weight: 700; text-align: center; pointer-events: none;
+    box-shadow: 0 8px 22px #00000066;
+    animation: kd-pop-in .28s ease;
+}
+
+.kd-actions {
+    position: absolute; z-index: 22; bottom: 22px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: stretch;
+}
+.kd-start-wave, .kd-study {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 28px; border-radius: 999px; border: 2px solid #ffb37a66;
+    font: inherit; text-align: start; cursor: pointer;
+    box-shadow: 0 12px 30px #00000080;
+    transition: transform .14s, filter .14s;
+}
+.kd-start-wave span, .kd-study span { font-size: 1.5rem; }
+.kd-start-wave b, .kd-study b { display: block; font-size: 1.05rem; font-weight: 900; }
+.kd-start-wave small, .kd-study small { display: block; opacity: .85; font-size: .82rem; }
+.kd-start-wave:hover, .kd-study:hover { transform: translateY(-2px); filter: brightness(1.12); }
+
+.kd-start-wave {
+    background: linear-gradient(180deg, #e0523d, #8c2418); color: #fff;
+    box-shadow: 0 12px 30px #00000080, 0 0 24px #ff6a3a40;
+    animation: kd-cta-glow 2.2s ease-in-out infinite;
+}
+
+/* wave-start banner sweep */
+.kd-wave-banner {
+    position: absolute; z-index: 26; top: 34%; left: 50%;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 42px; border-radius: 14px;
+    background: linear-gradient(180deg, #2a2019f2, #46281ef2);
+    border: 2px solid #ffb37a80; color: #ffe9b8;
+    font-size: clamp(1.3rem, 3.4vw, 2.2rem); font-weight: 900; white-space: nowrap;
+    text-shadow: 0 3px 10px #000; box-shadow: 0 16px 40px #000000a6, inset 0 0 24px #ff6a3a2e;
+    animation: kd-wave-banner 1.9s ease both;
+}
+.kd-wave-banner i { font-style: normal; filter: drop-shadow(0 0 8px #ff6a3a); }
+/* mid-wave pause: the board is frozen so the player can buy or upgrade */
+.kd-paused-badge {
+    position: absolute; z-index: 25; top: 12%; left: 50%; transform: translateX(-50%);
+    padding: 7px 20px; border-radius: 999px; white-space: nowrap;
+    background: #1d2a34e6; border: 2px solid #9fdcff80; color: #dff2ff;
+    font-size: clamp(.85rem, 2.1vw, 1.1rem); font-weight: 800;
+    box-shadow: 0 10px 26px #0009;
+}
+.kd-study {
+    border-color: #f7d98c80; color: #3a2508;
+    background: linear-gradient(180deg, #f6e6bd, #d9bb7d);
+}
+.kd-study span { filter: saturate(0) brightness(.4); }
+.kd-study-urgent {
+    color: #fff; border-color: #ffe9b0;
+    background: linear-gradient(180deg, #6b57b0, #3d2f6e);
+    animation: kd-cta-glow 1.8s ease-in-out infinite;
+}
+.kd-study-urgent span { filter: none; }
+
+/* ---------- build dock ---------- */
+.kd-build-dock {
+    position: absolute; z-index: 24; bottom: 18px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; align-items: stretch;
+    width: min(740px, 94vw); padding: 14px; padding-top: 16px; border-radius: 20px;
+    background: linear-gradient(180deg, #2a2019f5, #3d2f23ef);
+    border: 1px solid #f7d98c40; box-shadow: 0 18px 44px #000000a6;
+    backdrop-filter: blur(6px);
+    animation: kd-pop-in .24s ease;
+}
+.kd-build-dock > button:not(.kd-dock-close), .kd-tower-card {
+    position: relative; flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 14px; border: 1px solid #ffffff26;
+    background: #ffffff0f; color: #fff; font: inherit; text-align: start; cursor: pointer;
+    transition: background .15s, border-color .15s, transform .12s;
+}
+.kd-build-dock > button:not(.kd-dock-close) > span, .kd-tower-card > span { flex: 1; min-width: 0; }
+.kd-build-dock > button:not(.kd-dock-close):hover:not(:disabled) { background: #ffffff1f; border-color: #ffd166a6; transform: translateY(-2px); }
+.kd-build-dock > button:disabled { cursor: not-allowed; opacity: .45; filter: grayscale(.7); }
+.kd-build-dock img { flex: 0 0 auto; height: 54px; width: auto; max-width: 60px; object-fit: contain; filter: drop-shadow(0 4px 5px #00000059); }
+.kd-build-dock > button b, .kd-tower-card b { display: block; font-size: .92rem; font-weight: 800; line-height: 1.2; }
+.kd-build-dock > button small, .kd-tower-card small { display: block; opacity: .72; font-size: .74rem; }
+.kd-build-dock > button:not(.kd-dock-close) em {
+    font-style: normal; font-weight: 900; white-space: nowrap; font-size: .85rem;
+    padding: 4px 9px; border-radius: 999px; background: #00000059; color: #c9a6ff;
+}
+.kd-build-dock > button > i {
+    position: absolute; top: 6px; inset-inline-start: 8px; font-style: normal; font-size: .95rem;
+}
+.kd-tower-card { cursor: default; background: #ffffff0a; }
+.kd-upgrade {
+    flex: 0 0 auto; display: grid; place-items: center; gap: 2px;
+    padding: 10px 18px; border-radius: 14px; border: 1px solid #ffd166a6;
+    background: linear-gradient(180deg, #ffd166, #e5a12f); color: #3a2508;
+    font: inherit; font-weight: 900; cursor: pointer;
+    transition: transform .12s, filter .12s;
+}
+.kd-upgrade:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.08); }
+.kd-upgrade:disabled { opacity: .5; cursor: not-allowed; filter: grayscale(.4); }
+.kd-upgrade small { font-weight: 700; }
+.kd-build-dock > .kd-dock-close {
+    position: absolute; top: -12px; inset-inline-end: -6px; width: 34px; height: 34px;
+    flex: 0 0 auto; display: grid; place-items: center; padding: 0;
+    border-radius: 50%; border: 1px solid #ffffff59; background: #241c17;
+    color: #fff; font: inherit; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 10px #00000080;
+}
+
+/* ---------- briefing ---------- */
+.kd-briefing {
+    position: absolute; inset: 0; z-index: 30; display: grid; place-items: center;
+    text-align: center; padding: 20px;
+    background: #0b0805a1;
+    animation: kd-fade-in .5s ease;
+}
+.kd-briefing > div { max-width: min(560px, 94vw); }
+.kd-briefing span { font-size: 4rem; filter: drop-shadow(0 0 20px var(--kd-accent, #ffd166)); }
+.kd-briefing h1 {
+    margin: .1em 0 .25em; font-size: clamp(2.5rem, 7.5vw, 4.6rem); font-weight: 900;
+    background: linear-gradient(180deg, #fff3cd, #ffc24b 78%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 4px 10px #000000cc);
+    letter-spacing: .01em;
+}
+.kd-briefing p {
+    margin: 0 auto; max-width: 40ch; color: #f3e8d2; font-size: 1.12rem; line-height: 1.65;
+    text-shadow: 0 2px 8px #000;
+}
+.kd-briefing button, .kd-next-wave, .kd-ending button {
+    margin-top: 22px; padding: 14px 44px; border-radius: 999px; border: 2px solid #fff3cd66;
+    background: linear-gradient(180deg, #ffd166, #e5a12f); color: #3a2508;
+    font: inherit; font-size: 1.15rem; font-weight: 900; cursor: pointer;
+    box-shadow: 0 12px 30px #00000080, 0 0 26px #ffd16640;
+    transition: transform .14s, filter .14s;
+}
+.kd-briefing button:hover, .kd-next-wave:hover, .kd-ending button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+/* ---------- research (parchment war table) ---------- */
+.kd-research {
+    position: absolute; z-index: 30; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(720px, 94vw); max-height: 92%; overflow: auto;
+    padding: clamp(18px, 3.5vw, 34px); border-radius: 22px;
+    background: linear-gradient(150deg, #f8ecc9, #e2c68d 68%, #d5b478);
+    border: 3px solid #8d6d3c; color: var(--kd-ink);
+    box-shadow: 0 0 0 200vmax #0d090580, 0 30px 80px #000000cc, inset 0 0 44px #8b642b38;
+    animation: kd-pop-in .3s cubic-bezier(.2, .9, .25, 1.1);
+}
+.kd-research-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.kd-research-head > span {
+    display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+    background: radial-gradient(#fff2cf, #e9bf72); border: 2px solid #8d6d3c;
+    font-size: 1.6rem; color: #6b4c22;
+}
+.kd-research-head small { display: block; opacity: .7; font-weight: 700; }
+.kd-research-head h2 { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 1.7rem; }
+.kd-research-head > b {
+    margin-inline-start: auto; padding: 7px 14px; border-radius: 12px;
+    background: #00000012; border: 1px solid #8d6d3c59; font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+}
+.kd-research-caption { margin: 4px 0 12px; opacity: .75; font-weight: 600; }
+.kd-question {
+    min-height: 54px; margin: 8px 0 16px; padding: 14px;
+    border-block: 1px solid #76552f4d; text-align: center;
+    font-size: clamp(1.35rem, 3vw, 2rem); font-weight: 800;
+}
+.kd-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kd-answers button {
+    display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 14px;
+    border: 2px solid #8d6d3c; border-radius: 14px; background: #fff7e1; color: var(--kd-ink);
+    font: inherit; font-size: 1.06rem; font-weight: 600; cursor: pointer;
+    box-shadow: 0 4px 0 #8d6d3c;
+    transition: transform .12s, background .12s;
+}
+.kd-answers button:hover:not(:disabled), .kd-answers button:focus-visible { background: #fff; transform: translateY(-2px); }
+.kd-answers button:disabled { cursor: default; }
+.kd-answers kbd {
+    display: grid; place-items: center; flex: 0 0 auto; min-width: 30px; height: 30px;
+    border-radius: 9px; background: #5d452e; color: #fff; font: inherit; font-size: .9rem; font-weight: 800;
+}
+.kd-answer-wrong { background: #f3c0b2 !important; animation: kd-wrong .3s ease; }
+.kd-research-feedback { min-height: 30px; margin-top: 14px; text-align: center; font-weight: 800; font-size: 1.05rem; }
+.kd-research-feedback.good { color: #236c38; }
+.kd-research-feedback.bad { color: #8e322a; }
+.kd-research-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.kd-research-choices button {
+    display: grid; justify-items: center; gap: 8px; padding: 16px 12px;
+    border: 2px solid #8d6d3c; border-radius: 16px; background: #fff7e1; color: var(--kd-ink);
+    font: inherit; cursor: pointer; text-align: center; box-shadow: 0 4px 0 #8d6d3c;
+    transition: transform .12s, background .12s;
+}
+.kd-research-choices button:hover:not(:disabled) { background: #fff; transform: translateY(-3px); }
+.kd-research-choices button:disabled { opacity: .5; cursor: not-allowed; }
+.kd-research-choices i { font-style: normal; font-size: 2rem; }
+.kd-research-choices b { display: block; margin-bottom: 3px; font-size: 1rem; }
+.kd-research-choices small { display: block; opacity: .78; line-height: 1.35; }
+.kd-research-choices em {
+    font-style: normal; font-weight: 900; padding: 4px 12px; border-radius: 999px;
+    background: #5d452e; color: #ffe9b0;
+}
+.kd-next-wave { display: block; margin: 18px auto 0; }
+
+/* forge (study hall) reuses the parchment; add its close + done affordances */
+.kd-forge-close {
+    position: absolute; z-index: 2; top: 12px; inset-inline-start: 12px;
+    width: 42px; height: 42px; display: grid; place-items: center;
+    border: 0; border-radius: 50%; background: #5b3f28; color: #fff;
+    font: inherit; font-size: 1.5rem; cursor: pointer; box-shadow: 0 3px 8px #00000073;
+    transition: transform .12s, filter .12s;
+}
+.kd-forge-close:hover { transform: scale(1.06); filter: brightness(1.12); }
+.kd-forge-done { background: linear-gradient(180deg, #b79256, #8d6d3c); color: #fff3d8; border-color: #6f522d; }
+
+/* ---------- endings ---------- */
+.kd-ending {
+    position: absolute; inset: 0; z-index: 31; display: grid; place-items: center;
+    padding: 20px; text-align: center;
+    background: #0b0805a6;
+    animation: kd-fade-in .45s ease;
+}
+.kd-ending > div {
+    width: min(470px, 92vw); padding: 34px 28px; border-radius: 26px;
+    background: #241c17f5; border: 2px solid var(--kd-accent, #ffd166);
+    box-shadow: 0 26px 70px #000000d9, inset 0 0 0 1px #f7d98c26;
+}
+.kd-ending span { font-size: 4.4rem; filter: drop-shadow(0 0 18px var(--kd-accent, #ffd166)); }
+.kd-ending h2 { margin: 10px 0 6px; font-size: 2rem; font-weight: 900; color: #ffe9b0; }
+.kd-ending p { margin: 0 auto; max-width: 34ch; color: #e8dcc8; line-height: 1.6; }
+.kd-end-stats { display: flex; justify-content: center; gap: 10px; margin: 20px 0 2px; }
+.kd-end-stats b {
+    padding: 9px 16px; border-radius: 12px; background: #00000059;
+    border: 1px solid #ffffff21; color: #ffd166; font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- camera shake ---------- */
+.kd-shake .kd-battlefield { animation: kd-shake .25s; }
+
+/* ---------- themes ---------- */
+.kd-theme-space  { --kd-road-fill: #46587a; --kd-road-edge: #232f47; --kd-road-dash: #9ec2ff; }
+.kd-theme-dark   { --kd-road-fill: #6d6a80; --kd-road-edge: #35323f; --kd-road-dash: #cfd3ff; }
+.kd-theme-code   { --kd-road-fill: #0f3a22; --kd-road-edge: #062012; --kd-road-dash: #39ff14; }
+.kd-theme-code   .kd-road-detail { filter: drop-shadow(0 0 5px #00ff41); opacity: 1; }
+.kd-theme-unicorn { --kd-road-fill: #ecc9de; --kd-road-edge: #a06f92; --kd-road-dash: #fff0fa; }
+.kd-theme-soldiers { --kd-road-fill: #c3a878; --kd-road-edge: #6d5636; --kd-road-dash: #efe3c0; }
+
+.kd-theme-space .kd-motes i, .kd-theme-dark .kd-motes i, .kd-theme-code .kd-motes i { background: #cfe0ff; box-shadow: 0 0 7px 2px #9fb8ff5c; }
+.kd-theme-dark .kd-light-layer, .kd-theme-space .kd-light-layer {
+    background:
+        radial-gradient(50% 38% at 12% 8%, #cdd8f721, transparent 70%),
+        radial-gradient(125% 125% at 50% 45%, transparent 58%, #05060f59 100%);
+}
+.kd-theme-code .kd-ground-layer::after {
+    content: ""; position: absolute; inset: 0; height: auto;
+    background:
+        repeating-linear-gradient(90deg, #39ff140a 0 1px, transparent 1px 9vmin),
+        repeating-linear-gradient(0deg, #39ff140a 0 1px, transparent 1px 9vmin),
+        linear-gradient(180deg, #ffffff21, transparent 16%);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 760px) {
+    .kd-hud { top: 8px; inset-inline: 8px; gap: 8px; min-height: 52px; padding: 6px 10px; border-radius: 15px; }
+    .kd-hud-button { width: 40px; height: 40px; border-radius: 12px; }
+    .kd-wave small { display: none; }
+    .kd-wave strong { font-size: .88rem; }
+    .kd-resources span { padding: 4px 8px; gap: 4px; font-size: .82rem; }
+    .kd-hint { top: 68px; font-size: .9rem; padding: 8px 16px; }
+    .kd-build-dock { flex-direction: column; gap: 8px; bottom: 12px; padding: 12px; max-height: 52vh; overflow: auto; }
+    .kd-upgrade { padding: 12px; }
+    .kd-actions { bottom: 14px; width: min(94vw, 520px); }
+    .kd-start-wave, .kd-study { flex: 1; justify-content: center; padding: 10px 16px; }
+    .kd-start-wave small, .kd-study small { display: none; }
+    .kd-answers, .kd-research-choices { grid-template-columns: 1fr; }
+    .kd-question { font-size: 1.25rem; }
+    .kd-keep { width: clamp(80px, 21vmin, 150px); }
+    .kd-site { width: clamp(48px, 11vmin, 76px); height: clamp(48px, 11vmin, 76px); }
+    .kd-enemy { width: clamp(40px, 8.6vmin, 64px); height: clamp(40px, 8.6vmin, 64px); }
+    .kd-enemy-captain { width: clamp(58px, 12vmin, 92px); height: clamp(58px, 12vmin, 92px); }
+}
+@media (max-width: 560px) {
+    .kd-hud {
+        display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
+        align-items: center; gap: 6px 8px; padding: 6px 8px; min-height: 0;
+    }
+    .kd-hud > .kd-hud-button:first-child { grid-column: 1; grid-row: 1; }
+    .kd-resources { grid-column: 2; grid-row: 1; justify-content: center; min-width: 0; }
+    .kd-resources span { padding: 3px 7px; font-size: .76rem; }
+    .kd-speed { grid-column: 3; grid-row: 1; }
+    .kd-hud > .kd-hud-button:last-child { grid-column: 4; grid-row: 1; }
+    .kd-wave { grid-column: 1 / -1; grid-row: 2; flex-direction: row; align-items: center; gap: 8px; }
+    .kd-wave strong { font-size: .82rem; }
+    .kd-wave i { flex: 1; max-width: none; margin-top: 0; }
+    .kd-hud-button { width: 36px; height: 36px; border-radius: 11px; font-size: 1rem; }
+    .kd-hint { top: 100px; }
+    .kd-build-dock img { height: 44px; }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+    .kd-hud { min-height: 44px; padding: 4px 10px; }
+    .kd-hud-button { width: 38px; height: 38px; }
+    .kd-hint { top: 60px; }
+    .kd-build-dock { bottom: 10px; padding: 10px; }
+    .kd-build-dock > button, .kd-tower-card { padding: 6px 10px; }
+    .kd-build-dock img { height: 40px; }
+    .kd-actions { bottom: 10px; }
+    .kd-start-wave, .kd-study { padding: 8px 18px; }
+    .kd-briefing span, .kd-ending span { font-size: 2.6rem; }
+    .kd-research { max-height: 96%; }
+}
+
+/* ---------- animation ---------- */
+@keyframes kd-walk {
+    0%   { transform: translateY(0) rotate(-3deg); }
+    50%  { transform: translateY(-9%) rotate(3deg); }
+    100% { transform: translateY(0) rotate(-3deg); }
+}
+@keyframes kd-shadow-pulse { 50% { transform: scale(.82); opacity: .7; } }
+@keyframes kd-hit-knock { 40% { transform: translateX(6%) scale(1.04); } }
+@keyframes kd-boss-tag { 50% { transform: translateX(-50%) translateY(-2px); } }
+@keyframes kd-die {
+    0%   { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
+    30%  { transform: translateY(-16%) rotate(14deg) scale(1.08); opacity: 1; }
+    100% { transform: translateY(20%) rotate(78deg) scale(.4); opacity: 0; }
+}
+@keyframes kd-flash { from { transform: translate(-50%, -50%) scale(.5); opacity: 1; } to { transform: translate(-50%, -50%) scale(2.4); opacity: 0; } }
+@keyframes kd-mote {
+    0%   { opacity: 0; transform: translate(0, 0); }
+    20%  { opacity: .9; }
+    80%  { opacity: .7; }
+    100% { opacity: 0; transform: translate(3vmin, -7vmin); }
+}
+@keyframes kd-wave-banner {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(.9); }
+    18%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    82%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.96); }
+}
+@keyframes kd-sway { 50% { rotate: 1.7deg; } }
+@keyframes kd-battle-light { 50% { opacity: .45; } }
+@keyframes kd-pad-pulse {
+    0%, 100% { filter: drop-shadow(0 1vmin .9vmin #14260f4d); }
+    50% { filter: drop-shadow(0 1vmin .9vmin #14260f4d) drop-shadow(0 0 12px #ffd971a6); }
+}
+@keyframes kd-plus-bob { 50% { transform: translate(-50%, -66%); } }
+@keyframes kd-range-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+/* Siege engines are stills, so the life comes from CSS: a slow loaded-and-waiting
+   sway, and a sharp kick back on the shot. */
+@keyframes kd-engine-idle {
+    0%, 100% { transform: translateX(-50%) rotate(-1.6deg) translateY(0); }
+    50%      { transform: translateX(-50%) rotate(1.6deg) translateY(-4%); }
+}
+@keyframes kd-recoil {
+    0%   { transform: translateX(-50%) rotate(0deg) scale(1); }
+    30%  { transform: translateX(-50%) rotate(-7deg) translateY(6%) scale(.92); }
+    65%  { transform: translateX(-50%) rotate(3deg) translateY(-2%) scale(1.04); }
+    100% { transform: translateX(-50%) rotate(0deg) scale(1); }
+}
+@keyframes kd-keep-shake {
+    25% { transform: translate(-49%, -74%) rotate(.6deg); }
+    75% { transform: translate(-51%, -74%) rotate(-.6deg); }
+}
+@keyframes kd-reward {
+    0% { transform: translate(-50%, -30%) scale(.7); opacity: 0; }
+    18% { transform: translate(-50%, -70%) scale(1.05); opacity: 1; }
+    100% { transform: translate(-50%, -170%) scale(1); opacity: 0; }
+}
+@keyframes kd-pop-in { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } }
+.kd-hint { animation-name: kd-hint-in; }
+@keyframes kd-hint-in { from { opacity: 0; transform: translateX(-50%) translateY(-8px); } }
+@keyframes kd-fade-in { from { opacity: 0; } }
+@keyframes kd-cta-glow {
+    50% { box-shadow: 0 12px 30px #00000080, 0 0 38px #ff6a3a73; }
+}
+@keyframes kd-wrong { 30% { transform: translateX(5px); } 60% { transform: translateX(-5px); } }
+@keyframes kd-shake {
+    20% { transform: translate(4px, -3px); }
+    50% { transform: translate(-4px, 2px); }
+    80% { transform: translate(2px, 3px); }
+}
+
+/* build-dock uses translateX centering, keep its pop-in aligned */
+.kd-build-dock { animation-name: kd-dock-in; }
+@keyframes kd-dock-in { from { opacity: 0; transform: translateX(-50%) translateY(14px); } }
+.kd-research { animation-name: kd-research-in; }
+@keyframes kd-research-in { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } }
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .kd-game *, .kd-game *::before, .kd-game *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+    }
+    .kd-motes { display: none; }
+}
+.kd-reduced *, .kd-reduced *::before, .kd-reduced *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+}
+.kd-reduced .kd-motes { display: none; }

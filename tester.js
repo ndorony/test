@@ -9856,6 +9856,10 @@ var WaterPipelineComponent = null;
 if (typeof createWaterPipelineComponent === 'function') {
     WaterPipelineComponent = createWaterPipelineComponent(BaseGameComponent);
 }
+var KnowledgeDefenseComponent = null;
+if (typeof createKnowledgeDefenseComponent === 'function') {
+    KnowledgeDefenseComponent = createKnowledgeDefenseComponent(BaseGameComponent);
+}
 
 var FactoryTycoonComponent = null;
 if (typeof createFactoryTycoonComponent === 'function') {
@@ -9889,6 +9893,9 @@ const routes = [
 
 if (WaterPipelineComponent) {
     routes.push({path: '/play/water_pipeline/:currentAppId', component: WaterPipelineComponent, props: true});
+}
+if (KnowledgeDefenseComponent) {
+    routes.push({path: '/play/knowledge_defense/:currentAppId', component: KnowledgeDefenseComponent, props: true});
 }
 
 if (FactoryTycoonComponent) {

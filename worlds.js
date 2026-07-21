@@ -162,6 +162,22 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
             {type: 'final', game: 'mcq'},
         ],
     },
+    {
+        id: 'defense',
+        name: 'ממלכת הידע',
+        emoji: '🏰',
+        listName: 'ANIMALS',
+        setItems: 3,
+        questionIndex: 'english_name',
+        resultIndex: 'hebrew',
+        art: {bg: 'world_english_bg'},
+        unlock: {playerLevel: 3},
+        encounters: [
+            {type: 'learn'},
+            {type: 'game', game: 'knowledge_defense'},
+            {type: 'final', game: 'knowledge_defense', name: 'המצור הגדול'},
+        ],
+    },
 ]);
 
 const ADVENTURE_ID_RE = /^adv-([a-z0-9]+)-(\d+)$/;

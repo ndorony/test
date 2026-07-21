@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--
+  kenney-iso-render.html - renders Kenney GLB models to 512x512 isometric PNGs
+  (used to generate assets/knowledge-defense/*.png).
+
+  Setup - download + extract these kits from kenney.nl next to this file:
+    castle/ (Castle Kit)         town/ (Fantasy Town Kit)   nature/ (Nature Kit)
+    minidungeon/ (Mini Dungeon)  graveyard/ (Graveyard Kit) miniarena/ (Mini Arena)
+    miniforest/ (Mini Forest)    platformer/ (Platformer Kit)
+  Also save three.min.js (r147) and GLTFLoader.js (r147 examples/js) next to it,
+  serve over http (py -m http.server 8100), then screenshot each item key:
+    msedge --headless=new --window-size=512,512 --default-background-color=00000000
+           --virtual-time-budget=15000 --screenshot=out.png
+           "http://localhost:8100/kenney-iso-render.html#foe-orc"
+  then autocrop transparent margins with PIL. Enemy keys: foe-soldier (scout),
+  foe-skeleton (runner), foe-orc (guard), foe-vampire (captain).
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}canvas{display:block}</style>
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+const CASTLE = 'castle/Models/GLB format/';
+const TOWN = 'town/Models/GLB format/';
+const RED = new THREE.Color(0xb03a30);
+const ICE = new THREE.Color(0x7fd0ff);
+const SAND = new THREE.Color(0x7d6230);
+const SANDLIGHT = new THREE.Color(0x94743a);
+
+// Each item: parts get loaded, laid out by the compose fn, then auto-framed.
+// compose(parts) receives loaded scenes keyed by alias; returns THREE.Group.
+const NATURE = 'nature/Models/GLTF format/';
+const MINIDUN = 'minidungeon/Models/GLB format/';
+const GRAVE = 'graveyard/Models/GLB format/';
+const ARENA = 'miniarena/Models/GLB format/';
+const MINIFOREST = 'miniforest/Models/GLB format/';
+const PLATFORMER = 'platformer/Models/GLB format/';
+function charItem(file, ry) { return {files:{m:file}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:ry||0});return g;}}; }
+const ITEMS = {
+    'portal': {
+        files: {gate: CASTLE+'gate.glb', wall: CASTLE+'wall.glb', flag: CASTLE+'flag.glb'},
+        compose(p) {
+            const g = new THREE.Group();
+            const gateW = sizeOf(p.gate).x, wallW = sizeOf(p.wall).x, gateH = sizeOf(p.gate).y;
+            add(g, p.gate, 0, 0, 0, {ry: Math.PI});
+            add(g, p.wall, -(gateW/2 + wallW/2) + .02, 0, 0);
+            add(g, p.wall, (gateW/2 + wallW/2) - .02, 0, 0);
+            add(g, p.flag, 0, gateH - .04, 0);
+            return g;
+        },
+    },
+    'rock-pile': {
+        files: {a: NATURE+'stone_largeB.glb', b: NATURE+'stone_largeE.glb'},
+        compose(p) {
+            const g = new THREE.Group();
+            const aw = sizeOf(p.a).x;
+            add(g, p.a, 0, 0, 0);
+            add(g, p.b, aw*0.55, 0, -aw*0.35, {s: 0.7});
+            add(g, p.b, -aw*0.4, 0, aw*0.4, {s: 0.5, ry: Math.PI});
+            return g;
+        },
+    },
+    'road-0':   {files:{m:TOWN+'road.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:0});return g;}},
+    'road-45':  {files:{m:TOWN+'road.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:Math.PI*0.25});return g;}},
+    'road-90':  {files:{m:TOWN+'road.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:Math.PI*0.5});return g;}},
+    'road-bend':{files:{m:TOWN+'road-bend.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:0});return g;}},
+    'plot': {files:{m:CASTLE+'tower-base.glb'}, solid:new THREE.Color(0x5f5a50), compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'gate-a': {files:{m:CASTLE+'gate.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:0});return g;}},
+    'gate-b': {files:{m:CASTLE+'gate.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0,{ry:Math.PI*0.5});return g;}},
+    'tile-floor':  {files:{m:MINIDUN+'floor.glb'}, solid:SAND, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'tile-floor2': {files:{m:MINIDUN+'floor.glb'}, solid:SANDLIGHT, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'tile-detail': {files:{m:MINIDUN+'floor-detail.glb'}, solid:new THREE.Color(0x715724), compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'plot2': {files:{m:CASTLE+'tower-square-base.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'grand-gate': {
+        files: {gate: CASTLE+'gate.glb', flag: CASTLE+'flag.glb'},
+        compose(p) {
+            const g = new THREE.Group();
+            const gate = add(g, p.gate, 0, 0, 0, {ry: 0});   // arched portcullis facing the incoming enemies
+            const b = new THREE.Box3().setFromObject(gate), gs = b.getSize(new THREE.Vector3());
+            // banners planted on the battlements at each shoulder of the arch
+            add(g, p.flag, -gs.x*0.34, gs.y*0.78, gs.z*0.1, {s: .78});
+            add(g, p.flag,  gs.x*0.34, gs.y*0.72, gs.z*0.1, {s: .78});
+            return g;
+        },
+    },
+    'foe-skeleton': charItem(GRAVE+'character-skeleton.glb', Math.PI*0.25),
+    'foe-vampire':  charItem(GRAVE+'character-vampire.glb', Math.PI*0.25),
+    'foe-orc':      charItem(MINIDUN+'character-orc.glb', Math.PI*0.75),
+    'foe-soldier':  charItem(ARENA+'character-soldier.glb', Math.PI*0.75),
+    'tree-large': {files:{m:NATURE+'tree_default.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'tree-small': {files:{m:NATURE+'tree_pineRoundA.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'tree-oak': {files:{m:NATURE+'tree_oak.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'shrub': {files:{m:NATURE+'plant_bushDetailed.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'rock-a': {files:{m:NATURE+'stone_largeB.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'rock-b': {files:{m:NATURE+'stone_largeE.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'flower-red': {files:{m:NATURE+'flower_redA.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'flower-yellow': {files:{m:NATURE+'flower_yellowA.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'mushroom': {files:{m:NATURE+'mushroom_redGroup.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+    'grass-a': {files:{m:NATURE+'grass_leafs.glb'}, compose(p){const g=new THREE.Group();add(g,p.m,0,0,0);return g;}},
+
+    'keep': {
+        files: {gate: CASTLE+'gate.glb', wall: CASTLE+'wall.glb', tower: CASTLE+'tower-square.glb', flag: CASTLE+'flag.glb'},
+        compose(p) {
+            const g = new THREE.Group();
+            const gateW = sizeOf(p.gate).x, wallW = sizeOf(p.wall).x, towerW = sizeOf(p.tower).x;
+            add(g, p.gate, 0, 0, 0, {ry: Math.PI});
+            add(g, p.wall, -(gateW/2 + wallW/2) + .01, 0, 0);
+            add(g, p.wall, (gateW/2 + wallW/2) - .01, 0, 0);
+            const tx = gateW/2 + wallW + towerW/2 - .05;
+            const t1 = add(g, p.tower, -tx, 0, 0), t2 = add(g, p.tower, tx, 0, 0);
+            const towerH = sizeOf(p.tower).y;
+            add(g, p.flag, -tx, towerH - .02, 0);
+            add(g, p.flag, tx, towerH - .02, 0);
+            return g;
+        },
+    },
+    'build-pad': {
+        files: {base: CASTLE+'tower-square-base.glb'},
+        compose(p) { const g = new THREE.Group(); add(g, p.base, 0, 0, 0); return g; },
+    },
+    // Defences carry no tower block underneath - they sit directly on the build pad,
+    // which the game already draws beneath them.
+    'tower-archer': {
+        files: {w: MINIFOREST+'character-archer.glb'},
+        compose(p) { const g = new THREE.Group(); add(g, p.w, 0, 0, 0, {ry: Math.PI * 1.15}); return g; },
+    },
+    'tower-rocket': {
+        files: {w: CASTLE+'siege-catapult.glb'},
+        compose(p) { const g = new THREE.Group(); add(g, p.w, 0, 0, 0, {ry: Math.PI * 1.72}); return g; },
+    },
+    'tower-crystal': {
+        files: {w: CASTLE+'siege-trebuchet.glb'},
+        // The kit models carry a palette texture, so tinting barely shows; force the
+        // frost engine to a solid ice blue so it reads apart from the wooden ones.
+        solid: new THREE.Color(0x6fb8e8),
+        compose(p) { const g = new THREE.Group(); add(g, p.w, 0, 0, 0, {ry: Math.PI * 1.72}); return g; },
+    },
+    'enemy-scout': {
+        files: {m: TOWN+'cart.glb'},
+        tint: {color: RED, amount: .42},
+        compose(p) { const g = new THREE.Group(); add(g, p.m, 0, 0, 0, {ry: Math.PI * .72}); return g; },
+    },
+    'enemy-runner': {
+        files: {m: CASTLE+'siege-ram.glb'},
+        tint: {color: RED, amount: .45},
+        compose(p) { const g = new THREE.Group(); add(g, p.m, 0, 0, 0, {ry: Math.PI * 1.72}); return g; },
+    },
+    'enemy-guard': {
+        files: {m: CASTLE+'siege-tower.glb'},
+        tint: {color: RED, amount: .45},
+        compose(p) { const g = new THREE.Group(); add(g, p.m, 0, 0, 0, {ry: Math.PI * 1.72}); return g; },
+    },
+    'enemy-captain': {
+        files: {m: CASTLE+'siege-trebuchet.glb'},
+        tint: {color: RED, amount: .45},
+        compose(p) { const g = new THREE.Group(); add(g, p.m, 0, 0, 0, {ry: Math.PI * 1.72}); return g; },
+    },
+    'windmill': {
+        files: {m: TOWN+'windmill.glb', b: TOWN+'blade.glb'},
+        compose(p) {
+            const g = new THREE.Group();
+            add(g, p.m, 0, 0, 0);
+            const s = sizeOf(p.m);
+            add(g, p.b, 0, s.y * .72, s.z * .52, {ry: 0});
+            return g;
+        },
+    },
+};
+
+function sizeOf(scene) {
+    const box = new THREE.Box3().setFromObject(scene);
+    const v = new THREE.Vector3(); box.getSize(v); return v;
+}
+function add(group, scene, x, y, z, opts) {
+    const c = scene.clone(true);
+    c.position.set(x, y, z);
+    if (opts && opts.ry) c.rotation.y = opts.ry;
+    if (opts && opts.s) c.scale.setScalar(opts.s);
+    group.add(c);
+    return c;
+}
+function applyTint(root, tint) {
+    if (!tint) return;
+    const seen = new Map();
+    root.traverse(o => {
+        if (!o.isMesh) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        o.material = (Array.isArray(o.material) ? mats : mats).map(m => {
+            if (!seen.has(m)) { const c = m.clone(); c.color = m.color.clone().lerp(tint.color, tint.amount); seen.set(m, c); }
+            return seen.get(m);
+        });
+        if (!Array.isArray(o.material) && o.material.length === 1) o.material = o.material[0];
+        if (o.material.length === 1) o.material = o.material[0];
+    });
+}
+// Hard recolor for flat/vertex-coloured tiles: force one solid colour, drop map & vertex colours.
+function applySolid(root, color) {
+    if (!color) return;
+    root.traverse(o => {
+        if (!o.isMesh) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        o.material = mats.map(m => { const c = m.clone(); c.color = color.clone(); c.map = null; c.vertexColors = false; c.needsUpdate = true; return c; });
+        if (o.material.length === 1) o.material = o.material[0];
+    });
+}
+
+const key = (location.hash || '#keep').slice(1);
+const item = ITEMS[key];
+if (!item) { document.title = 'ERR-unknown-' + key; throw new Error('unknown ' + key); }
+
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true});
+renderer.setSize(512, 512);
+renderer.setClearColor(0x000000, 0);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.add(new THREE.AmbientLight(0xffffff, .38));
+const hemi = new THREE.HemisphereLight(0xdfefff, 0xcbb08a, .5);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2dc, .95);
+sun.position.set(4, 6, 3);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xbcd8ff, .3);
+fill.position.set(-4, 3, -2);
+scene.add(fill);
+
+const loader = new THREE.GLTFLoader();
+const names = Object.keys(item.files);
+Promise.all(names.map(n => new Promise((resolve, reject) => loader.load(item.files[n], g => resolve([n, g.scene]), undefined, reject))))
+.then(entries => {
+    const parts = Object.fromEntries(entries);
+    const model = item.compose(parts);
+    applyTint(model, item.tint);
+    if (item.solid) applySolid(model, item.solid);
+    scene.add(model);
+
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const radius = Math.max(size.x, size.y, size.z) * .5;
+
+    const yaw = Math.PI / 4, pitch = THREE.MathUtils.degToRad(27);
+    const dist = radius * 6;
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, dist * 4);
+    cam.position.set(
+        center.x + dist * Math.cos(pitch) * Math.sin(yaw),
+        center.y + dist * Math.sin(pitch),
+        center.z + dist * Math.cos(pitch) * Math.cos(yaw)
+    );
+    cam.lookAt(center);
+    cam.updateMatrixWorld();
+    // Fit frustum tightly around the projected bbox corners.
+    const inv = cam.matrixWorldInverse;
+    let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    for (let i = 0; i < 8; i++) {
+        const corner = new THREE.Vector3(
+            i & 1 ? box.max.x : box.min.x,
+            i & 2 ? box.max.y : box.min.y,
+            i & 4 ? box.max.z : box.min.z
+        ).applyMatrix4(inv);
+        minX = Math.min(minX, corner.x); maxX = Math.max(maxX, corner.x);
+        minY = Math.min(minY, corner.y); maxY = Math.max(maxY, corner.y);
+    }
+    const spanX = maxX - minX, spanY = maxY - minY;
+    const half = Math.max(spanX, spanY) * .5 * 1.06;
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    cam.left = cx - half; cam.right = cx + half;
+    cam.top = cy + half; cam.bottom = cy - half;
+    cam.updateProjectionMatrix();
+
+    renderer.render(scene, cam);
+    document.title = 'DONE-' + key;
+})
+.catch(e => { document.title = 'ERR-' + key + '-' + e; });
+</script>
+</body>
+</html>
