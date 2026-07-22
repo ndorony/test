@@ -22,5 +22,12 @@ pygame_game/saves/
 /.assets-temp/
 /.assets-*.jpg
 
+# QA/debug scratch — throwaway harness pages and captures, regenerable
+/qa-*.html
+/screenshots/
+/a.py
+/water-pipeline-*.png
+/water-pipeline-*.jpg
+
 # Secrets — never commit
 .secrets/
