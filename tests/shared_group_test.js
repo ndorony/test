@@ -84,12 +84,14 @@ const g0 = run(`getItemById(apps, 'grp-ch51-0')`);
 const g1 = run(`getItemById(apps, 'grp-ch51-1')`);
 const g2 = run(`getItemById(apps, 'grp-ch51-2')`);
 const g3 = run(`getItemById(apps, 'grp-ch51-3')`);
+const g4 = run(`getItemById(apps, 'grp-ch51-4')`);
 check('grp-ch51-0 → mcq on list 5_1', g0 && g0.appType === 'mcq' && g0.listName === '5_1', JSON.stringify(g0));
 check('grp-ch51-1 → balloon_shooter', g1 && g1.appType === 'balloon_shooter', JSON.stringify(g1));
 check('grp-ch51-2 → word_link', g2 && g2.appType === 'word_link');
 check('grp-ch51-3 → scribble_dungeon', g3 && g3.appType === 'scribble_dungeon');
+check('grp-ch51-4 → knowledge_defense', g4 && g4.appType === 'knowledge_defense', JSON.stringify(g4));
 check('shared config carried onto every game (english_name → hebrew, setItems 5)',
-    [g0, g1, g2, g3].every(g => g.questionIndex === 'english_name' && g.resultIndex === 'hebrew' && g.setItems === 5));
+    [g0, g1, g2, g3, g4].every(g => g.questionIndex === 'english_name' && g.resultIndex === 'hebrew' && g.setItems === 5));
 check('unknown group / out-of-range id → null',
     run(`resolveSharedGroupApp('grp-nope-0') === null && resolveSharedGroupApp('grp-ch51-9') === null && resolveSharedGroupApp('grp-ch51') === null`));
 check('resolveSharedGroupApp ignores non-group ids (menu ids untouched)', run(`resolveSharedGroupApp('0_2_1') === null`));
@@ -103,7 +105,7 @@ const menuLinks = run(`
         return null;
     })(apps);
 `);
-check('the "5_1" submenu exists with 4 linked buttons', Array.isArray(menuLinks) && menuLinks.length === 4, JSON.stringify(menuLinks));
+check('the "5_1" submenu exists with 5 linked buttons', Array.isArray(menuLinks) && menuLinks.length === 5, JSON.stringify(menuLinks));
 const generatedLinks = run(`getSharedGroupMenuItems('ch51').map(i => i.link)`);
 check('apps.js menu links match groups.js game order exactly',
     JSON.stringify(menuLinks) === JSON.stringify(generatedLinks), JSON.stringify(menuLinks) + ' vs ' + JSON.stringify(generatedLinks));
@@ -132,7 +134,7 @@ console.log('--- 5. gradual unlock works from ANY game (unlike adventure) ---');
 // master the 5 initially-unlocked items (weight 5 → 0) by answering across different games
 run(`
     for (let item = 0; item < 5; item++) {
-        for (let n = 0; n < 5; n++) updateWeightForKey('grp-ch51-' + (n % 4), item, -1);
+        for (let n = 0; n < 5; n++) updateWeightForKey('grp-ch51-' + (n % 5), item, -1);
     }
 `);
 let w = JSON.parse(localStorage.getItem('learn_grp-ch51_Weights_טסט_LocalData'));

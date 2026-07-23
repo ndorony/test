@@ -320,7 +320,8 @@ apps =  {
               // Shared-progress group (groups.js, group "ch51"): all four games
               // below learn the SAME word list (5_1) under one shared knowledge
               // key — pick any game, and progress carries across all of them.
-              // Keep the game order in sync with SHARED_GROUPS.ch51.games.
+              // Keep the game order in sync with SHARED_GROUPS.ch51.games (the
+              // grp-ch51-<n> index is the game's identity — append new games only).
               // IMPORTANT: this must stay LAST in the אנגלית menu. Menu item ids
               // are position-based (route_index), so inserting a new item in the
               // middle shifts the id — and therefore the saved progress — of
@@ -330,6 +331,7 @@ apps =  {
                 {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-ch51-1'},
                 {icon: 'timeline',       name:'חבר במילים',   type: 'app', link: '/play/word_link/grp-ch51-2'},
                 {icon: 'map',            name:'מבוך הקלף',    type: 'app', link: '/play/scribble_dungeon/grp-ch51-3'},
+                {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51-4'},
               ]
             },
       ]

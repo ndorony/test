@@ -28,18 +28,22 @@
 
 const SHARED_GROUPS = {
     // Grade 5, unit 1 vocabulary (DATA list "5_1"). One shared knowledge key,
-    // four ways to practice it. Question = the English word (heard + shown),
+    // five ways to practice it. Question = the English word (heard + shown),
     // answer = the Hebrew translation.
+    // Games are append-only: each game's index is its id (grp-ch51-<index>), so
+    // adding a game must go at the END — inserting mid-array would remap the ids
+    // and orphan saved progress.
     ch51: {
         listName: '5_1',
         questionIndex: 'english_name',
         resultIndex: 'hebrew',
         setItems: 5, // how many new words unlock per batch (shared across games)
         games: [
-            {appType: 'mcq',              icon: 'format_shapes',  name: 'בחירה מרובה',  title: 'בחרו את התרגום הנכון'},
-            {appType: 'balloon_shooter',  icon: 'sports_esports', name: 'מטווח בלונים', title: 'פגעו בבלון עם התשובה הנכונה'},
-            {appType: 'word_link',        icon: 'timeline',       name: 'חבר במילים',   title: 'מתחו קו מהמילה אל התרגום שלה'},
-            {appType: 'scribble_dungeon', icon: 'map',            name: 'מבוך הקלף',    title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+            {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',  title: 'בחרו את התרגום הנכון'},
+            {appType: 'balloon_shooter',   icon: 'sports_esports', name: 'מטווח בלונים', title: 'פגעו בבלון עם התשובה הנכונה'},
+            {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',   title: 'מתחו קו מהמילה אל התרגום שלה'},
+            {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',    title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+            {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'בנו מערך הגנה והצילו את הממלכה'},
         ],
     },
 };
