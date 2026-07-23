@@ -28,6 +28,7 @@ apps =  {
             {icon: 'timeline', name:'חבר במילים', type: 'app', appType: 'word_link', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'מתחו קו מהמילה הנופלת אל בת הזוג שלה'},
             {icon: 'sports_kabaddi', name:'דו-קרב', type: 'app', appType: 'duel_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
             {icon: 'auto_fix_high', name:'דו-קרב הקוסמים', type: 'app', appType: 'wizard_duel', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
+            {icon: 'map', name:'מבוך הקלף', type: 'app', appType: 'scribble_dungeon', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
           ]
         },
         {icon: 'format_shapes', name:'שם לאות', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
@@ -308,8 +309,11 @@ apps =  {
             {icon: 'sports_kabaddi', name:'דו-קרב', type:'app', appType:'duel_shooter', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:3, title:'ענה נכון ונצח בדו-קרב!'},
             {icon: 'auto_fix_high', name:'דו-קרב הקוסמים', type:'app', appType:'wizard_duel', listName:'PYTHON_KEYWORDS', questionIndex:'keyword', resultIndex:'hebrew', setItems:3, title:'ענה נכון והטל קסמים!'},
             {icon: 'water_drop', name:'מסע המים', type: 'app', appType: 'water_pipeline', listName: 'PYTHON_KEYWORDS', questionIndex: 'keyword', resultIndex: 'hebrew', setItems: 3, title: 'פתחו את החסימות והחזירו את המים!'},
+            {icon: 'map', name:'מבוך הקלף', type: 'app', appType: 'scribble_dungeon', listName: 'PYTHON_KEYWORDS', questionIndex: 'keyword', resultIndex: 'hebrew', setItems: 6, title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
           ]
-        }
+        },
+        {icon: 'map', name:'מבוך הקלף - חיות', type: 'app', appType: 'scribble_dungeon', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+        {icon: 'map', name:'מבוך הקלף - מילים חדשות', type: 'app', appType: 'scribble_dungeon', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
       ]
     },
     {
@@ -326,6 +330,7 @@ apps =  {
         {icon: 'sports_esports', name:'מבוך האוצר - חיבור', type: 'app', appType: 'treasure_maze', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'בחר את הדלת הנכונה'},
         {icon: 'sports_kabaddi', name:'דו-קרב - חיבור', type: 'app', appType: 'duel_shooter', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
         {icon: 'auto_fix_high', name:'דו-קרב הקוסמים - כפל', type: 'app', appType: 'wizard_duel', listName: 'MULTIPLICATION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
+        {icon: 'map', name:'מבוך הקלף - כפל', type: 'app', appType: 'scribble_dungeon', listName: 'MULTIPLICATION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
       ]
     },
     {
@@ -350,6 +355,7 @@ apps =  {
         {icon: 'sports_esports', name:'מבוך האותיות', type: 'app', appType: 'treasure_maze', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', title: 'הקשב לאות ובחר את הדלת הנכונה'},
         {icon: 'format_size', name:'השם שלי', type: 'app', appType: 'mcq', listName: 'NAME', questionIndex: 'letterName', resultIndex: 'letter'},
         {icon: 'water_drop', name:'מסע המים', type: 'app', appType: 'water_pipeline', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', setItems: 1, title: 'פתחו את החסימות והחזירו את המים!'},
+        {icon: 'map', name:'מבוך הקלף - אותיות י׳ עד פ׳', type: 'app', appType: 'scribble_dungeon', listName: 'HEBREW_LETTERS_YOD_PE', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', setItems: 0, title: 'הקשיבו לשם האות ובחרו נכון'},
       ]
     },
     {

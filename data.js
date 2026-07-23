@@ -7519,6 +7519,16 @@ function filterABCByString(lettersStr, abcList) {
 }
 DATA.practiceABC = filterABCByString("QRYPGJKZVN", DATA.ABC)
 
+// A view onto a stretch of the existing alphabet — same items, no new content.
+// Games use it to drill one section instead of always restarting from alef.
+function hebrewLetterRange(fromLetter, toLetter) {
+    const list = DATA.hebrewAlphabet;
+    const from = list.findIndex(item => item.letter.value === fromLetter);
+    const to = list.findIndex(item => item.letter.value === toLetter);
+    return from < 0 || to < 0 ? [] : list.slice(from, to + 1);
+}
+DATA.HEBREW_LETTERS_YOD_PE = hebrewLetterRange('י', 'פ');
+
 
 
 

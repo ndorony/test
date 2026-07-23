@@ -9866,6 +9866,11 @@ if (typeof createFactoryTycoonComponent === 'function') {
     FactoryTycoonComponent = createFactoryTycoonComponent(BaseGameComponent);
 }
 
+var ScribbleDungeonComponent = null;
+if (typeof createScribbleDungeonComponent === 'function') {
+    ScribbleDungeonComponent = createScribbleDungeonComponent(BaseGameComponent);
+}
+
 const routes = [
     {path: '/', component: MenuComponent,},
     {path: '/user', component: UserComponent},
@@ -9900,6 +9905,10 @@ if (KnowledgeDefenseComponent) {
 
 if (FactoryTycoonComponent) {
     routes.push({path: '/play/factory_tycoon/:currentAppId', component: FactoryTycoonComponent, props: true});
+}
+
+if (ScribbleDungeonComponent) {
+    routes.push({path: '/play/scribble_dungeon/:currentAppId', component: ScribbleDungeonComponent, props: true});
 }
 
 // Adventure mode routes (adventure.js) — appended only when the module is loaded

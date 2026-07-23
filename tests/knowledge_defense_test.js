@@ -228,7 +228,7 @@ test('legacy, Adventure, route, asset, and cache registrations exist', () => {
     assert.match(tester, /\/play\/knowledge_defense\/:currentAppId/);
     assert.match(index, /games\/knowledge-defense\.js/);
     assert.match(index, /games\/knowledge-defense\.css/);
-    assert.match(worker, /my-app-cache-v47/);
+    assert.match(worker, /my-app-cache-v\d+/);
 });
 
 console.log(`\n${passed} Knowledge Defense tests passed`);

@@ -34,3 +34,20 @@
   quality was produced as custom SVG, which also keeps the download small.
 - **Runtime:** The scene renders these SVGs as textures in Phaser (already vendored via
   CDN in `index.html` for other games). UI icons in the HUD are inline SVG strokes.
+
+## Scribble Dungeon (games/scribble-dungeon.js, games/scribble-dungeon.css)
+
+- **Files:** `assets/scribble-dungeons/*.png` — the full 136-sprite 64px set (walls,
+  corners, doors, floors, props, weapons and the four character tokens), plus
+  `LICENSE-KENNEY.txt` bundled beside the art.
+- **Source:** **Kenney "Scribble Dungeons"** — https://kenney.nl/assets/scribble-dungeons
+  (v1.0, 16-02-2022). The `Default (64px)` PNG set is committed as-is, flattened into
+  one folder; the pack's tilesheet, Tiled files and SVGs are not used.
+- **License:** Creative Commons Zero (CC0 1.0 Universal) — free for personal,
+  educational and commercial use. Attribution to Kenney is explicitly **not** required.
+- **Notes:** The art is black line work on transparency over an opaque white fill. The
+  game never ships recoloured copies: `inked()` re-maps each sprite to the active
+  theme's pencil/paper colours at runtime by luminance, which is why one greyscale
+  pack works on both the paper themes and the dark ones.
+- **Runtime:** Plain `<img>` loads drawn to a 2D canvas. No loader, atlas or 3D
+  library is involved.
