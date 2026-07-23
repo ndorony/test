@@ -411,6 +411,13 @@ function getItemById(currentItem, id) {
           return adventureApp;
       }
   }
+  // Shared-progress groups: grp-<group>-<n> ids resolve to a virtual app from groups.js
+  if (typeof resolveSharedGroupApp === 'function') {
+      const groupApp = resolveSharedGroupApp(id);
+      if (groupApp) {
+          return groupApp;
+      }
+  }
   // Split the ID into an array of indices
   const indices = id.split('_').map(Number);
 
@@ -9448,6 +9455,10 @@ var MenuComponent = Vue.component('menu',{
         }
         this.menu = getItemById(apps, currentMenu);
       }, getLink: function(app, id){
+        // Shared-progress group items carry an explicit play URL (groups.js)
+        if (app.link) {
+          return app.link;
+        }
         menu = this.menu;
         route = this.$route.params.currentMenu;
         link = `/${app.type}/${route}_${id}`;

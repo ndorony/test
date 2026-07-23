@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v50';
+const CACHE_NAME = 'my-app-cache-v51';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const CORE_ASSETS = [
   '/manifest.json',
   '/data.js',
   '/apps.js',
+  '/groups.js',
   '/worlds.js',
   '/adventure.js',
   '/adventure.css',

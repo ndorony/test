@@ -15,6 +15,11 @@ function getKey(key) {
     if (typeof normalizeAdventureKey === 'function') {
         key = normalizeAdventureKey(key);
     }
+    // Shared-progress groups: all games in a group share one knowledge key (groups.js).
+    // Non-group keys are returned unchanged.
+    if (typeof normalizeSharedGroupKey === 'function') {
+        key = normalizeSharedGroupKey(key);
+    }
     return `${key}_${getUser()}_LocalData`;
 }
 

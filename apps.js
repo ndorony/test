@@ -287,6 +287,20 @@ apps =  {
                 },
               ]
             },
+        {
+              name: '5_1 (התקדמות משותפת)',
+              type: 'menu',
+              // Shared-progress group (groups.js, group "ch51"): all four games
+              // below learn the SAME word list (5_1) under one shared knowledge
+              // key — pick any game, and progress carries across all of them.
+              // Keep the game order in sync with SHARED_GROUPS.ch51.games.
+              items: [
+                {icon: 'format_shapes',  name:'בחירה מרובה',  type: 'app', link: '/play/mcq/grp-ch51-0'},
+                {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-ch51-1'},
+                {icon: 'timeline',       name:'חבר במילים',   type: 'app', link: '/play/word_link/grp-ch51-2'},
+                {icon: 'map',            name:'מבוך הקלף',    type: 'app', link: '/play/scribble_dungeon/grp-ch51-3'},
+              ]
+            },
         {icon: 'sports_esports', name:'מטווח בלונים - חיות', type: 'app', appType: 'balloon_shooter', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'פגע בבלון עם התשובה הנכונה'},
         {icon: 'directions_run', name:'הרפתקת ריצה - חיות', type: 'app', appType: 'platformer', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 3, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
         {icon: 'directions_run', name:'הרפתקת ריצה - מילים חדשות', type: 'app', appType: 'platformer', listName: 'COLUMN_WORDS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 5, title: 'רוץ וקפוץ אל הבלוק עם התשובה הנכונה'},
