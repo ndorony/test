@@ -355,7 +355,7 @@ apps =  {
         {icon: 'sports_esports', name:'מבוך האותיות', type: 'app', appType: 'treasure_maze', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', title: 'הקשב לאות ובחר את הדלת הנכונה'},
         {icon: 'format_size', name:'השם שלי', type: 'app', appType: 'mcq', listName: 'NAME', questionIndex: 'letterName', resultIndex: 'letter'},
         {icon: 'water_drop', name:'מסע המים', type: 'app', appType: 'water_pipeline', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', setItems: 1, title: 'פתחו את החסימות והחזירו את המים!'},
-        {icon: 'map', name:'מבוך הקלף - אותיות י׳ עד פ׳', type: 'app', appType: 'scribble_dungeon', listName: 'HEBREW_LETTERS_YOD_PE', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', setItems: 0, title: 'הקשיבו לשם האות ובחרו נכון'},
+        {icon: 'map', name:'מבוך הקלף - אותיות', type: 'app', appType: 'scribble_dungeon', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', setItems: 2, title: 'הקשיבו לשם האות ובחרו נכון'},
       ]
     },
     {
