@@ -713,7 +713,9 @@ test('every registered app supplies the fields the game reads', () => {
     const entries = apps.split('\n').filter(line => /appType:\s*'scribble_dungeon'/.test(line));
     assert.ok(entries.length >= 3, 'expected the game to be registered on several lists');
     entries.forEach(line => {
-        assert.match(line, /listName:\s*'[A-Z0-9_]+'/, line);
+        // List names are SCREAMING_SNAKE in most of data.js but camelCase in a
+        // few (hebrewAlphabet, practiceABC) — DATA[listName] is a plain lookup.
+        assert.match(line, /listName:\s*'[A-Za-z0-9_]+'/, line);
         // Field names are camelCase in some lists (letterName) and snake in others.
         assert.match(line, /questionIndex:\s*'[a-zA-Z_]+'/, line);
         assert.match(line, /resultIndex:\s*'[a-zA-Z_]+'/, line);
