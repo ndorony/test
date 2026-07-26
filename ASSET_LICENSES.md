@@ -51,3 +51,26 @@
   pack works on both the paper themes and the dark ones.
 - **Runtime:** Plain `<img>` loads drawn to a 2D canvas. No loader, atlas or 3D
   library is involved.
+
+## Scribble Platformer (games/scribble-platformer.js, games/scribble-platformer.css)
+
+- **Files:** `assets/scribble-platformer/*.png` — the 104-sprite 64px `Default` set
+  (side-view terrain and blocks, ladders/grab holds, doors, crates, bridge, flag,
+  coin, gem, key, heart, spikes, shield/bow/sword/spear items, the four character
+  tokens with matching hands, clouds, trees and bushes), plus `LICENSE-KENNEY.txt`
+  bundled beside the art.
+- **Source:** **Kenney "Scribble Platformer"** — https://kenney.nl/assets/scribble-platformer
+  (v1.0, 2020). The `Default (64px)` PNG set is committed as-is, flattened into one
+  folder; the pack's Retina set, tilesheet, vector and Construct files are not used.
+- **License:** Creative Commons Zero (CC0 1.0 Universal) — free for personal,
+  educational and commercial use. Attribution to Kenney is explicitly **not** required.
+- **Notes:** Same hand-drawn black-line-on-transparency style as Scribble Dungeons, so
+  the same `inked()` runtime re-inking maps every tile to the active theme's
+  pencil/paper colours; the coloured character tokens are drawn as-is (`raw()`), like
+  the dungeon pawns. The two scribble packs are intentionally cross-used — identical
+  style — so side-view rooms reuse dungeon sprites (doors, shield, bridge, bow/arrow,
+  crate, rails) where the platformer pack has no equivalent. Concretely, `cart.png`
+  is copied verbatim from the Scribble Dungeons pack (also Kenney CC0) into this folder
+  for the rail room; the rails themselves are drawn at runtime, not a sprite.
+- **Runtime:** Plain `<img>` loads drawn to a 2D canvas. No loader, atlas or 3D
+  library is involved.
