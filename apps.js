@@ -317,7 +317,7 @@ apps =  {
         {
               name: '5_1 (התקדמות משותפת)',
               type: 'menu',
-              // Shared-progress group (groups.js, group "ch51"): all four games
+              // Shared-progress group (groups.js, group "ch51"): all the games
               // below learn the SAME word list (5_1) under one shared knowledge
               // key — pick any game, and progress carries across all of them.
               // Keep the game order in sync with SHARED_GROUPS.ch51.games (the
@@ -376,6 +376,32 @@ apps =  {
         {icon: 'format_size', name:'השם שלי', type: 'app', appType: 'mcq', listName: 'NAME', questionIndex: 'letterName', resultIndex: 'letter'},
         {icon: 'water_drop', name:'מסע המים', type: 'app', appType: 'water_pipeline', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', setItems: 1, title: 'פתחו את החסימות והחזירו את המים!'},
         {icon: 'map', name:'מבוך הקלף - אותיות', type: 'app', appType: 'scribble_dungeon', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', setItems: 2, title: 'הקשיבו לשם האות ובחרו נכון'},
+        {
+              name: 'אותיות (התקדמות משותפת)',
+              type: 'menu',
+              // Shared-progress group (groups.js, group "otiot"): all the games
+              // below learn the SAME letters (hebrewAlphabet) under one shared
+              // knowledge key — pick any game, and progress carries across all.
+              // Keep the game order in sync with SHARED_GROUPS.otiot.games (the
+              // grp-otiot-<n> index is the game's identity — append new games only).
+              // IMPORTANT: this must stay LAST in the עברית menu. Menu item ids
+              // are position-based (route_index), so inserting a new item in the
+              // middle shifts the id — and therefore the saved progress — of
+              // every item after it. Only ever append at the end.
+              items: [
+                {icon: 'format_shapes',  name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-otiot-0'},
+                {icon: 'sports_esports', name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-otiot-1'},
+                {icon: 'timeline',       name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-otiot-2'},
+                {icon: 'sports_esports', name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-otiot-3'},
+                {icon: 'directions_run', name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-otiot-4'},
+                {icon: 'sports_kabaddi', name:'דו-קרב',         type: 'app', link: '/play/duel_shooter/grp-otiot-5'},
+                {icon: 'auto_fix_high',  name:'דו-קרב הקוסמים', type: 'app', link: '/play/wizard_duel/grp-otiot-6'},
+                {icon: 'map',            name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-otiot-7'},
+                {icon: 'water_drop',     name:'מסע המים',       type: 'app', link: '/play/water_pipeline/grp-otiot-8'},
+                {icon: 'security',       name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-otiot-9'},
+                {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-otiot-10'},
+              ]
+            },
       ]
     },
     {

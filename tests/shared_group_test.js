@@ -148,7 +148,58 @@ check('new_items accumulate for the group, visible to every game', JSON.stringif
 run(`setLocalStorage('grp-ch51-0_new_items', [])`); // news screen shown from the mcq game
 check('news clear is shared across games', JSON.stringify(run(`getLocalStorage('grp-ch51-2_new_items', [])`)) === '[]');
 
-console.log('--- 6. no leakage, no adventure side-effects ---');
+console.log('--- 6. the hebrew-letters group ("otiot") ---');
+check('DATA.hebrewAlphabet has all 27 letters', run(`DATA.hebrewAlphabet.length`) === 27, run(`DATA.hebrewAlphabet.length`));
+const otiotGames = run(`SHARED_GROUPS.otiot.games.length`);
+check('otiot lists 11 games', otiotGames === 11, otiotGames);
+check('every otiot game has a name + title', run(`SHARED_GROUPS.otiot.games.every(g => g.appType && g.name && g.title)`));
+// a menu button pointing at an unregistered /play/<type>/ route would just dead-end
+const missingRoutes = run(`SHARED_GROUPS.otiot.games.map(g => g.appType)`)
+    .filter(t => !tester.includes(`/play/${t}/:currentAppId`));
+check('every otiot appType has a router route in tester.js', missingRoutes.length === 0, missingRoutes.join(', '));
+const otiotApps = run(`SHARED_GROUPS.otiot.games.map((g, i) => resolveSharedGroupApp('grp-otiot-' + i))`);
+check('every grp-otiot-<n> resolves to its own appType',
+    otiotApps.every((a, i) => a && a.appType === run(`SHARED_GROUPS.otiot.games[${i}].appType`)),
+    JSON.stringify(otiotApps.map(a => a && a.appType)));
+check('shared config carried onto every game (letterName → letter, speech, setItems 3)',
+    otiotApps.every(a => a.listName === 'hebrewAlphabet' && a.questionIndex === 'letterName'
+        && a.resultIndex === 'letter' && a.questionType === 'speech' && a.setItems === 3));
+check('grp-otiot-10 parses (2-digit index) and grp-otiot-11 does not',
+    run(`resolveSharedGroupApp('grp-otiot-10') !== null && resolveSharedGroupApp('grp-otiot-11') === null`));
+const otiotMenuLinks = run(`
+    (function find(node) {
+        if (node.type === 'menu' && node.name === 'אותיות (התקדמות משותפת)') return node.items.map(i => i.link);
+        if (!node.items) return null;
+        for (const child of node.items) { const r = find(child); if (r) return r; }
+        return null;
+    })(apps);
+`);
+check('the "אותיות" submenu exists with a button per game',
+    Array.isArray(otiotMenuLinks) && otiotMenuLinks.length === otiotGames, JSON.stringify(otiotMenuLinks));
+check('apps.js menu links match groups.js game order exactly',
+    JSON.stringify(otiotMenuLinks) === JSON.stringify(run(`getSharedGroupMenuItems('otiot').map(i => i.link)`)),
+    JSON.stringify(otiotMenuLinks));
+check('every menu link resolves to the appType named in its own URL',
+    run(`getSharedGroupMenuItems('otiot').every(i => { const parts = i.link.split('/'); return resolveSharedGroupApp(parts[3]).appType === parts[2]; })`));
+// the group must be LAST in its menu: ids are position-based, so appending is the only safe edit
+check('the group sits last in the עברית menu (position-based ids stay stable)',
+    run(`(function(){ const heb = apps.items.find(i => i.name === 'עברית'); return heb.items[heb.items.length - 1].name; })()`) === 'אותיות (התקדמות משותפת)');
+// shared knowledge, and strictly separate from ch51's
+run(`generateFromList('hebrewAlphabet', 'letterName', 'letter', 'grp-otiot-0', 3)`);
+run(`updateWeightForKey('grp-otiot-0', 0, 1)`);   // mistake in the mcq game
+run(`updateWeightForKey('grp-otiot-9', 0, -1)`);  // success in knowledge defense
+check('weight change carries from mcq to the falling-answers game (5+1-1=5)',
+    run(`getWeightsForKey('grp-otiot-10', 3, getDataList('hebrewAlphabet'))`)[0] === 5);
+check('attempt history shared across all 11 games',
+    run(`getAttemptHistory('grp-otiot-4')[0].length`) === 2, JSON.stringify(run(`getAttemptHistory('grp-otiot-4')[0]`)));
+check('exactly one weights array for otiot, and none per-game',
+    keys().filter(k => k.includes('grp-otiot') && k.includes('_Weights_')).length === 1
+    && keys().every(k => !/grp-otiot-\d/.test(k)), keys().filter(k => k.includes('otiot')).join(', '));
+check('otiot progress does not leak into the ch51 group',
+    run(`getWeightsForKey('grp-ch51-0', 5, getDataList('5_1')).length`) === 45
+    && keys().filter(k => k.includes('grp-ch51')).every(k => !k.includes('otiot')));
+
+console.log('--- 7. no leakage, no adventure side-effects ---');
 check('normalizeSharedGroupKey leaves normal & adventure keys alone',
     run(`normalizeSharedGroupKey('learn_0_2_1_Weights')`) === 'learn_0_2_1_Weights'
     && run(`normalizeSharedGroupKey('score0_12')`) === 'score0_12'

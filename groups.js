@@ -46,6 +46,32 @@ const SHARED_GROUPS = {
             {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'בנו מערך הגנה והצילו את הממלכה'},
         ],
     },
+
+    // The Hebrew alphabet (DATA list "hebrewAlphabet", 27 letters). One shared
+    // knowledge key, and EVERY generic game in the app as a way to practice it:
+    // question = the letter's name (spoken), answer = the letter itself.
+    // questionType 'speech' matches how the standalone עברית menu items play it.
+    // Same append-only rule as above: a game's index IS its id (grp-otiot-<index>).
+    otiot: {
+        listName: 'hebrewAlphabet',
+        questionIndex: 'letterName',
+        resultIndex: 'letter',
+        questionType: 'speech',
+        setItems: 3, // letters are short — three new ones per batch, shared across games
+        games: [
+            {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',      title: 'הקשיבו לשם האות ובחרו נכון'},
+            {appType: 'balloon_shooter',   icon: 'sports_esports', name: 'מטווח בלונים',     title: 'פגעו בבלון עם האות הנכונה'},
+            {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',       title: 'הקישו על הרמקול ומתחו קו אל האות הנכונה'},
+            {appType: 'treasure_maze',     icon: 'sports_esports', name: 'מבוך האוצר',       title: 'הקשיבו לשם האות ובחרו את הדלת הנכונה'},
+            {appType: 'platformer',        icon: 'directions_run', name: 'הרפתקת ריצה',      title: 'רוצו וקפצו אל הבלוק עם האות הנכונה'},
+            {appType: 'duel_shooter',      icon: 'sports_kabaddi', name: 'דו-קרב',           title: 'ענו נכון, מלאו את המחסנית ונצחו בדו-קרב!'},
+            {appType: 'wizard_duel',       icon: 'auto_fix_high',  name: 'דו-קרב הקוסמים',   title: 'ענו נכון והטילו כדורי אש על המפלצת!'},
+            {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',        title: 'הקשיבו לשם האות ובחרו את הדלת הנכונה'},
+            {appType: 'water_pipeline',    icon: 'water_drop',     name: 'מסע המים',         title: 'פתחו את החסימות והחזירו את המים!'},
+            {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',        title: 'בנו מערך הגנה והצילו את הממלכה'},
+            {appType: 'falling_answers',   icon: 'arrow_downward', name: 'תשובות נופלות',    title: 'הקשיבו לשם האות ולחצו על האות הנכונה'},
+        ],
+    },
 };
 
 const SHARED_GROUP_ID_RE = /^grp-([a-z0-9]+)-(\d+)$/;
