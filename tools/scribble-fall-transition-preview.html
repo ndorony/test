@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribble Fall Transition</title>
+<link rel="stylesheet" href="scribble-transition-preview.css">
+</head>
+<body class="fall-preview">
+<header><h1>Falling object transition: side-view to top-down</h1></header>
+<div class="controls">
+  <button id="play" type="button">Play</button>
+  <button id="reset" type="button" class="secondary">Reset</button>
+  <label>Timeline <input id="progress" type="range" min="0" max="1" step="0.001" value="0"><output id="progressOut">0%</output></label>
+  <label><input id="loop" type="checkbox" checked> Loop</label>
+  <label><input id="partLabelsToggle" type="checkbox" checked> Part labels</label>
+  <label><input id="manual3dToggle" type="checkbox"> Manual 3D</label>
+  <button id="resetView" type="button" class="secondary" disabled>Reset view</button>
+</div>
+<main class="stage" id="stage">
+  <canvas id="bridge"></canvas>
+  <div class="flash" id="flash"></div>
+  <div class="part-labels" id="partLabels" aria-label="Model part labels"></div>
+  <div class="status" id="status">loading</div>
+</main>
+<div class="part-key" id="partKey">
+  <strong id="selectedPart">Select a label</strong>
+  <span id="selectedPartName">Parts are grouped by the side ledge, shaft, falling object, and dungeon room.</span><br>
+  <span class="part-key-codes">S side ledge · O falling object · P shaft path · W shaft wall · R dungeon room · D dungeon ring</span>
+</div>
+<pre class="readout" id="readout"></pre>
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="../games/scribble-bridge.js?v=115"></script>
+<script src="scribble-transition-preview.js"></script>
+<script src="scribble-fall-transition-adapter.js?v=153"></script>
+<script>createScribbleTransitionPreview(createScribbleFallTransitionPreviewAdapter());</script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribble Bridge — seam preview</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; font: 14px/1.5 system-ui, sans-serif;
+    background: #fdfdf9; color: #2e3a55;
+  }
+  header { padding: 10px 16px; border-bottom: 1px solid rgba(46,58,85,.18); }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  p { margin: 0; font-size: 12px; opacity: .75; }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+    padding: 10px 16px; border-bottom: 1px solid rgba(46,58,85,.18);
+  }
+  label { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+  input[type=range] { width: 190px; }
+  .stage {
+    position: relative; margin: 16px auto; width: min(960px, calc(100vw - 32px));
+    aspect-ratio: 16 / 10;
+    border: 1px solid rgba(46,58,85,.22); border-radius: 8px; overflow: hidden;
+    background: #fdfdf9;
+  }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #flat { z-index: 1; }
+  #bridge { z-index: 2; }
+  .readout {
+    margin: 0 auto 24px; width: min(960px, calc(100vw - 32px));
+    font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap;
+    opacity: .8;
+  }
+  .bad { color: #d0342c; font-weight: 600; }
+  .good { color: #1f7a4d; font-weight: 600; }
+
+  /* #bare — the room on its own, for documentation captures. */
+  body.bare header, body.bare .controls, body.bare .readout { display: none; }
+  body.bare .stage { margin: 0; width: 100vw; height: 100vh; aspect-ratio: auto; border: 0; border-radius: 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Scribble Bridge — seam preview</h1>
+  <p>למטה מצוירים <strong>אותו חדר פעמיים</strong>: הקנבס התחתון הוא ציור 2D במוסכמת המצלמה של המבוך, והעליון הוא שכבת ה-3D של הגשר. אם המתמטיקה נכונה, ב-blend 0 הם צריכים לשבת אחד על השני.</p>
+</header>
+
+<div class="controls">
+  <label>קשת <input id="blend" type="range" min="0" max="1" step="0.001" value="0"><span id="blendOut">0.00</span></label>
+  <label>זום <input id="zoom" type="range" min="0.25" max="1.4" step="0.01" value="0.62"><span id="zoomOut">0.62</span></label>
+  <label><input id="showFlat" type="checkbox" checked> ציור 2D</label>
+  <label><input id="showBridge" type="checkbox" checked> שכבת 3D</label>
+  <label><input id="blink" type="checkbox"> הבהוב השוואה</label>
+  <label><input id="spin" type="checkbox"> סיבוב אוטומטי</label>
+</div>
+
+<div class="stage">
+  <canvas id="flat"></canvas>
+  <canvas id="bridge"></canvas>
+</div>
+
+<pre class="readout" id="readout"></pre>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="../games/scribble-bridge.js?v=115"></script>
+<script>
+/**
+ * A calibration harness for the bridge's camera contract.
+ *
+ * The 2D pass here is deliberately a copy of the dungeon's own drawing
+ * convention rather than an import of it: the whole claim under test is that
+ * an independent renderer following that convention lands in the same place as
+ * the bridge. Importing the dungeon would let a shared bug agree with itself.
+ */
+const PITCH = 64;
+const SPRITE = 64;
+const TOP_ASSET = '../assets/scribble-dungeons/';
+const SIDE_ASSET = '../assets/scribble-platformer/';
+
+// The transition room. 11 wide because that is one room of the platformer's
+// course; 7 deep so it still reads as a dungeon chamber; 7 tall so the wall
+// has the sky a level needs.
+const ROOM = { x: -5, y: -3, w: 11, h: 7, height: 4 };
+
+// The room's two halves, in the studio's own vocabulary. `top` is what lies
+// flat — the dungeon's floor plan. `side` is what stands up — the platformer's
+// walls. A wall tile gets both, which is what makes it read either way.
+const ART = { floor: 'tiles', wall: 'floor_wall', corner: 'floor_wall_corner' };
+const LEVEL = { wall: 'tile', ground: 'tile_grass' };
+
+// Crates: each an open-bottom cube. From above the dungeon's crate.png; from
+// the side a stack to jump on. Two of them are doubled up into a step.
+const PROPS = [
+  { c: 2, r: 4, top: 'crate', side: 'tile_crate' },
+  { c: 3, r: 4, top: 'crate', side: 'tile_crate', height: 2 },
+  { c: 6, r: 2, top: 'crate', side: 'tile_crate' },
+  { c: 8, r: 3, top: 'crate', side: 'tile_crate', height: 2 },
+];
+
+// Pasted from the studio's "Copy values for Codex" for Draft - Castle
+// battlement, unedited. The roof is a profile, not a lid: merlons at 2.45,
+// crenels recessed to 2.04, and the four cross-strips at 2.25 — every piece
+// cut from arrow.png at rect [20,0,24,64].
+const BATTLEMENT = {
+  asset: 'Draft - Castle battlement',
+  dimensions: [2.5, 2.5, 2.5],
+  panels: [
+    {id: 'castle-front', role: 'front', reference: 'side', position: [0, 1.25, 1.2], rotation: [0, 0, 0], size: [2.5, 2.5]},
+    {id: 'castle-back', role: 'back', reference: 'side', position: [0, 1.25, -1.2], rotation: [0, 180, 0], size: [2.5, 2.5]},
+    {id: 'roof-left-high', role: 'top', reference: 'top', position: [-0.977, 2.45, 0], rotation: [-90, 0, 0], size: [0.469, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'roof-centre-high', role: 'top', reference: 'top', position: [0, 2.45, 0], rotation: [-90, 0, 0], size: [0.859, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'roof-right-high', role: 'top', reference: 'top', position: [0.977, 2.45, 0], rotation: [-90, 0, 0], size: [0.469, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'roof-left-low', role: 'top', reference: 'top', position: [-0.586, 2.04, 0], rotation: [-90, 0, 0], size: [1.3, 2.45], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'roof-right-low', role: 'top', reference: 'top', position: [0.586, 2.04, 0], rotation: [-90, 0, 0], size: [1.4, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'c1', role: 'top', reference: 'top', position: [-0.8, 2.25, 0], rotation: [-90, 90, 0], size: [0.469, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'c2', role: 'top', reference: 'top', position: [-0.4, 2.25, 0], rotation: [-90, 90, 0], size: [0.469, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'c3', role: 'top', reference: 'top', position: [0.4, 2.25, 0], rotation: [-90, 90, 0], size: [0.469, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+    {id: 'c4', role: 'top', reference: 'top', position: [0.8, 2.25, 0], rotation: [-90, 90, 0], size: [0.469, 2.5], sourceReference: {source: './assets/scribble-dungeons/arrow.png', rect: [20, 0, 24, 64]}},
+  ],
+};
+const REFS = {
+  top: './assets/scribble-dungeons/floor_wall.png',
+  side: './assets/scribble-platformer/tile_castle.png',
+};
+
+// "Connected + arrow sides virtual 1" — the studio's approved reusable brick.
+// A tile.png front, and arrow.png on the top, left and right. This is what the
+// two side runs are laid from.
+const ARROW_SIDES = {
+  asset: 'Connected + arrow sides virtual 1',
+  dimensions: [2.5, 2.5, 2.5],
+  panels: [
+    {id: 'front', role: 'front', reference: 'side', position: [0, 1.25, 1.25], rotation: [0, 0, 0], size: [2.5, 2.5]},
+    {id: 'top', role: 'top', reference: 'top', position: [0, 2.45, 0.85], rotation: [-90, 0, 90], size: [2.5, 2.5]},
+    {id: 'left', role: 'left', reference: 'top', position: [-1.22, 1.27, 0.87], rotation: [0, -90, 0], size: [2.5, 2.5]},
+    {id: 'right', role: 'right', reference: 'top', position: [1.23, 1.28, 0.87], rotation: [0, 90, 0], size: [2.5, 2.5]},
+  ],
+};
+const ARROW_REFS = {
+  top: './assets/scribble-dungeons/arrow.png',
+  side: './assets/scribble-platformer/tile.png',
+};
+
+const RECIPE_SOURCES = [REFS.top, REFS.side, ARROW_REFS.top, ARROW_REFS.side,
+  './assets/scribble-dungeons/arrow.png'];
+
+// Which pack each sprite comes from. The room borrows from both.
+const PACK = {};
+Object.values(ART).forEach(n => { PACK[n] = TOP_ASSET; });
+Object.values(LEVEL).forEach(n => { PACK[n] = SIDE_ASSET; });
+PROPS.forEach(p => { PACK[p.top] = TOP_ASSET; PACK[p.side] = SIDE_ASSET; });
+
+const PAL = { ink: '#2e3a55', floor: '#ffffff', paper: '#fdfdf9' };
+
+const flat = document.getElementById('flat');
+const fctx = flat.getContext('2d');
+const bridgeCanvas = document.getElementById('bridge');
+const readout = document.getElementById('readout');
+
+const ui = {
+  blend: document.getElementById('blend'),
+  zoom: document.getElementById('zoom'),
+  showFlat: document.getElementById('showFlat'),
+  showBridge: document.getElementById('showBridge'),
+  blink: document.getElementById('blink'),
+  spin: document.getElementById('spin'),
+  blendOut: document.getElementById('blendOut'),
+  zoomOut: document.getElementById('zoomOut'),
+};
+
+const sprites = {};
+const inkCache = {};
+
+/** The dungeon's duotone re-ink, applied in place to an already-drawn canvas. */
+function duotone(ctx, canvas, color, paper) {
+  const ink = hexToRgb(color), pap = hexToRgb(paper);
+  const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const d = frame.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255;
+    d[i] = ink[0] + (pap[0] - ink[0]) * lum;
+    d[i + 1] = ink[1] + (pap[1] - ink[1]) * lum;
+    d[i + 2] = ink[2] + (pap[2] - ink[2]) * lum;
+  }
+  ctx.putImageData(frame, 0, 0);
+  return canvas;
+}
+
+/** The 2D pass still draws by short sprite name. */
+function inked(name) {
+  return textureFor(name, null);
+}
+
+function hexToRgb(hex) {
+  const v = hex.replace('#', '');
+  const n = parseInt(v.length === 3 ? v.split('').map(c => c + c).join('') : v, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+// Recipe panels name a source by path, relative to the app root; this page
+// lives one level down. Everything is keyed by the resolved URL so a short
+// sprite name and a recipe path that mean the same file share one bitmap.
+function resolve(key) {
+  if (key.indexOf('/') === -1) return PACK[key] + key + '.png';
+  return key.replace(/^\.\//, '../');
+}
+
+function loadSprites() {
+  const keys = Object.keys(PACK).concat(RECIPE_SOURCES);
+  return Promise.all(keys.map(key => new Promise(res => {
+    const url = resolve(key);
+    if (sprites[url]) return res();
+    const img = new Image();
+    img.onload = () => { sprites[url] = img; res(); };
+    img.onerror = () => res();
+    img.src = url;
+  })));
+}
+
+/**
+ * The texture the bridge asks for: a source, optionally cropped to a rect.
+ * The crop is what lets one arrow.png yield every strip of a battlement roof.
+ */
+function textureFor(key, rect) {
+  const url = resolve(key);
+  const img = sprites[url];
+  if (!img) return null;
+  const cacheKey = url + '|' + (rect ? rect.join(',') : 'full');
+  if (inkCache[cacheKey]) return inkCache[cacheKey];
+
+  const [rx, ry, rw, rh] = rect || [0, 0, img.naturalWidth, img.naturalHeight];
+  const c = document.createElement('canvas');
+  c.width = rw; c.height = rh;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, rx, ry, rw, rh, 0, 0, rw, rh);
+  inkCache[cacheKey] = duotone(ctx, c, PAL.ink, PAL.floor);
+  return inkCache[cacheKey];
+}
+
+// ---------------------------------------------------------------- 2D pass
+
+/** Frames the room exactly the way the dungeon's frameFor/aimCamera do. */
+function cameraFor(view, zoom) {
+  return {
+    x: (ROOM.x + (ROOM.w - 1) / 2) * PITCH,
+    y: (ROOM.y + (ROOM.h - 1) / 2) * PITCH,
+    z: zoom,
+  };
+}
+
+function drawFlat(view, cam, dpr) {
+  fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  fctx.clearRect(0, 0, view.w, view.h);
+  fctx.fillStyle = PAL.paper;
+  fctx.fillRect(0, 0, view.w, view.h);
+  if (!ui.showFlat.checked) return;
+
+  fctx.save();
+  // The dungeon's world transform, verbatim.
+  fctx.translate(view.w / 2, view.h / 2);
+  fctx.scale(cam.z, cam.z);
+  fctx.translate(-cam.x, -cam.y);
+
+  const floor = inked(ART.floor);
+  const wall = inked(ART.wall);
+  const corner = inked(ART.corner);
+
+  for (let c = 0; c < ROOM.w; c++) {
+    for (let r = 0; r < ROOM.h; r++) {
+      const lastC = ROOM.w - 1, lastR = ROOM.h - 1;
+      const edge = c === 0 || r === 0 || c === lastC || r === lastR;
+      const isCorner = (c === 0 || c === lastC) && (r === 0 || r === lastR);
+      const img = !edge ? floor : (isCorner ? corner : wall);
+      if (!img) continue;
+      fctx.save();
+      fctx.translate((ROOM.x + c) * PITCH, (ROOM.y + r) * PITCH);
+      // The wall ring's top-down art is rotated to face into the room, which
+      // is what the dungeon does when it inks a wall run.
+      let rot = 0;
+      if (isCorner) rot = c === 0 ? (r === 0 ? 0 : 90) : (r === 0 ? -90 : 180);
+      else if (edge) rot = r === 0 ? 0 : (r === lastR ? 180 : (c === 0 ? 90 : -90));
+      if (rot) fctx.rotate(rot * Math.PI / 180);
+      fctx.drawImage(img, -SPRITE / 2, -SPRITE / 2, SPRITE, SPRITE);
+      fctx.restore();
+    }
+  }
+  fctx.restore();
+}
+
+// ------------------------------------------------------------- bridge pass
+
+let bridge = null;
+
+function buildBridge() {
+  bridge = createScribbleBridge({
+    canvas: bridgeCanvas,
+    pitch: PITCH,
+    textureFor: textureFor,
+  });
+  if (!bridge) {
+    readout.innerHTML = '<span class="bad">WebGL לא זמין בדפדפן הזה — הגשר מחזיר null, וזו בדיוק ההתנהגות הרצויה.</span>';
+    document.body.dataset.captureError = 'webgl-unavailable';
+    return;
+  }
+  const stage = scribbleBridgeStage({
+    origin: [ROOM.x, ROOM.y],
+    width: ROOM.w, depth: ROOM.h, height: ROOM.height,
+    top: ART,
+    side: LEVEL,
+    props: PROPS,
+    // The walls are courses of the approved brick, a brick thick.
+    wallBrick: { recipe: ARROW_SIDES, refs: ARROW_REFS },
+  });
+
+  // Crown the back wall with the authored battlement, one per tile. This is
+  // the whole point of the adapter: the room's plain parts are generated, and
+  // anything with real design in it comes out of the studio unchanged.
+  for (let c = 0; c < ROOM.w; c++) {
+    stage.instances.push(scribbleBridgeInstance(
+      BATTLEMENT, REFS, [ROOM.x + c, ROOM.height, ROOM.y], 0));
+  }
+  bridge.setRoom(stage);
+}
+
+// ------------------------------------------------------------------- loop
+
+let spinT = 0;
+let last = performance.now();
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000 || 0);
+  last = now;
+
+  const stage = flat.parentElement;
+  const view = { w: stage.clientWidth, h: stage.clientHeight };
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (flat.width !== Math.round(view.w * dpr)) {
+    flat.width = Math.round(view.w * dpr);
+    flat.height = Math.round(view.h * dpr);
+  }
+
+  const zoom = Number(ui.zoom.value);
+  const cam = cameraFor(view, zoom);
+
+  if (ui.spin.checked) {
+    spinT = (spinT + dt * 0.35) % 2;
+    ui.blend.value = String(spinT > 1 ? 2 - spinT : spinT);
+  }
+  const blend = Number(ui.blend.value);
+  ui.blendOut.textContent = blend.toFixed(2);
+  ui.zoomOut.textContent = zoom.toFixed(2);
+
+  drawFlat(view, cam, dpr);
+  // The handover, as the game will do it: the 2D dungeon canvas holds the frame
+  // while the arc is still at rest, then gives way once the camera starts to
+  // move. Past that point the 2D pass has nothing true left to say — it can
+  // only draw the room from above.
+  flat.style.opacity = String(1 - Math.min(1, blend / 0.18));
+
+  if (bridge) {
+    bridge.resize(view, dpr);
+    // The two endpoints are the two games' own framings of this room: the
+    // dungeon's, centred on the floor plan, and the platformer's, centred on
+    // the wall at mid-height. The arc is what runs between them.
+    const wallCentreX = (ROOM.x + (ROOM.w - 1) / 2) * PITCH;
+    const framing = scribbleBridgeFraming(
+      { cam: cam, view: view },
+      // Platformer convention: the ground line is y = 0 and up is negative, so
+      // a camera above the ground sits at a negative y.
+      { cam: { x: wallCentreX, y: -ROOM.height / 2 * PITCH, z: cam.z }, view: view, floorY: 0 },
+      PITCH
+    );
+    bridge.setFraming(framing);
+    bridge.setProgress(blend);
+    const visible = ui.showBridge.checked &&
+      (!ui.blink.checked || Math.floor(now / 500) % 2 === 0);
+    bridgeCanvas.style.opacity = visible ? '1' : '0';
+    bridge.render();
+
+    if (!window.__scribbleCaptureReady) {
+      window.__scribbleCaptureReady = true;
+      document.body.dataset.captureReady = 'true';
+      window.dispatchEvent(new CustomEvent('scribble-capture-ready', {
+        detail: {type: 'bridge', progress: blend, zoom: zoom}
+      }));
+    }
+
+    if (blend === 0) reportSeam(view, cam);
+  }
+  requestAnimationFrame(frame);
+}
+
+/**
+ * The number that matters: where the bridge puts a known world point versus
+ * where the 2D convention puts it. Anything above a pixel would be visible as
+ * a jump at the handover.
+ */
+function reportSeam(view, cam) {
+  const probes = [
+    ['room centre', cam.x, cam.y],
+    ['top-left tile', ROOM.x * PITCH, ROOM.y * PITCH],
+    ['bottom-right tile', (ROOM.x + ROOM.w - 1) * PITCH, (ROOM.y + ROOM.h - 1) * PITCH],
+  ];
+  let worst = 0;
+  const lines = probes.map(([name, wx, wy]) => {
+    const expected = {
+      x: (wx - cam.x) * cam.z + view.w / 2,
+      y: (wy - cam.y) * cam.z + view.h / 2,
+    };
+    const got = bridge.project([wx / PITCH, 0, wy / PITCH]);
+    const dx = got.x - expected.x, dy = got.y - expected.y;
+    worst = Math.max(worst, Math.hypot(dx, dy));
+    return `${name.padEnd(20)} 2D (${expected.x.toFixed(2)}, ${expected.y.toFixed(2)})` +
+      `   3D (${got.x.toFixed(2)}, ${got.y.toFixed(2)})   Δ ${Math.hypot(dx, dy).toFixed(4)}px`;
+  });
+  const verdict = worst < 0.01
+    ? `<span class="good">התפר מדויק — סטייה מרבית ${worst.toFixed(4)} פיקסל.</span>`
+    : `<span class="bad">סטייה מרבית ${worst.toFixed(3)} פיקסל.</span>`;
+  readout.innerHTML = lines.join('\n') + '\n\n' + verdict;
+}
+
+// #b=0..100 opens the page at a point on the arc, so a particular reading can
+// be linked to or captured directly. #bare strips the page furniture, for
+// documentation captures of the room on its own.
+(function () {
+  const hash = location.hash || '';
+  const m = /(?:^|[#&])b=(\d+(?:\.\d+)?)/.exec(hash);
+  if (m) ui.blend.value = String(Math.min(1, Math.max(0, Number(m[1]) / 100)));
+  const z = /(?:^|[#&])z=(\d+(?:\.\d+)?)/.exec(hash);
+  if (z) ui.zoom.value = String(Number(z[1]) / 100);
+  if (/(?:^|[#&])bare/.test(hash)) {
+    document.body.classList.add('bare');
+  }
+})();
+
+loadSprites().then(() => {
+  buildBridge();
+  requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>

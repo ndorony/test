@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v52';
+const CACHE_NAME = 'my-app-cache-v153';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -16,11 +16,27 @@ const CORE_ASSETS = [
   '/games/factory-tycoon.css',
   '/games/knowledge-defense.js',
   '/games/knowledge-defense.css',
+  '/games/scribble-character-animation.js',
+  '/games/scribble-bridge.js?v=115',
   '/games/scribble-dungeon.js',
   '/games/scribble-dungeon.css',
+  '/games/scribble-platformer.js',
+  '/games/scribble-platformer.css',
+  '/tools/character-animation-preview.html',
+  '/tools/scribble-bridge-preview.html',
+  '/tools/scribble-magic-door-preview.html',
+  '/tools/scribble-fall-transition-preview.html',
+  '/tools/scribble-transition-preview.css',
+  '/tools/scribble-transition-preview.js',
+  '/tools/scribble-magic-door-transition-adapter.js',
+  '/tools/scribble-fall-transition-adapter.js?v=153',
+  '/tools/hybrid-asset-data.js',
+  '/tools/hybrid-asset-core.js',
+  '/tools/hybrid-asset-studio.js',
+  '/tools/hybrid-asset-studio.css',
   '/themes.js',
   '/storage.js',
-  '/tester.js?v=19',
+  '/tester.js?v=20',
   '/sounds/success.mp3',
   '/sounds/failure.mp3',
   '/assets/svg/tall.svg',
@@ -28,7 +44,16 @@ const CORE_ASSETS = [
   '/assets/svg/thin.svg',
   '/assets/svg/plump.svg',
   '/assets/svg/big.svg',
-  '/assets/svg/small.svg'
+  '/assets/svg/small.svg',
+  '/assets/scribble-dungeons/arrow.png',
+  '/assets/scribble-dungeons/floor_wall_curve.png',
+  '/assets/scribble-dungeons/tile.png',
+  '/assets/scribble-dungeons/wall.png',
+  '/assets/scribble-dungeons/doorway.png',
+  '/assets/scribble-dungeons/crate.png',
+  '/assets/scribble-dungeons/trap.png',
+  '/assets/scribble-dungeons/purple_character.png',
+  '/assets/scribble/character_animated.glb'
 ];
 
 const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
@@ -72,8 +97,23 @@ const DUNGEON_ART = ['tiles', 'tiles_center', 'tiles_cracked', 'tiles_decorative
   'red_hand', 'green_hand', 'purple_hand', 'yellow_hand']
   .map(name => `/assets/scribble-dungeons/${name}.png`);
 
+const PLATFORMER_ART = ['tile_grass', 'tile', 'tile_top', 'tile_block', 'tile_brick', 'tile_stone',
+  'tile_coin', 'tile_gem', 'tile_flag', 'tile_key', 'tile_heart',
+  'tile_bush', 'tile_bushHalf', 'tile_tree', 'tile_treeTop', 'tile_treeTrunk', 'tile_fence',
+  'tile_ladder', 'tile_door', 'tile_crate', 'tile_crateSmall', 'tile_bridge',
+  'tile_spike', 'tile_spikes',
+  'tile_castle', 'tile_roof', 'tile_column', 'tile_arch', 'tile_archColumns', 'tile_archColumn',
+  'tile_archHalf', 'tile_slope', 'tile_blockDoor', 'tile_blockWindow', 'tile_hang', 'tile_fenceHigh',
+  'background_cloudA', 'background_cloudB', 'background_tree', 'background_treeLarge',
+  'effect_blast', 'effect_trail',
+  'item_shieldRound', 'item_bow', 'item_arrow', 'item_sword', 'item_spear', 'item_blaster',
+  'cart',
+  'character_roundRed', 'character_roundGreen', 'character_roundPurple', 'character_roundYellow',
+  'character_handRed', 'character_handGreen', 'character_handPurple', 'character_handYellow']
+  .map(name => `/assets/scribble-platformer/${name}.png`);
+
 const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS)
-  .concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART);
+  .concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART).concat(PLATFORMER_ART);
 
 self.addEventListener('install', event => {
   self.skipWaiting();
