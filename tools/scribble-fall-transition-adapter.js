@@ -5,15 +5,20 @@
   const TOP_ASSET = '../assets/scribble-dungeons/';
   const SIDE_ASSET = '../assets/scribble-platformer/';
   const SHAFT_END_Y = -44;
-  const FLOOR_Y = SHAFT_END_Y - 6;
+  // The next stage is intentionally well below the brickwork. Leaving a
+  // genuine drop here makes the shaft end read as an opening into space.
+  const FLOOR_Y = SHAFT_END_Y - 16;
   const SHAFT_HALF = 1.25;
   const DESTINATION = {minX: -5, maxX: 5, minZ: -3, maxZ: 3};
+  const IMPACT = .88;
+  // The crate crosses the last brick course at this point. Keep following it
+  // for one short beat after the exit, then let it fall away from the outlet.
+  const SHAFT_EXIT_PROGRESS = IMPACT * (SHAFT_END_Y - 1.55) / (FLOOR_Y + .38 - 1.55);
   // Stop just below the shaft mouth, looking straight down. This keeps the
   // final beat spatially inside the transition rather than teleporting the
   // camera to an orthographic view above the entire next room.
-  const CAMERA_LOCK = .84;
-  const IMPACT = .88;
-  const FINAL_CAMERA_Y = SHAFT_END_Y - 1;
+  const CAMERA_LOCK = SHAFT_EXIT_PROGRESS + .065;
+  const FINAL_CAMERA_Y = SHAFT_END_Y + .35;
   const CAMERA_LEAD = 2.2;
 
   function clamp(value) { return Math.max(0, Math.min(1, value)); }
@@ -34,12 +39,9 @@
     const planes = [];
     const roomWidth = DESTINATION.maxX - DESTINATION.minX + 1;
     const roomDepth = DESTINATION.maxZ - DESTINATION.minZ + 1;
-    // The starting platform is two solid banks with a real gap between them.
-    // Each brick face begins exactly at the underside of its grass tile and
-    // continues down beside the shaft. There is deliberately no full-width
-    // brick backdrop behind the opening.
-    upright(planes, 'side-bricks-left', 'tile_brick', [-9.125, (SHAFT_END_Y - 1) / 2, .38], [15.75, 1 - SHAFT_END_Y], [16, 1 - SHAFT_END_Y], 'side-shell', 0);
-    upright(planes, 'side-bricks-right', 'tile_brick', [9.125, (SHAFT_END_Y - 1) / 2, .38], [15.75, 1 - SHAFT_END_Y], [16, 1 - SHAFT_END_Y], 'side-shell', 0);
+    // The starting platform is two grass banks with a real gap between them.
+    // Their undersides are open notebook paper: only the pit itself carries
+    // stone walls, so no long brick facade hangs below the grass.
     upright(planes, 'side-ground-left', 'tile_grass', [-9.125, -.5, .4], [15.75, 1], [16, 1], 'side-shell', 0);
     upright(planes, 'side-ground-right', 'tile_grass', [9.125, -.5, .4], [15.75, 1], [16, 1], 'side-shell', 0);
 
@@ -123,9 +125,9 @@
     const zoom = ease(p / .25);
     const turn = ease((p - .25) / .45);
     // Follow the crate at one steady pace through almost the whole shaft.
-    // The only settling happens at the physical outlet, where the lens clears
-    // the last brick course and can finally see the destination floor.
-    const settle = ease((p - .74) / (CAMERA_LOCK - .74));
+    // The short settle ends at the physical outlet, looking through the open
+    // end instead of flattening the destination room in front of the lens.
+    const settle = ease((p - (CAMERA_LOCK - .10)) / .10);
     // Match a playable platformer frame: the ground is in the lower third,
     // the falling object begins just above it, and roughly sixteen tiles span
     // the viewport rather than showing the whole stage from far away.
@@ -148,11 +150,13 @@
     const finalPosition = [0, FINAL_CAMERA_Y, 0];
     const framedTarget = point(target, finalTarget, settle);
     const framedPosition = point(position, finalPosition, settle);
-    // World Y decreases while falling. Clamp the eye to the side above the
-    // crate so the settling move can never pass through or overtake it.
-    const followPosition = [framedPosition[0], Math.max(framedPosition[1], object[1] + CAMERA_LEAD), framedPosition[2]];
+    // World Y decreases while falling. The eye stays above the crate until it
+    // reaches the mouth; the remaining small lead is the outlet itself, not an
+    // overtake. Afterwards the crate falls away through the empty gap.
+    const exitLead = lerp(CAMERA_LEAD, .35, settle);
+    const followPosition = [framedPosition[0], Math.max(framedPosition[1], object[1] + exitLead), framedPosition[2]];
     const framedUp = point([0, Math.cos(angle), -Math.sin(angle)], [0, 0, -1], settle);
-    const framedFov = lerp(lerp(24, 68, zoom), 75, settle);
+    const framedFov = lerp(lerp(24, 68, zoom), 52, settle);
     let phase = 'side-2d-follow';
     if (p > 0) phase = 'pit-zoom';
     if (p >= .25) phase = 'shaft-entry-turn';
@@ -188,7 +192,7 @@
       object: {visible: p < IMPACT + .02, position: object},
       debris: debris,
       pose: topFrame ? {target: finalTarget, position: finalPosition, up: [0, 0, -1],
-        perspective: true, fov: 75, unit: topUnit} : pose,
+        perspective: true, fov: 52, unit: topUnit} : pose,
       timing: {dropStart: 0, zoomEnd: .25, rotateStart: .25, shaftExit: CAMERA_LOCK, impact: IMPACT, dungeonFrame: CAMERA_LOCK, topLock: CAMERA_LOCK, characterStart: .93},
       route: [[0, 1.55, 0], [0, FLOOR_Y + .38, 0]],
       character: {visible: p >= .93, position: [lerp(DESTINATION.minX - .85, DESTINATION.minX + 1.4, arrival), FLOOR_Y + .05, 0]},
@@ -214,35 +218,30 @@
           {id: 'O1', name: 'Falling transition object', kind: 'route', position: [0, -22, 0]},
           {id: 'P1', name: 'Open-top shaft route', kind: 'route', position: [0, -22, 0]},
           {id: 'W1', name: 'Shaft containment walls', kind: 'wall', position: [-1.15, -22, 0]},
-          {id: 'R1', name: '2D dungeon stage floor', kind: 'room', position: [5, FLOOR_Y + .08, 2], minProgress: .73},
+          {id: 'R1', name: '2D dungeon stage floor', kind: 'room', position: [5, FLOOR_Y + .08, 2], minProgress: CAMERA_LOCK},
           {id: 'D1', name: '2D dungeon wall ring', kind: 'wall', position: [0, FLOOR_Y + .1, DESTINATION.minZ], minProgress: CAMERA_LOCK},
           {id: 'A1', name: 'Arriving dungeon character', kind: 'route', position: [DESTINATION.minX + 1, FLOOR_Y + .08, 0], minProgress: .93},
         ];
       },
       state: fallState,
       apply: function (bridge, state, blueprint, context) {
-        // As the eye clears the physical lip of the shaft, dissolve its last
-        // brick course over the same beat. The room floor is therefore revealed
-        // through the outlet instead of replacing a full shaft frame in one cut.
-        const exitReveal = ease((context.progress - .70) / .14);
-        const roomReveal = ease((context.progress - .72) / .12);
-        const propsReveal = ease((context.progress - .76) / .08);
         bridge.setGroupVisibility('side-shell', context.manual || context.progress < .34);
         bridge.setGroupVisibility('shaft-walls', context.manual ||
-          context.progress < .86);
+          context.progress < CAMERA_LOCK + .06);
         // The fourth wall only appears after the camera has crossed the rim
         // and is looking directly at the falling object from inside the shaft.
         bridge.setGroupVisibility('shaft-front', context.manual ||
-          (context.progress >= .28 && context.progress < .86));
-        bridge.setGroupOpacity('shaft-walls', context.manual ? 1 : 1 - exitReveal);
-        bridge.setGroupOpacity('shaft-front', context.manual ? 1 : 1 - exitReveal);
-        // The floor is visible across the short drop after the shaft ends;
-        // only its wall ring waits for the final 2D framing.
+          (context.progress >= .28 && context.progress < CAMERA_LOCK + .06));
+        // The entire destination already exists below the shaft. The solid
+        // brick tunnel, rather than a timed reveal, is what keeps its walls
+        // outside the view until the eye has reached the outlet.
+        bridge.setGroupOpacity('shaft-walls', 1);
+        bridge.setGroupOpacity('shaft-front', 1);
         bridge.setGroupVisibility('dungeon-floor', true);
-        bridge.setGroupVisibility('dungeon-ring', context.manual || context.progress >= .72);
-        bridge.setGroupVisibility('dungeon-props', context.manual || context.progress >= .76);
-        bridge.setGroupOpacity('dungeon-ring', context.manual ? 1 : roomReveal);
-        bridge.setGroupOpacity('dungeon-props', context.manual ? 1 : propsReveal);
+        bridge.setGroupVisibility('dungeon-ring', true);
+        bridge.setGroupVisibility('dungeon-props', true);
+        bridge.setGroupOpacity('dungeon-ring', 1);
+        bridge.setGroupOpacity('dungeon-props', 1);
         bridge.setObjectState('arrival-player', state.character);
         bridge.setObjectState('falling-stone', state.object);
         state.debris.forEach(function (piece, index) {
@@ -255,7 +254,7 @@
           'camera: [' + pose.position.map(function (value) { return value.toFixed(2); }).join(', ') + ']',
           'object: [' + state.object.position.map(function (value) { return value.toFixed(2); }).join(', ') + ']',
           'visible frustum: ' + (view.w / pose.unit).toFixed(2) + ' x ' + (view.h / pose.unit).toFixed(2) + ' units',
-          'shaft: 2.5 x 2.5 x 44.0 units; target gap: 6.0 units',
+          'shaft: 2.5 x 2.5 x 44.0 units; target gap: ' + (SHAFT_END_Y - FLOOR_Y).toFixed(1) + ' units',
           'destination: 11 x 7 tiles',
         ].join('\n');
       },
@@ -263,7 +262,7 @@
         return {progress: progress, phase: state.phase, camera: pose.position.slice(),
           object: state.object.position.slice(), frustum: [view.w / pose.unit, view.h / pose.unit],
           route: state.route.map(function (item) { return item.slice(); }), duration: 14,
-          shaft: [2.5, 2.5, 44], targetGap: 6, destinationReady: progress >= state.timing.topLock,
+          shaft: [2.5, 2.5, 44], targetGap: SHAFT_END_Y - FLOOR_Y, destinationReady: progress >= state.timing.topLock,
           playerVisible: state.character.visible};
       },
     };

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v153';
+const CACHE_NAME = 'my-app-cache-v159';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -29,7 +29,7 @@ const CORE_ASSETS = [
   '/tools/scribble-transition-preview.css',
   '/tools/scribble-transition-preview.js',
   '/tools/scribble-magic-door-transition-adapter.js',
-  '/tools/scribble-fall-transition-adapter.js?v=153',
+  '/tools/scribble-fall-transition-adapter.js?v=159',
   '/tools/hybrid-asset-data.js',
   '/tools/hybrid-asset-core.js',
   '/tools/hybrid-asset-studio.js',
