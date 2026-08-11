@@ -1,20 +1,24 @@
 {
   "name": "My Offline tester",
   "short_name": "testerApp",
-  "start_url": ".",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-192x192.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23000000' width='192' height='192'/%3E%3Ctext x='50%25' y='50%25' font-size='96' fill='%23ffffff' text-anchor='middle' dy='.3em' font-family='Arial'%3ET%3C/text%3E%3C/svg%3E",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "icon-512x512.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%23000000' width='512' height='512'/%3E%3Ctext x='50%25' y='50%25' font-size='256' fill='%23ffffff' text-anchor='middle' dy='.3em' font-family='Arial'%3ET%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
