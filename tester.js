@@ -28,6 +28,14 @@ function getNItmes(number) {
 }
 
 
+// A value dropped inside the single-quoted JS string of an inline onclick.
+// Words like "don't" or "let's" would otherwise close the string and break the
+// whole handler — the attribute is double-quoted, so a backslash escape reaches
+// the JS parser intact.
+function escapeInlineJsString(value) {
+    return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 function render(object) {
     switch (object.type) {
         case "text":
@@ -35,11 +43,11 @@ function render(object) {
         case "image":
             return `<img class="field-image" src="${object.value}" alt="" loading="lazy">`;
         case "audio":
-        return `<button type="button" class="audio-prompt" onclick="audio('${object.value}')" aria-label="השמע"><i class="medium material-icons">play_circle_filled</i></button>`;
+        return `<button type="button" class="audio-prompt" onclick="audio('${escapeInlineJsString(object.value)}')" aria-label="השמע"><i class="medium material-icons">play_circle_filled</i></button>`;
         case "text_to_speech":
-            return `<button type="button" class="audio-prompt audio-prompt-text" onclick="text_to_speech('${object.value}')">${object.value}</button>`;
+            return `<button type="button" class="audio-prompt audio-prompt-text" onclick="text_to_speech('${escapeInlineJsString(object.value)}')">${object.value}</button>`;
         case "speech":
-            return `<button type="button" class="audio-prompt" onclick="text_to_speech('${object.value}')" aria-label="השמע"><i class="medium material-icons">play_circle_filled</i></button>`;
+            return `<button type="button" class="audio-prompt" onclick="text_to_speech('${escapeInlineJsString(object.value)}')" aria-label="השמע"><i class="medium material-icons">play_circle_filled</i></button>`;
         default:
             return null;
     }
@@ -2612,7 +2620,10 @@ var BalloonShooterComponent = Vue.component('balloon-shooter', Vue.extend({
                 questionItem['type'] = this.currentApp.questionType;
             }
             this.exercise = render(questionItem);
-            const action = generateQuestion(this.list[weightedRandomIndex][this.currentApp.questionIndex]);
+            // Use questionItem (with questionType applied), so a question the app
+            // forces to 'text_to_speech'/'speech' is read aloud even when the
+            // field itself is plain text — matching the maze and the platformer.
+            const action = generateQuestion(questionItem);
             action();
 
             const wrongIndexes = getRandomIndexesExcluding(this.list, this.currentApp.resultIndex, weightedRandomIndex, 3);

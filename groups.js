@@ -100,6 +100,53 @@ const SHARED_GROUPS = {
     },
 };
 
+// The Ministry of Education's compulsory elementary-school word list (the "650
+// words" published for the end of primary school), split in data.js into the
+// five parts GRADE6_MOE_1..5. Each part becomes TWO shared-progress groups —
+// one per direction:
+//   g6p<part>e : English -> Hebrew, key grp-g6p<part>e
+//   g6p<part>h : Hebrew  -> English, key grp-g6p<part>h
+// Producing a word is a different skill from recognising it, so the two
+// directions keep separate keys and are climbed independently — exactly the
+// reasoning behind ch51 vs ch51s above.
+//
+// Both directions ask with questionType 'text_to_speech': the word is shown
+// AND read aloud (text_to_speech() picks he-IL or en-US from the text itself,
+// so the Hebrew side is spoken in Hebrew).
+const GRADE6_MOE_GAMES = [
+    {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',  title: 'בחרו את התרגום הנכון'},
+    {appType: 'balloon_shooter',   icon: 'sports_esports', name: 'מטווח בלונים', title: 'פגעו בבלון עם התרגום הנכון'},
+    {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',   title: 'מתחו קו מהמילה אל התרגום שלה'},
+    {appType: 'treasure_maze',     icon: 'sports_esports', name: 'מבוך האוצר',   title: 'בחרו את הדלת עם התרגום הנכון'},
+    {appType: 'platformer',        icon: 'directions_run', name: 'הרפתקת ריצה',  title: 'רוצו וקפצו אל הבלוק עם התרגום הנכון'},
+    {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',    title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+    {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'בנו מערך הגנה והצילו את הממלכה'},
+];
+
+// One shared games array for all ten groups, so their ids can never drift
+// apart. The same append-only rule applies: a game's index IS its id
+// (grp-g6p1e-<index>), so new games go at the END of GRADE6_MOE_GAMES only.
+const GRADE6_MOE_PARTS = 5;
+const GRADE6_MOE_SET_ITEMS = 8; // new words unlocked per batch, shared per group
+for (let part = 1; part <= GRADE6_MOE_PARTS; part++) {
+    SHARED_GROUPS[`g6p${part}e`] = {
+        listName: `GRADE6_MOE_${part}`,
+        questionIndex: 'english_name',
+        resultIndex: 'hebrew',
+        questionType: 'text_to_speech',
+        setItems: GRADE6_MOE_SET_ITEMS,
+        games: GRADE6_MOE_GAMES,
+    };
+    SHARED_GROUPS[`g6p${part}h`] = {
+        listName: `GRADE6_MOE_${part}`,
+        questionIndex: 'hebrew',
+        resultIndex: 'english',
+        questionType: 'text_to_speech',
+        setItems: GRADE6_MOE_SET_ITEMS,
+        games: GRADE6_MOE_GAMES,
+    };
+}
+
 const SHARED_GROUP_ID_RE = /^grp-([a-z0-9]+)-(\d+)$/;
 
 // Dev-time warning for invalid group ids (they would break key normalization)

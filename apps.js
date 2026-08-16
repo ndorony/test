@@ -340,10 +340,10 @@ apps =  {
               // Shared-progress group "ch51s": the same six games over the same
               // word list, but the question is only ever heard. Its own knowledge
               // key, so this ladder is climbed independently of the reading one.
-              // IMPORTANT: this must stay LAST in the אנגלית menu. Menu item ids
-              // are position-based (route_index), so inserting a new item in the
-              // middle shifts the id — and therefore the saved progress — of
-              // every item after it. Only ever append at the end.
+              // IMPORTANT: menu item ids are position-based (route_index), so
+              // inserting a new item in the middle shifts the id — and therefore
+              // the saved progress — of every item after it. Only ever append at
+              // the end of the אנגלית menu, below this item.
               items: [
                 {icon: 'hearing',        name:'בחירה מרובה',  type: 'app', link: '/play/mcq/grp-ch51s-0'},
                 {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-ch51s-1'},
@@ -353,6 +353,178 @@ apps =  {
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51s-5'},
               ]
             },
+        {
+          name: '6',
+          type: 'menu',
+          // The Ministry of Education grade-6 (elementary) word list, DATA lists
+          // GRADE6_MOE_1..5. Every leaf submenu is ONE shared-progress group
+          // (groups.js): its games all learn the same part in the same direction
+          // under a single knowledge key, so progress carries between them.
+          // Keep each list in sync with GRADE6_MOE_GAMES — a game's index is its
+          // id (grp-g6p<part><dir>-<n>), so only ever append at the end.
+          items: [
+            {
+              name: 'חלק 1',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p1e-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p1e-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p1e-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p1e-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p1e-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p1e-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p1e-6'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p1h-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p1h-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p1h-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p1h-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p1h-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p1h-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p1h-6'},
+                  ]
+                },
+              ]
+            },
+            {
+              name: 'חלק 2',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p2e-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p2e-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p2e-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p2e-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p2e-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p2e-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p2e-6'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p2h-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p2h-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p2h-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p2h-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p2h-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p2h-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p2h-6'},
+                  ]
+                },
+              ]
+            },
+            {
+              name: 'חלק 3',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p3e-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p3e-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p3e-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p3e-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p3e-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p3e-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p3e-6'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p3h-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p3h-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p3h-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p3h-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p3h-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p3h-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p3h-6'},
+                  ]
+                },
+              ]
+            },
+            {
+              name: 'חלק 4',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p4e-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p4e-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p4e-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p4e-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p4e-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p4e-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p4e-6'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p4h-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p4h-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p4h-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p4h-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p4h-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p4h-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p4h-6'},
+                  ]
+                },
+              ]
+            },
+            {
+              name: 'חלק 5',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p5e-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p5e-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p5e-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p5e-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p5e-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p5e-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p5e-6'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes',   name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g6p5h-0'},
+                    {icon: 'sports_esports',  name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g6p5h-1'},
+                    {icon: 'timeline',        name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g6p5h-2'},
+                    {icon: 'sports_esports',  name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g6p5h-3'},
+                    {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p5h-4'},
+                    {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p5h-5'},
+                    {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p5h-6'},
+                  ]
+                },
+              ]
+            },
+          ]
+        },
       ]
     },
     {
