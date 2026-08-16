@@ -45,6 +45,19 @@
     // raising them cost range: a player standing back shows a smaller, blurrier
     // prop, and it stopped registering even on the right corner. They are kept
     // near their original values, and strictness lives in the four gates instead.
+    //
+    // What one fixed hue could not survive is *changing light*. A calibrated hue
+    // is one object under one lamp at one angle: turn the prop over, carry it
+    // through the shadow of your own body, let the webcam re-balance when a cloud
+    // passes, and the very same object reads several degrees off and a good deal
+    // less saturated. The envelope that was tight enough to reject the room was
+    // then also tight enough to drop the prop, and the marker died mid-reach.
+    //
+    // So the tracker no longer follows a colour — it follows an *object*, and
+    // colour is one of the things it knows about it. Position, velocity and blob
+    // size carry the identity between frames; the colour envelope is allowed to
+    // grow to fit what that object turns out to look like. See
+    // `createCrystalArenaTracker` for how the growth is earned rather than given.
     const CRYSTAL_ARENA_TRACKER_DEFAULTS = {
         width: 96,             // colour matching is cheap, so sample finer than before
         height: 72,
@@ -62,6 +75,30 @@
         hitMargin: 0.03,       // trims the quadrant fallback; measured crystals get 0
         dominance: 1.5,        // the winning blob must clearly out-size the runner-up
         maxJump: 0.30,         // a leap this far is a different object, not the same one
+
+        // --- the halo: what might be the object under other light --------
+        haloHue: 14,           // extra degrees the candidate envelope allows
+        haloSaturation: 0.12,  // and how much duller a candidate pixel may be
+        haloValue: 0.08,
+        haloMinSaturation: 0.20, // however far the model moves, a halo pixel needs this much colour
+        haloMinValue: 0.15,      // and this much light, or its hue means nothing
+        haloFloodLimit: 0.55,  // a halo covering this much of the frame is the room, so ignore it
+
+        // --- what may be learned, and how fast it is given back ----------
+        maxHueTolerance: 32,   // the learned envelope never widens past this from the calibrated hue
+        minSaturationFloor: 0.26, // nor drops its floors below these
+        minValueFloor: 0.20,
+        learnHueMargin: 3,     // learned bounds clear the observation by this much
+        learnSatMargin: 0.04,
+        learnValMargin: 0.04,
+        minCorePixels: 6,      // core pixels that make a blob trusted, not merely followed
+        minGhostPixels: 8,     // outside-the-envelope pixels worth remembering
+        learnSizeRatio: 0.35,  // a chain that changed size this much is no longer the same object
+        confirmFrames: 5,      // unbroken frames before a chain may teach the model
+        graceFrames: 6,        // frames the object may vanish for without breaking the chain
+        pendingLimit: 30,      // provisional readings held while the chain is unproven
+        relaxPerFrame: 0.004,  // unlearning per idle frame, so a lesson cannot outlive its light
+        ghostPenalty: 0.6,     // a halo-only blob loses to a solid one of the same shape
     };
 
     const CRYSTAL_ARENA_THEME_MOTIFS = {
@@ -331,7 +368,15 @@
     // (and head/torso when they are not part of the background yet). Used only for
     // the on-screen markers — never for deciding a strike. 4-connected flood fill
     // over a 64x48 mask is a few thousand steps per frame.
-    function crystalArenaFindBlobs(mask, width, height, minPixels, maxBlobs) {
+    //
+    // The optional `probe` turns the same walk into a measurement of each island.
+    // It carries the tracker's two envelopes — `core` (pixels the model already
+    // accepts) and `member` (pixels the wider halo accepts) — plus the per-pixel
+    // hue offset, saturation and value buffers. With it, a blob reports how much
+    // of itself is a solid colour match, and what the rest of it actually looks
+    // like: the "rest" is the shaded or angled part of the object, and it is what
+    // the model has to learn to keep hold of the prop as the light moves.
+    function crystalArenaFindBlobs(mask, width, height, minPixels, maxBlobs, probe) {
         const visited = new Uint8Array(mask.length);
         const stack = [];
         const blobs = [];
@@ -347,6 +392,14 @@
             let maxX = -1;
             let minY = height;
             let maxY = -1;
+            let corePixels = 0;
+            let coreSumX = 0;
+            let coreSumY = 0;
+            let ghostPixels = 0;
+            let ghostHue = 0;
+            let ghostWeight = 0;
+            let ghostSat = 0;
+            let ghostVal = 0;
             while (stack.length) {
                 const pixel = stack.pop();
                 const x = pixel % width;
@@ -358,6 +411,23 @@
                 if (x > maxX) maxX = x;
                 if (y < minY) minY = y;
                 if (y > maxY) maxY = y;
+                if (probe) {
+                    if (probe.core[pixel]) {
+                        corePixels += 1;
+                        coreSumX += x;
+                        coreSumY += y;
+                    } else if (probe.member[pixel]) {
+                        // Weighted by saturation for the same reason calibration is:
+                        // a vivid pixel says more about the object's colour than a
+                        // nearly grey one does.
+                        const weight = probe.sat[pixel];
+                        ghostPixels += 1;
+                        ghostHue += probe.hue[pixel] * weight;
+                        ghostWeight += weight;
+                        ghostSat += probe.sat[pixel];
+                        ghostVal += probe.val[pixel];
+                    }
+                }
                 if (x > 0 && mask[pixel - 1] && !visited[pixel - 1]) { visited[pixel - 1] = 1; stack.push(pixel - 1); }
                 if (x < width - 1 && mask[pixel + 1] && !visited[pixel + 1]) { visited[pixel + 1] = 1; stack.push(pixel + 1); }
                 if (y > 0 && mask[pixel - width] && !visited[pixel - width]) { visited[pixel - width] = 1; stack.push(pixel - width); }
@@ -365,12 +435,23 @@
             }
             if (count < minPixels) continue;
             blobs.push({
-                x: (sumX / count) / width,
-                y: (sumY / count) / height,
+                // The core pixels are the part we are sure about, so when there are
+                // any they own the position. Otherwise a shadow spreading down one
+                // side of the object would drag the marker — and the answer — off
+                // the thing the player is actually holding.
+                x: (corePixels ? coreSumX / corePixels : sumX / count) / width,
+                y: (corePixels ? coreSumY / corePixels : sumY / count) / height,
                 width: (maxX - minX + 1) / width,
                 height: (maxY - minY + 1) / height,
                 size: count / mask.length,
                 pixels: count,
+                corePixels: corePixels,
+                ghostPixels: ghostPixels,
+                ghost: ghostPixels && ghostWeight ? {
+                    offset: ghostHue / ghostWeight,
+                    sat: ghostSat / ghostPixels,
+                    val: ghostVal / ghostPixels,
+                } : null,
             });
         }
         blobs.sort((a, b) => b.pixels - a.pixels);
@@ -399,6 +480,70 @@
     function crystalArenaHueDistance(a, b) {
         const raw = Math.abs(a - b) % 360;
         return raw > 180 ? 360 - raw : raw;
+    }
+
+    // The same distance, but signed: negative below the anchor hue, positive
+    // above. Light does not blur an object's hue symmetrically — a warm lamp
+    // drags it one way round the wheel and a cool window the other — so the two
+    // sides of the envelope have to be able to move independently.
+    function crystalArenaHueOffset(hue, anchor) {
+        let delta = (hue - anchor) % 360;
+        if (delta > 180) delta -= 360;
+        else if (delta < -180) delta += 360;
+        return delta;
+    }
+
+    // What the tracker currently believes the object looks like. `base` is what
+    // calibration measured and never changes — every learned bound is clamped
+    // against it and unwinds back toward it — while `lo`/`hi`/`sat`/`val` are the
+    // live core envelope, which only ever loosens.
+    function crystalArenaAppearanceModel(profile, config) {
+        const tolerance = profile.tolerance > 0 ? profile.tolerance : config.hueTolerance;
+        const base = {lo: tolerance, hi: tolerance, sat: config.minSaturation, val: config.minValue};
+        return {
+            hue: profile.hue,
+            base: base,
+            lo: base.lo,
+            hi: base.hi,
+            sat: base.sat,
+            val: base.val,
+            adapted: false,
+            lessons: 0,
+        };
+    }
+
+    // The wider envelope around the core. A halo pixel means "this could be the
+    // object under different light" — never "this is the object". Halo pixels are
+    // followed, drawn faintly and learned from, but on their own they can never
+    // answer a question, so widening the halo cannot produce a wrong answer.
+    function crystalArenaHaloBounds(model, config) {
+        return {
+            lo: model.lo + config.haloHue,
+            hi: model.hi + config.haloHue,
+            sat: Math.max(model.sat - config.haloSaturation, config.haloMinSaturation),
+            val: Math.max(model.val - config.haloValue, config.haloMinValue),
+        };
+    }
+
+    // True once the model has moved away from the calibrated envelope.
+    function crystalArenaModelAdapted(model) {
+        return model.lo > model.base.lo + 0.01 || model.hi > model.base.hi + 0.01 ||
+            model.sat < model.base.sat - 0.001 || model.val < model.base.val - 0.001;
+    }
+
+    // How much a blob looks like the continuation of the object already being
+    // followed. Position dominates (things move a little between frames and never
+    // teleport), blob size is a secondary vote, and a halo-only blob is docked so
+    // that a solid match wins whenever there is one to be had. This is the part
+    // that makes the tracker follow an object rather than a colour: when the light
+    // changes, the blob in the right place with the right size is still the prop
+    // even though its hue has moved.
+    function crystalArenaBlobScore(blob, predictedX, predictedY, track, config, solid) {
+        const distance = Math.hypot(blob.x - predictedX, blob.y - predictedY);
+        const proximity = 1 / (1 + distance / Math.max(0.01, config.maxJump));
+        const known = track.pixels || blob.pixels;
+        const ratio = Math.min(blob.pixels, known) / Math.max(blob.pixels, known);
+        return proximity * (0.45 + 0.55 * ratio) * (solid ? 1 : config.ghostPenalty);
     }
 
     // Finds the dominant saturated hue inside a region — this is what calibration
@@ -447,22 +592,73 @@
         return {hue: hue, share: saturated / considered, strength: strength};
     }
 
-    // Colour tracker. The player holds a saturated object — a glove, a ball, a
-    // sticky note — and the tracker follows that hue. Unlike the presence
+    // Object tracker. The player holds a saturated object — a glove, a ball, a
+    // sticky note — and calibration measures its colour. Unlike the presence
     // detectors this replaced, it knows exactly *what* it is looking for, so a
     // shadow, a shoulder or a chair simply do not match.
+    //
+    // Colour alone was not enough to keep hold of it once the light moved. The
+    // tracker therefore keeps an appearance model with two envelopes, and a
+    // notion of identity that does not depend on colour at all:
+    //
+    //  * The **core** envelope is the strict one calibration produced. Only core
+    //    pixels prove an object is the prop, and only a blob solidly made of them
+    //    can charge a corner. Nothing below ever relaxes that rule.
+    //  * The **halo** around it is a wider "this could be the same thing in a
+    //    different light". Halo blobs are followed and drawn, so the marker stays
+    //    on the prop as it passes through a shadow, but a halo blob on its own
+    //    can never answer a question.
+    //  * A **track** carries identity between frames through position, velocity
+    //    and size. That is what makes a blob "the same object" while its colour
+    //    is moving, and it is why the candidate is picked by score rather than by
+    //    being the biggest one on screen.
+    //
+    // Learning is the point of all three, and it is gated on continuity rather
+    // than on colour. Whenever the object shows a part the core envelope rejects
+    // — the shaded side, a face turned to the light, the whole prop after the
+    // webcam re-balanced — that reading is set aside as *provisional*, not
+    // applied. Only when the same unbroken track lands back on a clean,
+    // unambiguous core sighting is the chain proven to have been the prop all
+    // along, and the provisional readings are folded into the core envelope. Its
+    // having moved there continuously is the evidence; a chain that breaks before
+    // it is proven teaches nothing at all.
+    //
+    // Three things stop that from drifting onto the wall: learned bounds are hard
+    // clamped against the calibrated ones, they unwind again while nothing is
+    // being tracked, and a widening that makes the core flood the frame is thrown
+    // away the moment it does.
     function createCrystalArenaTracker(options) {
         const config = Object.assign({}, CRYSTAL_ARENA_TRACKER_DEFAULTS, options || {});
         let slots = config.slots || CRYSTAL_ARENA_SLOTS;
         let hitBoxes = [];
         const size = config.width * config.height;
+        // 0 = no match, 1 = halo, 2 = core. The overlay draws the two levels
+        // differently, which doubles as the clearest debugging view available.
         const mask = new Uint8Array(size);
+        const coreMask = new Uint8Array(size);
+        const memberMask = new Uint8Array(size);
         const dilateA = new Uint8Array(size);
         const dilateB = new Uint8Array(size);
+        // Per-pixel appearance, kept so the blob walk can measure an island
+        // without converting every pixel to HSV a second time.
+        const hueBuf = new Float32Array(size);
+        const satBuf = new Float32Array(size);
+        const valBuf = new Float32Array(size);
+        const probe = {core: coreMask, member: memberMask, hue: hueBuf, sat: satBuf, val: valBuf};
         const hsv = [0, 0, 0];
+        // Readings taken while the current chain was still unproven.
+        const pending = [];
         let profile = null;
+        let model = null;
         let frames = 0;
         let target = null;
+        let track = null;
+        let chainFrames = 0;
+        let chainSolid = false;
+        let chainSolidPixels = 0;
+        let misses = 0;
+        let ghosting = false;
+        let learnBlockedUntil = 0;
         let dwellZone = null;
         let dwellFrames = 0;
         let lastHitZone = null;
@@ -495,13 +691,81 @@
         function snapshot(hit) {
             return {
                 hit: hit,
-                ready: !!profile,
+                ready: !!model,
                 target: target,
                 zone: dwellZone,
                 dwell: config.dwellFrames ? Math.min(1, dwellFrames / config.dwellFrames) : 0,
                 mask: mask,
                 frames: frames,
+                // The object is being held by shape and motion while its colour
+                // sits outside the core envelope: the marker follows it, but no
+                // answer can come from it until the model has learned that look.
+                ghost: ghosting,
+                adapted: !!(model && model.adapted),
+                pending: pending.length,
             };
+        }
+
+        // The chain is the evidence that a run of frames was all one object.
+        // Dropping it also drops everything provisional, so a reading that was
+        // never proven can never be picked up later by accident.
+        function breakChain() {
+            track = null;
+            chainFrames = 0;
+            chainSolid = false;
+            chainSolidPixels = 0;
+            pending.length = 0;
+        }
+
+        // Folds the provisional readings into the core envelope. Each one only
+        // pushes the bound it actually needs, and every bound is clamped: the
+        // envelope can loosen up to the configured limit and no further, whatever
+        // the camera reports.
+        function learnPending() {
+            if (!model || !pending.length) return;
+            for (let index = 0; index < pending.length; index += 1) {
+                const sample = pending[index];
+                if (sample.offset >= 0) {
+                    model.hi = Math.min(config.maxHueTolerance,
+                        Math.max(model.hi, sample.offset + config.learnHueMargin));
+                } else {
+                    model.lo = Math.min(config.maxHueTolerance,
+                        Math.max(model.lo, -sample.offset + config.learnHueMargin));
+                }
+                model.sat = Math.max(config.minSaturationFloor,
+                    Math.min(model.sat, sample.sat - config.learnSatMargin));
+                model.val = Math.max(config.minValueFloor,
+                    Math.min(model.val, sample.val - config.learnValMargin));
+            }
+            pending.length = 0;
+            model.lessons += 1;
+            model.adapted = crystalArenaModelAdapted(model);
+        }
+
+        // A lesson learned under one light must not outlive it. With nothing being
+        // tracked the envelope creeps back toward what calibration measured, so a
+        // widening that was useful for one reach cannot accumulate over a session
+        // into a profile that matches the room.
+        function relaxModel() {
+            if (!model || !model.adapted) return;
+            const degrees = config.relaxPerFrame * config.maxHueTolerance;
+            model.lo = Math.max(model.base.lo, model.lo - degrees);
+            model.hi = Math.max(model.base.hi, model.hi - degrees);
+            model.sat = Math.min(model.base.sat, model.sat + config.relaxPerFrame);
+            model.val = Math.min(model.base.val, model.val + config.relaxPerFrame);
+            model.adapted = crystalArenaModelAdapted(model);
+        }
+
+        // Everything learned, thrown away at once. Used when the widened envelope
+        // turns out to match the room: whatever it was taught, it was wrong.
+        function revertModel(now) {
+            if (!model) return;
+            model.lo = model.base.lo;
+            model.hi = model.base.hi;
+            model.sat = model.base.sat;
+            model.val = model.base.val;
+            model.adapted = false;
+            learnBlockedUntil = now + config.cooldownMs * 8;
         }
 
         function reset() {
@@ -511,65 +775,155 @@
             dwellFrames = 0;
             lastHitZone = null;
             cooldownUntil = 0;
+            ghosting = false;
+            misses = 0;
+            breakChain();
             mask.fill(0);
         }
 
         function setProfile(next) {
             profile = next ? {hue: next.hue, tolerance: next.tolerance || config.hueTolerance} : null;
+            // A new calibration is a new object, or the same object under a light
+            // worth re-reading. Either way nothing learned about the old one still
+            // applies, so the model starts again from what was just measured.
+            model = profile ? crystalArenaAppearanceModel(profile, config) : null;
+            learnBlockedUntil = 0;
             reset();
         }
 
         function ingest(rgba, now) {
-            if (!profile || !rgba || rgba.length !== size * 4) {
+            if (!model || !rgba || rgba.length !== size * 4) {
                 mask.fill(0);
                 target = null;
+                ghosting = false;
                 return snapshot(null);
             }
             frames += 1;
 
-            let matched = 0;
+            const halo = crystalArenaHaloBounds(model, config);
+            let core = 0;
+            let outer = 0;
             for (let index = 0, offset = 0; index < size; index += 1, offset += 4) {
                 crystalArenaHsv(rgba[offset], rgba[offset + 1], rgba[offset + 2], hsv);
-                const isMatch = hsv[1] >= config.minSaturation &&
-                    hsv[2] >= config.minValue &&
-                    crystalArenaHueDistance(hsv[0], profile.hue) <= profile.tolerance;
-                mask[index] = isMatch ? 1 : 0;
-                if (isMatch) matched += 1;
+                const delta = crystalArenaHueOffset(hsv[0], model.hue);
+                hueBuf[index] = delta;
+                satBuf[index] = hsv[1];
+                valBuf[index] = hsv[2];
+                let level = 0;
+                if (hsv[1] >= model.sat && hsv[2] >= model.val && delta >= -model.lo && delta <= model.hi) {
+                    level = 2;
+                    core += 1;
+                } else if (hsv[1] >= halo.sat && hsv[2] >= halo.val && delta >= -halo.lo && delta <= halo.hi) {
+                    level = 1;
+                    outer += 1;
+                }
+                mask[index] = level;
+                coreMask[index] = level === 2 ? 1 : 0;
             }
 
-            // A match covering most of the frame means the profile hue is also the
-            // wall colour; refuse to track rather than fire in every corner.
-            if (matched / size > config.floodLimit) {
+            // A core match covering most of the frame means the profile hue is also
+            // the wall colour; refuse to track rather than fire in every corner. If
+            // that only became true after the model widened, the widening is the
+            // culprit and goes back.
+            if (core / size > config.floodLimit) {
+                if (model.adapted) revertModel(now);
+                breakChain();
                 target = null;
+                ghosting = false;
                 dwellZone = null;
                 dwellFrames = 0;
                 return snapshot(null);
             }
+            // The same danger one step out: a halo covering half the room would
+            // merge the prop into the furniture, so this frame is matched on the
+            // core envelope alone.
+            const useHalo = (core + outer) / size <= config.haloFloodLimit;
+            for (let index = 0; index < size; index += 1) {
+                memberMask[index] = mask[index] === 2 || (useHalo && mask[index] === 1) ? 1 : 0;
+            }
 
             const merged = config.dilate > 0
-                ? crystalArenaDilate(mask, dilateA, dilateB, config.width, config.height, config.dilate)
-                : mask;
-            const blobs = crystalArenaFindBlobs(merged, config.width, config.height, config.minBlobPixels, 3);
-            const found = blobs[0] || null;
-            // Two islands of the same hue and similar size mean the tracker cannot
-            // tell which one the player is actually holding. The marker keeps
-            // following the larger one, but an ambiguous frame earns no dwell.
-            const confident = !!found &&
-                (!blobs[1] || found.pixels >= blobs[1].pixels * config.dominance);
+                ? crystalArenaDilate(memberMask, dilateA, dilateB, config.width, config.height, config.dilate)
+                : memberMask;
+            const blobs = crystalArenaFindBlobs(merged, config.width, config.height, config.minBlobPixels, 4, probe);
+            const isSolid = blob => blob.corePixels >= config.minCorePixels;
 
-            // Glide toward the new reading so the marker never snaps — unless the
-            // reading leapt across the frame, which means this is a different object
-            // rather than the same one moving. Then jump to it and start over.
-            let jumped = false;
+            // Which island is the object. With a track running, the one that
+            // continues its motion at its size wins — that is the whole reason a
+            // prop can change colour mid-reach and still be followed. With no
+            // track, size decides, except that a solid blob always beats a
+            // halo-only one however big the latter looks.
+            let found = null;
+            if (track) {
+                const predictedX = track.x + track.vx;
+                const predictedY = track.y + track.vy;
+                let best = 0;
+                for (let index = 0; index < blobs.length; index += 1) {
+                    const blob = blobs[index];
+                    const score = crystalArenaBlobScore(blob, predictedX, predictedY, track, config, isSolid(blob));
+                    if (!found || score > best) {
+                        best = score;
+                        found = blob;
+                    }
+                }
+            } else {
+                for (let index = 0; index < blobs.length; index += 1) {
+                    const blob = blobs[index];
+                    if (!found) {
+                        found = blob;
+                    } else if (isSolid(blob) !== isSolid(found) ? isSolid(blob) : blob.pixels > found.pixels) {
+                        found = blob;
+                    }
+                }
+            }
+
             if (!found) {
                 target = null;
-            } else if (!target) {
+                ghosting = false;
+                dwellZone = null;
+                dwellFrames = 0;
+                // Nothing on screen re-arms every corner: the object has left, so
+                // bringing it back may answer the same corner again.
+                lastHitZone = null;
+                // A brief loss is part of ordinary movement — the prop passes
+                // behind a hand, the exposure hunts for a moment — so the chain
+                // survives it and the readings either side stay connected. A long
+                // one is a different reach, and unwinds what was learned.
+                misses += 1;
+                if (misses > config.graceFrames) {
+                    breakChain();
+                    relaxModel();
+                }
+                return snapshot(null);
+            }
+            misses = 0;
+            const solid = isSolid(found);
+            ghosting = !solid;
+
+            // Position, velocity and size are the identity. A leap across the frame
+            // is a different object rather than the same one moving, so the track
+            // restarts there instead of inheriting any credit.
+            let jumped = false;
+            if (!track) {
+                track = {x: found.x, y: found.y, vx: 0, vy: 0, pixels: found.pixels};
+            } else {
+                jumped = Math.hypot(found.x - track.x, found.y - track.y) > config.maxJump;
+                if (jumped) {
+                    track = {x: found.x, y: found.y, vx: 0, vy: 0, pixels: found.pixels};
+                } else {
+                    track.vx = found.x - track.x;
+                    track.vy = found.y - track.y;
+                    track.x = found.x;
+                    track.y = found.y;
+                    track.pixels = track.pixels + (found.pixels - track.pixels) * config.smoothing;
+                }
+            }
+
+            // Glide the drawn marker toward the new reading so it never snaps.
+            if (!target || jumped) {
                 target = {x: found.x, y: found.y, width: found.width, height: found.height, pixels: found.pixels};
             } else {
-                jumped = Math.hypot(found.x - target.x, found.y - target.y) > config.maxJump;
-                target = jumped ? {
-                    x: found.x, y: found.y, width: found.width, height: found.height, pixels: found.pixels,
-                } : {
+                target = {
                     x: target.x + (found.x - target.x) * config.smoothing,
                     y: target.y + (found.y - target.y) * config.smoothing,
                     width: target.width + (found.width - target.width) * config.smoothing,
@@ -578,7 +932,60 @@
                 };
             }
 
-            const zone = target ? zoneOf(target.x, target.y) : null;
+            if (jumped || !chainFrames) {
+                chainFrames = 1;
+                chainSolid = solid;
+                chainSolidPixels = solid ? found.pixels : 0;
+                pending.length = 0;
+            } else {
+                chainFrames += 1;
+                if (solid) {
+                    chainSolid = true;
+                    chainSolidPixels = found.pixels;
+                }
+            }
+
+            // Two islands of the same colour and similar size mean the tracker
+            // cannot tell which one the player is actually holding. The marker
+            // keeps following its candidate, but an ambiguous frame earns no dwell.
+            // `confident` counts only solid rivals, since only a solid blob could
+            // have been the answer instead; learning is held to the stricter
+            // `unambiguous`, where a halo blob competing for the same identity is
+            // enough of a doubt to teach nothing this frame.
+            let rival = null;
+            let anyRival = null;
+            for (let index = 0; index < blobs.length; index += 1) {
+                const blob = blobs[index];
+                if (blob === found) continue;
+                if (!anyRival || blob.pixels > anyRival.pixels) anyRival = blob;
+                if (!isSolid(blob)) continue;
+                if (!rival || blob.pixels > rival.pixels) rival = blob;
+            }
+            const confident = solid && (!rival || found.pixels >= rival.pixels * config.dominance);
+            const unambiguous = !anyRival || found.pixels >= anyRival.pixels * config.dominance;
+
+            // The in-between readings. Set aside, never applied here: at this point
+            // the run of frames is only a claim that this was one object moving.
+            if (found.ghost && found.ghostPixels >= config.minGhostPixels && pending.length < config.pendingLimit) {
+                pending.push(found.ghost);
+            }
+            // …and here the claim is settled. This same unbroken track was the prop
+            // beyond doubt at least once, it has run long enough to be a movement
+            // rather than a coincidence, it is still the only thing that could be
+            // the prop, and it is still roughly the size it was when it was proven.
+            // So it is the prop now too — and everything it looked like along the
+            // way becomes part of what the prop looks like. That is the whole
+            // repair: the object is identified by having moved here continuously,
+            // and its shaded, angled, re-balanced appearances come along with it.
+            const held = chainSolidPixels
+                ? Math.min(found.pixels, chainSolidPixels) / Math.max(found.pixels, chainSolidPixels)
+                : 0;
+            if (chainSolid && chainFrames >= config.confirmFrames && unambiguous &&
+                held >= config.learnSizeRatio && now >= learnBlockedUntil) {
+                learnPending();
+            }
+
+            const zone = zoneOf(target.x, target.y);
             if (zone !== dwellZone || jumped) {
                 dwellZone = zone;
                 dwellFrames = zone && !jumped ? 1 : 0;
@@ -608,6 +1015,9 @@
             setProfile: setProfile,
             getZones: function () { return hitBoxes; },
             getProfile: function () { return profile; },
+            // The live envelope, for tests and for anything that wants to show how
+            // far the tracker has had to stretch to keep hold of the object.
+            getModel: function () { return model; },
             frameCount: function () { return frames; },
         };
     }
@@ -1525,8 +1935,12 @@
                     if (context) context.clearRect(0, 0, context.canvas.width, context.canvas.height);
                 },
 
-                // Draws every pixel that matched the calibrated hue. Seeing the object
-                // light up is the clearest proof that the calibration took.
+                // Draws every pixel that matched. Seeing the object light up is the
+                // clearest proof that the calibration took. The two match levels are
+                // drawn at different strengths: solid where the tracker is sure of the
+                // colour, faint where it is only holding on to the object through a
+                // shadow or an angle, which is exactly where the player can see the
+                // tracking survive a change in the light.
                 paintMatchMask: function (mask, ready) {
                     const context = this._visionCtx;
                     const image = this._visionImage;
@@ -1534,11 +1948,12 @@
                     const rgb = this._visionRgb;
                     const data = image.data;
                     const alpha = ready ? 210 : 0;
+                    const faint = Math.round(alpha * 0.42);
                     for (let index = 0, offset = 0; index < mask.length; index += 1, offset += 4) {
                         data[offset] = rgb[0];
                         data[offset + 1] = rgb[1];
                         data[offset + 2] = rgb[2];
-                        data[offset + 3] = mask[index] ? alpha : 0;
+                        data[offset + 3] = mask[index] === 2 ? alpha : (mask[index] ? faint : 0);
                     }
                     context.putImageData(image, 0, 0);
                 },
@@ -1749,6 +2164,10 @@
     global.crystalArenaDilate = crystalArenaDilate;
     global.crystalArenaHsv = crystalArenaHsv;
     global.crystalArenaHueDistance = crystalArenaHueDistance;
+    global.crystalArenaHueOffset = crystalArenaHueOffset;
+    global.crystalArenaAppearanceModel = crystalArenaAppearanceModel;
+    global.crystalArenaHaloBounds = crystalArenaHaloBounds;
+    global.crystalArenaBlobScore = crystalArenaBlobScore;
     global.crystalArenaDominantHue = crystalArenaDominantHue;
     global.createCrystalArenaTracker = createCrystalArenaTracker;
     global.resolveCrystalArenaTheme = resolveCrystalArenaTheme;

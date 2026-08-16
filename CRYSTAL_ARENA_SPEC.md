@@ -219,6 +219,48 @@ intro card is not on screen to carry it.
   `floodLimit` of the frame the wall itself is that colour, so the tracker
   reports nothing rather than firing in every corner.
 
+- **The tracker follows an object, not a colour.** A calibrated hue is one object
+  under one lamp at one angle. Turn the prop over, carry it through the shadow of
+  your own body, let the webcam re-balance when a cloud passes, and the same
+  object reads several degrees off and much duller — so the envelope that was
+  tight enough to reject the room was also tight enough to drop the prop, and the
+  marker died mid-reach. Measured over the drift scenarios in the test suite, the
+  marker survived 12 of 28 frames while being carried into different light, and
+  the corner it was carried to never answered at all.
+
+  Three pieces fix that, and only the third is new information:
+
+  | Piece | What it is |
+  | --- | --- |
+  | **Core envelope** | The strict envelope calibration produced. Only core pixels prove an object is the prop, and only a blob with at least `minCorePixels` of them can charge a corner. No relaxation below reaches this rule. |
+  | **Halo envelope** | `haloHue` degrees wider, `haloSaturation`/`haloValue` dimmer: "this could be the same thing in another light". Halo blobs are followed, measured and drawn faintly, so the marker stays on the prop through a shadow — but a halo blob alone can never answer, which is why widening it cannot produce a wrong answer. |
+  | **Track** | Identity carried between frames by position, velocity and blob size. The candidate blob is chosen by `crystalArenaBlobScore` — continuation of the motion at the right size — rather than by being the biggest. This is what still recognises the prop while its colour is moving. |
+
+  **Learning is gated on continuity, not on colour.** Every frame the object shows
+  a part the core envelope rejects, that reading is set aside as *provisional*.
+  It is folded into the core envelope only once the same unbroken track has been
+  the prop beyond doubt at least once (`chainSolid`), has run for `confirmFrames`,
+  is still the only thing that could be the prop (`dominance` over every other
+  blob, halo ones included), and is still within `learnSizeRatio` of the size it
+  had when it was proven. Having moved there continuously *is* the evidence of
+  identity, so the shaded, angled and re-balanced appearances come along with it.
+  A chain that breaks — a leap past `maxJump`, or more than `graceFrames` with
+  nothing found — discards everything provisional and teaches nothing.
+
+  **Three brakes keep this off the wall.** Learned bounds are hard clamped
+  (`maxHueTolerance`, `minSaturationFloor`, `minValueFloor`) whatever the camera
+  reports, so the washed-out and too-dark refusals above hold even after
+  adapting. They unwind toward the calibrated envelope at `relaxPerFrame` while
+  nothing is tracked, so a lesson cannot outlive its light or accumulate across a
+  session. And a widening that makes the core flood the frame is reverted on the
+  spot, with learning blocked for a cooldown. The learned envelope is deliberately
+  session-only and survives `reset()` between rounds: it describes this object in
+  this room right now, which the next question does not change, but it is never
+  persisted, because the next session's light is not this one.
+
+  The same scenarios after the change: the marker survives 28 of 28 frames and the
+  intended corner answers, while a differently-coloured object still never fires.
+
 - **Nothing is focused when a round opens.** Answering destroys the element that
   had focus, so a keyboard player needs it put back or the next round is
   unreachable by arrow keys. Everyone else must be left alone: focusing the first
@@ -273,7 +315,11 @@ intro card is not on screen to carry it.
 
 - **Showing that tracking works:** the match mask is drawn to an on-stage canvas,
   and one ring marks the tracked object. Marker colour is the contrast-picked
-  `--ca-edge`, because the theme accent is silver on the light palettes.
+  `--ca-edge`, because the theme accent is silver on the light palettes. The two
+  match levels are drawn at different strengths — solid where the colour is
+  certain, faint where the tracker is holding on to the object through a shadow
+  or an angle — so "it is still following me" stays visible during exactly the
+  moments the model is catching up.
 
 - **Known cost:** the game needs a physical prop. Without one there is no camera
   mode — which is why the manual path is not a fallback but a first-class input.

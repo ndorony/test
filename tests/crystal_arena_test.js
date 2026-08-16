@@ -335,6 +335,136 @@ check('reset keeps the calibrated colour', !!tracker.getProfile());
 tracker.setProfile(null);
 check('clearing the profile stops all tracking', tracker.getProfile() === null);
 
+// The whole reason this section exists: one calibrated hue is one object under
+// one light. Turn the prop over, carry it through the shadow of your own body,
+// let the webcam re-balance when a cloud passes, and the same object reads
+// several degrees off and a good deal duller — and the envelope that was tight
+// enough to reject the room was tight enough to drop the prop.
+console.log('  -- keeping hold of the object when the light changes --');
+const DEFAULTS = ctx.CRYSTAL_ARENA_TRACKER_DEFAULTS;
+const DRIFT_HUE = PROP_HUE + 26; // past the 18° core, still inside the halo
+
+function litProp(nx, ny, hue, sat, val, wide, tall) {
+    const width = wide || 16;
+    const height = tall || 12;
+    return paintRect(roomRgba(),
+        Math.round(nx * TRACK_W - width / 2), Math.round(ny * TRACK_H - height / 2),
+        width, height, hsvToRgb(hue, sat, val));
+}
+// Walks the prop from one place to another in small steps while its colour
+// shifts along the way: a player carrying the object out of the light and into
+// a corner, which is the motion that used to lose it.
+function carry(tracker, from, to, steps, startTime) {
+    let now = startTime || 0;
+    let last = null;
+    let hit = null;
+    for (let step = 1; step <= steps; step += 1) {
+        const t = step / steps;
+        const between = key => from[key] + (to[key] - from[key]) * t;
+        now += 33;
+        last = tracker.ingest(
+            litProp(between('x'), between('y'), between('hue'), between('sat'), between('val')), now);
+        if (last.hit && !hit) hit = last.hit;
+    }
+    return {reading: last, now: now, hit: hit};
+}
+const LIT = {x: 0.5, y: 0.5, hue: PROP_HUE, sat: 0.85, val: 0.9};
+const DRIFTED = {x: 0.78, y: 0.20, hue: DRIFT_HUE, sat: 0.85, val: 0.9};
+const SHADED = {x: 0.22, y: 0.80, hue: PROP_HUE + 8, sat: 0.30, val: 0.34};
+
+// A colour on its own still proves nothing — the halo never answers by itself.
+check('an object of a drifted colour, on its own, never answers',
+    holdFrames(trackerWithProp(), litProp(0.78, 0.20, DRIFT_HUE, 0.85, 0.9), 20).hit === null);
+const ghosted = holdFrames(trackerWithProp(), litProp(0.78, 0.20, DRIFT_HUE, 0.85, 0.9), 6);
+check('but the marker still follows it, so the player is never left blind',
+    !!ghosted.reading.target && ghosted.reading.ghost === true);
+check('and the tracker says so, rather than claiming a match',
+    ghosted.reading.dwell === 0 && ghosted.reading.adapted === false);
+
+// The repair: moving there continuously is what identifies the object.
+tracker = trackerWithProp();
+holdFrames(tracker, propAt(LIT.x, LIT.y), 6);
+const carried = carry(tracker, LIT, DRIFTED, 10);
+check('carrying the prop into different light teaches the tracker its new look',
+    tracker.getModel().hi >= 26, tracker.getModel().hi);
+check('so the corner it was carried to answers',
+    carried.hit === 'tr' ||
+    holdFrames(tracker, litProp(DRIFTED.x, DRIFTED.y, DRIFT_HUE, 0.85, 0.9), 10, carried.now).hit === 'tr');
+check('the learned envelope stays inside its hard limit',
+    tracker.getModel().hi <= DEFAULTS.maxHueTolerance, tracker.getModel().hi);
+
+tracker = trackerWithProp();
+holdFrames(tracker, propAt(LIT.x, LIT.y), 6);
+const shaded = carry(tracker, LIT, SHADED, 10);
+check('a prop carried into shadow is learned by its dimmer look too',
+    tracker.getModel().sat < DEFAULTS.minSaturation, tracker.getModel().sat);
+check('and answers from the shadowed corner',
+    shaded.hit === 'bl' ||
+    holdFrames(tracker, litProp(SHADED.x, SHADED.y, SHADED.hue, SHADED.sat, SHADED.val), 10, shaded.now).hit === 'bl');
+check('the saturation floor never drops past its hard limit',
+    tracker.getModel().sat >= DEFAULTS.minSaturationFloor, tracker.getModel().sat);
+check('even after adapting, a washed-out object is still refused',
+    holdFrames(tracker, litProp(0.78, 0.20, PROP_HUE, 0.10, 0.9), 14).hit === null);
+check('even after adapting, a dark shadow of the prop colour is still refused',
+    holdFrames(tracker, litProp(0.78, 0.20, PROP_HUE, 0.8, 0.10), 14).hit === null);
+
+// Continuity is the evidence. Without it, a second object of a nearby colour is
+// exactly what the tracker must not adopt.
+tracker = trackerWithProp();
+const proven = holdFrames(tracker, propInCorner('bl'), 8);
+const elsewhere = holdFrames(tracker, litProp(0.78, 0.20, DRIFT_HUE, 0.85, 0.9), 20, proven.now + 2000);
+check('a drifted colour that appears somewhere else instead of moving there teaches nothing',
+    elsewhere.hit === null && tracker.getModel().hi === tracker.getModel().base.hi,
+    tracker.getModel().hi);
+
+tracker = trackerWithProp();
+holdFrames(tracker, propAt(LIT.x, LIT.y), 6);
+carry(tracker, LIT, {x: 0.78, y: 0.20, hue: PROP_HUE + 70, sat: 0.85, val: 0.9}, 12);
+check('a colour that leaves the halo altogether breaks the chain instead of being learned',
+    tracker.getModel().hi <= DEFAULTS.maxHueTolerance && tracker.getModel().hi < 70,
+    tracker.getModel().hi);
+
+// A lesson must not outlive the light it was learned under.
+tracker = trackerWithProp();
+holdFrames(tracker, propAt(LIT.x, LIT.y), 6);
+const taught = carry(tracker, LIT, DRIFTED, 10);
+check('the model reports that it has adapted', tracker.getModel().adapted === true);
+const idle = holdFrames(tracker, roomRgba(), 200, taught.now);
+check('what was learned unwinds once the object is gone for good',
+    tracker.getModel().adapted === false &&
+    tracker.getModel().hi === tracker.getModel().base.hi, tracker.getModel().hi);
+check('the widened envelope is not what re-arms the corner', idle.hit === null);
+
+tracker = trackerWithProp();
+holdFrames(tracker, propAt(LIT.x, LIT.y), 6);
+const widened = carry(tracker, LIT, DRIFTED, 10);
+const flooded = holdFrames(tracker, roomRgba(hsvToRgb(DRIFT_HUE, 0.85, 0.9)), 3, widened.now);
+check('a widening that turns out to match the wall is thrown away on the spot',
+    flooded.hit === null && tracker.getModel().adapted === false);
+
+// The overlay has to show the difference, since "it is still following me" is
+// the only feedback the player gets while the model is catching up.
+tracker = trackerWithProp();
+const twoTone = litProp(0.5, 0.5, PROP_HUE, 0.85, 0.9);
+paintRect(twoTone, Math.round(0.5 * TRACK_W), Math.round(0.5 * TRACK_H - 6), 8, 12,
+    hsvToRgb(DRIFT_HUE, 0.85, 0.9));
+const mixed = tracker.ingest(twoTone, 33);
+check('the mask marks sure pixels and maybe-pixels apart',
+    Array.prototype.indexOf.call(mixed.mask, 2) !== -1 &&
+    Array.prototype.indexOf.call(mixed.mask, 1) !== -1);
+check('the overlay draws both levels', GAME_SOURCE.indexOf('mask[index] === 2 ? alpha') !== -1);
+
+// The label studio calls the blob finder without a probe.
+const plainMask = new Uint8Array(TRACK_W * TRACK_H);
+for (let y = 4; y < 10; y += 1) {
+    for (let x = 4; x < 10; x += 1) plainMask[y * TRACK_W + x] = 1;
+}
+const plainBlobs = ctx.crystalArenaFindBlobs(plainMask, TRACK_W, TRACK_H, 4, 4);
+check('the blob finder still works without the measuring probe',
+    plainBlobs.length === 1 && plainBlobs[0].pixels === 36);
+check('an unprobed blob still reports its centroid',
+    Math.abs(plainBlobs[0].x - 6.5 / TRACK_W) < 0.01);
+
 
 console.log('--- 2d. the guided opening marks a spot per step ---');
 const steps = ctx.CRYSTAL_ARENA_CALIBRATION_STEPS;
