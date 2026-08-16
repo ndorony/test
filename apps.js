@@ -441,17 +441,5 @@ apps =  {
         {icon: 'precision_manufacturing', name:'מפעל הצעצועים', type: 'app', appType: 'factory_tycoon', listName: 'FACTORY_UPGRADES', questionIndex: 'name', resultIndex: 'name', setItems: 4, quizListName: 'ENGLISH_CHAPTER4_ALL', quizQuestionIndex: 'english_name', quizResultIndex: 'hebrew', quizSetItems: 10, title: 'ענו נכון על שאלות פרק 4 כדי לשדרג את המפעל'},
       ]
     },
-    {
-      // Camera games. The camera is always optional — every game here is fully
-      // playable with clicks/touch/keyboard when the camera is off or denied.
-      // Menu item ids are position-based, so only ever append at the end.
-      name: 'מצלמה ותנועה',
-      type: 'menu',
-      items: [
-        {icon: 'back_hand', name:'זירת הגבישים - חיות', type: 'app', appType: 'crystal_arena', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 4, title: 'החזיקו חפץ צבעוני בפינה עם התשובה הנכונה'},
-        {icon: 'back_hand', name:'זירת הגבישים - אותיות', type: 'app', appType: 'crystal_arena', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', setItems: 2, title: 'הקשיבו לשם האות והחזיקו את החפץ בפינה הנכונה'},
-        {icon: 'back_hand', name:'זירת הגבישים - כפל', type: 'app', appType: 'crystal_arena', listName: 'MULTIPLICATION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'החזיקו את החפץ הצבעוני על התשובה הנכונה'},
-      ]
-    },
   ]
 };
