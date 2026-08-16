@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v160';
+const CACHE_NAME = 'my-app-cache-v172';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -22,6 +22,8 @@ const CORE_ASSETS = [
   '/games/scribble-dungeon.css',
   '/games/scribble-platformer.js',
   '/games/scribble-platformer.css',
+  '/games/crystal-arena.js',
+  '/games/crystal-arena.css',
   '/tools/character-animation-preview.html',
   '/tools/scribble-bridge-preview.html',
   '/tools/scribble-magic-door-preview.html',

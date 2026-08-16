@@ -320,18 +320,37 @@ apps =  {
               // Shared-progress group (groups.js, group "ch51"): all the games
               // below learn the SAME word list (5_1) under one shared knowledge
               // key — pick any game, and progress carries across all of them.
+              // This is the READING half: the English word is shown beside its
+              // speaker button. The שמיעה submenu is a different group with a
+              // different key, because hearing a word is not the same skill.
               // Keep the game order in sync with SHARED_GROUPS.ch51.games (the
               // grp-ch51-<n> index is the game's identity — append new games only).
-              // IMPORTANT: this must stay LAST in the אנגלית menu. Menu item ids
-              // are position-based (route_index), so inserting a new item in the
-              // middle shifts the id — and therefore the saved progress — of
-              // every item after it. Only ever append at the end.
               items: [
                 {icon: 'format_shapes',  name:'בחירה מרובה',  type: 'app', link: '/play/mcq/grp-ch51-0'},
                 {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-ch51-1'},
                 {icon: 'timeline',       name:'חבר במילים',   type: 'app', link: '/play/word_link/grp-ch51-2'},
                 {icon: 'map',            name:'מבוך הקלף',    type: 'app', link: '/play/scribble_dungeon/grp-ch51-3'},
                 {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51-4'},
+                {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51-5'},
+              ]
+            },
+        {
+              name: '5_1 שמיעה (התקדמות משותפת)',
+              type: 'menu',
+              // Shared-progress group "ch51s": the same six games over the same
+              // word list, but the question is only ever heard. Its own knowledge
+              // key, so this ladder is climbed independently of the reading one.
+              // IMPORTANT: this must stay LAST in the אנגלית menu. Menu item ids
+              // are position-based (route_index), so inserting a new item in the
+              // middle shifts the id — and therefore the saved progress — of
+              // every item after it. Only ever append at the end.
+              items: [
+                {icon: 'hearing',        name:'בחירה מרובה',  type: 'app', link: '/play/mcq/grp-ch51s-0'},
+                {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-ch51s-1'},
+                {icon: 'timeline',       name:'חבר במילים',   type: 'app', link: '/play/word_link/grp-ch51s-2'},
+                {icon: 'map',            name:'מבוך הקלף',    type: 'app', link: '/play/scribble_dungeon/grp-ch51s-3'},
+                {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51s-4'},
+                {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51s-5'},
               ]
             },
       ]
@@ -400,6 +419,7 @@ apps =  {
                 {icon: 'water_drop',     name:'מסע המים',       type: 'app', link: '/play/water_pipeline/grp-otiot-8'},
                 {icon: 'security',       name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-otiot-9'},
                 {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-otiot-10'},
+                {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-otiot-11'},
               ]
             },
       ]
@@ -419,6 +439,18 @@ apps =  {
       type: 'menu',
       items: [
         {icon: 'precision_manufacturing', name:'מפעל הצעצועים', type: 'app', appType: 'factory_tycoon', listName: 'FACTORY_UPGRADES', questionIndex: 'name', resultIndex: 'name', setItems: 4, quizListName: 'ENGLISH_CHAPTER4_ALL', quizQuestionIndex: 'english_name', quizResultIndex: 'hebrew', quizSetItems: 10, title: 'ענו נכון על שאלות פרק 4 כדי לשדרג את המפעל'},
+      ]
+    },
+    {
+      // Camera games. The camera is always optional — every game here is fully
+      // playable with clicks/touch/keyboard when the camera is off or denied.
+      // Menu item ids are position-based, so only ever append at the end.
+      name: 'מצלמה ותנועה',
+      type: 'menu',
+      items: [
+        {icon: 'back_hand', name:'זירת הגבישים - חיות', type: 'app', appType: 'crystal_arena', listName: 'ANIMALS', questionIndex: 'english_name', resultIndex: 'hebrew', setItems: 4, title: 'החזיקו חפץ צבעוני בפינה עם התשובה הנכונה'},
+        {icon: 'back_hand', name:'זירת הגבישים - אותיות', type: 'app', appType: 'crystal_arena', listName: 'hebrewAlphabet', questionIndex: 'letterName', resultIndex: 'letter', questionType: 'speech', setItems: 2, title: 'הקשיבו לשם האות והחזיקו את החפץ בפינה הנכונה'},
+        {icon: 'back_hand', name:'זירת הגבישים - כפל', type: 'app', appType: 'crystal_arena', listName: 'MULTIPLICATION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'החזיקו את החפץ הצבעוני על התשובה הנכונה'},
       ]
     },
   ]

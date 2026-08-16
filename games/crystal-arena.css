@@ -1,0 +1,810 @@
+/* Crystal Arena (זירת הגבישים) — see CRYSTAL_ARENA_SPEC.md.
+   All palette values arrive as --ca-* custom properties from the game's theme
+   adapter; this file must not name a theme key directly. */
+
+.ca-game {
+    --ca-energy: 0;
+    position: fixed;
+    inset: 0;
+    width: 100dvw;
+    height: 100dvh;
+    overflow: hidden;
+    z-index: 1100;
+    isolation: isolate;
+    color: var(--ca-ink);
+    background:
+        radial-gradient(circle at 50% 50%, var(--ca-tertiary), transparent 65%),
+        var(--ca-bg);
+    font-family: "Segoe UI", Arial, sans-serif;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.ca-game *, .ca-game *::before, .ca-game *::after { box-sizing: border-box; }
+.ca-game button { font: inherit; color: inherit; }
+
+/* ---------- stage: camera feed + arena dressing ---------- */
+
+.ca-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.ca-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Mirrored so the player sees themselves as in a mirror; the motion sampler
+       mirrors identically, so screen space and sample space agree. */
+    transform: scaleX(-1);
+    opacity: 0;
+    transition: opacity .5s ease;
+    /* Desaturated and held under full strength so the theme, not the room, owns
+       the scene's colour — the feed is the arena floor, not the subject. */
+    filter: saturate(.5) contrast(1.02);
+}
+
+.ca-camera-live .ca-video { opacity: .6; }
+
+/* The detector's own foreground mask, upscaled. Seeing your silhouette light up
+   is the clearest proof the camera is tracking you. */
+.ca-vision {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    image-rendering: pixelated;
+    transition: opacity .4s ease;
+    filter: blur(3px);
+}
+
+.ca-camera-live .ca-vision { opacity: .32; }
+
+.ca-scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--ca-scrim);
+    mix-blend-mode: normal;
+}
+
+/* Marker on the tracked object. Positioned per frame by direct style writes,
+   never through reactive data. */
+.ca-hands {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.ca-hand {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border: 3px solid var(--ca-edge);
+    border-radius: 50%;
+    background: none;
+    box-shadow: 0 0 14px var(--ca-glow), inset 0 0 12px var(--ca-glow);
+    font-style: normal;
+    opacity: 0;
+    transition: opacity .18s ease;
+    will-change: left, top, width;
+}
+
+/* The glyph rides the top of the ring so the ring's centre — where an answer
+   word sits when the hand is over a crystal — stays clear. */
+.ca-hand b {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -60%);
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--ca-plate);
+    font-size: clamp(.8rem, 2.2vmin, 1.4rem);
+    line-height: 1.1;
+}
+
+.ca-reduced .ca-hand, .ca-reduced .ca-vision { transition: none; }
+
+.ca-grid {
+    position: absolute;
+    inset: 0;
+    opacity: .28;
+    background-image:
+        linear-gradient(to right, var(--ca-rim) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--ca-rim) 1px, transparent 1px);
+    background-size: 68px 68px;
+    mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 78%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 78%);
+}
+
+.ca-rings {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+.ca-rings i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border: 2px solid var(--ca-rim);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: .35;
+}
+
+.ca-rings i:nth-child(1) { width: 44vmin; height: 44vmin; animation: ca-breathe 7.5s ease-in-out infinite; }
+.ca-rings i:nth-child(2) { width: 68vmin; height: 68vmin; opacity: .22; animation: ca-breathe 9.5s ease-in-out infinite -2.4s; }
+.ca-rings i:nth-child(3) { width: 94vmin; height: 94vmin; opacity: .14; animation: ca-breathe 12s ease-in-out infinite -5.1s; }
+
+@keyframes ca-breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.045); }
+}
+
+.ca-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 42%, var(--ca-bg) 118%);
+    opacity: .85;
+}
+
+.ca-motes { position: absolute; inset: 0; }
+
+.ca-motes i {
+    position: absolute;
+    border-radius: 50%;
+    opacity: .5;
+    filter: blur(.4px);
+    animation: ca-drift linear infinite;
+}
+
+@keyframes ca-drift {
+    0% { transform: translate3d(0, 12px, 0) scale(.7); opacity: 0; }
+    30% { opacity: .55; }
+    100% { transform: translate3d(14px, -46px, 0) scale(1.1); opacity: 0; }
+}
+
+/* ---------- HUD ---------- */
+
+.ca-hud {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    pointer-events: none;
+}
+
+.ca-hud > * { pointer-events: auto; }
+
+.ca-round-button {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 12px;
+    background: var(--ca-plate);
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.ca-round-button:hover { box-shadow: 0 0 0 3px var(--ca-glow); }
+.ca-round-button:active { transform: scale(.94); }
+
+.ca-hud-center {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.ca-charge {
+    position: relative;
+    width: min(340px, 46vw);
+    height: 22px;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 999px;
+    background: var(--ca-plate);
+    overflow: hidden;
+}
+
+.ca-charge i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: linear-gradient(90deg, var(--ca-primary), var(--ca-accent));
+    transition: width .45s ease;
+}
+
+.ca-charge b {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-shadow: 0 1px 2px var(--ca-bg);
+}
+
+.ca-streak {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--ca-plate);
+    border: 1px solid var(--ca-plate-edge);
+    font-weight: 700;
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+.ca-score {
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: var(--ca-plate);
+    border: 1px solid var(--ca-plate-edge);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ---------- camera status strip (shown during play, not only on the intro) --- */
+
+.ca-notice {
+    position: absolute;
+    z-index: 7;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: min(92vw, 620px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 14px;
+    background: var(--ca-plate);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+    font-size: .84rem;
+    line-height: 1.35;
+}
+
+.ca-notice-retry, .ca-notice-close {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 4px 10px;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 10px;
+    background: var(--ca-bg);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ca-notice-retry:focus-visible, .ca-notice-close:focus-visible {
+    outline: 3px solid var(--ca-accent);
+    outline-offset: 2px;
+}
+
+/* The strip must never sit on top of a crystal, so the arena yields the space. */
+.ca-has-notice .ca-arena { top: 128px; }
+
+/* ---------- arena grid: corners + core ---------- */
+
+.ca-arena {
+    /* Forced LTR so grid column 1 is always the visual left, independent of the
+       document direction; text inside each element sets its own dir. */
+    direction: ltr;
+    position: absolute;
+    inset: 62px 10px 10px;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+}
+
+.ca-slot-tl { grid-area: 1 / 1; justify-self: start; align-self: start; }
+.ca-slot-tr { grid-area: 1 / 3; justify-self: end; align-self: start; }
+.ca-slot-bl { grid-area: 3 / 1; justify-self: start; align-self: end; }
+.ca-slot-br { grid-area: 3 / 3; justify-self: end; align-self: end; }
+
+/* ---------- crystals ---------- */
+
+.ca-crystal {
+    position: relative;
+    /* The button box is the crystal: the SVG stretches to fill it, so the label,
+       number, mark and hand meter always sit inside the drawn silhouette. */
+    width: clamp(132px, 21vw, 236px);
+    max-width: 100%;
+    min-height: clamp(112px, 19vh, 190px);
+    padding: 8px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transition: transform .18s ease, filter .18s ease, opacity .3s ease;
+}
+
+.ca-crystal:disabled { cursor: default; }
+
+.ca-crystal-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .35));
+}
+
+.ca-facet-back {
+    fill: var(--ca-plate);
+    stroke: var(--ca-edge);
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.ca-facet-top { fill: var(--ca-tertiary); opacity: .72; }
+.ca-facet-low { fill: var(--ca-secondary); opacity: .38; }
+
+.ca-facet-crack {
+    stroke: var(--ca-wrong);
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+/* The hand meter is the only per-frame update: as motion builds in this corner
+   the crystal itself fills with accent light. Filling the polygon (instead of a
+   separate bar) keeps the feedback inside the drawn silhouette. */
+.ca-facet-energy {
+    fill: var(--ca-accent);
+    opacity: calc(var(--ca-energy) * 0.6);
+    pointer-events: none;
+}
+
+/* No number badge: the crystals are aimed at, not numbered. The 1-4 keyboard
+   shortcuts still work and are announced through aria-keyshortcuts. The hexagon
+   leaves its bounding box corners empty, so any overlay must be anchored to the
+   top or bottom point, never to a box corner. */
+
+.ca-crystal-mark {
+    position: absolute;
+    z-index: 3;
+    bottom: 9%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.ca-reaction-shattered .ca-crystal-mark { color: var(--ca-correct); }
+.ca-reaction-cracked .ca-crystal-mark,
+.ca-reaction-spent .ca-crystal-mark { color: var(--ca-wrong); }
+
+.ca-crystal-label {
+    position: relative;
+    z-index: 2;
+    max-width: 84%;
+    padding: 4px 6px;
+    font-size: clamp(1rem, 2.4vw, 1.5rem);
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    overflow-wrap: anywhere;
+    text-shadow: 0 1px 3px var(--ca-bg);
+}
+
+.ca-crystal-label.ca-long { font-size: clamp(.82rem, 1.8vw, 1.1rem); }
+.ca-crystal-label img { max-width: 74px; max-height: 74px; }
+
+.ca-crystal:not(:disabled):hover { transform: scale(1.04); }
+.ca-crystal:not(:disabled):hover .ca-facet-back { stroke: var(--ca-accent); }
+
+/* The crystal edge colour is theme-derived and can coincide with the accent, so
+   focus is shown by an outline in the theme's text colour (guaranteed to contrast
+   the background) plus a thicker glowing facet — never by colour alone. */
+.ca-crystal:focus-visible {
+    outline: 3px solid var(--ca-ink);
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+
+.ca-crystal:focus-visible .ca-facet-back {
+    stroke-width: 6;
+    filter: drop-shadow(0 0 8px var(--ca-glow));
+}
+
+/* Reactions */
+
+.ca-reaction-shattered { animation: ca-shatter .62s ease forwards; }
+.ca-reaction-shattered .ca-facet-back { stroke: var(--ca-correct); fill: var(--ca-flash); }
+
+@keyframes ca-shatter {
+    0% { transform: scale(1); }
+    22% { transform: scale(1.16); filter: brightness(1.7); }
+    100% { transform: scale(.72); opacity: 0; filter: brightness(1); }
+}
+
+.ca-reaction-cracked { animation: ca-wobble .42s ease; }
+.ca-reaction-cracked .ca-facet-crack,
+.ca-reaction-spent .ca-facet-crack { opacity: 1; }
+.ca-reaction-cracked .ca-facet-back { stroke: var(--ca-wrong); }
+
+@keyframes ca-wobble {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-7px) rotate(-1.5deg); }
+    60% { transform: translateX(6px) rotate(1.2deg); }
+}
+
+.ca-crystal-spent { opacity: .42; }
+.ca-crystal-spent .ca-facet-back { stroke: var(--ca-spent); fill: transparent; }
+.ca-crystal-spent .ca-facet-top,
+.ca-crystal-spent .ca-facet-low { fill: var(--ca-spent); opacity: .2; }
+.ca-crystal-spent .ca-crystal-label { text-decoration: line-through; }
+
+.ca-shards { position: absolute; inset: 0; pointer-events: none; }
+
+.ca-shards i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-radius: 2px;
+    animation: ca-shard .7s ease-out forwards;
+}
+
+@keyframes ca-shard {
+    0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--ca-shard-x)), calc(-50% + var(--ca-shard-y))) scale(.1) rotate(180deg); opacity: 0; }
+}
+
+/* ---------- core / question ---------- */
+
+.ca-core {
+    grid-area: 2 / 2;
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+}
+
+.ca-core-ring {
+    --ca-progress: 0%;
+    position: absolute;
+    width: min(38vmin, 320px);
+    height: min(38vmin, 320px);
+    border-radius: 50%;
+    background: conic-gradient(var(--ca-accent) var(--ca-progress), var(--ca-plate-edge) var(--ca-progress));
+    opacity: .55;
+    transition: opacity .3s ease;
+}
+
+.ca-core-ring i {
+    position: absolute;
+    inset: 9px;
+    border-radius: 50%;
+    background: var(--ca-bg);
+}
+
+.ca-core-charged .ca-core-ring { opacity: .95; animation: ca-core-pulse .8s ease; }
+
+@keyframes ca-core-pulse {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.09); }
+    100% { transform: scale(1); }
+}
+
+.ca-core-plate {
+    position: relative;
+    z-index: 2;
+    max-width: min(92%, 460px);
+    padding: 14px 18px;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 20px;
+    background: var(--ca-plate);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+    text-align: center;
+}
+
+.ca-core-kicker {
+    font-size: .72rem;
+    letter-spacing: .12em;
+    opacity: .7;
+    margin-bottom: 4px;
+}
+
+.ca-core-question {
+    font-size: clamp(1.15rem, 3.4vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.ca-core-question img { max-width: 120px; max-height: 120px; }
+
+.ca-core-hint {
+    margin-top: 6px;
+    font-size: .82rem;
+    opacity: .72;
+}
+
+.ca-feedback {
+    position: absolute;
+    bottom: -46px;
+    z-index: 3;
+    min-height: 1.4em;
+    padding: 4px 14px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-weight: 700;
+    white-space: nowrap;
+    /* Always on its own plate: the feedback line sits over a live camera feed. */
+    background: var(--ca-plate);
+    border-color: var(--ca-plate-edge);
+}
+
+.ca-feedback:empty { border-color: transparent; background: none; }
+.ca-feedback-good { background: var(--ca-correct); border-color: var(--ca-correct); color: #06210f; }
+.ca-feedback-wrong { background: var(--ca-wrong); border-color: var(--ca-wrong); color: #fff; }
+
+/* ---------- intro / calibration overlays ---------- */
+
+.ca-intro, .ca-calibrate {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: color-mix(in srgb, var(--ca-bg) 82%, transparent);
+    backdrop-filter: blur(3px);
+}
+
+.ca-intro-card, .ca-calibrate-card {
+    max-width: 460px;
+    width: 100%;
+    padding: 22px;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 22px;
+    background: var(--ca-plate);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .35);
+    text-align: center;
+}
+
+.ca-intro-glyph { font-size: 2.6rem; line-height: 1; }
+
+.ca-intro-card h2 { margin: 8px 0 6px; font-size: 1.5rem; }
+.ca-intro-copy { margin: 0 0 10px; line-height: 1.5; }
+
+.ca-intro-notice {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--ca-wrong);
+    color: #fff;
+    font-size: .88rem;
+}
+
+.ca-intro-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.ca-primary, .ca-secondary {
+    padding: 12px 18px;
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid var(--ca-plate-edge);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ca-primary { background: var(--ca-primary); color: var(--ca-bg); }
+.ca-secondary { background: var(--ca-plate); }
+.ca-primary:disabled { opacity: .6; cursor: default; }
+.ca-primary:focus-visible, .ca-secondary:focus-visible { outline: 3px solid var(--ca-accent); outline-offset: 2px; }
+
+.ca-intro-privacy { margin: 0; font-size: .75rem; opacity: .7; }
+
+.ca-calibrate-card p { margin: 8px 0 12px; }
+
+/* ---------- colour calibration ---------- */
+
+/* Live swatch of the hue being read plus the lock-on progress, inside the card so
+   nothing is ever drawn on top of the target frame. */
+.ca-lockon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--ca-plate-edge);
+    border-radius: 12px;
+    background: var(--ca-bg);
+    text-align: start;
+}
+
+.ca-lockon b {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--ca-plate-edge);
+    transition: background .2s ease, opacity .2s ease;
+}
+
+.ca-lockon span { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ca-lockon em { font-style: normal; font-size: .86rem; }
+
+.ca-lockon u {
+    display: block;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--ca-plate-edge);
+    overflow: hidden;
+}
+
+.ca-lockon u i { display: block; height: 100%; background: var(--ca-correct); transition: width .12s linear; }
+
+.ca-calibrate-card h3 { margin: 0 0 6px; font-size: 1.2rem; }
+
+/* Calibration is the one moment the player must see the room clearly: the object
+   has to be lined up inside the frame. Lift the feed and drop the dressing. */
+.ca-state-calibrating .ca-video { opacity: 1; filter: none; }
+.ca-state-calibrating .ca-scrim { opacity: .22; }
+.ca-state-calibrating .ca-vignette { opacity: .35; }
+.ca-state-calibrating .ca-grid,
+.ca-state-calibrating .ca-rings,
+.ca-state-calibrating .ca-motes { display: none; }
+
+.ca-calibrate {
+    align-items: end;
+    background: none;
+    backdrop-filter: none;
+}
+.ca-calibrate .ca-calibrate-card { margin-bottom: 3vh; }
+.ca-state-calibrating .ca-core { display: none; }
+
+/* The marked spot: the game points, the player puts the object down and leaves
+   it. It moves from step to step, so it is positioned per step rather than fixed. */
+.ca-spot {
+    position: absolute;
+    width: min(22vmin, 150px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 10;
+    transition: left .45s ease, top .45s ease;
+}
+
+.ca-spot i {
+    position: absolute;
+    width: 28%;
+    height: 28%;
+    border: 4px solid var(--ca-accent);
+}
+.ca-spot i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 12px 0 0 0; }
+.ca-spot i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 12px 0 0; }
+.ca-spot i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 12px; }
+.ca-spot i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 12px 0; }
+
+/* A slow pulse says "put it here"; it stops the moment the object lands. */
+.ca-spot b {
+    position: absolute;
+    inset: 14%;
+    border: 3px dashed var(--ca-accent);
+    border-radius: 50%;
+    opacity: .55;
+    animation: ca-spot-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ca-spot-pulse {
+    0%, 100% { transform: scale(.86); opacity: .35; }
+    50% { transform: scale(1); opacity: .7; }
+}
+
+.ca-spot-holding i { border-color: var(--ca-correct); }
+.ca-spot-holding b { border-color: var(--ca-correct); border-style: solid; animation: none; opacity: .9; }
+
+.ca-reduced .ca-spot, .ca-reduced .ca-spot b { transition: none; animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ca-spot, .ca-spot b { transition: none; animation: none; }
+}
+
+/* Step dots: how far through the guided opening the player is. */
+.ca-steps {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.ca-steps li {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ca-plate-edge);
+}
+
+.ca-steps .ca-step-done { background: var(--ca-correct); }
+.ca-steps .ca-step-now { background: var(--ca-accent); transform: scale(1.35); }
+
+.ca-sampler { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -9999px; }
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 720px) {
+    /* Equal columns on narrow screens: the centre band no longer steals the room
+       the corner crystals need, so nothing overflows the viewport edge. */
+    .ca-arena {
+        inset: 58px 6px 6px;
+        gap: 4px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .ca-crystal { width: 100%; min-height: clamp(96px, 17vh, 150px); }
+    .ca-core { grid-column: 1 / -1; }
+    .ca-crystal-label { max-width: 92%; }
+    .ca-notice {
+        left: 6px;
+        right: 6px;
+        max-width: none;
+        transform: none;
+        flex-wrap: wrap;
+        font-size: .78rem;
+    }
+    .ca-has-notice .ca-arena { top: 168px; }
+    .ca-core-plate { padding: 10px 12px; }
+    .ca-charge { width: 40vw; }
+    .ca-score { padding: 5px 8px; font-size: .85rem; }
+}
+
+@media (max-height: 520px) {
+    .ca-arena { inset: 52px 6px 6px; }
+    .ca-crystal { width: clamp(120px, 26vw, 210px); min-height: 92px; }
+    .ca-crystal-mark { font-size: 1rem; }
+    .ca-core-kicker, .ca-core-hint { display: none; }
+    .ca-core-ring { width: min(30vmin, 200px); height: min(30vmin, 200px); }
+    .ca-feedback { bottom: -30px; font-size: .82rem; }
+    .ca-notice { top: 50px; padding: 5px 10px; font-size: .74rem; }
+    .ca-has-notice .ca-arena { top: 104px; }
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .ca-rings i, .ca-motes i, .ca-calibrate-glyph { animation: none; }
+    .ca-motes { display: none; }
+    .ca-reaction-shattered { animation: none; opacity: .25; }
+    .ca-reaction-cracked { animation: none; }
+    .ca-core-charged .ca-core-ring { animation: none; }
+    .ca-crystal, .ca-charge i, .ca-video { transition: none; }
+}
+
+.ca-reduced .ca-motes { display: none; }
+.ca-reduced .ca-rings i { animation: none; }
+.ca-reduced .ca-reaction-shattered { animation: none; opacity: .25; }
+.ca-reduced .ca-reaction-cracked { animation: none; }
+.ca-reduced .ca-calibrate-glyph { animation: none; }

@@ -85,32 +85,63 @@ const g1 = run(`getItemById(apps, 'grp-ch51-1')`);
 const g2 = run(`getItemById(apps, 'grp-ch51-2')`);
 const g3 = run(`getItemById(apps, 'grp-ch51-3')`);
 const g4 = run(`getItemById(apps, 'grp-ch51-4')`);
+const g5 = run(`getItemById(apps, 'grp-ch51-5')`);
 check('grp-ch51-0 → mcq on list 5_1', g0 && g0.appType === 'mcq' && g0.listName === '5_1', JSON.stringify(g0));
 check('grp-ch51-1 → balloon_shooter', g1 && g1.appType === 'balloon_shooter', JSON.stringify(g1));
 check('grp-ch51-2 → word_link', g2 && g2.appType === 'word_link');
 check('grp-ch51-3 → scribble_dungeon', g3 && g3.appType === 'scribble_dungeon');
 check('grp-ch51-4 → knowledge_defense', g4 && g4.appType === 'knowledge_defense', JSON.stringify(g4));
+check('grp-ch51-5 → crystal_arena (the camera game)', g5 && g5.appType === 'crystal_arena', JSON.stringify(g5));
+const ch51Apps = run(`SHARED_GROUPS.ch51.games.map((g, i) => resolveSharedGroupApp('grp-ch51-' + i))`);
 check('shared config carried onto every game (english_name → hebrew, setItems 5)',
-    [g0, g1, g2, g3, g4].every(g => g.questionIndex === 'english_name' && g.resultIndex === 'hebrew' && g.setItems === 5));
+    ch51Apps.every(g => g.listName === '5_1' && g.questionIndex === 'english_name'
+        && g.resultIndex === 'hebrew' && g.setItems === 5));
+check('every game has a name, a title and a router route',
+    ch51Apps.every((g, i) => g.name && g.title && tester.includes(`/play/${g.appType}/:currentAppId`)),
+    JSON.stringify(ch51Apps.map(g => g.appType)));
+check('the reading group never overrides the question type, so the word is shown',
+    ch51Apps.every(g => g.questionType === undefined),
+    JSON.stringify(ch51Apps.map(g => g.questionType)));
 check('unknown group / out-of-range id → null',
-    run(`resolveSharedGroupApp('grp-nope-0') === null && resolveSharedGroupApp('grp-ch51-9') === null && resolveSharedGroupApp('grp-ch51') === null`));
+    run(`resolveSharedGroupApp('grp-nope-0') === null
+        && resolveSharedGroupApp('grp-ch51-' + SHARED_GROUPS.ch51.games.length) === null
+        && resolveSharedGroupApp('grp-ch51') === null`));
 check('resolveSharedGroupApp ignores non-group ids (menu ids untouched)', run(`resolveSharedGroupApp('0_2_1') === null`));
 
 console.log('--- 3. the menu wiring matches the group (no drift) ---');
-const menuLinks = run(`
-    (function find(node) {
-        if (node.type === 'menu' && node.name === '5_1 (התקדמות משותפת)') return node.items.map(i => i.link);
-        if (!node.items) return null;
-        for (const child of node.items) { const r = find(child); if (r) return r; }
-        return null;
-    })(apps);
-`);
-check('the "5_1" submenu exists with 5 linked buttons', Array.isArray(menuLinks) && menuLinks.length === 5, JSON.stringify(menuLinks));
-const generatedLinks = run(`getSharedGroupMenuItems('ch51').map(i => i.link)`);
-check('apps.js menu links match groups.js game order exactly',
-    JSON.stringify(menuLinks) === JSON.stringify(generatedLinks), JSON.stringify(menuLinks) + ' vs ' + JSON.stringify(generatedLinks));
+// Two submenus over two groups: read the word, hear the word. Same games, same
+// word list, separate knowledge keys.
+function submenuLinks(name) {
+    return run(`
+        (function find(node) {
+            if (node.type === 'menu' && node.name === ${JSON.stringify(name)}) return node.items.map(i => i.link);
+            if (!node.items) return null;
+            for (const child of node.items) { const r = find(child); if (r) return r; }
+            return null;
+        })(apps);
+    `);
+}
+const readingLinks = submenuLinks('5_1 (התקדמות משותפת)');
+const listeningLinks = submenuLinks('5_1 שמיעה (התקדמות משותפת)');
+check('both 5_1 submenus exist', Array.isArray(readingLinks) && Array.isArray(listeningLinks),
+    JSON.stringify([readingLinks, listeningLinks]));
+check('the reading submenu matches groups.js game order exactly',
+    JSON.stringify(readingLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51').map(i => i.link)`)),
+    JSON.stringify(readingLinks));
+check('the listening submenu matches groups.js game order exactly',
+    JSON.stringify(listeningLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51s').map(i => i.link)`)),
+    JSON.stringify(listeningLinks));
+check('the reading submenu shows the word, the listening one never does',
+    readingLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === undefined)
+    && listeningLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === 'speech'),
+    JSON.stringify(listeningLinks.map(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`))));
+check('the same games are offered in both halves, in the same order',
+    readingLinks.map(link => link.split('/')[2]).join(',')
+    === listeningLinks.map(link => link.split('/')[2]).join(','),
+    readingLinks.map(link => link.split('/')[2]).join(',') + ' vs ' + listeningLinks.map(link => link.split('/')[2]).join(','));
 check('every menu link resolves to the appType named in its own URL',
-    run(`getSharedGroupMenuItems('ch51').every(i => { const parts = i.link.split('/'); return resolveSharedGroupApp(parts[3]).appType === parts[2]; })`));
+    run(`['ch51', 'ch51s'].every(id => getSharedGroupMenuItems(id)
+        .every(i => { const parts = i.link.split('/'); return resolveSharedGroupApp(parts[3]).appType === parts[2]; }))`));
 
 console.log('--- 4. shared knowledge across the four games ---');
 const qa = run(`generateFromList(getItemById(apps, 'grp-ch51-0').listName, 'english_name', 'hebrew', 'grp-ch51-0', getItemById(apps, 'grp-ch51-0').setItems)`);
@@ -151,7 +182,7 @@ check('news clear is shared across games', JSON.stringify(run(`getLocalStorage('
 console.log('--- 6. the hebrew-letters group ("otiot") ---');
 check('DATA.hebrewAlphabet has all 27 letters', run(`DATA.hebrewAlphabet.length`) === 27, run(`DATA.hebrewAlphabet.length`));
 const otiotGames = run(`SHARED_GROUPS.otiot.games.length`);
-check('otiot lists 11 games', otiotGames === 11, otiotGames);
+check('otiot lists 12 games', otiotGames === 12, otiotGames);
 check('every otiot game has a name + title', run(`SHARED_GROUPS.otiot.games.every(g => g.appType && g.name && g.title)`));
 // a menu button pointing at an unregistered /play/<type>/ route would just dead-end
 const missingRoutes = run(`SHARED_GROUPS.otiot.games.map(g => g.appType)`)
@@ -164,8 +195,9 @@ check('every grp-otiot-<n> resolves to its own appType',
 check('shared config carried onto every game (letterName → letter, speech, setItems 3)',
     otiotApps.every(a => a.listName === 'hebrewAlphabet' && a.questionIndex === 'letterName'
         && a.resultIndex === 'letter' && a.questionType === 'speech' && a.setItems === 3));
-check('grp-otiot-10 parses (2-digit index) and grp-otiot-11 does not',
-    run(`resolveSharedGroupApp('grp-otiot-10') !== null && resolveSharedGroupApp('grp-otiot-11') === null`));
+check('2-digit indexes parse, and one past the last game does not',
+    run(`resolveSharedGroupApp('grp-otiot-' + (SHARED_GROUPS.otiot.games.length - 1)) !== null
+        && resolveSharedGroupApp('grp-otiot-' + SHARED_GROUPS.otiot.games.length) === null`));
 const otiotMenuLinks = run(`
     (function find(node) {
         if (node.type === 'menu' && node.name === 'אותיות (התקדמות משותפת)') return node.items.map(i => i.link);
@@ -212,6 +244,36 @@ check('a group id is NOT an adventure id (no XP / stars / world-map redirect)',
     run(`typeof getAdventureLevelCompleteRoute === 'function' ? getAdventureLevelCompleteRoute('grp-ch51-0') === null : true`)
     && run(`typeof parseAdventureId === 'function' ? parseAdventureId('grp-ch51-0') === null : true`));
 check('group activity created no adventure (adv-) storage keys', keys().every(k => !k.includes('adv-') && !k.includes('adv_')), keys().filter(k => k.includes('adv')).join(', '));
+
+console.log('--- 8. reading and listening are separate ladders ---');
+// Recognising a word by ear is a different skill from recognising it in print,
+// so ch51s carries its own key. The prefix similarity is the risk here: a naive
+// startsWith would fold grp-ch51s into grp-ch51 and silently merge the two.
+check('the listening group has its own knowledge key',
+    run(`getSharedGroupKnowledgeKey('ch51s')`) === 'grp-ch51s'
+    && run(`getSharedGroupKnowledgeKey('ch51')`) === 'grp-ch51');
+check('the two keys never collapse into one another',
+    run(`normalizeSharedGroupKey('learn_grp-ch51s-3_Weights')`) === 'learn_grp-ch51s_Weights'
+    && run(`normalizeSharedGroupKey('learn_grp-ch51-3_Weights')`) === 'learn_grp-ch51_Weights');
+check('both groups teach the same word list',
+    run(`SHARED_GROUPS.ch51s.listName`) === run(`SHARED_GROUPS.ch51.listName`));
+check('every listening game hides the word, inheriting it from the group',
+    run(`SHARED_GROUPS.ch51s.games.every((g, i) => resolveSharedGroupApp('grp-ch51s-' + i).questionType === 'speech')
+        && SHARED_GROUPS.ch51s.games.every(g => g.questionType === undefined)`));
+
+// The behaviour the separation exists for.
+const beforeListening = run(`getWeightsForKey('grp-ch51s-0', 5, getDataList('5_1'))`).slice(0, 5).join(',');
+run(`for (let n = 0; n < 5; n++) updateWeightForKey('grp-ch51-0', 0, -1);`);
+const afterReading = run(`getWeightsForKey('grp-ch51s-0', 5, getDataList('5_1'))`).slice(0, 5).join(',');
+check('mastering a word by reading does not mark it learned by ear',
+    beforeListening === afterReading, beforeListening + ' -> ' + afterReading);
+const readingHistoryBefore = JSON.stringify(run(`getAttemptHistory('grp-ch51-0')`));
+run(`for (let n = 0; n < 3; n++) updateWeightForKey('grp-ch51s-2', 1, -1);`);
+check('listening progress is shared across the listening games',
+    run(`getAttemptHistory('grp-ch51s-4')`)[1].length === 3,
+    JSON.stringify(run(`getAttemptHistory('grp-ch51s-4')`)[1]));
+check('listening progress left the reading history untouched',
+    JSON.stringify(run(`getAttemptHistory('grp-ch51-0')`)) === readingHistoryBefore);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

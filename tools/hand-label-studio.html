@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סטודיו סימון ידיים</title>
+<style>
+  :root {
+    --bg: #10161a;
+    --panel: #182126;
+    --panel-2: #1f2b31;
+    --line: #2b3b42;
+    --line-strong: #3d525b;
+    --ink: #e6eef0;
+    --ink-2: #9db0b8;
+    --ink-3: #6d848d;
+    --accent: #4fc3c9;
+    --accent-ink: #08181a;
+    --hand: #ffd23f;
+    --good: #6fc49d;
+    --bad: #e5798a;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", "Noto Sans Hebrew", Arial, sans-serif; font-size: 14px;
+  }
+  h1 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+  h2 { margin: 0 0 10px; font-size: .82rem; letter-spacing: .04em; color: var(--ink-2); font-weight: 700; }
+
+  header {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header .grow { flex: 1; }
+  .hint { color: var(--ink-3); font-size: .78rem; }
+
+  .layout {
+    display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 14px; padding: 14px; align-items: start;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+
+  button {
+    font: inherit; color: var(--ink); background: var(--panel-2);
+    border: 1px solid var(--line-strong); border-radius: 7px; padding: 8px 12px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+  button.danger { color: var(--bad); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  video { display: block; width: 100%; border-radius: 8px; background: #000; transform: scaleX(-1); }
+
+  .camera-stage { position: relative; line-height: 0; }
+  .burst-overlay {
+    position: absolute; inset: 0; display: grid; place-items: center; border-radius: 8px;
+    background: rgba(8, 14, 16, .55); color: var(--accent);
+    font-family: var(--mono); font-size: 2.6rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 14px rgba(0,0,0,.7);
+  }
+  .flash {
+    position: absolute; inset: 0; border-radius: 8px; background: #fff; opacity: 0; pointer-events: none;
+  }
+  .flash.on { opacity: .75; }
+  @media (prefers-reduced-motion: no-preference) {
+    .flash { transition: opacity .22s ease; }
+    .flash.on { transition: none; }
+  }
+
+  .progress {
+    font-family: var(--mono); font-size: .76rem; font-variant-numeric: tabular-nums;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 9px; color: var(--ink-2);
+  }
+  .progress.done { color: var(--good); border-color: var(--good); }
+
+  /* The stage shrink-wraps the shot so the thumbnail strip below stays reachable,
+     and the overlay always covers exactly the same box as the image. */
+  .stage { position: relative; line-height: 0; display: inline-block; max-width: 100%; }
+  .stage canvas {
+    display: block; border-radius: 8px; touch-action: none;
+    max-width: 100%; max-height: 56vh; width: auto; height: auto;
+  }
+  #overlay { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+
+  .strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+  .thumb {
+    position: relative; flex: 0 0 auto; width: 104px; border: 2px solid var(--line);
+    border-radius: 7px; overflow: hidden; cursor: pointer; background: #000; padding: 0;
+  }
+  .thumb.sel { border-color: var(--accent); }
+  .thumb img { display: block; width: 100%; height: 74px; object-fit: cover; }
+  .thumb .badge {
+    position: absolute; top: 3px; inset-inline-start: 3px; font-family: var(--mono); font-size: .62rem;
+    padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.72); color: var(--ink);
+  }
+  .thumb .badge.bg { background: var(--accent); color: var(--accent-ink); }
+  .thumb .count {
+    position: absolute; bottom: 3px; inset-inline-end: 3px; font-family: var(--mono); font-size: .62rem;
+    padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.72); color: var(--hand);
+  }
+
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-family: var(--mono); font-size: .78rem; }
+  .kv dt { color: var(--ink-3); }
+  .kv dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  label.field { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--ink-2); }
+  input[type=range] { flex: 1; accent-color: var(--accent); }
+  select { font: inherit; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 6px; padding: 5px 8px; }
+
+  .boxlist { display: flex; flex-direction: column; gap: 5px; max-height: 190px; overflow-y: auto; }
+  .boxrow {
+    display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .74rem;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px;
+  }
+  .boxrow span { flex: 1; color: var(--ink-2); }
+  .boxrow .sw { width: 11px; height: 11px; border-radius: 3px; background: var(--hand); flex: 0 0 auto; }
+
+  .verdict { font-family: var(--mono); font-size: .8rem; display: flex; flex-direction: column; gap: 4px; }
+  .verdict .ok { color: var(--good); }
+  .verdict .no { color: var(--bad); }
+  .empty { color: var(--ink-3); font-size: .82rem; }
+  .warn { color: var(--hand); font-size: .8rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🖐️ סטודיו סימון ידיים</h1>
+  <span class="hint">
+    רווח = צלם · B = רקע · ←/→ = מעבר בין צילומים · U = הבא שלא סומן ·
+    C = העתק מהקודם · X = אין ידיים · Delete = מחק סימון אחרון
+  </span>
+  <span class="grow"></span>
+  <span id="status" class="hint"></span>
+  <button id="export" class="primary">ייצוא JSON</button>
+</header>
+
+<div class="layout">
+
+  <div class="col">
+    <div class="panel">
+      <h2>מצלמה</h2>
+      <div class="camera-stage">
+        <video id="video" playsinline muted autoplay></video>
+        <div id="burstOverlay" class="burst-overlay" hidden></div>
+        <div id="flash" class="flash"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="start" class="primary">הפעל מצלמה</button>
+        <button id="shoot" disabled>צלם דגימה</button>
+        <button id="shootBg" disabled>צלם רקע</button>
+        <button id="stop" disabled>עצור</button>
+      </div>
+      <label class="field" style="margin-top:10px">גודל שמירה
+        <select id="capRes">
+          <option value="640">640 רוחב (מומלץ לסדרה)</option>
+          <option value="960">960 רוחב</option>
+          <option value="0">מלא</option>
+        </select>
+      </label>
+      <p class="hint" style="margin:8px 0 0">
+        התמונה נשמרת <b>משוקפת</b>, בדיוק כמו שהמשחק רואה אותה, כדי שהסימונים יהיו באותן קואורדינטות.
+        הכל נשאר במכשיר — אין שום שליחה לרשת.
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>סדרה אוטומטית</h2>
+      <div class="row">
+        <label class="field">כמה <input id="burstCount" type="number" min="1" max="300" value="60" style="width:70px"></label>
+        <label class="field">כל
+          <select id="burstEvery">
+            <option value="500">חצי שנייה</option>
+            <option value="1000" selected>שנייה</option>
+            <option value="2000">שתי שניות</option>
+          </select>
+        </label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="burst" class="primary" disabled>התחל סדרה</button>
+        <button id="burstStop" hidden class="danger">הפסק</button>
+      </div>
+      <p class="hint" style="margin:8px 0 0">
+        אחרי ספירה של 3 המצלמה מצלמת לבד. תחליפו תנוחת יד בין צילום לצילום — פינה אחרת, מרחק אחר,
+        לפעמים בלי ידיים בכלל.
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>מה לצלם</h2>
+      <ol class="hint" style="margin:0; padding-inline-start:1.2em; line-height:1.7">
+        <li>קודם <b>רקע</b>: החדר בלי ידיים בפריים (אפשר לשבת רגיל).</li>
+        <li>אחר כך <b>דגימות</b>: יד בכל אחת מארבע הפינות, קרוב ורחוק.</li>
+        <li>גם מקרים קשים: צל על הקיר, יד של מישהו אחר, ידיים בתנועה.</li>
+        <li>וגם דגימות <b>בלי ידיים</b> — הן מודדות התרעות שווא.</li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <h2>בדיקת הגלאי הנוכחי</h2>
+      <label class="field">רזולוציה
+        <select id="res">
+          <option value="64x48">64×48 (כמו במשחק)</option>
+          <option value="96x72">96×72</option>
+          <option value="128x96">128×96</option>
+        </select>
+      </label>
+      <label class="field" style="margin-top:8px">סף <span id="thrVal" class="hint">24</span>
+        <input id="thr" type="range" min="6" max="70" value="24">
+      </label>
+      <div class="row" style="margin-top:10px">
+        <button id="run" disabled>הרץ על הדגימה</button>
+        <button id="runAll" disabled>הרץ על הכל</button>
+      </div>
+      <div id="verdict" class="verdict" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between; margin-bottom:10px">
+        <h2 style="margin:0">סימון — גררו מלבן סביב כל כף יד</h2>
+        <div class="row">
+          <span id="progress" class="progress">0 / 0</span>
+          <button id="prev" title="הקודם (→)">→</button>
+          <span id="position" class="hint" style="font-family:var(--mono); min-width:5.5em; text-align:center">–</span>
+          <button id="next" title="הבא (←)">←</button>
+          <button id="copyPrev" title="העתק מהקודם (C)">העתק מהקודם</button>
+          <button id="nextTodo" class="primary" title="הבא שלא סומן (U)">הבא שלא סומן</button>
+        </div>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="shot"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="clearBoxes">נקה סימונים</button>
+        <label class="field"><input type="checkbox" id="noHands"> אין ידיים בפריים הזה</label>
+        <span class="grow" style="flex:1"></span>
+        <button id="delShot" class="danger">מחק צילום</button>
+      </div>
+      <div id="boxes" class="boxlist" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel">
+      <h2>צילומים</h2>
+      <div id="strip" class="strip"><span class="empty">עוד לא צולם כלום.</span></div>
+      <dl class="kv" style="margin-top:12px">
+        <dt>סה"כ</dt><dd id="kTotal">0</dd>
+        <dt>רקע</dt><dd id="kBg">0</dd>
+        <dt>ידיים מסומנות</dt><dd id="kHands">0</dd>
+        <dt>פריימים ריקים</dt><dd id="kEmpty">0</dd>
+      </dl>
+      <div class="row" style="margin-top:10px">
+        <button id="clearAll" class="danger">מחק הכל</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Reuses the game's own blob finder so the check measures the shipped code. -->
+<script src="../games/crystal-arena.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- storage: survives a refresh so labelling work is not lost ----------
+  const DB_NAME = 'hand-label-studio';
+  let db = null;
+
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('shots', {keyPath: 'id'});
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  function tx(mode) { return db.transaction('shots', mode).objectStore('shots'); }
+  function dbPut(shot) { return new Promise(r => { tx('readwrite').put(shot).onsuccess = r; }); }
+  function dbDelete(id) { return new Promise(r => { tx('readwrite').delete(id).onsuccess = r; }); }
+  function dbClear() { return new Promise(r => { tx('readwrite').clear().onsuccess = r; }); }
+  function dbAll() {
+    return new Promise(resolve => {
+      const request = tx('readonly').getAll();
+      request.onsuccess = () => resolve(request.result || []);
+    });
+  }
+
+  // ---------- state ----------
+  const el = id => document.getElementById(id);
+  let shots = [];
+  let selectedId = null;
+  let stream = null;
+  let drawing = null;
+
+  const video = el('video');
+  const shotCanvas = el('shot');
+  const overlay = el('overlay');
+  const shotCtx = shotCanvas.getContext('2d');
+  const overlayCtx = overlay.getContext('2d');
+
+  function selected() { return shots.filter(shot => shot.id === selectedId)[0] || null; }
+  function status(text) { el('status').textContent = text; }
+
+  // ---------- camera ----------
+  async function startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status(window.isSecureContext === false
+        ? 'המצלמה דורשת https או localhost'
+        : 'הדפדפן לא תומך במצלמה');
+      return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {facingMode: 'user', width: {ideal: 1280}, height: {ideal: 720}}, audio: false,
+      });
+    } catch (error) {
+      status('המצלמה נכשלה: ' + (error && error.name));
+      return;
+    }
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    setBurstUi(false);
+    status(video.videoWidth + '×' + video.videoHeight);
+  }
+
+  function stopCamera() {
+    if (burst) endBurst();
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null;
+    video.srcObject = null;
+    setBurstUi(false);
+    status('');
+  }
+
+  function captureSize() {
+    const requested = Number(el('capRes').value);
+    if (!requested || requested >= video.videoWidth) return [video.videoWidth, video.videoHeight];
+    return [requested, Math.round(requested * video.videoHeight / video.videoWidth)];
+  }
+
+  async function capture(kind, silent) {
+    if (!video.videoWidth) return null;
+    const [width, height] = captureSize();
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    // Mirror on capture so the stored frame shares the game's coordinate system.
+    context.setTransform(-1, 0, 0, 1, canvas.width, 0);
+    context.drawImage(video, 0, 0, width, height);
+
+    // A separate small thumbnail keeps the strip light once there are 60+ shots.
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 160;
+    thumbCanvas.height = Math.round(160 * height / width);
+    thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
+    const shot = {
+      id: 's' + Date.now() + Math.random().toString(36).slice(2, 6),
+      at: Date.now(),
+      kind: kind,
+      width: width,
+      height: height,
+      image: canvas.toDataURL('image/jpeg', 0.86),
+      thumb: thumbCanvas.toDataURL('image/jpeg', 0.6),
+      hands: [],
+      noHands: false,
+    };
+    shots.push(shot);
+    await dbPut(shot);
+    if (silent) {
+      flash();
+      updateCounters();
+    } else {
+      selectedId = shot.id;
+      render();
+    }
+    return shot;
+  }
+
+  function flash() {
+    const node = el('flash');
+    node.classList.add('on');
+    setTimeout(() => node.classList.remove('on'), 60);
+  }
+
+  // ---------- automatic series ----------
+  let burst = null;
+
+  function setBurstUi(running) {
+    const live = !!stream;
+    el('burst').hidden = running;
+    el('burstStop').hidden = !running;
+    el('burstOverlay').hidden = !running;
+    ['shoot', 'shootBg', 'stop', 'burst'].forEach(id => { el(id).disabled = running || !live; });
+    ['capRes', 'burstCount', 'burstEvery'].forEach(id => { el(id).disabled = running; });
+    el('start').disabled = live || running;
+  }
+
+  function startBurst() {
+    if (!stream || burst) return;
+    burst = {
+      done: 0,
+      total: Math.max(1, Math.min(300, Number(el('burstCount').value) || 60)),
+      interval: Number(el('burstEvery').value),
+      timer: null,
+      firstId: null,
+    };
+    setBurstUi(true);
+    countdown(3);
+  }
+
+  function countdown(remaining) {
+    if (!burst) return;
+    el('burstOverlay').textContent = remaining > 0 ? String(remaining) : '●';
+    if (remaining > 0) {
+      burst.timer = setTimeout(() => countdown(remaining - 1), 800);
+      return;
+    }
+    burst.timer = setTimeout(tickBurst, 250);
+  }
+
+  async function tickBurst() {
+    if (!burst) return;
+    const shot = await capture('sample', true);
+    if (!burst) return;
+    if (shot && !burst.firstId) burst.firstId = shot.id;
+    burst.done += 1;
+    el('burstOverlay').textContent = burst.done + ' / ' + burst.total;
+    if (burst.done >= burst.total) { endBurst(); return; }
+    burst.timer = setTimeout(tickBurst, burst.interval);
+  }
+
+  function endBurst() {
+    if (!burst) return;
+    if (burst.timer) clearTimeout(burst.timer);
+    const first = burst.firstId;
+    burst = null;
+    setBurstUi(false);
+    if (first) selectedId = first;
+    render();
+    status('הסדרה הסתיימה — אפשר להתחיל לסמן');
+  }
+
+  // ---------- labelling ----------
+  function pointerPosition(event) {
+    const rect = overlay.getBoundingClientRect();
+    return {
+      x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+      y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height)),
+    };
+  }
+
+  overlay.addEventListener('pointerdown', event => {
+    const shot = selected();
+    if (!shot || shot.kind === 'background') return;
+    overlay.setPointerCapture(event.pointerId);
+    const start = pointerPosition(event);
+    drawing = {x0: start.x, y0: start.y, x1: start.x, y1: start.y};
+    paintOverlay();
+  });
+
+  overlay.addEventListener('pointermove', event => {
+    if (!drawing) return;
+    const at = pointerPosition(event);
+    drawing.x1 = at.x;
+    drawing.y1 = at.y;
+    paintOverlay();
+  });
+
+  overlay.addEventListener('pointerup', async () => {
+    if (!drawing) return;
+    const shot = selected();
+    const box = {
+      x: Math.min(drawing.x0, drawing.x1),
+      y: Math.min(drawing.y0, drawing.y1),
+      w: Math.abs(drawing.x1 - drawing.x0),
+      h: Math.abs(drawing.y1 - drawing.y0),
+    };
+    drawing = null;
+    // Ignore accidental taps; a hand is never a 1% sliver.
+    if (shot && box.w > 0.015 && box.h > 0.015) {
+      shot.hands.push(box);
+      shot.noHands = false;
+      await dbPut(shot);
+    }
+    render();
+  });
+
+  function paintOverlay(detection) {
+    const shot = selected();
+    overlay.width = shotCanvas.width;
+    overlay.height = shotCanvas.height;
+    overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!shot) return;
+    const scaleX = overlay.width;
+    const scaleY = overlay.height;
+
+    if (detection) {
+      overlayCtx.globalAlpha = 0.34;
+      overlayCtx.drawImage(detection.maskCanvas, 0, 0, overlay.width, overlay.height);
+      overlayCtx.globalAlpha = 1;
+      overlayCtx.strokeStyle = '#4fc3c9';
+      overlayCtx.lineWidth = Math.max(2, overlay.width / 320);
+      detection.blobs.forEach(blob => {
+        overlayCtx.strokeRect(
+          (blob.x - blob.width / 2) * scaleX, (blob.y - blob.height / 2) * scaleY,
+          blob.width * scaleX, blob.height * scaleY);
+      });
+    }
+
+    overlayCtx.lineWidth = Math.max(2, overlay.width / 300);
+    overlayCtx.strokeStyle = '#ffd23f';
+    overlayCtx.font = Math.round(overlay.width / 34) + 'px sans-serif';
+    overlayCtx.fillStyle = '#ffd23f';
+    shot.hands.forEach((box, index) => {
+      overlayCtx.strokeRect(box.x * scaleX, box.y * scaleY, box.w * scaleX, box.h * scaleY);
+      overlayCtx.fillText(String(index + 1), box.x * scaleX + 5, box.y * scaleY + overlay.width / 30);
+    });
+
+    if (drawing) {
+      overlayCtx.setLineDash([7, 5]);
+      overlayCtx.strokeStyle = '#ffffff';
+      overlayCtx.strokeRect(
+        Math.min(drawing.x0, drawing.x1) * scaleX, Math.min(drawing.y0, drawing.y1) * scaleY,
+        Math.abs(drawing.x1 - drawing.x0) * scaleX, Math.abs(drawing.y1 - drawing.y0) * scaleY);
+      overlayCtx.setLineDash([]);
+    }
+  }
+
+  // ---------- detector check ----------
+  function grayscaleOf(shot, width, height) {
+    return new Promise(resolve => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d', {willReadFrequently: true});
+        context.drawImage(image, 0, 0, width, height);
+        const pixels = context.getImageData(0, 0, width, height).data;
+        const gray = new Uint8Array(width * height);
+        for (let index = 0, offset = 0; index < gray.length; index += 1, offset += 4) {
+          gray[index] = (pixels[offset] * 77 + pixels[offset + 1] * 151 + pixels[offset + 2] * 28) >> 8;
+        }
+        resolve(gray);
+      };
+      image.src = shot.image;
+    });
+  }
+
+  async function analyse(shot) {
+    const background = shots.filter(item => item.kind === 'background').slice(-1)[0];
+    if (!background) return {error: 'צריך לצלם רקע אחד לפחות'};
+    const [width, height] = el('res').value.split('x').map(Number);
+    const threshold = Number(el('thr').value);
+    const [bgGray, sampleGray] = await Promise.all([
+      grayscaleOf(background, width, height),
+      grayscaleOf(shot, width, height),
+    ]);
+
+    const mask = new Uint8Array(width * height);
+    for (let index = 0; index < mask.length; index += 1) {
+      mask[index] = Math.abs(sampleGray[index] - bgGray[index]) > threshold ? 1 : 0;
+    }
+    const merged = window.crystalArenaDilate
+      ? window.crystalArenaDilate(mask, new Uint8Array(mask.length), new Uint8Array(mask.length), width, height, 1)
+      : mask;
+    const blobs = window.crystalArenaFindBlobs
+      ? window.crystalArenaFindBlobs(merged, width, height, 12, 8)
+      : [];
+
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = width;
+    maskCanvas.height = height;
+    const maskCtx = maskCanvas.getContext('2d');
+    const image = maskCtx.createImageData(width, height);
+    for (let index = 0, offset = 0; index < merged.length; index += 1, offset += 4) {
+      image.data[offset] = 79; image.data[offset + 1] = 195; image.data[offset + 2] = 201;
+      image.data[offset + 3] = merged[index] ? 235 : 0;
+    }
+    maskCtx.putImageData(image, 0, 0);
+
+    // A labelled hand counts as found when a blob's centre lands inside its box.
+    const found = shot.hands.map(box => blobs.some(blob =>
+      blob.x >= box.x && blob.x <= box.x + box.w && blob.y >= box.y && blob.y <= box.y + box.h));
+    const strays = blobs.filter(blob => !shot.hands.some(box =>
+      blob.x >= box.x && blob.x <= box.x + box.w && blob.y >= box.y && blob.y <= box.y + box.h));
+
+    return {
+      blobs: blobs, maskCanvas: maskCanvas,
+      hands: shot.hands.length,
+      hits: found.filter(Boolean).length,
+      strays: strays.length,
+    };
+  }
+
+  async function runOne() {
+    const shot = selected();
+    if (!shot) return;
+    const result = await analyse(shot);
+    if (result.error) { el('verdict').innerHTML = '<span class="no">' + result.error + '</span>'; return; }
+    paintOverlay(result);
+    el('verdict').innerHTML =
+      '<div>ידיים מסומנות: <b>' + result.hands + '</b></div>' +
+      '<div class="' + (result.hits === result.hands && result.hands ? 'ok' : 'no') + '">נמצאו: <b>' + result.hits + '</b></div>' +
+      '<div class="' + (result.strays ? 'no' : 'ok') + '">גושים מיותרים: <b>' + result.strays + '</b></div>';
+  }
+
+  async function runAll() {
+    const samples = shots.filter(shot => shot.kind === 'sample' && (shot.hands.length || shot.noHands));
+    if (!samples.length) { el('verdict').innerHTML = '<span class="no">אין דגימות מסומנות</span>'; return; }
+    let hands = 0, hits = 0, strays = 0, failed = 0;
+    for (const shot of samples) {
+      const result = await analyse(shot);
+      if (result.error) { el('verdict').innerHTML = '<span class="no">' + result.error + '</span>'; return; }
+      hands += result.hands; hits += result.hits; strays += result.strays;
+      if (result.hits < result.hands) failed += 1;
+    }
+    const recall = hands ? Math.round(hits / hands * 100) : 0;
+    el('verdict').innerHTML =
+      '<div>דגימות: <b>' + samples.length + '</b></div>' +
+      '<div class="' + (recall >= 90 ? 'ok' : 'no') + '">ידיים שנמצאו: <b>' + hits + '/' + hands + '</b> (' + recall + '%)</div>' +
+      '<div class="' + (strays ? 'no' : 'ok') + '">גושים מיותרים: <b>' + strays + '</b></div>' +
+      '<div class="' + (failed ? 'no' : 'ok') + '">פריימים עם החמצה: <b>' + failed + '</b></div>';
+  }
+
+  // ---------- navigation ----------
+  function isLabelled(shot) {
+    return shot.kind === 'background' || shot.noHands || shot.hands.length > 0;
+  }
+
+  function step(delta) {
+    if (!shots.length) return;
+    let index = shots.findIndex(shot => shot.id === selectedId);
+    if (index < 0) index = 0;
+    index = Math.min(shots.length - 1, Math.max(0, index + delta));
+    selectedId = shots[index].id;
+    render();
+  }
+
+  function nextUnlabelled() {
+    if (!shots.length) return;
+    const from = Math.max(0, shots.findIndex(shot => shot.id === selectedId));
+    for (let offset = 1; offset <= shots.length; offset += 1) {
+      const shot = shots[(from + offset) % shots.length];
+      if (!isLabelled(shot)) { selectedId = shot.id; render(); return; }
+    }
+    status('כל הדגימות סומנו 🎉');
+  }
+
+  async function copyPrevious() {
+    const index = shots.findIndex(shot => shot.id === selectedId);
+    if (index <= 0) return;
+    const shot = shots[index];
+    const previous = shots[index - 1];
+    if (shot.kind !== 'sample') return;
+    shot.hands = previous.hands.map(box => ({x: box.x, y: box.y, w: box.w, h: box.h}));
+    shot.noHands = previous.noHands;
+    await dbPut(shot);
+    render();
+  }
+
+  // ---------- render ----------
+  let stripKey = null;
+
+  function updateCounters() {
+    const samples = shots.filter(shot => shot.kind === 'sample');
+    const done = samples.filter(isLabelled).length;
+    const progress = el('progress');
+    progress.textContent = done + ' / ' + samples.length;
+    progress.classList.toggle('done', samples.length > 0 && done === samples.length);
+    el('kTotal').textContent = shots.length;
+    el('kBg').textContent = shots.filter(shot => shot.kind === 'background').length;
+    el('kHands').textContent = shots.reduce((sum, shot) => sum + shot.hands.length, 0);
+    el('kEmpty').textContent = shots.filter(shot => shot.noHands).length;
+    const index = shots.findIndex(shot => shot.id === selectedId);
+    el('position').textContent = index < 0 ? '–' : (index + 1) + ' / ' + shots.length;
+  }
+
+  // The strip is only rebuilt when the set of shots changes; navigating 60 frames
+  // must not re-create 60 nodes on every arrow press.
+  function renderStrip() {
+    const strip = el('strip');
+    const key = shots.map(shot => shot.id).join(',');
+    if (key !== stripKey) {
+      stripKey = key;
+      strip.innerHTML = '';
+      if (!shots.length) {
+        strip.innerHTML = '<span class="empty">עוד לא צולם כלום.</span>';
+      }
+      shots.forEach(shot => {
+        const button = document.createElement('button');
+        button.className = 'thumb';
+        button.dataset.id = shot.id;
+        button.innerHTML =
+          '<img src="' + (shot.thumb || shot.image) + '" alt="" loading="lazy">' +
+          '<span class="badge' + (shot.kind === 'background' ? ' bg' : '') + '">' +
+          (shot.kind === 'background' ? 'רקע' : 'דגימה') + '</span>' +
+          '<span class="count"></span>';
+        button.onclick = () => { selectedId = shot.id; render(); };
+        strip.appendChild(button);
+      });
+    }
+    Array.prototype.forEach.call(strip.querySelectorAll('.thumb'), button => {
+      const shot = shots.filter(item => item.id === button.dataset.id)[0];
+      if (!shot) return;
+      const isSelected = shot.id === selectedId;
+      button.classList.toggle('sel', isSelected);
+      const count = button.querySelector('.count');
+      count.textContent = shot.kind === 'background' ? '' : (shot.noHands ? '∅' : (shot.hands.length || ''));
+      if (isSelected) button.scrollIntoView({block: 'nearest', inline: 'center'});
+    });
+  }
+
+  function render() {
+    renderStrip();
+    updateCounters();
+
+    const shot = selected();
+    el('delShot').disabled = !shot;
+    el('clearBoxes').disabled = !shot;
+    el('noHands').checked = !!(shot && shot.noHands);
+    el('noHands').disabled = !shot || shot.kind === 'background';
+    el('run').disabled = !shot || shot.kind === 'background';
+    el('runAll').disabled = !shots.some(item => item.kind === 'background');
+
+    const list = el('boxes');
+    list.innerHTML = '';
+    if (shot && shot.kind === 'background') {
+      list.innerHTML = '<span class="empty">צילום רקע — אין מה לסמן כאן.</span>';
+    } else if (shot && !shot.hands.length) {
+      list.innerHTML = '<span class="empty">גררו מלבן סביב כל כף יד בתמונה.</span>';
+    } else if (shot) {
+      shot.hands.forEach((box, index) => {
+        const row = document.createElement('div');
+        row.className = 'boxrow';
+        row.innerHTML = '<i class="sw"></i><span>יד ' + (index + 1) + ' · ' +
+          Math.round(box.x * 100) + ',' + Math.round(box.y * 100) + ' · ' +
+          Math.round(box.w * 100) + '×' + Math.round(box.h * 100) + '</span>';
+        const remove = document.createElement('button');
+        remove.textContent = '✕';
+        remove.className = 'danger';
+        remove.onclick = async () => { shot.hands.splice(index, 1); await dbPut(shot); render(); };
+        row.appendChild(remove);
+        list.appendChild(row);
+      });
+    }
+
+    const index = shots.findIndex(item => item.id === selectedId);
+    el('prev').disabled = index <= 0;
+    el('next').disabled = index < 0 || index >= shots.length - 1;
+    el('copyPrev').disabled = index <= 0 || !shot || shot.kind !== 'sample';
+    el('nextTodo').disabled = !shots.some(item => item.kind === 'sample' && !isLabelled(item));
+
+    if (!shot) {
+      shotCanvas.width = 640; shotCanvas.height = 360;
+      shotCtx.fillStyle = '#000'; shotCtx.fillRect(0, 0, 640, 360);
+      paintOverlay();
+      return;
+    }
+    const image = new Image();
+    image.onload = () => {
+      shotCanvas.width = image.width;
+      shotCanvas.height = image.height;
+      shotCtx.drawImage(image, 0, 0);
+      paintOverlay();
+    };
+    image.src = shot.image;
+  }
+
+  // ---------- wiring ----------
+  el('start').onclick = startCamera;
+  el('stop').onclick = stopCamera;
+  el('shoot').onclick = () => capture('sample');
+  el('shootBg').onclick = () => capture('background');
+  el('burst').onclick = startBurst;
+  el('burstStop').onclick = endBurst;
+  el('prev').onclick = () => step(-1);
+  el('next').onclick = () => step(1);
+  el('nextTodo').onclick = nextUnlabelled;
+  el('copyPrev').onclick = copyPrevious;
+  el('run').onclick = runOne;
+  el('runAll').onclick = runAll;
+  el('thr').oninput = () => { el('thrVal').textContent = el('thr').value; };
+
+  el('noHands').onchange = async () => {
+    const shot = selected();
+    if (!shot) return;
+    shot.noHands = el('noHands').checked;
+    if (shot.noHands) shot.hands = [];
+    await dbPut(shot);
+    render();
+  };
+
+  el('clearBoxes').onclick = async () => {
+    const shot = selected();
+    if (!shot) return;
+    shot.hands = [];
+    await dbPut(shot);
+    render();
+  };
+
+  el('delShot').onclick = async () => {
+    const shot = selected();
+    if (!shot) return;
+    shots = shots.filter(item => item.id !== shot.id);
+    await dbDelete(shot.id);
+    selectedId = shots.length ? shots[shots.length - 1].id : null;
+    render();
+  };
+
+  el('clearAll').onclick = async () => {
+    if (!shots.length || !confirm('למחוק את כל הצילומים והסימונים?')) return;
+    shots = [];
+    selectedId = null;
+    await dbClear();
+    render();
+  };
+
+  el('export').onclick = () => {
+    const payload = {
+      version: 1,
+      created: new Date().toISOString(),
+      note: 'Frames are mirrored, matching the game coordinate space. Boxes are normalised 0..1.',
+      shots: shots,
+    };
+    const blob = new Blob([JSON.stringify(payload)], {type: 'application/json'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'hand-labels-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '') + '.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  };
+
+  window.addEventListener('keydown', event => {
+    if (event.target.matches('input, select, textarea')) return;
+    if (event.code === 'Space' && !el('shoot').disabled) { event.preventDefault(); capture('sample'); }
+    if (event.key === 'b' || event.key === 'B') { if (!el('shootBg').disabled) capture('background'); }
+    // The strip reads right-to-left, so the left arrow advances.
+    if (event.key === 'ArrowLeft') { event.preventDefault(); step(1); }
+    if (event.key === 'ArrowRight') { event.preventDefault(); step(-1); }
+    if (event.key === 'u' || event.key === 'U') nextUnlabelled();
+    if (event.key === 'c' || event.key === 'C') copyPrevious();
+    if (event.key === 'x' || event.key === 'X') {
+      const shot = selected();
+      if (shot && shot.kind === 'sample') { el('noHands').checked = !shot.noHands; el('noHands').onchange(); }
+    }
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      const shot = selected();
+      if (shot && shot.hands.length) {
+        event.preventDefault();
+        shot.hands.pop();
+        dbPut(shot).then(render);
+      }
+    }
+  });
+
+  window.addEventListener('beforeunload', () => { if (stream) stopCamera(); });
+
+  openDb().then(async database => {
+    db = database;
+    shots = (await dbAll()).sort((a, b) => a.at - b.at);
+    selectedId = shots.length ? shots[shots.length - 1].id : null;
+    render();
+  }).catch(() => {
+    status('אחסון מקומי לא זמין — העבודה לא תישמר בין רענונים');
+    render();
+  });
+})();
+</script>
+</body>
+</html>

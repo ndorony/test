@@ -1307,8 +1307,16 @@ var WordLinkComponent = Vue.component('word-link', Vue.extend({
 
         fieldToken: function(idx, fieldName) {
             const field = this.list[idx][fieldName];
-            const isText = field.type === 'text' || field.type === 'text_to_speech';
-            return {text: isText ? String(field.value) : '🔊', action: generateQuestion(field)};
+            // An app can force the question type - a listening drill sets 'speech',
+            // meaning the word is heard and never seen. That has to win over the
+            // field's own type, or the tile prints the very word it is hiding.
+            // Only the question field is overridden; the answer keeps its own type.
+            const forced = this.currentApp.questionType && fieldName === this.currentApp.questionIndex
+                ? this.currentApp.questionType : null;
+            const type = forced || field.type;
+            const isText = type === 'text' || type === 'text_to_speech';
+            const spoken = forced ? Object.assign({}, field, {type: forced}) : field;
+            return {text: isText ? String(field.value) : '🔊', action: generateQuestion(spoken)};
         },
 
         colX: function(c) {
@@ -9882,6 +9890,11 @@ if (typeof createScribbleDungeonComponent === 'function') {
     ScribbleDungeonComponent = createScribbleDungeonComponent(BaseGameComponent);
 }
 
+var CrystalArenaComponent = null;
+if (typeof createCrystalArenaComponent === 'function') {
+    CrystalArenaComponent = createCrystalArenaComponent(BaseGameComponent);
+}
+
 const routes = [
     {path: '/', component: MenuComponent,},
     {path: '/user', component: UserComponent},
@@ -9920,6 +9933,10 @@ if (FactoryTycoonComponent) {
 
 if (ScribbleDungeonComponent) {
     routes.push({path: '/play/scribble_dungeon/:currentAppId', component: ScribbleDungeonComponent, props: true});
+}
+
+if (CrystalArenaComponent) {
+    routes.push({path: '/play/crystal_arena/:currentAppId', component: CrystalArenaComponent, props: true});
 }
 
 // Adventure mode routes (adventure.js) — appended only when the module is loaded

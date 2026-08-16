@@ -27,9 +27,11 @@
 //   keep their game order in sync with the `games` array below.
 
 const SHARED_GROUPS = {
-    // Grade 5, unit 1 vocabulary (DATA list "5_1"). One shared knowledge key,
-    // five ways to practice it. Question = the English word (heard + shown),
-    // answer = the Hebrew translation.
+    // Grade 5, unit 1 vocabulary (DATA list "5_1"), READ: the list's own
+    // 'text_to_speech' field shows the English word beside a speaker button.
+    // Answer = the Hebrew translation. One shared knowledge key across every game
+    // below. The listening twin is a SEPARATE group (ch51s) with its own key —
+    // see the note there.
     // Games are append-only: each game's index is its id (grp-ch51-<index>), so
     // adding a game must go at the END — inserting mid-array would remap the ids
     // and orphan saved progress.
@@ -44,6 +46,29 @@ const SHARED_GROUPS = {
             {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',   title: 'מתחו קו מהמילה אל התרגום שלה'},
             {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',    title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
             {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'בנו מערך הגנה והצילו את הממלכה'},
+            {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים', title: 'החזיקו חפץ צבעוני בפינה עם התשובה הנכונה'},
+        ],
+    },
+
+    // The same word list, HEARD: questionType 'speech' renders the speaker button
+    // alone, so the English word is never on screen. Its own group, therefore its
+    // own knowledge key (grp-ch51s) — recognising a word by ear is a different
+    // skill from recognising it in print, and mastering one must not mark the
+    // other as learned. Same games and the same unlock batch size, climbed
+    // independently.
+    ch51s: {
+        listName: '5_1',
+        questionIndex: 'english_name',
+        resultIndex: 'hebrew',
+        questionType: 'speech', // group-wide: every game here hides the word
+        setItems: 5,
+        games: [
+            {appType: 'mcq',               icon: 'hearing',        name: 'בחירה מרובה',  title: 'הקשיבו למילה ובחרו את התרגום'},
+            {appType: 'balloon_shooter',   icon: 'sports_esports', name: 'מטווח בלונים', title: 'הקשיבו למילה ופגעו בבלון עם התרגום'},
+            {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',   title: 'הקישו על הרמקול ומתחו קו אל התרגום'},
+            {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',    title: 'הקשיבו למילה ובחרו את הדלת הנכונה'},
+            {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'הקשיבו למילה והגנו על הממלכה'},
+            {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים', title: 'הקשיבו למילה והחזיקו את החפץ על התרגום'},
         ],
     },
 
@@ -70,6 +95,7 @@ const SHARED_GROUPS = {
             {appType: 'water_pipeline',    icon: 'water_drop',     name: 'מסע המים',         title: 'פתחו את החסימות והחזירו את המים!'},
             {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',        title: 'בנו מערך הגנה והצילו את הממלכה'},
             {appType: 'falling_answers',   icon: 'arrow_downward', name: 'תשובות נופלות',    title: 'הקשיבו לשם האות ולחצו על האות הנכונה'},
+            {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים',     title: 'הקשיבו לשם האות והחזיקו את החפץ בפינה הנכונה'},
         ],
     },
 };
