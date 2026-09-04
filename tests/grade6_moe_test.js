@@ -151,14 +151,14 @@ check('one past the last game does not resolve',
 check('every group has its own knowledge key',
     new Set(PARTS.flatMap(p => DIRS.map(d => run(`normalizeSharedGroupKey('grp-g6p${p}${d}-3')`)))).size === 10);
 
-console.log('--- 4. the "6" menu, appended at the end of אנגלית ---');
+console.log('--- 4. the old grade-6 menu, retained at the end of אנגלית ---');
 const english = run(`apps.items.find(i => i.name === 'אנגלית')`);
-const six = run(`apps.items.find(i => i.name === 'אנגלית').items[apps.items.find(i => i.name === 'אנגלית').items.length - 1]`);
-check('the new menu is named "6"', six && six.name === '6', six && six.name);
+const six = run(`apps.items.find(i => i.name === 'אנגלית').items[apps.items.find(i => i.name === 'אנגלית').items.length - 2]`);
+check('the former grade-6 menu is named "old"', six && six.name === 'old', six && six.name);
 // appending is the only safe edit: menu ids are position-based (route_index)
 check('it was appended, so no existing item changed position',
     run(`(function(){ const e = apps.items.find(i => i.name === 'אנגלית');
-        return e.items[e.items.length - 2].name; })()`) === '5_1 שמיעה (התקדמות משותפת)');
+        return e.items[e.items.length - 3].name; })()`) === '5_1 שמיעה (התקדמות משותפת)');
 check('"6" holds exactly five parts', six.items.length === 5, six.items.map(i => i.name).join(', '));
 check('the parts are named חלק 1..5',
     six.items.every((it, i) => it.name === `חלק ${i + 1}`), six.items.map(i => i.name).join(', '));

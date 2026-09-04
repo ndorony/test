@@ -98,6 +98,44 @@ const SHARED_GROUPS = {
             {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים',     title: 'הקשיבו לשם האות והחזיקו את החפץ בפינה הנכונה'},
         ],
     },
+
+    // Unit 6.1, list 1 (DATA key "6.1_1"): English words shown and spoken,
+    // with Hebrew translations as answers. All compatible learning games share
+    // one knowledge key, so progress carries between every game in the menu.
+    // The internal id is letters/digits only because shared-group ids are used
+    // inside storage keys; the learner-facing list name remains "6.1_1".
+    g611: {
+        listName: '6.1_1',
+        questionIndex: 'english_name',
+        resultIndex: 'hebrew',
+        questionType: 'text_to_speech',
+        setItems: 8,
+        games: [
+            {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',      title: 'בחרו את התרגום הנכון'},
+            {appType: 'balloon_shooter',   icon: 'sports_esports', name: 'מטווח בלונים',     title: 'פגעו בבלון עם התרגום הנכון'},
+            {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',       title: 'מתחו קו מהמילה אל התרגום שלה'},
+            {appType: 'treasure_maze',     icon: 'sports_esports', name: 'מבוך האוצר',       title: 'בחרו את הדלת עם התרגום הנכון'},
+            {appType: 'platformer',        icon: 'directions_run', name: 'הרפתקת ריצה',      title: 'רוצו וקפצו אל הבלוק עם התרגום הנכון'},
+            {appType: 'duel_shooter',      icon: 'sports_kabaddi', name: 'דו-קרב',           title: 'ענו נכון, מלאו את המחסנית ונצחו בדו-קרב!'},
+            {appType: 'wizard_duel',       icon: 'auto_fix_high',  name: 'דו-קרב הקוסמים',   title: 'ענו נכון והטילו כדורי אש על המפלצת!'},
+            {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',        title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+            {appType: 'water_pipeline',    icon: 'water_drop',     name: 'מסע המים',         title: 'פתחו את החסימות והחזירו את המים!'},
+            {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',        title: 'בנו מערך הגנה והצילו את הממלכה'},
+            {appType: 'falling_answers',   icon: 'arrow_downward', name: 'תשובות נופלות',    title: 'לחצו על התשובה הנכונה כשהיא נופלת'},
+            {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים',     title: 'החזיקו את החפץ בפינה עם התרגום הנכון'},
+        ],
+    },
+};
+
+// The reverse direction is a separate learning skill, but uses the exact same
+// games and order as g611 so the two menu halves cannot drift apart.
+SHARED_GROUPS.g611h = {
+    listName: '6.1_1',
+    questionIndex: 'hebrew',
+    resultIndex: 'english',
+    questionType: 'text_to_speech',
+    setItems: 8,
+    games: SHARED_GROUPS.g611.games,
 };
 
 // The Ministry of Education's compulsory elementary-school word list (the "650

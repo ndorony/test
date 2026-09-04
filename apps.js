@@ -354,7 +354,7 @@ apps =  {
               ]
             },
         {
-          name: '6',
+          name: 'old',
           type: 'menu',
           // The Ministry of Education grade-6 (elementary) word list, DATA lists
           // GRADE6_MOE_1..5. Every leaf submenu is ONE shared-progress group
@@ -523,6 +523,56 @@ apps =  {
                 },
               ]
             },
+          ]
+        },
+        {
+              name: '6',
+              type: 'menu',
+              // Chapter container for the 6.1_1 vocabulary. Keep this item in
+              // its current position: menu ids are position-based.
+              items: [
+                {
+                  name: 'פרק 1',
+                  type: 'menu',
+                  items: [
+                    {
+                      name: 'עברית לאנגלית',
+                      type: 'menu',
+                      items: [
+                        {icon: 'format_shapes',  name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g611h-0'},
+                        {icon: 'sports_esports', name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g611h-1'},
+                        {icon: 'timeline',       name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g611h-2'},
+                        {icon: 'sports_esports', name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g611h-3'},
+                        {icon: 'directions_run', name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g611h-4'},
+                        {icon: 'sports_kabaddi', name:'דו-קרב',         type: 'app', link: '/play/duel_shooter/grp-g611h-5'},
+                        {icon: 'auto_fix_high',  name:'דו-קרב הקוסמים', type: 'app', link: '/play/wizard_duel/grp-g611h-6'},
+                        {icon: 'map',            name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g611h-7'},
+                        {icon: 'water_drop',     name:'מסע המים',       type: 'app', link: '/play/water_pipeline/grp-g611h-8'},
+                        {icon: 'security',       name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g611h-9'},
+                        {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-g611h-10'},
+                        {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611h-11'},
+                      ]
+                    },
+                    {
+                      name: 'אנגלית לעברית',
+                      type: 'menu',
+                      items: [
+                        {icon: 'format_shapes',  name:'בחירה מרובה',    type: 'app', link: '/play/mcq/grp-g611-0'},
+                        {icon: 'sports_esports', name:'מטווח בלונים',   type: 'app', link: '/play/balloon_shooter/grp-g611-1'},
+                        {icon: 'timeline',       name:'חבר במילים',     type: 'app', link: '/play/word_link/grp-g611-2'},
+                        {icon: 'sports_esports', name:'מבוך האוצר',     type: 'app', link: '/play/treasure_maze/grp-g611-3'},
+                        {icon: 'directions_run', name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g611-4'},
+                        {icon: 'sports_kabaddi', name:'דו-קרב',         type: 'app', link: '/play/duel_shooter/grp-g611-5'},
+                        {icon: 'auto_fix_high',  name:'דו-קרב הקוסמים', type: 'app', link: '/play/wizard_duel/grp-g611-6'},
+                        {icon: 'map',            name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g611-7'},
+                        {icon: 'water_drop',     name:'מסע המים',       type: 'app', link: '/play/water_pipeline/grp-g611-8'},
+                        {icon: 'security',       name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g611-9'},
+                        {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-g611-10'},
+                        {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611-11'},
+                      ]
+                    },
+                  ]
+                },
           ]
         },
       ]
