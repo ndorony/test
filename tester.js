@@ -235,6 +235,15 @@ const updateWeightForKey = (key, index, change) => {
             is_correct: change < 0
         });
     }
+    // LearnBox (optional, local): report the accepted answer so the household
+    // server can credit coins. No-op when the app is not served by a LearnBox.
+    // Only a genuine answer counts, and every answer site passes exactly ±1.
+    // A non-answer caller uses a different magnitude — factory-tycoon passes
+    // -15 to force-master an item the child BOUGHT with in-game money — and
+    // must not mint coins, so test for -1 rather than for "negative".
+    if (typeof onLearnBoxAnswer === 'function') {
+        onLearnBoxAnswer(key, change === -1, index);
+    }
     if (!storedWeights) {
         if (typeof onAdventureAnswer === 'function') {
             onAdventureAnswer(key, change < 0);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v184';
+const CACHE_NAME = 'my-app-cache-v185';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const CORE_ASSETS = [
   '/data.js',
   '/apps.js',
   '/groups.js',
+  '/learnbox-bridge.js',
   '/worlds.js',
   '/adventure.js',
   '/adventure.css',
@@ -139,6 +140,15 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // LearnBox API responses are per-child, per-session state — "is a profile
+  // selected?", "what is the balance?". Caching any of them would freeze that
+  // answer until the next cache bump, so the whole namespace goes to the
+  // network and is never stored. The Cache API ignores Cache-Control, so the
+  // server cannot opt out on its own.
+  if (new URL(event.request.url).pathname.indexOf('/api/') === 0) {
     return;
   }
 
