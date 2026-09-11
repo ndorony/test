@@ -63,7 +63,11 @@ function makeContext(responder, options) {
         document: {
             readyState: 'complete',
             addEventListener: () => {},
-            createElement: () => ({style: {cssText: '', opacity: ''}, setAttribute: () => {}}),
+            createElement: () => ({
+                style: {cssText: '', opacity: ''},
+                setAttribute: () => {},
+                appendChild: () => {},
+            }),
             body: {appendChild: () => {}},
         },
         fetch: (url, opts) => {
@@ -407,6 +411,30 @@ async function run() {
         assert.ok(/updateWeightForKey\([^)]*,\s*-15\)/.test(buyers),
             'the non-answer caller this guards against still exists; if it is ' +
             'gone, re-check whether the -1 test is still the right one');
+    }
+
+    // --- 9. A DOM that refuses the LearnBox bar costs nothing --------------
+    {
+        // The bar (balance + the way back) is a convenience; reporting answers
+        // is the point. A browser or a game that will not take the injected
+        // element must not cost the child a single coin.
+        const {ctx, calls} = makeContext(call =>
+            call.url.indexOf('/child/me') !== -1
+                ? ok(CHILD)
+                : ok({accepted: 1, coins_awarded: 10, counter: 0, balance: 10}));
+        ctx.document.createElement = () => {
+            throw new Error('no DOM for you');
+        };
+        vm.runInContext(BRIDGE, ctx);
+        await settle();
+
+        assert.strictEqual(ctx.learnBoxAvailable(), true,
+            'a bar that cannot be drawn must not disable the bridge');
+
+        ctx.onLearnBoxAnswer('grp-g611-0', true, 1);
+        await settle();
+        assert.strictEqual(events(calls).length, 1,
+            'answers are still reported when the bar cannot be drawn');
     }
 
     console.log('learnbox_bridge_test: all assertions passed');
