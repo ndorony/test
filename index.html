@@ -1,17 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2T1G2WVRMD"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-2T1G2WVRMD', {
-        'send_page_view': false
-      });
-    </script>
+    <!-- Google tag (gtag.js). Loaded from ./vendor/analytics.js, which defines
+         the gtag() shim locally and appends the remote tag itself, so a box with
+         no internet still boots and the call sites still work. See #11. -->
+    <script src="./vendor/analytics.js"></script>
     <link rel="manifest" href="/manifest.json">
     <meta charset="UTF-8">
     <title>Test</title>
@@ -24,8 +17,8 @@
     <meta name="apple-mobile-web-app-title" content="testerApp">
 
     <!-- Material -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="./vendor/material-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="./vendor/materialize-1.0.0.min.css">
     <link rel="stylesheet" href="./adventure.css">
     <link rel="stylesheet" href="./games/water-pipeline.css">
     <link rel="stylesheet" href="./games/factory-tycoon.css">
@@ -1345,16 +1338,16 @@
 </div>
 
 
-<script src="https://unpkg.com/vue@2"></script>
-<script src="https://unpkg.com/vue-router@2.0.0/dist/vue-router.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js"></script>
+<script src="./vendor/vue-2.7.16.js"></script>
+<script src="./vendor/vue-router-2.0.0.js"></script>
+<script src="./vendor/he-1.2.0.min.js"></script>
 
 <!-- Material -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.85.2/dist/phaser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+<script src="./vendor/materialize-1.0.0.min.js"></script>
+<script src="./vendor/three-0.128.0.min.js"></script>
+<script src="./vendor/three-0.128.0-GLTFLoader.js"></script>
+<script src="./vendor/phaser-3.85.2.min.js"></script>
+<script src="./vendor/lottie-5.12.2.min.js"></script>
 <script src="./assets/models/shooter/shooter_models.js"></script>
 <script src="./data.js?v=2"></script>
 <script src="./apps.js"></script>
@@ -1366,9 +1359,9 @@
 <script src="./learnbox-bridge.js"></script>
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="./vendor/firebase-9.23.0-app-compat.js"></script>
+<script src="./vendor/firebase-9.23.0-auth-compat.js"></script>
+<script src="./vendor/firebase-9.23.0-firestore-compat.js"></script>
 <script src="./firebase.js"></script>
 
 <!-- Large standalone game modules expose guarded component factories. -->
@@ -1379,6 +1372,6 @@
 <script src="./games/crystal-arena.js"></script>
 <script src="./tester.js?v=19"></script>
 
-<script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+<script src="./vendor/tesseract-2.1.0.min.js"></script>
 </body>
 </html>

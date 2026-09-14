@@ -1,4 +1,28 @@
-const CACHE_NAME = 'my-app-cache-v185';
+const CACHE_NAME = 'my-app-cache-v186';
+// Third-party libraries, vendored under /vendor at the versions index.html used
+// to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
+// are what the app cannot start without: with no internet and no local copy,
+// Vue never defines and the page is blank. Analytics (googletagmanager) is
+// deliberately absent — see vendor/analytics.js.
+const VENDOR_ASSETS = [
+  '/vendor/analytics.js',
+  '/vendor/material-icons.css',
+  '/vendor/material-icons-v145.woff2',
+  '/vendor/materialize-1.0.0.min.css',
+  '/vendor/materialize-1.0.0.min.js',
+  '/vendor/vue-2.7.16.js',
+  '/vendor/vue-router-2.0.0.js',
+  '/vendor/he-1.2.0.min.js',
+  '/vendor/three-0.128.0.min.js',
+  '/vendor/three-0.128.0-GLTFLoader.js',
+  '/vendor/phaser-3.85.2.min.js',
+  '/vendor/lottie-5.12.2.min.js',
+  '/vendor/tesseract-2.1.0.min.js',
+  '/vendor/firebase-9.23.0-app-compat.js',
+  '/vendor/firebase-9.23.0-auth-compat.js',
+  '/vendor/firebase-9.23.0-firestore-compat.js'
+];
+
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -17,7 +41,6 @@ const CORE_ASSETS = [
   '/games/factory-tycoon.css',
   '/games/knowledge-defense.js',
   '/games/knowledge-defense.css',
-  '/games/scribble-character-animation.js',
   '/games/scribble-bridge.js?v=115',
   '/games/scribble-dungeon.js',
   '/games/scribble-dungeon.css',
@@ -25,7 +48,6 @@ const CORE_ASSETS = [
   '/games/scribble-platformer.css',
   '/games/crystal-arena.js',
   '/games/crystal-arena.css',
-  '/tools/character-animation-preview.html',
   '/tools/scribble-bridge-preview.html',
   '/tools/scribble-magic-door-preview.html',
   '/tools/scribble-fall-transition-preview.html',
@@ -33,10 +55,6 @@ const CORE_ASSETS = [
   '/tools/scribble-transition-preview.js',
   '/tools/scribble-magic-door-transition-adapter.js',
   '/tools/scribble-fall-transition-adapter.js?v=159',
-  '/tools/hybrid-asset-data.js',
-  '/tools/hybrid-asset-core.js',
-  '/tools/hybrid-asset-studio.js',
-  '/tools/hybrid-asset-studio.css',
   '/themes.js',
   '/storage.js',
   '/tester.js?v=20',
@@ -55,8 +73,7 @@ const CORE_ASSETS = [
   '/assets/scribble-dungeons/doorway.png',
   '/assets/scribble-dungeons/crate.png',
   '/assets/scribble-dungeons/trap.png',
-  '/assets/scribble-dungeons/purple_character.png',
-  '/assets/scribble/character_animated.glb'
+  '/assets/scribble-dungeons/purple_character.png'
 ];
 
 const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
@@ -115,13 +132,23 @@ const PLATFORMER_ART = ['tile_grass', 'tile', 'tile_top', 'tile_block', 'tile_br
   'character_handRed', 'character_handGreen', 'character_handPurple', 'character_handYellow']
   .map(name => `/assets/scribble-platformer/${name}.png`);
 
-const urlsToCache = CORE_ASSETS.concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS)
+const urlsToCache = VENDOR_ASSETS.concat(CORE_ASSETS).concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS)
   .concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART).concat(PLATFORMER_ART);
 
 self.addEventListener('install', event => {
   self.skipWaiting();
+  // cache.addAll() is all-or-nothing: one 404 anywhere in the manifest rejects
+  // the whole install, and the app is then left with no offline cache at all.
+  // Six entries had drifted out of the tree that way, so every child was
+  // running uncached without any visible symptom while the box was reachable.
+  // Caching each asset on its own trades a complete cache for a best-effort
+  // one, which is the right way round: a missing background is a cosmetic gap,
+  // a missing Vue is a blank screen. tests/offline_assets_test.js keeps the
+  // manifest honest so this tolerance never has to be used in practice.
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => Promise.all(
+      urlsToCache.map(url => cache.add(url).catch(() => null))
+    ))
   );
 });
 
