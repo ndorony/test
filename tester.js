@@ -223,6 +223,18 @@ const getWeightsForKey = (key, setItems, elements) => {
     return weights;
 }
 
+function speakAnswerOnCorrect(key, index) {
+    const app = getItemById(apps, key);
+    if (!app || !app.speakAnswerOnCorrect || !app.listName || !app.resultIndex) {
+        return;
+    }
+    const item = getDataList(app.listName)[index];
+    const answer = item && item[app.resultIndex];
+    if (answer && typeof answer.value === 'string' && typeof speechSynthesis !== 'undefined') {
+        text_to_speech(answer.value);
+    }
+}
+
 const updateWeightForKey = (key, index, change) => {
     // Retrieve the current weights from localStorage
     const storedWeights = localStorage.getItem(getWeightsKey(key));
@@ -243,6 +255,11 @@ const updateWeightForKey = (key, index, change) => {
     // must not mint coins, so test for -1 rather than for "negative".
     if (typeof onLearnBoxAnswer === 'function') {
         onLearnBoxAnswer(key, change === -1, index);
+    }
+    // Apps flagged speakAnswerOnCorrect read the answer aloud on a correct pick.
+    // Hooked here so every game gets it without its own change.
+    if (change === -1) {
+        speakAnswerOnCorrect(key, index);
     }
     if (!storedWeights) {
         if (typeof onAdventureAnswer === 'function') {

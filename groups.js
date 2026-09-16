@@ -109,6 +109,7 @@ const SHARED_GROUPS = {
         questionIndex: 'english_name',
         resultIndex: 'hebrew',
         questionType: 'text_to_speech',
+        speakAnswerOnCorrect: true, // read the Hebrew answer aloud once it is picked right
         setItems: 8,
         games: [
             {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',      title: 'בחרו את התרגום הנכון'},
@@ -256,7 +257,7 @@ function resolveSharedGroupApp(id) {
         listName: group.listName,
         setItems: game.setItems !== undefined ? game.setItems : group.setItems,
     };
-    const inherited = ['questionIndex', 'resultIndex', 'questionType', 'title', 'a', 'b'];
+    const inherited = ['questionIndex', 'resultIndex', 'questionType', 'speakAnswerOnCorrect', 'title', 'a', 'b'];
     inherited.forEach(field => {
         const value = game[field] !== undefined ? game[field] : group[field];
         if (value !== undefined) {

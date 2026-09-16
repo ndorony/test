@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v186';
+const CACHE_NAME = 'my-app-cache-v187';
 // Third-party libraries, vendored under /vendor at the versions index.html used
 // to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
 // are what the app cannot start without: with no internet and no local copy,
