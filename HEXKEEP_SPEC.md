@@ -64,7 +64,7 @@ The full tiled 48-hex world and 480 decorative continuation hexes remain. The
 four tower models are vendored CC0 KayKit models, rendered with the same camera as
 the terrain. Three new models and baked sprites are recorded in provenance.json.
 Projectiles and range overlays are lightweight UI effects. No external runtime
-asset service, framework or bundler was added. Cache version: v197-hexkeep.
+asset service, framework or bundler was added. Cache version: v199-hexkeep.
 
 
 ## Squad combat and health
@@ -81,8 +81,7 @@ Both sides have individually labeled health bars with current/max accessibility
 values and animated fill changes. Soldiers occupy separate formation slots, and
 engaged enemies stand opposite their paired soldier. Original skeletal melee
 clips are baked into enemy/guard attack atlases and advance on the paused battle
-clock. Debug mode starts an unsaved tactical session with 100 spendable points;
-returning to normal mode restores the regular village.
+clock. Production has no debug mode or free starting funds. Automated tests seed isolated browser fixtures only.
 
 ## Contextual construction and impact timing
 
@@ -92,4 +91,4 @@ Damage is resolved once at contact on the shared paused battle clock: melee at 4
 
 ## Battlefield overlays
 
-The game fills the viewport. HUD, raid counter, exit/debug controls and learning/launch actions float over the terrain. Questions and newly unlocked vocabulary use a compact centered dialog, leaving terrain visible around it. The optional BaseGameComponent.presentNewItems hook preserves the shared engine unlock/persistence lifecycle while Hexkeep presents new words without routing away. The new-items list is cleared only after its last word. Other games retain their existing news route. Upgrades replace all four tower types with distinct level-two and level-three models, including reinforced corner towers and level-three banners.
+The game fills the viewport. HUD, raid counter, exit controls and learning/launch actions float over the terrain. Questions and newly unlocked vocabulary use a compact centered dialog, leaving terrain visible around it. The optional BaseGameComponent.presentNewItems hook preserves the shared engine unlock/persistence lifecycle while Hexkeep presents new words without routing away. The new-items list is cleared only after its last word. Other games retain their existing news route. Upgrades replace all four tower types with distinct level-two and level-three models, including reinforced corner towers and level-three banners.
