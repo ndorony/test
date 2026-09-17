@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v187';
+const CACHE_NAME = 'my-app-cache-v198-hexkeep';
 // Third-party libraries, vendored under /vendor at the versions index.html used
 // to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
 // are what the app cannot start without: with no internet and no local copy,
@@ -23,7 +23,12 @@ const VENDOR_ASSETS = [
   '/vendor/firebase-9.23.0-firestore-compat.js'
 ];
 
+
 const CORE_ASSETS = [
+  "/assets/models/shooter/shooter_models.js",
+  "/data.js?v=2",
+  "/firebase.js",
+  "/tester.js?v=19",
   '/',
   '/index.html',
   '/adventure.html',
@@ -35,6 +40,36 @@ const CORE_ASSETS = [
   '/worlds.js',
   '/adventure.js',
   '/adventure.css',
+  '/games/hexkeep.js',
+  '/games/hexkeep-map.js',
+  '/games/hexkeep.css',
+  '/assets/hexkeep/projection.js',
+  '/assets/hexkeep/walk.js',
+  '/assets/hexkeep/enemy-walk.png',
+  '/assets/hexkeep/enemy-fight.png',
+  '/assets/hexkeep/guard-fight.png',
+  '/assets/hexkeep/village.png',
+  '/assets/hexkeep/guard.png',
+  '/assets/hexkeep/guard-2.png',
+  '/assets/hexkeep/guard-3.png',
+  '/assets/hexkeep/archer-2.png',
+  '/assets/hexkeep/archer-3.png',
+  '/assets/hexkeep/mage-2.png',
+  '/assets/hexkeep/mage-3.png',
+  '/assets/hexkeep/catapult-2.png',
+  '/assets/hexkeep/catapult-3.png',
+
+  '/assets/hexkeep/archer.png',
+  '/assets/hexkeep/mage.png',
+  '/assets/hexkeep/catapult.png',
+  '/assets/hexkeep/blacksmith.png',
+  '/assets/hexkeep/well.png',
+  '/assets/hexkeep/lumber.png',
+  '/assets/hexkeep/barricade.png',
+
+  '/assets/hexkeep/windmill.png',
+  '/assets/hexkeep/knight.png',
+  '/assets/hexkeep/enemy.png',
   '/games/water-pipeline.js',
   '/games/water-pipeline.css',
   '/games/factory-tycoon.js',
@@ -73,7 +108,7 @@ const CORE_ASSETS = [
   '/assets/scribble-dungeons/doorway.png',
   '/assets/scribble-dungeons/crate.png',
   '/assets/scribble-dungeons/trap.png',
-  '/assets/scribble-dungeons/purple_character.png'
+  '/assets/scribble-dungeons/purple_character.png',
 ];
 
 const LETTER_SOUNDS = 'abcdefghijklmnopqrstuvwxyz'
@@ -132,8 +167,10 @@ const PLATFORMER_ART = ['tile_grass', 'tile', 'tile_top', 'tile_block', 'tile_br
   'character_handRed', 'character_handGreen', 'character_handPurple', 'character_handYellow']
   .map(name => `/assets/scribble-platformer/${name}.png`);
 
-const urlsToCache = VENDOR_ASSETS.concat(CORE_ASSETS).concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS)
-  .concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART).concat(PLATFORMER_ART);
+const KNOWLEDGE_DEFENSE_ART = ["battlefield.png","build-pad.png","coin.png","enemy-captain.png","enemy-guard.png","enemy-runner.png","enemy-scout.png","flower-red.png","flower-yellow.png","grass-a.png","grass-edge.png","ground.png","keep.png","mushroom.png","portal.png","road-tile.png","road-tile2.png","rock-a.png","rock-b.png","rock-pile.png","rocket.png","shell.png","shrub.png","spark.png","tower-archer.png","tower-crystal.png","tower-rocket.png","tree-large.png","tree-oak.png","tree-small.png"].map(name => `/assets/knowledge-defense/${name}`);
+
+const urlsToCache = [...new Set(VENDOR_ASSETS.concat(CORE_ASSETS).concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS)
+  .concat(KNOWLEDGE_DEFENSE_ART).concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART).concat(PLATFORMER_ART))];
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -188,7 +225,15 @@ self.addEventListener('fetch', event => {
       || event.request.destination === 'script'
       || event.request.destination === 'style') {
     event.respondWith(
-      fetch(event.request).catch(() => {
+      fetch(event.request).then(response => {
+        // Retain successful runtime scripts/styles too (including CDN libraries)
+        // so a previously loaded game can bootstrap without a network connection.
+        if (response.ok || response.type === 'opaque') {
+          const copy = response.clone();
+          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)));
+        }
+        return response;
+      }).catch(() => {
         if (event.request.mode === 'navigate') {
           const page = new URL(event.request.url).pathname.endsWith('/adventure.html')
             ? '/adventure.html' : '/index.html';

@@ -1,0 +1,18 @@
+[
+  {
+    "asset": "Knight",
+    "local_source": "assets/models/duel/Knight.glb",
+    "local_sha256": "60428e3abc09ba83e595d256e3af8c5c976b46cdae599f0802fc82b4a3445168",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0/blob/672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/Knight.glb",
+    "license": "CC0",
+    "notes": "Existing locally vendored model, posed using its bundled idle animation; no old defense sprite reused."
+  },
+  {
+    "asset": "Skeleton_Minion",
+    "local_source": "assets/models/duel/Skeleton_Minion.glb",
+    "local_sha256": "6ffc003f895bed0b074791e0e490846210a2e2f8fc7da300aba53cc185f95968",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/blob/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Characters/gltf/Skeleton_Minion.glb",
+    "license": "CC0",
+    "notes": "Existing locally vendored model, posed using its bundled idle animation; no old defense sprite reused."
+  }
+]

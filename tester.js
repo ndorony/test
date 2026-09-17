@@ -548,6 +548,10 @@ var BaseGameComponent = Vue.component('base-game',{
 
             } else if (this.progress.progress == 0){
                 if(getLocalStorage(`${this.currentAppId}_new_items`, []).length != 0){
+                   if (typeof this.presentNewItems === 'function') {
+                       this.presentNewItems();
+                       return false;
+                   }
                    this.$router.push('/display/news/' + this.currentAppId);
                    return false;
                 }
@@ -9464,7 +9468,7 @@ var MenuComponent = Vue.component('menu',{
     <div class="row">
       <!-- Adventure mode is intentionally NOT linked here — it is reachable only
            by its direct URL (#/adventure) while it is still work in progress. -->
-      <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
+      <div v-for="(app, index) in menu.items" v-if="!app.hidden" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
         <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
           {{ app.name }}
@@ -9908,6 +9912,7 @@ const Login = {
 
 // Standalone games are loaded before tester.js and instantiated here, after
 // BaseGameComponent exists but before the router is finalized.
+var HexkeepComponent = typeof createHexkeepComponent === 'function' ? createHexkeepComponent(BaseGameComponent) : null;
 var WaterPipelineComponent = null;
 if (typeof createWaterPipelineComponent === 'function') {
     WaterPipelineComponent = createWaterPipelineComponent(BaseGameComponent);
@@ -9957,6 +9962,7 @@ const routes = [
     {path: '/login', component: Login },
 ]
 
+if (HexkeepComponent) routes.push({path: '/play/hexkeep/:currentAppId', component: HexkeepComponent, props: true});
 if (WaterPipelineComponent) {
     routes.push({path: '/play/water_pipeline/:currentAppId', component: WaterPipelineComponent, props: true});
 }

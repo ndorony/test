@@ -1,0 +1,15 @@
+const {chromium}=require('playwright'),assert=require('assert');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});let checks=0;const check=(v,label)=>{assert.ok(v,label);checks++;console.log('PASS',label);};
+try{const context=await browser.newContext(),page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8767',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>typeof BaseGameComponent!=='undefined');
+ await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r&&r.active;},null,{timeout:60000});
+ await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>navigator.serviceWorker.controller&&typeof BaseGameComponent!=='undefined');
+ await page.waitForFunction(async()=>!!await caches.match('https://unpkg.com/vue@2'));
+ check(true,'runtime cached under active service worker');
+ await page.evaluate(()=>{const id='6_0',a=getItemById(apps,id);generateFromList(a.listName,a.questionIndex,a.resultIndex,id,getSetItems(a),a.questionType);setLocalStorage(id+'_new_items',[]);location.hash='/play/hexkeep/'+id;});await page.waitForSelector('.hk-opening');
+ await context.setOffline(true);await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('.hk-opening');check(true,'actual route loads with networking disabled');
+ await page.locator('.hk-opening button').click();await page.locator('.hk-study').click();await page.locator('.hk-game').evaluate(e=>{const g=e.__vue__;for(let i=0;i<12;i++){if(i)g.continueGame();g.answer(g.options.indexOf(g.question.result));}g.returnToVillage();});await page.locator('.hk-site').first().click();await page.locator('.hk-blueprints button').first().click();await page.waitForFunction(()=>[...document.querySelectorAll('.hk-game img')].every(i=>i.complete&&i.naturalWidth));check(true,'board and new guard load offline');
+ check(await page.locator('.hk-game').evaluate(el=>el.__vue__.score===getScore('6_0')&&el.__vue__.battle.turn===0&&el.__vue__.battle.earned===12),'offline learning buys guard without moving battlefield');
+ check(await page.evaluate(async()=>{for(const key of ['village','guard','archer','mage','catapult','knight','enemy','enemy-walk','enemy-fight','guard-fight'])if(!await caches.match('/assets/hexkeep/'+key+'.png'))return false;return true;}),'all current battlefield and tower images pre-cached');
+ const score=await page.locator('.hk-game').evaluate(el=>el.__vue__.score);await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('.hk-planning');check(await page.locator('.hk-game').evaluate(el=>el.__vue__.score)===score,'second offline reload preserves score');check(!errors.length,'no offline script errors '+errors.join('; '));console.log(checks+' offline checks passed');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

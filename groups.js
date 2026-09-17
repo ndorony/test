@@ -128,6 +128,11 @@ const SHARED_GROUPS = {
     },
 };
 
+// Append only: preserve every existing shared-game index and knowledge key.
+['ch51', 'ch51s', 'g611'].forEach(groupId => {
+    SHARED_GROUPS[groupId].games.push({appType: 'hexkeep', icon: 'holiday_village', name: 'Hexkeep · הכפר החי', title: 'תרגלו את מילות הפרק ובנו כפר חי'});
+});
+
 // The reverse direction is a separate learning skill, but uses the exact same
 // games and order as g611 so the two menu halves cannot drift apart.
 SHARED_GROUPS.g611h = {
