@@ -476,6 +476,7 @@ function ensureWorldWeights(world) {
 
 // Hebrew display names for the game types used on the path
 const ADVENTURE_GAME_NAMES = {
+    hexkeep: 'Hexkeep · הכפר החי',
     mcq: 'שאלות ותשובות',
     spell: 'הכתבה',
     common: 'התאמת זוגות',

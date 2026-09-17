@@ -180,6 +180,8 @@ const WORLDS = HEBREW_LETTER_WORLDS.concat([
     },
 ]);
 
+WORLDS.push({id: 'hexkeep', name: 'Hexkeep · הכפר החי', emoji: '🌿', listName: 'ADDITION', setItems: 10, questionIndex: 'question', resultIndex: 'answer', art: {bg: 'world_english_bg'}, unlock: {playerLevel: 1}, encounters: [{type: 'learn'}, {type: 'game', game: 'hexkeep'}, {type: 'final', game: 'hexkeep', name: 'The village watch'}]});
+
 const ADVENTURE_ID_RE = /^adv-([a-z0-9]+)-(\d+)$/;
 const ADVENTURE_LIST_PREFIX = 'ADV_WORLD:';
 

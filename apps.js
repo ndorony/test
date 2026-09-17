@@ -332,6 +332,7 @@ apps =  {
                 {icon: 'map',            name:'מבוך הקלף',    type: 'app', link: '/play/scribble_dungeon/grp-ch51-3'},
                 {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51-4'},
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51-5'},
+                {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51-6'},
               ]
             },
         {
@@ -351,6 +352,7 @@ apps =  {
                 {icon: 'map',            name:'מבוך הקלף',    type: 'app', link: '/play/scribble_dungeon/grp-ch51s-3'},
                 {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51s-4'},
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51s-5'},
+                {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51s-6'},
               ]
             },
         {
@@ -551,6 +553,7 @@ apps =  {
                         {icon: 'security',       name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g611h-9'},
                         {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-g611h-10'},
                         {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611h-11'},
+                        {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-g611h-12'},
                       ]
                     },
                     {
@@ -569,6 +572,7 @@ apps =  {
                         {icon: 'security',       name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g611-9'},
                         {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-g611-10'},
                         {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611-11'},
+                        {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-g611-12'},
                       ]
                     },
                   ]
@@ -665,3 +669,8 @@ apps =  {
     },
   ]
 };
+
+// Append only: existing positional app IDs stay unchanged.
+apps.items.push({name: 'Hexkeep · הכפר החי', type: 'menu', items: [
+  {icon: 'holiday_village', name: 'Hexkeep: The Living Village', type: 'app', appType: 'hexkeep', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'בנו כפר חי והגנו עליו בעזרת הלמידה'}
+]});

@@ -522,6 +522,10 @@ var BaseGameComponent = Vue.component('base-game',{
 
             } else if (this.progress.progress == 0){
                 if(getLocalStorage(`${this.currentAppId}_new_items`, []).length != 0){
+                   if (typeof this.presentNewItems === 'function') {
+                       this.presentNewItems();
+                       return false;
+                   }
                    this.$router.push('/display/news/' + this.currentAppId);
                    return false;
                 }
@@ -9882,6 +9886,7 @@ const Login = {
 
 // Standalone games are loaded before tester.js and instantiated here, after
 // BaseGameComponent exists but before the router is finalized.
+var HexkeepComponent = typeof createHexkeepComponent === 'function' ? createHexkeepComponent(BaseGameComponent) : null;
 var WaterPipelineComponent = null;
 if (typeof createWaterPipelineComponent === 'function') {
     WaterPipelineComponent = createWaterPipelineComponent(BaseGameComponent);
@@ -9931,6 +9936,7 @@ const routes = [
     {path: '/login', component: Login },
 ]
 
+if (HexkeepComponent) routes.push({path: '/play/hexkeep/:currentAppId', component: HexkeepComponent, props: true});
 if (WaterPipelineComponent) {
     routes.push({path: '/play/water_pipeline/:currentAppId', component: WaterPipelineComponent, props: true});
 }

@@ -101,8 +101,10 @@ check('g611h uses the 6.1_1 list in Hebrew-to-English mode',
     reverseGroup.listName === '6.1_1' && reverseGroup.questionIndex === 'hebrew'
     && reverseGroup.resultIndex === 'english' && reverseGroup.questionType === 'text_to_speech'
     && reverseGroup.setItems === 8);
-check('the group exposes all 12 compatible games', group.games.length === 12, group.games.length);
-check('both directions expose the same 12 games in the same order',
+check('the group exposes all 13 compatible games', group.games.length === 13, group.games.length);
+check('Hexkeep is appended without changing previous game indexes',
+    group.games[11].appType === 'crystal_arena' && group.games[12].appType === 'hexkeep');
+check('both directions expose the same 13 games in the same order',
     JSON.stringify(group.games) === JSON.stringify(reverseGroup.games));
 check('every game type has a registered route',
     group.games.every(game => testerSource.includes('/play/' + game.appType + '/:currentAppId')),
