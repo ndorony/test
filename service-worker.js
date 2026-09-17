@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v198-hexkeep';
+const CACHE_NAME = 'my-app-cache-v200-hexkeep';
 // Third-party libraries, vendored under /vendor at the versions index.html used
 // to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
 // are what the app cannot start without: with no internet and no local copy,
@@ -22,8 +22,6 @@ const VENDOR_ASSETS = [
   '/vendor/firebase-9.23.0-auth-compat.js',
   '/vendor/firebase-9.23.0-firestore-compat.js'
 ];
-
-
 const CORE_ASSETS = [
   "/assets/models/shooter/shooter_models.js",
   "/data.js?v=2",
