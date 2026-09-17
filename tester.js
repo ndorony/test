@@ -9442,7 +9442,7 @@ var MenuComponent = Vue.component('menu',{
     <div class="row">
       <!-- Adventure mode is intentionally NOT linked here — it is reachable only
            by its direct URL (#/adventure) while it is still work in progress. -->
-      <div v-for="(app, index) in menu.items" :key="index" class="col s8 offset-s2">
+      <div v-for="(app, index) in menu.items" v-if="!app.hidden" :key="index" class="col s8 offset-s2">
         <!-- Each app as a button -->
         <router-link :to="getLink(app, index)" class="waves-effect waves-light btn-large result lighten-1" style="width: 100%; margin-bottom: 20px;" :style="{background: theme.colors.secondary}">
           {{ app.name }}

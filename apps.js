@@ -671,6 +671,6 @@ apps =  {
 };
 
 // Append only: existing positional app IDs stay unchanged.
-apps.items.push({name: 'Hexkeep · הכפר החי', type: 'menu', items: [
+apps.items.push({name: 'Hexkeep · הכפר החי', hidden: true, type: 'menu', items: [
   {icon: 'holiday_village', name: 'Hexkeep: The Living Village', type: 'app', appType: 'hexkeep', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'בנו כפר חי והגנו עליו בעזרת הלמידה'}
 ]});
