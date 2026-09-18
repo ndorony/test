@@ -1,44 +1,73 @@
 (function(global){
  'use strict';
- const M=global.HEXKEEP_MAP;
+ const LEVELS=global.HEXKEEP_LEVELS;
  const CAMPAIGN={waves:10,reward:1,tickMs:1100};
+ const ATLAS=global.HEXKEEP_ATLAS;
+ // Debug mode is off in production: it exists only on a local dev server
+ // (localhost / 127.0.0.1) whose URL carries ?debug=1. It plays on its own save
+ // slot, so it never touches the real campaign.
+ const DEBUG_POINTS=9999;
+ function debugRequested(){const loc=global.location;if(!loc||!/^(localhost|127\.0\.0\.1)$/.test(loc.hostname||''))return false;return /[?&]debug(=(1|true|on))?(?=&|#|$)/.test(String(loc.href||''));}
  const TYPES={
-  guard:{name:'מגדל שומרים',subtitle:'חוסם אויבים בקרב קרוב',cost:12,upgrade:16,master:20,range:1,detail:'מוציא 3 חיילים לשביל. כל חייל עוצר אויב אחד ונלחם בו. אויבים נוספים ממשיכים ללכת. כל שדרוג מוסיף חייל ומגדיל את הנזק. השדרוג הראשון גם מרחיב את אזור ההצבה.'},
-  archer:{name:'מגדל קשתים',subtitle:'ירי מהיר לטווח רחוק',cost:14,upgrade:18,master:20,range:3,detail:'יורה חץ בכל פעימת קרב לעבר האויב המתקדם ביותר בטווח. כל שדרוג מגדיל את הנזק. יעיל נגד אויבים קלים.'},
-  mage:{name:'מגדל קוסמים',subtitle:'קסם שחודר שריון',cost:18,upgrade:22,master:26,range:2,detail:'משגר קסם חזק בכל שתי פעימות קרב. מתעלם משריון. שדרוג מוסיף נזק ומרחיב את הטווח.'},
-  catapult:{name:'מגדל קטפולטה',subtitle:'פגיעה בכמה אויבים יחד',cost:20,upgrade:24,master:28,range:3,detail:'משגר אבן בכל שלוש פעימות קרב ופוגע בכל האויבים ליד המטרה. שדרוג מגדיל את הנזק ואת אזור הפגיעה.'}
+  guard:{name:'מגדל שומרים',subtitle:'חוסם אויבים בקרב קרוב',cost:12,upgrade:16,master:20,range:1,every:2,damage:[1,2,3],detail:'מוציא 3 חיילים לשביל. כל חייל עוצר אויב אחד ונלחם בו. אויבים נוספים ממשיכים ללכת. כל שדרוג מוסיף חייל ומגדיל את הנזק. השדרוג הראשון גם מרחיב את אזור ההצבה.'},
+  archer:{name:'מגדל קשתים',subtitle:'ירי מהיר לטווח רחוק',cost:14,upgrade:18,master:20,range:3,every:1,damage:[1,2,3],detail:'יורה חץ בכל פעימת קרב לעבר האויב המתקדם ביותר בטווח. כל שדרוג מגדיל את הנזק. יעיל נגד אויבים קלים.'},
+  mage:{name:'מגדל קוסמים',subtitle:'קסם שחודר שריון',cost:18,upgrade:22,master:26,range:2,every:2,damage:[3,5,8],detail:'משגר קסם חזק בכל שתי פעימות קרב. מתעלם משריון. שדרוג מוסיף נזק ומרחיב את הטווח.'},
+  catapult:{name:'מגדל קטפולטה',subtitle:'פגיעה בכמה אויבים יחד',cost:20,upgrade:24,master:28,range:3,every:3,damage:[5,8,13],detail:'משגר אבן בכל שלוש פעימות קרב ופוגע בכל האויבים ליד המטרה. שדרוג מגדיל את הנזק ואת אזור הפגיעה.'}
  };
- function freshBattle(wave=1){return {wave,turn:0,supplies:0,earned:0,health:5,maxHealth:5,buildings:M.sites.map(()=>null),guards:[],enemies:[],shots:[],impacts:[],spawned:0,serial:0,kills:0,events:[],outcome:null};}
- function targetCount(b){return 4+Math.floor((b.wave-1)*.8);}
+ // Every attacker on every region is one of these. The region decides who
+ // shows up and how tough they are; this table only says how they behave.
+ const KINDS={
+  raider:{name:'פולש',note:'הולך בקצב אחיד עד לכפר.'},
+  runner:{name:'רץ ביצה',note:'מדלג שתי משבצות בכל פעימה — קשה לעצור אותו בקרב קרוב.'},
+  brute:{name:'לוחם כבד',note:'הרבה חיים ושריון כבד. חצים כמעט לא מזיקים לו, קסם כן.'},
+  shaman:{name:'קוסם מרפא',note:'מרפא בכל פעימה את האויבים שלידו. כדאי להפיל אותו ראשון.'},
+  knight:{name:'אביר אופל',note:'המגן שלו בולע קליע שלם בכל פגיעה. חצים מהירים שוברים אותו, ושומרים נלחמים בו בלי מגן.'},
+  warlock:{name:'מזמן',note:'מקים שלדים חדשים לצדו בזמן ההליכה. כל פעימה שהוא חי מוסיפה אויבים.'}
+ };
+ const ROSTERS={};
+ function rosterOf(level){if(!ROSTERS[level.id]){const seen=[];for(let wave=1;wave<=level.waves;wave++)for(let i=0;i<level.count(wave);i++){const kind=level.enemy(wave,i).kind;if(!seen.includes(kind))seen.push(kind);}if(!seen.includes(level.boss.kind))seen.push(level.boss.kind);ROSTERS[level.id]=seen;}return ROSTERS[level.id];}
+ function levelOf(b){const id=b&&b.level;return LEVELS.find(l=>l.id===id)||LEVELS[0];}
+ function mapOf(b){return levelOf(b).map;}
+ function levelIndex(id){const i=LEVELS.findIndex(l=>l.id===id);return i<0?0:i;}
+ function nextLevel(id){return LEVELS[levelIndex(id)+1]||null;}
+ function freshBattle(wave=1,level=LEVELS[0].id){return {level,wave,turn:0,supplies:0,earned:0,health:5,maxHealth:5,buildings:mapOf({level}).sites.map(()=>null),guards:[],enemies:[],shots:[],impacts:[],spawned:0,serial:0,kills:0,events:[],outcome:null};}
+ function targetCount(b){return levelOf(b).count(b.wave);}
  function canStartRaid(b){return !b.outcome;}
  function rewardAnswer(b){b.earned++;b.supplies+=CAMPAIGN.reward;}
  function prepareRaid(b,advance){if(advance)b.wave++;b.turn=0;b.spawned=0;b.kills=0;b.enemies=[];b.shots=[];b.impacts=[];b.outcome=null;b.health=b.maxHealth;b.guards.forEach(g=>{g.hp=g.maxHp;g.respawn=0;g.enemyId=null;});}
  function range(v){return TYPES[v.type].range+(v.level>=2&&['guard','mage'].includes(v.type)?1:0);}
- function placement(b,index,type){return !!M.sites[index]&&!!TYPES[type]&&M.path.some(id=>M.distance(id,M.sites[index].tile)<=TYPES[type].range);}
+ function placement(b,index,type){const M=mapOf(b);return !!M.sites[index]&&!!TYPES[type]&&M.path.some(id=>M.distance(id,M.sites[index].tile)<=TYPES[type].range);}
  function available(b,index,type){const t=TYPES[type];return !!t&&placement(b,index,type)&&!b.buildings[index]&&b.supplies>=t.cost;}
  function newGuard(b,index){const v=b.buildings[index];b.guards.push({id:++b.serial,site:index,slot:b.guards.filter(g=>g.site===index).length,enemyId:null,step:v.rally,hp:5,maxHp:5,respawn:0});}
- function build(b,index,type){if(!available(b,index,type))return false;b.supplies-=TYPES[type].cost;b.buildings.splice(index,1,{type,level:1,rally:M.sites[index].rally});if(type==='guard')for(let i=0;i<3;i++)newGuard(b,index);return true;}
+ function build(b,index,type){if(!available(b,index,type))return false;b.supplies-=TYPES[type].cost;b.buildings.splice(index,1,{type,level:1,rally:mapOf(b).sites[index].rally});if(type==='guard')for(let i=0;i<3;i++)newGuard(b,index);return true;}
  function upgradeCost(v){return v.level===1?TYPES[v.type].upgrade:TYPES[v.type].master;}
  function upgrade(b,index){const v=b.buildings[index];if(!v||v.level>=3||b.supplies<upgradeCost(v))return false;b.supplies-=upgradeCost(v);v.level++;if(v.type==='guard')newGuard(b,index);return true;}
- function rally(b,index,step){const v=b.buildings[index];if(!v||v.type!=='guard'||!M.path[step]||M.distance(M.sites[index].tile,M.path[step])>range(v))return false;v.rally=step;b.guards.filter(g=>g.site===index).forEach(g=>g.step=step);return true;}
+ function rally(b,index,step){const M=mapOf(b),v=b.buildings[index];if(!v||v.type!=='guard'||!M.path[step]||M.distance(M.sites[index].tile,M.path[step])>range(v))return false;v.rally=step;b.guards.filter(g=>g.site===index).forEach(g=>g.step=step);return true;}
  function settleBattle(b,finishMovement){
-  b.enemies=b.enemies.filter(e=>{if(e.hp<=0){b.kills++;return false;}if(finishMovement&&e.step>=M.path.length-1){b.health=e.boss?0:Math.max(0,b.health-1);b.events.push('אויב הגיע לכפר.');return false;}return true;});
+  const M=mapOf(b);
+  b.enemies=b.enemies.filter(e=>{if(e.hp<=0){if(!e.raised)b.kills++;return false;}if(finishMovement&&e.step>=M.path.length-1){b.health=e.boss?0:Math.max(0,b.health-1);b.events.push('אויב הגיע לכפר.');return false;}return true;});
   b.guards.forEach(g=>{if(g.hp<=0||!b.enemies.some(e=>e.id===g.enemyId))g.enemyId=null;});b.enemies.forEach(e=>{if(e.guardId&&!b.guards.some(g=>g.id===e.guardId&&g.hp>0)){e.guardId=null;e.duelTicks=0;}});
-  if(!b.health)b.outcome='defeat';else if(b.spawned===targetCount(b)&&!b.enemies.length)b.outcome=b.wave>=CAMPAIGN.waves?'victory':'cleared';
+  if(!b.health)b.outcome='defeat';else if(b.spawned===targetCount(b)&&!b.enemies.length)b.outcome=b.wave>=levelOf(b).waves?'victory':'cleared';
  }
  function applyImpacts(b,elapsed){let changed=false;
   for(const hit of b.impacts||[]){if(hit.done||elapsed<hit.at)continue;hit.done=true;changed=true;
    const enemy=b.enemies.find(e=>e.id===hit.enemyId&&e.hp>0);
    if(hit.kind==='melee'){const guard=b.guards.find(g=>g.id===hit.guardId&&g.hp>0);if(enemy&&guard&&(enemy.boss||enemy.guardId===guard.id)){enemy.hp=Math.max(0,enemy.hp-hit.damage);guard.hp=Math.max(0,guard.hp-1);b.events.push('המכה פגעה.');}}
-   else if(hit.kind==='shot'){const shot=b.shots.find(s=>s.id===hit.shotId);if(shot){shot.landed=true;const victims=shot.type==='catapult'?b.enemies.filter(e=>e.hp>0&&Math.abs(e.step-shot.step)<=shot.radius):(enemy?[enemy]:[]);victims.forEach(e=>e.hp=Math.max(0,e.hp-(shot.type==='mage'?hit.damage:Math.max(1,hit.damage-(e.armor||0)))));if(victims.length)b.events.push(shot.type==='catapult'?'האבן פגעה והתפוצצה ליד האויבים.':'הקליע פגע באויב.');}}
+   else if(hit.kind==='shot'){const shot=b.shots.find(s=>s.id===hit.shotId);if(shot){shot.landed=true;const victims=shot.type==='catapult'?b.enemies.filter(e=>e.hp>0&&Math.abs(e.step-shot.step)<=shot.radius):(enemy?[enemy]:[]);victims.forEach(e=>{if(e.shield>0){e.shield--;return;}e.hp=Math.max(0,e.hp-(shot.type==='mage'?hit.damage:Math.max(1,hit.damage-(e.armor||0))));});if(victims.length)b.events.push(shot.type==='catapult'?'האבן פגעה והתפוצצה ליד האויבים.':'הקליע פגע באויב.');}}
   }
   if(changed||elapsed>=CAMPAIGN.tickMs)settleBattle(b,elapsed>=CAMPAIGN.tickMs);return changed;
  }
- function reservedDamage(b,e){return (b.impacts||[]).filter(h=>!h.done&&((h.enemyId===e.id)||h.victims&&h.victims.includes(e.id))).reduce((n,h)=>n+(h.kind==='melee'||h.type==='mage'?h.damage:Math.max(1,h.damage-(e.armor||0))),0);}
+ // Pending hits in flight order: projectiles spend shield charges first, so a
+ // shielded target is not written off while its shield still soaks them.
+ function reservedDamage(b,e){let shield=e.shield||0;return (b.impacts||[]).filter(h=>!h.done&&((h.enemyId===e.id)||h.victims&&h.victims.includes(e.id))).reduce((n,h)=>{if(h.kind!=='melee'&&shield>0){shield--;return n;}return n+(h.kind==='melee'||h.type==='mage'?h.damage:Math.max(1,h.damage-(e.armor||0)));},0);}
+ // The final raid of a region closes with its commander; every other arrival
+ // comes from the region's own roster.
+ function arrival(b){const L=levelOf(b);if(b.wave>=L.waves&&b.spawned===targetCount(b)-1){const c=L.boss;return {kind:c.kind,hp:c.hp,armor:c.armor,speed:c.speed,heal:c.heal,shield:c.shield,summon:c.summon,boss:true};}const spec=L.enemy(b.wave,b.spawned);return {...spec,hp:Math.round(spec.hp*(L.tough||1))};}
+ function arrivalNote(b,spec){const L=levelOf(b);if(spec.boss)return L.boss.name+' הגיע לשביל!';if(spec.heal)return 'קוסם מרפא נכנס לשביל.';if(spec.summon)return 'מזמן נכנס לשביל — הוא יקים שלדים.';if(spec.shield)return 'אביר אופל עם מגן נכנס לשביל.';if((spec.speed||1)>1)return 'רץ מהיר חומק פנימה.';return spec.armor?'אויב משוריין נכנס לשביל.':'אויב נכנס לשביל היער.';}
  function resolveTurn(input,deferHits=false){
-  const b=JSON.parse(JSON.stringify(input));if(b.outcome)return b;b.turn++;b.events=[];b.shots=[];b.impacts=[];
+  const b=JSON.parse(JSON.stringify(input));if(b.outcome)return b;const M=mapOf(b),L=levelOf(b);b.turn++;b.events=[];b.shots=[];b.impacts=[];
   b.guards.forEach(g=>{if(g.hp<=0){g.respawn=(g.respawn||6)-1;if(!g.respawn)g.hp=g.maxHp;}});
-  if(b.spawned<targetCount(b)&&b.turn%2===1&&!(b.wave===10&&b.spawned===targetCount(b)-1&&b.enemies.length)){const boss=b.wave===10&&b.spawned===targetCount(b)-1,hp=boss?107:3+Math.floor((b.wave-1)/2),armor=boss||b.wave>=4&&b.spawned%3===0?1:0;b.enemies.push({id:++b.serial,step:-1,hp,maxHp:hp,armor,boss});b.spawned++;b.events.push(armor?'אויב משוריין נכנס לשביל.':'אויב נכנס לשביל היער.');}
+  if(b.spawned<targetCount(b)&&b.turn%2===1&&!(b.wave>=L.waves&&b.spawned===targetCount(b)-1&&b.enemies.length)){const spec=arrival(b);b.enemies.push({id:++b.serial,step:-1,hp:spec.hp,maxHp:spec.hp,armor:spec.armor||0,speed:spec.speed||1,heal:spec.heal||0,shield:spec.shield||0,summon:spec.summon||null,summoned:0,kind:spec.kind||'raider',boss:!!spec.boss});b.spawned++;b.events.push(arrivalNote(b,spec));}
   // Reserve ongoing pairs before assigning newcomers, so one soldier holds
   // exactly one enemy. A full squad never blocks the rest of the road.
   const occupied=new Set();
@@ -46,73 +75,146 @@
   b.guards.forEach(g=>g.enemyId=null);
   b.enemies.forEach(e=>{const g=b.guards.find(g=>g.id===e.guardId&&g.hp>0&&g.step===e.step);if(g&&!e.boss&&!occupied.has(g.id)){occupied.add(g.id);g.enemyId=e.id;}else{e.guardId=null;e.duelTicks=0;}});
   b.enemies.forEach(e=>{
+   const pace=e.speed||1;
    e.previous=e.step;let defender=b.guards.find(g=>g.id===e.guardId);
-   if(!defender)defender=b.guards.find(g=>g.hp>0&&!occupied.has(g.id)&&(g.step===e.step||g.step===e.step+1));
-   if(!defender){e.step++;return;}
+   // A fast enemy still runs into any soldier standing inside its stride, so
+   // extra speed slips past towers rather than past the guard line.
+   if(!defender)defender=b.guards.find(g=>g.hp>0&&!occupied.has(g.id)&&g.step>=e.step&&g.step<=e.step+pace);
+   if(!defender){e.step+=pace;return;}
    occupied.add(defender.id);
-   if(e.boss){e.step++;b.impacts.push({kind:'melee',enemyId:e.id,guardId:defender.id,damage:b.buildings[defender.site].level,at:440,done:false});return;}
+   if(e.boss){e.step+=pace;b.impacts.push({kind:'melee',enemyId:e.id,guardId:defender.id,damage:b.buildings[defender.site].level,at:440,done:false});return;}
    if(e.guardId===defender.id)e.duelTicks=(e.duelTicks||0)+1;else{e.guardId=defender.id;e.duelTicks=0;}
    defender.enemyId=e.id;e.step=defender.step;
    // Contact first, then one exchange every 2.2 seconds. No instant HP loss.
    if(e.duelTicks%2===1)b.impacts.push({kind:'melee',enemyId:e.id,guardId:defender.id,damage:b.buildings[defender.site].level,at:440,done:false});
   });
-  b.buildings.forEach((v,i)=>{if(!v||v.type==='guard')return;const cadence=v.type==='archer'?1:v.type==='mage'?2:3;if(b.turn%cadence)return;
+  b.buildings.forEach((v,i)=>{if(!v||v.type==='guard')return;if(b.turn%TYPES[v.type].every)return;
    const targets=b.enemies.filter(e=>e.hp-reservedDamage(b,e)>0&&e.step>=0&&e.step<M.path.length&&M.distance(M.sites[i].tile,M.path[e.step])<=range(v)).sort((a,c)=>c.step-a.step);if(!targets.length)return;
-   const target=targets[0],power=v.type==='archer'?v.level:v.type==='mage'?2+v.level:1+v.level;
+   const target=targets[0],power=TYPES[v.type].damage[v.level-1];
    const victims=v.type==='catapult'?b.enemies.filter(e=>e.hp>0&&Math.abs(e.step-target.step)<=v.level):[target],duration=v.type==='catapult'?850:v.type==='mage'?550:420,id=b.turn+'-'+i;
    b.shots.push({id,type:v.type,site:i,step:target.step,enemyId:target.id,aim:JSON.parse(JSON.stringify(target)),duration,radius:v.level,landed:false});
    b.impacts.push({kind:'shot',type:v.type,shotId:id,enemyId:target.id,victims:victims.map(e=>e.id),damage:power,at:duration,done:false});b.events.push(TYPES[v.type].name+' משגר קליע.');
   });
+  // Summoners raise a fresh skeleton beside themselves on their own beat, up to
+  // a fixed number per caster, so a quick kill caps the swarm.
+  b.enemies.filter(e=>e.summon&&e.hp>0&&e.step>=0&&e.step<M.path.length-1&&(e.summoned||0)<e.summon.max&&b.turn%e.summon.every===0).forEach(caster=>{
+   caster.summoned=(caster.summoned||0)+1;const hp=3+Math.floor(b.wave/3);
+   b.enemies.push({id:++b.serial,step:caster.step,previous:caster.step,hp,maxHp:hp,armor:0,speed:1,heal:0,shield:0,summon:null,kind:'raider',raised:true,boss:false});
+   b.events.push('המזמן הקים שלד חדש.');
+  });
+  // Healers mend their neighbours, never themselves, so the escort dies with
+  // the caster instead of outlasting every tower.
+  const healers=b.enemies.filter(e=>e.heal&&e.hp>0);
+  if(healers.length){let mended=0;b.enemies.forEach(e=>{if(e.hp<=0||e.hp>=e.maxHp)return;const aid=healers.reduce((n,h)=>n+(h.id!==e.id&&Math.abs(h.step-e.step)<=1?h.heal:0),0);if(aid){e.hp=Math.min(e.maxHp,e.hp+aid);mended++;}});if(mended)b.events.push('הקוסם מרפא את האויבים שלידו.');}
   if(!deferHits)applyImpacts(b,CAMPAIGN.tickMs);return b;
  }
  function themeKit(p){const c=p.colors;return {'--hk-paper':'color-mix(in srgb, '+c.background+' 96%, '+c.tertiary+')','--hk-ink':'color-mix(in srgb, '+c.text+' 82%, '+c.primary+')','--hk-primary':c.primary,'--hk-secondary':c.secondary,'--hk-accent':c.accent};}
  function createHexkeepComponent(Base){return Vue.component('hexkeep',Vue.extend({
   extends:Base,
-  data(){return {newWords:[],newWordIndex:0,menuOpen:false,menuPosition:{},battle:freshBattle(),phase:'opening',resumePhase:'planning',question:null,options:[],selectedSite:0,selectedType:'guard',feedback:'',wrongIndex:-1,stopped:false,run:0,turnTimer:null,answerTimer:null,motion:[],reduced:false,hidden:false,types:TYPES,map:M,art:global.HEXKEEP_ART};},
-  computed:{kit(){return themeKit(this.theme);},learning(){return this.newWords.length>0||['ready','retry','resolved'].includes(this.phase);},canPlan(){return !this.newWords.length&&!this.stopped&&['planning','combat','opening'].includes(this.phase);},selected(){return this.battle.buildings[this.selectedSite];},rangeTiles(){if(!this.menuOpen)return [];const v=this.selected||{type:this.selectedType,level:1};return M.tiles.filter(t=>M.distance(t.id,M.sites[this.selectedSite].tile)<=range(v));},raidSize(){return targetCount(this.battle);},needed(){return 0;},rallySteps(){return M.path.map((tile,step)=>({tile,step})).filter(p=>this.selected&&M.distance(M.sites[this.selectedSite].tile,p.tile)<=this.selected.level);},sceneSummary(){return 'כפר עם שביל מפותל. '+this.battle.enemies.length+' אויבים בדרך. לכפר נותרו '+this.battle.health+' לבבות.';}},
+  data(){return {newWords:[],newWordIndex:0,menuOpen:false,menuPosition:{},battle:freshBattle(),phase:'opening',resumePhase:'planning',question:null,options:[],selectedSite:0,selectedType:'guard',feedback:'',wrongIndex:-1,stopped:false,run:0,turnTimer:null,answerTimer:null,motion:[],reduced:false,hidden:false,types:TYPES,kinds:KINDS,levels:LEVELS,cleared:[],saves:{},art:global.HEXKEEP_ART,atlas:ATLAS,atlasPick:null,atlasFresh:null,debugAvailable:debugRequested(),debugMode:false,debugPoints:DEBUG_POINTS};},
+  computed:{kit(){return themeKit(this.theme);},map(){return mapOf(this.battle);},level(){return levelOf(this.battle);},learning(){return this.newWords.length>0||['ready','retry','resolved'].includes(this.phase);},canPlan(){return !this.newWords.length&&!this.stopped&&['planning','combat','opening'].includes(this.phase);},selected(){return this.battle.buildings[this.selectedSite];},rangeTiles(){if(!this.menuOpen)return [];const M=this.map,v=this.selected||{type:this.selectedType,level:1};return M.tiles.filter(t=>M.distance(t.id,M.sites[this.selectedSite].tile)<=range(v));},raidSize(){return targetCount(this.battle);},needed(){return 0;},rallySteps(){const M=this.map;return M.path.map((tile,step)=>({tile,step})).filter(p=>this.selected&&M.distance(M.sites[this.selectedSite].tile,p.tile)<=this.selected.level);},sceneSummary(){return 'כפר עם שביל מפותל. '+this.battle.enemies.length+' אויבים בדרך. לכפר נותרו '+this.battle.health+' לבבות.';},
+   pickedRegion(){return LEVELS.find(l=>l.id===this.atlasPick)||null;},
+   atlasRoads(){return ATLAS.roads.map((d,i)=>({d,open:this.regionOpen(i+1),fresh:LEVELS[i+1].id===this.atlasFresh}));},
+   canDebugAct(){return this.debugMode&&!this.stopped&&!this.battle.outcome&&!['levels','completed'].includes(this.phase);}},
   template:`<main class="hk-game" :style="kit" :class="{'hk-reduced':reduced,'hk-hidden':hidden,'hk-question-open':learning}" @keydown="onKey" dir="rtl">
-   <header class="hk-header"><div class="hk-brand"><span class="hk-seal" aria-hidden="true">H</span><div><span class="hk-eyebrow">לומדים, בונים ומגינים על הכפר</span><h1>Hexkeep<span>הכפר החי</span></h1></div></div><button class="hk-exit" @click="exitGame">יציאה מהכפר ↗</button></header>
+   <header class="hk-header"><div class="hk-brand"><span class="hk-seal" aria-hidden="true">H</span><div><span class="hk-eyebrow">לומדים, בונים ומגינים על הכפר</span><h1>Hexkeep<span>הכפר החי</span></h1></div></div><template v-if="debugAvailable"><button v-if="debugMode" class="hk-debug hk-debug-map" :disabled="!canDebugAct" @click="debugAtlas">🗺 מפה</button><button v-if="debugMode" class="hk-debug hk-debug-win" :disabled="!canDebugAct" @click="debugWin">🏆 ניצחון באזור</button><button class="hk-debug" :aria-pressed="String(debugMode)" @click="toggleDebug">{{debugMode?'דיבאג פועל ✓':'דיבאג כבוי'}}</button></template><button class="hk-exit" @click="exitGame">יציאה מהכפר ↗</button></header>
+   <p v-if="debugMode" class="hk-debug-note" role="status">מצב דיבאג · {{debugPoints}} נקודות בכל כפר · כל הכפרים פתוחים במפה · שמירה נפרדת מהמשחק הרגיל</p>
    <div class="hk-layout"><section class="hk-world" aria-label="מפת הכפר">
-    <div class="hk-map-heading"><div><span class="hk-eyebrow">עמק הנהר</span><h2>מעבר הערבה</h2></div><span class="hk-raid">מתקפה {{battle.wave}} מתוך 10</span></div>
+    <div class="hk-map-heading"><div><span class="hk-eyebrow">{{level.region}}</span><h2>{{level.name}}</h2></div><span class="hk-raid">מתקפה {{battle.wave}} מתוך {{level.waves}}</span></div>
     <div class="hk-hud"><span><small>הכפר</small><b>{{'♥'.repeat(battle.health)}}{{'♡'.repeat(battle.maxHealth-battle.health)}}</b></span><span><small>נקודות לקנייה</small><b>{{battle.supplies}}</b></span><span><small>מגדלים</small><b>{{battle.buildings.filter(Boolean).length}}</b></span><span><small>הובסו</small><b dir="ltr">{{battle.kills}} / {{raidSize}}</b></span></div>
     <div class="hk-map-viewport"><div class="hk-board" role="group" :aria-label="sceneSummary" @click.self="closeBuildMenu">
-     <img class="hk-terrain" src="assets/hexkeep/village.png" alt="כפר משושים עם שביל מפותל, גשר אבן, נהר ויערות">
+     <img class="hk-terrain" :src="'assets/hexkeep/'+level.board" :alt="'מפת '+level.name+': שביל משושים מפותל שמוביל אל הכפר'">
      <span v-for="tile in rangeTiles" :key="'range'+tile.id" class="hk-range-cell" :style="anchorStyle(tile.id)" aria-hidden="true"></span>
      <span v-for="shot in battle.shots" :key="'shot'+shot.id" class="hk-projectile" :class="'hk-shot-'+shot.type" :data-shot-id="shot.id" :style="shotStyle(shot)" aria-hidden="true"></span>
      <span v-for="shot in battle.shots" :key="'impact'+shot.id" class="hk-impact" :class="{'hk-impact-stone':shot.type==='catapult'}" :data-impact-id="shot.id" :style="impactStyle(shot)" aria-hidden="true"></span><template v-for="(building,i) in battle.buildings"><img v-if="building" :key="'building'+i" class="hk-object" :class="{'hk-firing':battle.shots.some(s=>s.site===i&&s.type==='catapult')}" :src="'assets/hexkeep/'+towerArt(building)+'.png'" :style="spriteStyle(towerArt(building),map.sites[i].tile)" alt=""></template>
      <button v-for="(site,i) in map.sites" :key="'site'+i" class="hk-site" :data-site-index="i" :class="{'hk-selected':menuOpen&&selectedSite===i,'hk-occupied':battle.buildings[i]}" :style="siteStyle(i)" :aria-label="site.name+': '+(battle.buildings[i]?'שדרוג '+types[battle.buildings[i].type].name:'בניית מגדל')" :aria-expanded="menuOpen&&selectedSite===i" aria-haspopup="dialog" :disabled="!canPlan" @click.stop="selectSite(i)"><span v-if="!battle.buildings[i]" aria-hidden="true">+</span></button>
      <div v-for="guard in battle.guards.filter(g=>g.hp>0)" :key="'guard'+guard.id" class="hk-soldier" :data-guard-id="guard.id" :style="guardStyle(guard)" role="group" aria-label="חייל"><span v-if="guard.enemyId" class="hk-fighter hk-guard-fighter" :style="guardFightStyle(guard)" aria-hidden="true"></span><img v-else class="hk-guard-idle" src="assets/hexkeep/knight.png" :style="guardIdleStyle()" alt=""><span class="hk-health hk-health-guard" role="progressbar" aria-label="חיי החייל" :aria-valuenow="guard.hp" :aria-valuemax="guard.maxHp" aria-valuemin="0" :title="guard.hp+' / '+guard.maxHp"><i :style="{transform:'scaleX('+guard.hp/guard.maxHp+')'}"></i></span></div>
-     <div v-for="enemy in battle.enemies" :key="'enemy'+enemy.id" class="hk-enemy" :data-enemy-id="enemy.id" :style="enemyStyle(enemy)" role="group" :aria-label="enemy.boss?'מפקד הפולשים':'אויב'"><span class="hk-walker" :class="{'hk-armored':enemy.armor,'hk-boss':enemy.boss,'hk-enemy-fighter':!!enemy.guardId}" :style="walkStyle(enemy)" aria-hidden="true"></span><span class="hk-health hk-health-enemy" role="progressbar" aria-label="חיי האויב" :aria-valuenow="Math.max(0,enemy.hp)" :aria-valuemax="enemy.maxHp" aria-valuemin="0" :title="enemy.hp+' / '+enemy.maxHp"><i :style="{transform:'scaleX('+Math.max(0,enemy.hp)/enemy.maxHp+')'}"></i></span></div>
-     <span class="hk-landmark hk-entry" :style="anchorStyle(map.path[0])">כניסת היער</span><span class="hk-landmark hk-village" :style="anchorStyle(map.village)">כפר הערבה</span>
+     <div v-for="enemy in battle.enemies" :key="'enemy'+enemy.id" class="hk-enemy" :data-enemy-id="enemy.id" :style="enemyStyle(enemy)" role="group" :aria-label="enemy.boss?level.boss.name:kinds[enemy.kind||'raider'].name"><span class="hk-walker" :class="['hk-walk-'+(enemy.kind||'raider'),enemy.guardId?'hk-enemy-fighter hk-fight-'+(enemy.kind||'raider'):'',{'hk-armored':enemy.armor,'hk-shielded':enemy.shield>0,'hk-boss':enemy.boss}]" :style="walkStyle(enemy)" aria-hidden="true"></span><span v-if="enemy.shield>0" class="hk-shield" :title="'מגן: עוד '+enemy.shield+' פגיעות'" :aria-label="'מגן: עוד '+enemy.shield+' פגיעות'">{{enemy.shield}}</span><span class="hk-health hk-health-enemy" role="progressbar" aria-label="חיי האויב" :aria-valuenow="Math.max(0,enemy.hp)" :aria-valuemax="enemy.maxHp" aria-valuemin="0" :title="enemy.hp+' / '+enemy.maxHp"><i :style="{transform:'scaleX('+Math.max(0,enemy.hp)/enemy.maxHp+')'}"></i></span></div>
+     <span class="hk-landmark hk-entry" :style="anchorStyle(map.path[0])">כניסת הפולשים</span><span class="hk-landmark hk-village" :style="anchorStyle(map.village)">{{level.name}}</span>
     </div>
     </div><div class="hk-fieldnote"><span class="hk-status-dot"></span><span>{{phase==='combat'?'המתקפה פועלת — השומרים נלחמים לבד.':learning?'הקרב מושהה. אפשר לחשוב בנחת.':battle.outcome?'המתקפה הסתיימה. הקרב נעצר.':'הקרב מושהה עד שתפעילו מתקפה.'}}</span><span class="hk-tiles">מגינים יחד</span></div>
     <p class="hk-pan-hint">גררו את המפה ולחצו על מקום פנוי או על מגדל.</p>
     <section v-if="menuOpen&&canPlan" ref="buildMenu" tabindex="-1" class="hk-build-menu" :style="menuPosition" role="dialog" :aria-label="selected?'שדרוג מגדל':'קניית מגדל'" @keydown.esc.stop="closeBuildMenu">
      <header><h3>{{selected?types[selected.type].name:'איזה מגדל לבנות?'}}</h3><button class="hk-menu-close" aria-label="סגירת תפריט המגדל" @click="closeBuildMenu">×</button></header>
      <p class="hk-menu-wallet">{{battle.supplies}} נקודות לקנייה<span v-if="selected"> · דרגה {{selected.level}} מתוך 3</span></p>
-     <div v-if="!selected" class="hk-blueprints"><button v-for="(type,key) in types" :key="key" :disabled="!canBuyType(key)" @focus="selectedType=key" @mouseenter="selectedType=key" @click="buyType(key)"><img :src="'assets/hexkeep/'+key+'.png'" alt=""><span><b>{{type.name}}</b><small>{{type.subtitle}}</small><em>{{type.cost}} נקודות</em></span></button></div>
-     <template v-else><img class="hk-menu-tower" :src="'assets/hexkeep/'+towerArt(selected)+'.png'" alt=""><p class="hk-detail">{{types[selected.type].detail}}</p><button class="hk-primary hk-upgrade" :disabled="selected.level===3||!canUpgrade()" @click="upgradeSelected">{{selected.level===3?'משודרג עד הסוף':'שדרוג · '+upgradePrice()+' נקודות'}}</button><p v-if="selected.type==='guard'" class="hk-detail">{{guardStatus()}}</p></template>
+     <div v-if="!selected" class="hk-blueprints"><button v-for="(type,key) in types" :key="key" :disabled="!canBuyType(key)" @focus="selectedType=key" @mouseenter="selectedType=key" @click="buyType(key)"><img :src="'assets/hexkeep/'+key+'.png'" alt=""><span><b>{{type.name}}</b><small>{{type.subtitle}}</small><i class="hk-power">{{powerLabel(key,1)}}</i><em>{{type.cost}} נקודות</em></span></button></div>
+     <template v-else><img class="hk-menu-tower" :src="'assets/hexkeep/'+towerArt(selected)+'.png'" alt=""><p class="hk-detail">{{types[selected.type].detail}}</p><p class="hk-power hk-power-line">{{powerLabel(selected.type,selected.level)}}<span v-if="selected.level<3"> ← אחרי שדרוג: {{powerLabel(selected.type,selected.level+1)}}</span></p><button class="hk-primary hk-upgrade" :disabled="selected.level===3||!canUpgrade()" @click="upgradeSelected">{{selected.level===3?'משודרג עד הסוף':'שדרוג · '+upgradePrice()+' נקודות'}}</button><p v-if="selected.type==='guard'" class="hk-detail">{{guardStatus()}}</p></template>
     </section>
    </section>
-   <aside class="hk-journal" :class="{'hk-dialog':learning||['opening','victory','defeat','cleared'].includes(phase)}" :role="learning?'dialog':null" :aria-label="learning?'לומדים ומרוויחים נקודות':'פקדי המשחק'"><div class="hk-journal-title"><span class="hk-eyebrow">יומן הכפר</span><span>עמק הערבה</span></div>
+   <aside v-if="phase!=='levels'" class="hk-journal" :class="{'hk-dialog':learning||['opening','victory','defeat','cleared'].includes(phase)}" :role="learning?'dialog':null" :aria-label="learning?'לומדים ומרוויחים נקודות':'פקדי המשחק'"><div class="hk-journal-title"><span class="hk-eyebrow">יומן הכפר</span><span>{{level.name}} · אזור {{levelNumber()}} מתוך {{levels.length}}</span></div>
     <section v-if="newWords.length" class="hk-learning hk-new-words"><span class="hk-chapter">מילים חדשות · {{newWordIndex+1}} מתוך {{newWords.length}}</span><h2 ref="newWordHeading" tabindex="-1" dir="auto" v-html="newWordContent().question"></h2><div class="hk-word-translation" dir="auto" v-html="newWordContent().result"></div><p class="hk-reward">מכירים את המילה, ואז מתרגלים ומרוויחים נקודות.</p><button class="hk-primary hk-news-next" @click="nextNewWord">{{newWordIndex+1===newWords.length?'מתחילים לתרגל ←':'המילה הבאה ←'}}</button></section>
-    <section v-else-if="phase==='opening'" class="hk-opening"><span class="hk-chapter">ברוכים הבאים לכפר החי</span><h2>לומדים מילים.<br>בונים הגנה.</h2><p>עזרו לכפר לעמוד ב־10 מתקפות. במתקפה האחרונה מגיע מפקד משוריין שלא ניתן לעצור — צריך מגדלי ירי חזקים כדי להביס אותו. למדו כדי לממן מגדלים ושדרוגים חזקים. אפשר להמשיך גם בפעם הבאה.</p><ol><li>לחצו על ״לומדים ומרוויחים״. כל תשובה נכונה מעניקה נקודה לקנייה.</li><li>קנו מגדלים ושדרוגים בנקודות שהרווחתם.</li><li>הפעילו מתקפה כשתהיו מוכנים. האויבים מתחזקים — שדרגו את המגדלים בין המתקפות.</li><li>הקרב רץ לבד. בזמן השאלות ובין המתקפות הוא נעצר.</li></ol><button class="hk-primary" @click="startGame">נכנסים לכפר ←</button><small>הכפר, הנקודות והלמידה נשמרים אוטומטית.</small></section>
-    <section v-else-if="['victory','defeat','cleared'].includes(phase)" class="hk-ending"><span class="hk-chapter">{{phase==='victory'?'הכפר בטוח!':phase==='cleared'?'המתקפה הסתיימה':'מנסים הגנה חדשה'}}</span><h2>{{phase==='victory'?'ניצחנו יחד!':phase==='cleared'?'כל הכבוד, מגינים!':'הכפר צריך עזרה'}}</h2><p>{{phase==='victory'?'הבסתם את מפקד הפולשים והגנתם על הכפר! הידע שלכם בנה הגנה חזקה.':phase==='cleared'?'הקרב נעצר. זה הזמן ללמוד, לקנות ולשדרג לקראת המתקפה הבאה.':'המבנים, הנקודות והתשובות שלכם נשמרו. הכפר והשומרים יתאוששו, ותוכלו לנסות שוב את אותה מתקפה.'}}</p><button ref="nextAction" class="hk-primary" @click="nextWatch">{{phase==='victory'?'חזרה לפרק ←':phase==='cleared'?'מתכוננים למתקפה הבאה ←':'מכינים את הכפר מחדש ←'}}</button></section>
+    <section v-else-if="phase==='opening'" class="hk-opening"><span class="hk-chapter">ברוכים הבאים לכפר החי</span><h2>לומדים מילים.<br>בונים הגנה.</h2><p>{{levels.length}} אזורים מחכים לכם, ובכל אזור 10 מתקפות ומפה משלו. במתקפה האחרונה של כל אזור מגיע מפקד משוריין שלא ניתן לעצור בקרב קרוב — צריך מגדלי ירי חזקים. כשמנצחים באזור נפתח האזור הבא, עם שביל חדש ועם אויבים חדשים. אפשר להמשיך גם בפעם הבאה.</p><ol><li>לחצו על ״לומדים ומרוויחים״. כל תשובה נכונה מעניקה נקודה לקנייה.</li><li>קנו מגדלים ושדרוגים בנקודות שהרווחתם.</li><li>הפעילו מתקפה כשתהיו מוכנים. האויבים מתחזקים — שדרגו את המגדלים בין המתקפות.</li><li>ניצחתם באזור? מפת המסע נפתחת, ויוצאים בדרך אל הכפר הבא.</li><li>הקרב רץ לבד. בזמן השאלות ובין המתקפות הוא נעצר.</li></ol><button class="hk-primary" @click="startGame">נכנסים לכפר ←</button><small>הכפר, הנקודות והלמידה נשמרים אוטומטית.</small></section>
+    <section v-else-if="['victory','defeat','cleared'].includes(phase)" class="hk-ending"><span class="hk-chapter">{{phase==='victory'?(nextRegion()?'האזור שוחרר!':'הכפר בטוח!'):phase==='cleared'?'המתקפה הסתיימה':'מנסים הגנה חדשה'}}</span><h2>{{phase==='victory'?'ניצחנו יחד!':phase==='cleared'?'כל הכבוד, מגינים!':'הכפר צריך עזרה'}}</h2><p>{{phase==='victory'?(nextRegion()?('הבסתם את '+level.boss.name+'! האזור הבא נפתח: '+nextRegion().name+' — מפה חדשה ואויבים חדשים.'):'הבסתם את '+level.boss.name+' והגנתם על האזור האחרון! סיימתם את כל המסע.'):phase==='cleared'?'הקרב נעצר. זה הזמן ללמוד, לקנות ולשדרג לקראת המתקפה הבאה.':'המבנים, הנקודות והתשובות שלכם נשמרו. הכפר והשומרים יתאוששו, ותוכלו לנסות שוב את אותה מתקפה.'}}</p><button ref="nextAction" class="hk-primary" @click="nextWatch">{{phase==='victory'?(nextRegion()?'למפת המסע ←':'חזרה לפרק ←'):phase==='cleared'?'מתכוננים למתקפה הבאה ←':'מכינים את הכפר מחדש ←'}}</button></section>
     <section v-else-if="learning" class="hk-learning"><span class="hk-chapter">לומדים בנחת — הקרב מושהה</span><h2 ref="questionHeading" tabindex="-1" dir="auto" v-html="question&&question.question"></h2><p class="hk-reward">כל תשובה נכונה: נקודה אחת לקניית מגדלים ושדרוגים</p><div class="hk-answers"><button v-for="(option,i) in options" :key="i" :disabled="phase!=='ready'" :class="{'hk-wrong':wrongIndex===i}" @click="answer(i)"><kbd>{{i+1}}</kbd><span dir="auto" v-html="option"></span></button></div><button v-if="phase==='retry'" ref="nextAction" class="hk-primary hk-continue" @click="retry">מנסים שוב את אותה שאלה ↻</button><p v-if="phase==='resolved'" class="hk-auto-next" role="status">נכון! +1 נקודה · עוברים לשאלה הבאה…</p><button class="hk-return" @click="returnToVillage">{{resumePhase==='combat'?'חזרה לקרב והמשך המתקפה ←':'חזרה לכפר ובנייה ←'}}</button></section>
-    <section v-else class="hk-planning"><span class="hk-chapter">{{phase==='combat'?'המתקפה בעיצומה':'מתכוננים יחד'}}</span><h2>{{phase==='combat'?'השומרים מגינים על הכפר':'מה בונים עכשיו?'}}</h2><p>{{phase==='combat'?'אפשר לבנות ולשדרג בזמן הקרב. רוצים עוד נקודות? עברו ללמידה והקרב ייעצר.':'למדו כדי להרוויח נקודות, בחרו חלקה וקנו מבנה. אתם בוחרים מתי להתחיל את המתקפה.'}}</p><button class="hk-primary hk-study" @click="openLearning">לומדים ומרוויחים +1 נקודה</button><button v-if="phase==='paused'" class="hk-primary hk-resume" @click="resumeRaid">המשך המתקפה השמורה ←</button><button v-if="phase==='planning'" class="hk-primary hk-launch" :disabled="needed>0" @click="startRaid">התחלת מתקפה {{battle.wave}} ←</button><p v-if="phase==='planning'" class="hk-reward">כדאי להציב שומרים ולשלב מגדלי ירי לפני שמתחילים.</p></section>
+    <section v-else class="hk-planning"><span class="hk-chapter">{{phase==='combat'?'המתקפה בעיצומה':'מתכוננים יחד'}}</span><h2>{{phase==='combat'?'השומרים מגינים על הכפר':'מה בונים עכשיו?'}}</h2><p>{{phase==='combat'?'אפשר לבנות ולשדרג בזמן הקרב. רוצים עוד נקודות? עברו ללמידה והקרב ייעצר.':'למדו כדי להרוויח נקודות, בחרו חלקה וקנו מבנה. אתם בוחרים מתי להתחיל את המתקפה.'}}</p><p v-if="phase!=='combat'" class="hk-reward">{{level.blurb}}</p><button class="hk-primary hk-study" @click="openLearning">לומדים ומרוויחים +1 נקודה</button><button v-if="phase==='paused'" class="hk-primary hk-resume" @click="resumeRaid">המשך המתקפה השמורה ←</button><button v-if="phase==='planning'" class="hk-primary hk-launch" :disabled="needed>0" @click="startRaid">התחלת מתקפה {{battle.wave}} ←</button><p v-if="phase==='planning'" class="hk-reward">כדאי להציב שומרים ולשלב מגדלי ירי לפני שמתחילים.</p><button v-if="phase!=='combat'" class="hk-return" @click="openRegions">🗺 מפת המסע · {{cleared.length}}/{{levels.length}} ★</button></section>
     <p class="hk-feedback" role="status" aria-live="polite">{{feedback}}</p>
     <div class="hk-journal-bottom"><div class="hk-score"><span>ניקוד הלמידה</span><b>{{score}}</b></div><progress-bar v-if="progress" title="התקדמות הלמידה" :progress="progress" :theme="theme"></progress-bar><div class="hk-turn-log"><span class="hk-eyebrow">מה קורה בכפר</span><p v-for="(event,i) in battle.events.slice(-3)" :key="i">{{event}}</p><p v-if="!battle.events.length">הגשר שקט. הכפר מחכה לעזרתכם.</p></div></div>
    </aside></div><footer class="hk-footer">HEXKEEP <span>לומדים יחד. בונים יחד.</span><span>איורים: Kay Lousberg · CC0</span></footer>
+   <section v-if="phase==='levels'" class="hk-atlas" role="dialog" aria-modal="true" aria-labelledby="hk-atlas-title">
+    <header class="hk-atlas-bar"><h2 id="hk-atlas-title" class="hk-atlas-title">מפת המסע</h2><span class="hk-atlas-count" :aria-label="'שוחררו '+cleared.length+' כפרים מתוך '+levels.length">{{cleared.length}}/{{levels.length}} <b aria-hidden="true">★</b></span><span v-if="debugMode" class="hk-atlas-debug">דיבאג · כל הכפרים פתוחים</span><button class="hk-atlas-exit" @click="exitGame">יציאה ↗</button></header>
+    <div class="hk-atlas-scroll"><div class="hk-atlas-board">
+     <img v-for="(prop,i) in atlas.scenery" :key="'prop'+i" class="hk-atlas-prop" :src="'assets/hexkeep/atlas/'+prop.icon+'.png'" :style="atlasProp(prop)" alt="">
+     <svg class="hk-atlas-roads" viewBox="0 0 1600 1000" aria-hidden="true"><defs><mask id="hk-atlas-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1600" height="1000"><path v-for="road in atlasRoads.filter(r=>r.fresh)" :key="'mask'+road.d" :d="road.d" pathLength="1" class="hk-atlas-draw"/></mask></defs>
+      <path :d="atlas.start" class="hk-road hk-road-open"/><path v-for="(road,i) in atlasRoads" :key="'road'+i" :d="road.d" class="hk-road" :class="road.open?'hk-road-open':'hk-road-locked'" :mask="road.fresh&&!reduced?'url(#hk-atlas-reveal)':null"/></svg>
+     <button v-for="(region,i) in levels" :key="'node'+region.id" class="hk-atlas-node" :data-region="region.id" :class="{'hk-node-here':region.id===battle.level,'hk-node-done':cleared.includes(region.id),'hk-node-locked':!regionOpen(i),'hk-node-picked':atlasPick===region.id,'hk-node-fresh':atlasFresh===region.id&&!reduced}" :style="atlasSpot(region.id)" :disabled="!regionOpen(i)" :aria-pressed="String(atlasPick===region.id)" :aria-label="(i+1)+'. '+(regionOpen(i)?region.name:'כפר נעול')+' · '+regionStatus(i)" @click="pickRegion(region.id)">
+      <span class="hk-node-seal"><img :src="'assets/hexkeep/atlas/'+atlas.nodes[region.id].icon+'.png'" alt=""><span class="hk-node-num">{{i+1}}</span><span v-if="cleared.includes(region.id)" class="hk-node-star" aria-hidden="true">★</span><img v-if="region.id===battle.level" class="hk-node-flag" src="assets/hexkeep/atlas/flag.png" alt=""></span>
+      <span class="hk-node-name">{{regionOpen(i)?region.name:'🔒 נעול'}}</span></button>
+    </div></div>
+    <aside v-if="pickedRegion" class="hk-atlas-card"><img :src="'assets/hexkeep/'+pickedRegion.board" alt=""><div><span class="hk-atlas-where">{{pickedRegion.region}} · כפר {{levelIndex(pickedRegion.id)+1}} מתוך {{levels.length}}</span><h3>{{pickedRegion.name}}</h3><p>{{pickedRegion.blurb}}</p><p class="hk-atlas-roster"><b>אויבים:</b> {{regionRoster(pickedRegion)}}</p><p class="hk-atlas-state" role="status">{{regionStatus(levelIndex(pickedRegion.id))}}</p>
+     <button ref="atlasGo" class="hk-primary hk-atlas-go" @click="travel">{{pickedRegion.id===battle.level?'חזרה אל '+pickedRegion.name+' ←':'יוצאים אל '+pickedRegion.name+' ←'}}</button></div></aside>
+   </section>
   </main>`,
   methods:{
    presentNewItems(){if(this.newWords.length)return;this.pauseMotion();this.invalidate();this.newWords=getLocalStorage(this.currentAppId+'_new_items',[]).slice();this.newWordIndex=0;this.menuOpen=false;this.$nextTick(()=>this.speakNewWord());},
    newWordContent(){const item=getDataList(this.currentApp.listName)[this.newWords[this.newWordIndex]];if(!item)return {question:'',result:''};const q={...item[this.currentApp.questionIndex]};if(this.currentApp.questionType)q.type=this.currentApp.questionType;return {question:render(q),result:render(item[this.currentApp.resultIndex]),source:q};},
    speakNewWord(){const content=this.newWordContent();if(content.source)generateQuestion(content.source)();this.focus('newWordHeading');},
    nextNewWord(){if(this.newWordIndex+1<this.newWords.length){this.newWordIndex++;this.speakNewWord();return;}setLocalStorage(this.currentAppId+'_new_items',[]);this.newWords=[];this.newWordIndex=0;this.question=null;this.options=[];this.phase='ready';this.create();},
-   campaignKey(){return this.currentAppId+'_HexkeepCampaign_v3';},
-   saveCampaign(){if(!this.currentAppId)return;this.syncMotion();setLocalStorage(this.campaignKey(),{version:3,movement:{elapsed:this.motionState().elapsed,walkTime:this.motionState().walkTime},opening:this.phase==='opening',battle:JSON.parse(JSON.stringify(this.battle)),active:this.phase==='combat'||(this.learning&&this.resumePhase==='combat')||this.phase==='paused'});},
-   restoreCampaign(){let saved=getLocalStorage(this.campaignKey(),null);if(!saved){const old=getLocalStorage(this.currentAppId+'_HexkeepCampaign_v2',null);if(old&&old.version===2){saved=JSON.parse(JSON.stringify(old));const refunds={windmill:[14,16],blacksmith:[18,20],well:[12,14],lumber:[10,12],barricade:[8,10]};saved.battle.buildings=saved.battle.buildings.map(v=>{if(!v||v.type==='guard')return v;const price=refunds[v.type];if(price)saved.battle.supplies+=price[0]+(v.level===2?price[1]:0);return null;});saved.battle.shots=[];saved.version=3;}}
-    if(saved&&saved.version===3&&saved.battle&&Array.isArray(saved.battle.buildings)&&saved.battle.buildings.length===M.sites.length){this.battle=saved.battle;this.battle.buildings.forEach((v,i)=>{if(v&&v.type==='guard'){const guards=this.battle.guards.filter(g=>g.site===i);guards.forEach((g,slot)=>{g.slot=slot;});while(this.battle.guards.filter(g=>g.site===i).length<v.level+2)newGuard(this.battle,i);}});Object.assign(this.motionState(),{elapsed:saved.movement?saved.movement.elapsed:CAMPAIGN.tickMs,walkTime:saved.movement?saved.movement.walkTime:0,last:null});this.battle.shots=this.battle.shots||[];this.battle.impacts=this.battle.impacts||[];this.battle.maxHealth=5;this.battle.health=Math.min(5,this.battle.health);this.phase=this.battle.outcome||(saved.opening?'opening':saved.active?'paused':'planning');}else{this.battle=freshBattle();this.motionState().elapsed=0;this.phase='opening';}},
+   campaignKey(){return this.currentAppId+(this.debugMode?'_HexkeepDebug_v4':'_HexkeepCampaign_v4');},
+   levelNumber(){return levelIndex(this.battle.level)+1;},
+   levelIndex(id){return levelIndex(id);},
+   regionRoster(level){return rosterOf(level).map(kind=>KINDS[kind].name).join(' · ');},
+   nextRegion(){return nextLevel(this.battle.level);},
+   regionOpen(i){return this.debugMode||i===0||this.cleared.includes(LEVELS[i-1].id);},
+   regionStatus(i){const region=LEVELS[i];if(!this.regionOpen(i))return 'נפתח אחרי '+LEVELS[i-1].name;const state=this.cleared.includes(region.id)?'שוחרר ✓':'פתוח — אפשר להיכנס';return region.id===this.battle.level?'כאן אתם עכשיו · '+state:state;},
+   // Every move between regions goes through the journey map (phase 'levels').
+   openRegions(){if(this.stopped||!['planning','paused'].includes(this.phase))return;this.menuOpen=false;this.pauseMotion();this.invalidate();this.resumePhase=this.phase;this.showAtlas(this.battle.level,null);this.saveCampaign();},
+   showAtlas(pick,fresh){this.phase='levels';this.atlasPick=pick;this.atlasFresh=fresh;this.$nextTick(()=>{const node=this.$el&&this.$el.querySelector('.hk-atlas-node[data-region="'+pick+'"]');if(node&&node.scrollIntoView)node.scrollIntoView({block:'nearest',inline:'center'});});this.focus('atlasGo');},
+   closeRegions(){if(this.phase!=='levels'||this.stopped)return;this.atlasFresh=null;this.phase=this.resumePhase==='paused'?'paused':'planning';this.feedback='';this.saveCampaign();},
+   pickRegion(id){if(this.phase!=='levels'||this.stopped||!this.regionOpen(levelIndex(id)))return;this.atlasPick=id;this.focus('atlasGo');},
+   travel(){if(this.atlasPick)this.chooseRegion(this.atlasPick);},
+   atlasSpot(id){const n=ATLAS.nodes[id];return {left:n.x/16+'%',top:n.y/10+'%'};},
+   atlasProp(p){return {left:p.x/16+'%',top:p.y/10+'%',width:p.w/16+'%'};},
+   chooseRegion(id){if(this.stopped||this.phase!=='levels'||!this.regionOpen(levelIndex(id)))return;this.invalidate();
+    if(id===this.battle.level){this.closeRegions();return;}
+    this.saves[this.battle.level]=this.snapshot();this.menuOpen=false;this.selectedSite=0;this.question=null;this.options=[];this.atlasFresh=null;
+    this.phase=this.battle.outcome||this.loadSlot(id);this.resumePhase='planning';this.feedback='נכנסתם אל '+levelOf(this.battle).name+'.';this.saveCampaign();},
+   debugFill(){if(this.debugMode)this.battle.supplies=Math.max(this.battle.supplies,DEBUG_POINTS);},
+   toggleDebug(){if(this.stopped||!this.debugAvailable)return;this.saveCampaign();this.invalidate();this.newWords=[];this.newWordIndex=0;this.menuOpen=false;this.question=null;this.options=[];this.wrongIndex=-1;this.feedback='';this.selectedSite=0;this.atlasFresh=null;
+    this.debugMode=!this.debugMode;this.restoreCampaign();},
+   // Debug shortcuts: open the journey map from anywhere, or win the region now.
+   debugAtlas(){if(!this.canDebugAct)return;const fighting=['combat','paused'].includes(this.phase)||(this.learning&&this.resumePhase==='combat');this.invalidate();this.newWords=[];this.question=null;this.options=[];this.wrongIndex=-1;this.phase=fighting?'paused':'planning';this.openRegions();},
+   debugWin(){if(!this.canDebugAct)return;this.invalidate();this.newWords=[];this.question=null;this.options=[];this.wrongIndex=-1;this.menuOpen=false;
+    Object.assign(this.battle,{wave:this.level.waves,enemies:[],shots:[],impacts:[],outcome:'victory'});this.phase='victory';this.saveCampaign();this.focus('nextAction');},
+   walkMeta(e){const walk=global.HEXKEEP_WALK||{},meta=(walk.variants&&walk.variants[e&&e.kind])||walk;return {frames:meta.frames||24,directions:meta.directions||6,duration:meta.duration||1066.667};},
+   snapshot(){return {battle:JSON.parse(JSON.stringify(this.battle)),active:this.phase==='combat'||(this.learning&&this.resumePhase==='combat')||this.phase==='paused'||(this.phase==='levels'&&this.resumePhase==='paused'),movement:{elapsed:this.motionState().elapsed,walkTime:this.motionState().walkTime}};},
+   // `atlas` reopens the journey map after a reload (e.g. a region was won but
+   // the next one not yet entered); otherwise the player lands in their region.
+   saveCampaign(){if(!this.currentAppId)return;this.syncMotion();this.saves[this.battle.level]=this.snapshot();setLocalStorage(this.campaignKey(),{version:4,current:this.battle.level,cleared:this.cleared.slice(),opening:this.phase==='opening',atlas:this.phase==='levels'?{fresh:this.atlasFresh}:null,levels:this.saves});},
+   legacyCampaign(){let saved=getLocalStorage(this.currentAppId+'_HexkeepCampaign_v3',null);if(!saved){const old=getLocalStorage(this.currentAppId+'_HexkeepCampaign_v2',null);if(old&&old.version===2){saved=JSON.parse(JSON.stringify(old));const refunds={windmill:[14,16],blacksmith:[18,20],well:[12,14],lumber:[10,12],barricade:[8,10]};saved.battle.buildings=saved.battle.buildings.map(v=>{if(!v||v.type==='guard')return v;const price=refunds[v.type];if(price)saved.battle.supplies+=price[0]+(v.level===2?price[1]:0);return null;});saved.battle.shots=[];saved.version=3;}}
+    if(!saved||saved.version!==3||!saved.battle)return null;saved.battle.level=LEVELS[0].id;
+    // A single-region save becomes the first slot of the region campaign.
+    return {version:4,current:LEVELS[0].id,cleared:[],opening:saved.opening,levels:{[LEVELS[0].id]:{battle:saved.battle,active:saved.active,movement:saved.movement}}};},
+   loadSlot(id){const slot=this.saves[id],map=levelOf({level:id}).map;
+    if(!slot||!slot.battle||!Array.isArray(slot.battle.buildings)||slot.battle.buildings.length!==map.sites.length){this.battle=freshBattle(1,id);this.debugFill();this.motionState().elapsed=0;return 'planning';}
+    this.battle=slot.battle;this.battle.level=id;this.battle.buildings.forEach((v,i)=>{if(v&&v.type==='guard'){const guards=this.battle.guards.filter(g=>g.site===i);guards.forEach((g,slot)=>{g.slot=slot;});while(this.battle.guards.filter(g=>g.site===i).length<v.level+2)newGuard(this.battle,i);}});
+    Object.assign(this.motionState(),{elapsed:slot.movement?slot.movement.elapsed:CAMPAIGN.tickMs,walkTime:slot.movement?slot.movement.walkTime:0,last:null});
+    this.battle.shots=this.battle.shots||[];this.battle.impacts=this.battle.impacts||[];this.battle.maxHealth=5;this.battle.health=Math.min(5,this.battle.health);this.debugFill();return slot.active?'paused':'planning';},
+   restoreCampaign(){const saved=getLocalStorage(this.campaignKey(),null)||(this.debugMode?null:this.legacyCampaign());this.atlasPick=null;this.atlasFresh=null;
+    if(saved&&saved.version===4&&saved.levels){this.saves=saved.levels;this.cleared=(saved.cleared||[]).filter(id=>LEVELS.some(l=>l.id===id));
+     const id=LEVELS.some(l=>l.id===saved.current)?saved.current:LEVELS[0].id;const resume=this.loadSlot(id);
+     this.phase=this.battle.outcome||(saved.opening?'opening':resume);
+     if(saved.atlas&&!this.battle.outcome&&!saved.opening){this.resumePhase=resume;const fresh=LEVELS.some(l=>l.id===saved.atlas.fresh)?saved.atlas.fresh:null;this.showAtlas(fresh||id,fresh);}}
+    else{this.saves={};this.cleared=[];this.battle=freshBattle();this.debugFill();this.motionState().elapsed=0;this.phase=this.debugMode?'planning':'opening';}},
    create(){if(this.stopped||this.phase==='opening'||!['ready','resolved'].includes(this.phase))return;if(!this.reloadProgress()){if(!this.newWords.length)this.phase='completed';return;}const a=this.currentApp;this.question=generateFromList(a.listName,a.questionIndex,a.resultIndex,this.currentAppId,getSetItems(a),a.questionType);this.questionIndex=this.question.questionIndex;this.options=this.shuffle(this.question.options.slice());if(!this.reloadProgress()){if(!this.newWords.length)this.phase='completed';return;}this.phase='ready';this.wrongIndex=-1;this.feedback='';if(this.question.action)this.question.action();this.focus('questionHeading');},
    startGame(){if(this.phase!=='opening'||this.stopped)return;this.phase='planning';this.saveCampaign();},
    openLearning(){this.menuOpen=false;if(this.stopped||!['planning','combat','paused'].includes(this.phase))return;this.pauseMotion();this.resumePhase=this.phase==='planning'?'planning':'combat';this.invalidate();this.phase=this.question?(this.wrongIndex>=0?'retry':'ready'):'ready';this.saveCampaign();if(!this.question)this.create();else this.focus('questionHeading');},
@@ -135,21 +237,24 @@
    fitMap(){this.$nextTick(()=>{const viewport=this.$el&&this.$el.querySelector('.hk-map-viewport');if(viewport)viewport.scrollLeft=(viewport.scrollWidth-viewport.clientWidth)*.58;});},
    towerArt(v){return v.type+(v.level>1?'-'+v.level:'');},
    spriteStyle(key,tile,dx=0){const p=this.art.anchors[tile],s=this.art.sprites[key];return {left:(p.x+s.dx+dx)+'%',top:(p.y+s.dy)+'%',width:s.w+'%',height:s.h+'%',zIndex:Math.round(p.y)};},
-   guardPoint(g){const p=this.art.anchors[M.path[g.step]],slot=g.slot||0;return {x:p.x+(slot%3-1)*2.3,y:p.y+1+Math.floor(slot/3)*1.8};},
+   guardPoint(g){const p=this.art.anchors[this.map.path[g.step]],slot=g.slot||0;return {x:p.x+(slot%3-1)*2.3,y:p.y+1+Math.floor(slot/3)*1.8};},
    guardStyle(g){const p=this.guardPoint(g);return {transform:'translate('+p.x+'cqw,'+p.y+'cqh)',zIndex:Math.round(p.y)};},
    guardIdleStyle(){const s=this.art.sprites.knight;return {left:s.dx+'cqw',top:s.dy+'cqh',width:s.w+'cqw',height:s.h+'cqh',transformOrigin:(-s.dx/s.w*100)+'% '+(-s.dy/s.h*100)+'%'};},
    duelFrame(e){return this.reduced?0:Math.floor((((e.duelTicks||0)*CAMPAIGN.tickMs+this.motionState().elapsed)%(CAMPAIGN.tickMs*2))/(CAMPAIGN.tickMs*2)*24);},
    guardFightStyle(g){const e=this.battle.enemies.find(e=>e.id===g.enemyId);return {backgroundPosition:(e?this.duelFrame(e)/23*100:0)+'% 60%'};},
-   roadPoint(step){if(step<0){const a=this.art.anchors[M.path[0]],b=this.art.anchors[M.path[1]];return {x:2*a.x-b.x,y:2*a.y-b.y};}return this.art.anchors[M.path[Math.min(step,M.path.length-1)]];},
+   roadPoint(step){const M=this.map;if(step<0){const a=this.art.anchors[M.path[0]],b=this.art.anchors[M.path[1]];return {x:2*a.x-b.x,y:2*a.y-b.y};}return this.art.anchors[M.path[Math.min(step,M.path.length-1)]];},
    enemyPoint(e,elapsed=this.motionState().elapsed){const guard=this.battle.guards.find(g=>g.id===e.guardId),oldGuard=this.battle.guards.find(g=>g.id===e.previousGuardId),offset=g=>{const p=this.guardPoint(g);return {x:p.x-1.3,y:p.y-1.8};},a=oldGuard?offset(oldGuard):this.roadPoint(e.previous===undefined?e.step:e.previous),b=guard?offset(guard):this.roadPoint(e.step),t=this.reduced?1:Math.min(1,elapsed/CAMPAIGN.tickMs);return {x:a.x+(b.x-a.x)*t+(guard||oldGuard?0:.35),y:a.y+(b.y-a.y)*t};},
    enemyStyle(e){const p=this.enemyPoint(e);return {transform:'translate('+p.x+'cqw,'+p.y+'cqh)',zIndex:Math.round(p.y)};},
-   walkStyle(e){if(e.guardId)return {backgroundPosition:(this.duelFrame(e)/23*100)+'% 0%'};const meta=global.HEXKEEP_WALK||{frames:24,directions:6,duration:1066.667},step=Math.max(1,e.step),from=M.world(M.path[step-1]),to=M.world(M.path[step]),angle=Math.atan2(to.x-from.x,to.z-from.z),row=((Math.round((angle-Math.PI/6)/(Math.PI/3))%6)+6)%6,moving=e.previous!==e.step,frame=this.reduced||!moving?0:Math.floor((this.motionState().walkTime+e.id*137)%meta.duration/meta.duration*meta.frames);return {backgroundPosition:(frame/(meta.frames-1)*100)+'% '+(row/(meta.directions-1)*100)+'%'};},
+   walkStyle(e){if(e.guardId)return {backgroundPosition:(this.duelFrame(e)/23*100)+'% 0%'};const M=this.map,meta=this.walkMeta(e),step=Math.max(1,Math.min(e.step,M.path.length-1)),from=M.world(M.path[step-1]),to=M.world(M.path[step]),angle=Math.atan2(to.x-from.x,to.z-from.z),row=((Math.round((angle-Math.PI/6)/(Math.PI/3))%6)+6)%6,moving=e.previous!==e.step,frame=this.reduced||!moving?0:Math.floor((this.motionState().walkTime+e.id*137)%meta.duration/meta.duration*meta.frames);return {backgroundPosition:(frame/(meta.frames-1)*100)+'% '+(row/(meta.directions-1)*100)+'%'};},
    shotTarget(shot){return shot.aim?this.enemyPoint(shot.aim,shot.duration):this.roadPoint(shot.step);},
-   shotStyle(shot){const from=this.art.anchors[M.sites[shot.site].tile],to=this.shotTarget(shot),t=Math.min(1,this.motionState().elapsed/(shot.duration||500)),arc=shot.type==='catapult'?Math.sin(Math.PI*t)*9:0;return {transform:'translate('+(from.x+(to.x-from.x)*t)+'cqw,'+(from.y-6+(to.y-from.y+6)*t-arc)+'cqh)',opacity:t<1?'1':'0'};},
+   shotStyle(shot){const from=this.art.anchors[this.map.sites[shot.site].tile],to=this.shotTarget(shot),t=Math.min(1,this.motionState().elapsed/(shot.duration||500)),arc=shot.type==='catapult'?Math.sin(Math.PI*t)*9:0;return {transform:'translate('+(from.x+(to.x-from.x)*t)+'cqw,'+(from.y-6+(to.y-from.y+6)*t-arc)+'cqh)',opacity:t<1?'1':'0'};},
    impactStyle(shot){const to=this.shotTarget(shot),age=this.motionState().elapsed-(shot.duration||500),t=Math.max(0,Math.min(1,age/240));return {transform:'translate('+to.x+'cqw,'+to.y+'cqh) translate(-50%,-50%) scale('+(1+t)+')',opacity:age>=0&&age<240?String(1-t):'0'};},
-   siteStyle(i){const v=this.battle.buildings[i];if(!v)return this.anchorStyle(M.sites[i].tile);const p=this.spriteStyle(this.towerArt(v),M.sites[i].tile);return {left:(parseFloat(p.left)+parseFloat(p.width)/2)+'%',top:(parseFloat(p.top)+parseFloat(p.height)/2)+'%',width:p.width,height:p.height};},
+   siteStyle(i){const M=this.map,v=this.battle.buildings[i];if(!v)return this.anchorStyle(M.sites[i].tile);const p=this.spriteStyle(this.towerArt(v),M.sites[i].tile);return {left:(parseFloat(p.left)+parseFloat(p.width)/2)+'%',top:(parseFloat(p.top)+parseFloat(p.height)/2)+'%',width:p.width,height:p.height};},
    selectSite(i){if(!this.canPlan)return;this.selectedSite=i;this.menuOpen=true;const el=this.$el&&this.$el.querySelector('[data-site-index="'+i+'"]'),rect=el&&el.getBoundingClientRect();this.menuPosition=rect?{left:'clamp(12px,'+(rect.right+12)+'px,calc(100vw - 332px))',top:'clamp(12px,'+rect.top+'px,calc(100vh - 430px))'}:{};this.$nextTick(()=>{const menu=this.$refs.buildMenu;if(menu&&rect)this.menuPosition.top=Math.max(12,Math.min(rect.top,global.innerHeight-menu.getBoundingClientRect().height-12))+'px';});this.focus('buildMenu');},
    closeBuildMenu(){this.menuOpen=false;const el=this.$el&&this.$el.querySelector('[data-site-index="'+this.selectedSite+'"]');if(el)el.focus({preventScroll:true});},
+   // Damage over six beats (the common multiple of every cadence), so a pricier
+   // tower visibly shows a bigger whole number. Guards show their squad instead.
+   powerLabel(type,level){const t=TYPES[type];return type==='guard'?'🛡 '+(level+2)+' חיילים':'⚔ עוצמה '+t.damage[level-1]*6/t.every;},
    canBuyType(type){return available(this.battle,this.selectedSite,type);},
    buyType(type){this.selectedType=type;this.buildSelected();},
    canBuild(){return available(this.battle,this.selectedSite,this.selectedType);},
@@ -167,15 +272,23 @@
    },
    retry(){if(this.phase!=='retry'||this.stopped)return;this.phase='ready';this.wrongIndex=-1;this.feedback='';this.focus('questionHeading');},
    continueGame(){if(this.phase==='resolved'&&!this.stopped){this.invalidate();this.question=null;this.create();}},
-   nextWatch(){if(this.stopped||!['victory','defeat','cleared'].includes(this.phase))return;if(this.phase==='victory'){this.exitGame();return;}prepareRaid(this.battle,this.phase==='cleared');this.motionState().elapsed=0;this.phase='planning';this.question=null;this.options=[];this.feedback='';this.saveCampaign();},
+   nextWatch(){if(this.stopped||!['victory','defeat','cleared'].includes(this.phase))return;
+    // Clearing a region unlocks the next one and leaves the final raid ready to
+    // replay, so coming back later never lands on a finished screen.
+    if(this.phase==='victory'){if(!this.cleared.includes(this.battle.level))this.cleared.push(this.battle.level);
+     prepareRaid(this.battle,false);this.motionState().elapsed=0;this.question=null;this.options=[];
+     const next=nextLevel(this.battle.level);this.resumePhase='planning';
+     if(next)this.showAtlas(next.id,next.id);else if(this.debugMode)this.showAtlas(this.battle.level,null);else this.phase='planning';
+     this.feedback=next?('האזור '+next.name+' נפתח!'):'סיימתם את כל האזורים!';this.saveCampaign();if(!next&&!this.debugMode)this.exitGame();return;}
+    prepareRaid(this.battle,this.phase==='cleared');this.motionState().elapsed=0;this.phase='planning';this.question=null;this.options=[];this.feedback='';this.saveCampaign();},
    onKey(e){if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(/^[1-4]$/.test(e.key)&&this.phase==='ready'){e.preventDefault();this.answer(Number(e.key)-1);}},
    visibility(){this.hidden=document.hidden;if(this.hidden){this.pauseMotion();this.invalidate();this.saveCampaign();}else if(this.phase==='combat'){this.resumeMotion();this.scheduleTick();}else if(this.phase==='resolved')this.continueGame();},
    invalidate(){this.stopFrames();this.run++;clearTimeout(this.turnTimer);clearTimeout(this.answerTimer);this.turnTimer=null;this.answerTimer=null;},
    exitGame(){this.saveCampaign();this.invalidate();this.phase='completed';const match=/^adv-([a-z0-9]+)-/.exec(this.currentAppId);this.$router.push(match?'/adventure/world/'+match[1]:'/app/'+this.currentAppId);}
   },
-  mounted(){this.restoreCampaign();this.fitMap();global.addEventListener('resize',this.fitMap);this.reduced=!!(global.matchMedia&&global.matchMedia('(prefers-reduced-motion: reduce)').matches);this.visibility();document.addEventListener('visibilitychange',this.visibility);},
-  watch:{'$route.params.currentAppId'(id){if(!id||id===this.currentAppId||this.stopped)return;this.saveCampaign();this.invalidate();this.newWords=[];this.newWordIndex=0;this.menuOpen=false;this.currentAppId=id;this.currentApp=getItemById(apps,id);this.theme=getTheme();this.battle=freshBattle();this.motionState().elapsed=0;this.phase='opening';this.question=null;this.options=[];this.selectedSite=0;this.feedback='';this.wrongIndex=-1;this.restoreCampaign();this.updateScore();this.reloadProgress();this.saveApp(id);}},
+  mounted(){this.debugMode=this.debugAvailable;this.restoreCampaign();this.fitMap();global.addEventListener('resize',this.fitMap);this.reduced=!!(global.matchMedia&&global.matchMedia('(prefers-reduced-motion: reduce)').matches);this.visibility();document.addEventListener('visibilitychange',this.visibility);},
+  watch:{'$route.params.currentAppId'(id){if(!id||id===this.currentAppId||this.stopped)return;this.saveCampaign();this.invalidate();this.newWords=[];this.newWordIndex=0;this.menuOpen=false;this.currentAppId=id;this.currentApp=getItemById(apps,id);this.theme=getTheme();this.battle=freshBattle();this.saves={};this.cleared=[];this.motionState().elapsed=0;this.phase='opening';this.question=null;this.options=[];this.selectedSite=0;this.feedback='';this.wrongIndex=-1;this.restoreCampaign();this.updateScore();this.reloadProgress();this.saveApp(id);}},
   beforeDestroy(){if(global.removeEventListener)global.removeEventListener('resize',this.fitMap);if(this.phase!=='completed')this.saveCampaign();this.stopped=true;this.invalidate();document.removeEventListener('visibilitychange',this.visibility);}
  }));}
- global.HEXKEEP={campaign:CAMPAIGN,canStartRaid,rewardAnswer,prepareRaid,range,upgradeCost,types:TYPES,freshBattle,placement,available,build,upgrade,resolveTurn,applyImpacts,themeKit,targetCount,rally};global.createHexkeepComponent=createHexkeepComponent;
+ global.HEXKEEP={campaign:CAMPAIGN,levels:LEVELS,kinds:KINDS,levelOf,mapOf,nextLevel,canStartRaid,rewardAnswer,prepareRaid,range,upgradeCost,types:TYPES,freshBattle,placement,available,build,upgrade,resolveTurn,applyImpacts,themeKit,targetCount,rally};global.createHexkeepComponent=createHexkeepComponent;
 })(typeof window!=='undefined'?window:globalThis);

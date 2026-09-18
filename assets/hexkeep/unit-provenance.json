@@ -14,5 +14,45 @@
     "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/blob/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Characters/gltf/Skeleton_Minion.glb",
     "license": "CC0",
     "notes": "Existing locally vendored model, posed using its bundled idle animation; no old defense sprite reused."
+  },
+  {
+    "asset": "Skeleton_Warrior",
+    "local_source": "assets/models/duel/Skeleton_Warrior.glb",
+    "local_sha256": "178b6fda810b814c250d8a2010c24dfd9b458b9006dd323353e620b7ff118bbe",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0",
+    "license": "CC0",
+    "notes": "Heavy attacker of the marsh and ridge regions; Walking_C and 2H_Melee_Attack_Chop clips sampled by tools/hexkeep-unit-render.html."
+  },
+  {
+    "asset": "Skeleton_Mage",
+    "local_source": "assets/models/duel/Skeleton_Mage.glb",
+    "local_sha256": "e05b0f5cfa395271c9f75fd07c0a0613c56f401ece4ab644e080001a79971075",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0",
+    "license": "CC0",
+    "notes": "Healing caster of the ridge region; Walking_B and Spellcast_Shoot clips sampled by tools/hexkeep-unit-render.html."
+  },
+  {
+    "asset": "Rogue",
+    "local_source": "assets/models/duel/Rogue.glb",
+    "local_sha256": "e825437cd4d2ee9c1960b517a74a69101e33eb409ae7fa8cedc7134a998fbb7d",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0",
+    "license": "CC0",
+    "notes": "Fast runner of the marsh and ridge regions; Running_A and 1H_Melee_Attack_Stab clips sampled by tools/hexkeep-unit-render.html."
+  },
+  {
+    "asset": "Knight (enemy knight)",
+    "local_source": "assets/models/duel/Knight.glb",
+    "local_sha256": "60428e3abc09ba83e595d256e3af8c5c976b46cdae599f0802fc82b4a3445168",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0",
+    "license": "CC0",
+    "notes": "Also rendered as the frost-pass shield knight: Walking_A and 1H_Melee_Attack_Chop clips, re-inked to dark iron (0x4a4d63) so it never reads as a defending guard."
+  },
+  {
+    "asset": "Mage",
+    "local_source": "assets/models/duel/Mage.glb",
+    "local_sha256": "cf898585da33fab50c724d31605fb931eb2912e6d2280092141e98ca81ad507d",
+    "upstream": "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0",
+    "license": "CC0",
+    "notes": "Summoner of the ash wastes; Walking_B and Spellcast_Shoot clips sampled by tools/hexkeep-unit-render.html."
   }
 ]
