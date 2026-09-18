@@ -10,7 +10,7 @@ try{
  async function enter(id='grp-ch51-6',fresh=true){
   await page.goto('http://127.0.0.1:8767/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>typeof BaseGameComponent!=='undefined');
-  await page.evaluate(({id,fresh})=>{const a=getItemById(apps,id);if(fresh){setLocalStorage(id+'_HexkeepCampaign_v3',null);setLocalStorage(getActivityMode()+'_'+id+'_Weights',getDataList(a.listName).map(()=>15));setLocalStorage(id+'_CurrentLevelProgress',{progress:0,total:9999});setLocalStorage(id+'_new_items',[]);}location.hash='/play/hexkeep/'+id;},{id,fresh});
+  await page.evaluate(({id,fresh})=>{const a=getItemById(apps,id);if(fresh){setLocalStorage(id+'_HexkeepCampaign_v4',null);setLocalStorage(id+'_HexkeepCampaign_v3',null);setLocalStorage(getActivityMode()+'_'+id+'_Weights',getDataList(a.listName).map(()=>15));setLocalStorage(id+'_CurrentLevelProgress',{progress:0,total:9999});setLocalStorage(id+'_new_items',[]);}location.hash='/play/hexkeep/'+id;},{id,fresh});
   await page.waitForSelector('.hk-game');
  }
  async function answer(correct=true){const i=await state(g=>g.options.indexOf(g.question.result));await page.locator('.hk-answers button').nth(correct?i:(i+1)%4).click();}
@@ -65,7 +65,7 @@ try{
   await enter(id);await page.locator('.hk-opening button').click();await page.locator('.hk-study').click();await page.evaluate(()=>{const g=document.querySelector('.hk-game').__vue__,w=getDataList(g.currentApp.listName).map(()=>0);w[g.questionIndex]=1;setLocalStorage(getActivityMode()+'_'+g.currentAppId+'_Weights',w);setLocalStorage(g.currentAppId+'_CurrentLevelProgress',{progress:0,total:1});});
   await answer();await page.waitForFunction(()=>!document.querySelector('.hk-game'));
   check(await page.evaluate(({id})=>location.hash.includes(id.startsWith('adv-')?'/adventure/world/hexkeep':'/app/'+id),{id}),'engine completion route '+id);
-  check(await page.evaluate(id=>getLocalStorage(id+'_HexkeepCampaign_v3').battle.earned,id)===1,'final answer currency saved before navigation '+id);
+  check(await page.evaluate(id=>getLocalStorage(id+'_HexkeepCampaign_v4').levels.valley.battle.earned,id)===1,'final answer currency saved before navigation '+id);
  }
  check(!errors.length,'no page errors: '+errors.join('; '));console.log(checks+' campaign browser checks passed');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

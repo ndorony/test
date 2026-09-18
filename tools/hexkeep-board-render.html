@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!--
+  hexkeep-board-render.html — bakes one battlefield PNG per Hexkeep region from
+  the vendored KayKit hexagon kit. Driven headlessly by tools/hexkeep-bake.cjs:
+
+    node tools/hexkeep-bake.cjs boards
+    node tools/hexkeep-bake.cjs 'boards?only=frost,ash'
+
+  Every region shares the grid and the camera of the original bake
+  (tools/render-hexkeep.cjs), so assets/hexkeep/projection.js keeps placing
+  sprites correctly on all of them; the page re-measures the anchors anyway and
+  posts them as anchors-check.json so a drift is visible instead of silent.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<script src="/tools/vendor/three.min.js"></script>
+<script src="/tools/vendor/GLTFLoader.js"></script>
+<script src="/games/hexkeep-map.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
+(async()=>{try{
+ const T=THREE,loader=new T.GLTFLoader(),models={};
+ const aliases=Object.keys((await (await fetch('/assets/hexkeep/provenance.json')).json()).models);
+ for(const key of aliases)models[key]=(await loader.loadAsync('/assets/hexkeep/source/'+key+'.gltf')).scene;
+
+ const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
+ renderer.setSize(1600,900);renderer.outputEncoding=T.sRGBEncoding;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+ renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+ const camera=new T.OrthographicCamera(-10.7,10.7,6.019,-6.019,.1,100);
+ camera.position.set(8,13,18);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+ const project=(x,y,z)=>{const v=new T.Vector3(x,y,z).project(camera);return {x:(v.x+1)*50,y:(1-v.y)*50};};
+
+ function road(map,id){
+  const i=map.path.indexOf(id),p=map.world(id);
+  const prev=i?map.world(map.path[i-1]):{x:p.x-2,z:p.z};
+  const next=i<map.path.length-1?map.world(map.path[i+1]):map.world(map.village);
+  const angles=[prev,next].map(n=>(Math.round(Math.atan2(-(n.z-p.z),n.x-p.x)*3/Math.PI)+6)%6).sort();
+  for(const [key,dirs]of [['roadA',[0,3]],['roadB',[1,3]],['roadC',[2,3]]])for(let rot=0;rot<6;rot++)if(dirs.map(v=>(v+rot)%6).sort().join()==angles.join())return {key,rot:rot*Math.PI/3};
+  throw Error('Disconnected road '+id+' on '+map.id);
+ }
+
+ // Every KayKit tile samples one shared palette atlas: 8x4 vertical gradient
+ // swatches. Tinting can only darken a swatch, so snow or lava cannot be
+ // reached that way; a region that needs them repaints its own copy of the
+ // atlas instead. Grass is swatch (col 0,row 2), water (col 1,row 1) — measured
+ // from the tile UVs; the road swatch (col 3,row 2) is never touched.
+ const atlasImage=await new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src='/assets/hexkeep/source/hexagons_medieval.png';});
+ const SWATCH={grass:[0,2],water:[1,1]};
+ function regionAtlas(swatches){
+  const canvas=document.createElement('canvas');canvas.width=atlasImage.width;canvas.height=atlasImage.height;
+  const ctx=canvas.getContext('2d');ctx.drawImage(atlasImage,0,0);const w=canvas.width/8,h=canvas.height/4;
+  for(const [name,[top,bottom]]of Object.entries(swatches)){const [col,row]=SWATCH[name],g=ctx.createLinearGradient(0,row*h,0,(row+1)*h);
+   g.addColorStop(0,top);g.addColorStop(1,bottom);ctx.fillStyle=g;ctx.fillRect(col*w,row*h,w,h);}
+  const tex=new T.CanvasTexture(canvas);tex.flipY=false;tex.encoding=T.sRGBEncoding;return tex;
+ }
+
+ function paint(map){
+  const scene=new T.Scene();
+  const atlas=map.palette.swatches?regionAtlas(map.palette.swatches):null;
+  scene.add(new T.HemisphereLight(0xfff5de,0x536e68,.85));
+  const sun=new T.DirectionalLight(0xffefce,1.3);sun.position.set(-8,16,7);sun.castShadow=true;
+  Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50});
+  sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0008;scene.add(sun);
+  const add=(key,x,z,rotation=0,scale=1,y=0)=>{const m=models[key].clone(true);m.position.set(x,y,z);m.rotation.y=rotation;m.scale.multiplyScalar(scale);m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(atlas&&o.material.map){o.material=o.material.clone();o.material.map=atlas;}}});scene.add(m);return m;};
+  const tint=(tile,hex)=>tile.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.setHex(hex);}});
+  const ground=map.palette.ground,water=map.palette.water;
+
+  for(const t of map.apron){
+   const w=map.cellWorld(t),key=t.role==='river'?'riverA':t.role==='road'?'roadA':'grass';
+   const tile=add(key,w.x,w.z,t.role==='river'?map.riverRot:0);tile.scale.y=.48;tint(tile,ground);
+   if(t.role==='forest')add(Math.abs(t.c+t.r)%2?'tree':'broadleaf',w.x,w.z,(t.c%3)*Math.PI/3,1.05+Math.abs(t.r%3)*.13);
+  }
+  for(const t of map.tiles){
+   const w=map.world(t.id);let key='grass',rot=0;
+   if(map.path.includes(t.id)){const spec=road(map,t.id);key=spec.key;rot=spec.rot;}
+   if(t.role==='river'){key='riverA';rot=map.riverRot;}
+   if(t.role==='water')key='water';if(t.role==='hill')key='hill';
+   if(t.role==='bridge'){key='rivercrossing_A';rot=map.riverRot;}
+   const tile=add(key,w.x,w.z,rot);tile.scale.y=.48;tint(tile,key==='water'?water:ground);
+   // Lava pools glow on their own instead of only reflecting the sun.
+   if(key==='water'&&map.palette.glow)tile.traverse(o=>{if(o.isMesh){o.material.emissive=new T.Color(map.palette.glow);o.material.emissiveIntensity=.3;}});
+   // The crossing tile's road runs two sixth-turns behind its river; the bridge
+   // spans that road, i.e. across the water on every river orientation.
+   if(t.role==='bridge')add('bridge',w.x,w.z,map.riverRot-2*Math.PI/3);
+   if(t.role==='forest'){add(t.id%2?'broadleaf':'tree',w.x,w.z,0,1.28);add('rock',w.x+.52,w.z+.62,1,2.2);}
+   if(t.role==='hill'&&map.scenery.rockyHills)add('rock',w.x-.35,w.z+.4,2,2.6);
+   if(t.role==='build')add('site',w.x,w.z,0,.66,.005);
+   if(t.role==='village'){add('home',w.x-.3,w.z,0,1.35);add('home',w.x+.5,w.z-.55,Math.PI/3,.95);add('fence',w.x,w.z,0,.8);add('crate',w.x+.3,w.z+.4,0,1.4);}
+   if(t.id===map.scenery.flagTile)add('flag',w.x+.5,w.z-.65,0,2.4);
+   if(t.id===map.scenery.boulderTile)add('rock',w.x-.7,w.z-.6,0,3);
+  }
+  renderer.render(scene,camera);
+  return renderer.domElement.toDataURL('image/png').split(',')[1];
+ }
+
+ // ?only=frost,ash repaints a subset and leaves every other board untouched.
+ const only=new URLSearchParams(location.search).get('only');
+ const anchors=[];
+ for(const map of Object.values(HEXKEEP_MAPS).filter(m=>!only||only.split(',').includes(m.id))){
+  await post(map.board,paint(map));
+  if(!anchors.length)map.tiles.forEach(t=>{const w=map.world(t.id);anchors.push(project(w.x,0,w.z));});
+ }
+ renderer.dispose();
+ await post('anchors-check.json',JSON.stringify(anchors));
+ await post('_done','');
+}catch(e){await post('_error',String(e&&e.stack||e));}})();
+</script>
+</body>
+</html>

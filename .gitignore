@@ -31,3 +31,7 @@ pygame_game/saves/
 
 # Secrets — never commit
 .secrets/
+
+# Three.js r128 copies used only by the Hexkeep bake pages (tools/hexkeep-bake.cjs).
+# Development-only; the app ships rendered PNGs and never loads Three.js.
+/tools/vendor/

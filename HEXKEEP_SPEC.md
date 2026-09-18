@@ -27,23 +27,25 @@ Hidden tabs stop simulation. Completed raids stay stopped.
 
 Four original KayKit combat towers replace the former support roster:
 
-| Tower | Build | Level 2 | Level 3 | Role |
-|---|---:|---:|---:|---|
-| Guards | 12 | 16 | 20 | Block normal enemies, melee, rally, respawn |
-| Archers | 14 | 18 | 20 | Fast long-range arrows; affected by armor |
-| Mages | 18 | 22 | 26 | Slower magic that ignores armor |
-| Catapults | 20 | 24 | 28 | Area damage against groups |
+| Tower | Build | Level 2 | Level 3 | Hit (L1/L2/L3), every | Role |
+|---|---:|---:|---:|---|---|
+| Guards | 12 | 16 | 20 | 1/2/3, 2 beats | Block normal enemies, melee, rally, respawn |
+| Archers | 14 | 18 | 20 | 1/2/3, 1 beat | Fast long-range arrows; affected by armor |
+| Mages | 18 | 22 | 26 | 3/5/8, 2 beats | Slower magic that ignores armor |
+| Catapults | 20 | 24 | 28 | 5/8/13, 3 beats | Area damage against groups |
 
 All six plots are buildable; the sixth moved off the road to tile 35. Range tiles
 show the selected tower's actual hex-distance footprint. Every upgrade increases
-combat power, with three levels per tower. No free points are awarded by combat.
+combat power, with three levels per tower. A pricier ranged tower always deals more
+damage per beat than a cheaper one at the same level; the build menu shows it as
+"power" (damage over six beats: 6/9/10 at level 1). No free points are awarded by combat.
 
 There is no 200-answer target bar or answer-count launch gate. The learning cost
-comes from required defenses: the final raid ends with an armored 107-health boss
+comes from required defenses: the final raid ends with an armored 134-health boss
 that cannot be blocked and defeats the village if it reaches the entrance.
 A conservative dynamic-programming bound enumerates every six-site configuration
 costing less than 200 and grants ideal targeting, all cooldown alignments and
-optimistic mobile guards. Even that upper bound deals at most 106 boss damage.
+optimistic mobile guards. Even that upper bound deals at most 133 boss damage.
 A real ten-raid simulation and browser run win using 240 correct answers, with
 all purchases funded exclusively by those answers.
 
@@ -81,7 +83,8 @@ Both sides have individually labeled health bars with current/max accessibility
 values and animated fill changes. Soldiers occupy separate formation slots, and
 engaged enemies stand opposite their paired soldier. Original skeletal melee
 clips are baked into enemy/guard attack atlases and advance on the paused battle
-clock. Production has no debug mode or free starting funds. Automated tests seed isolated browser fixtures only.
+clock. Production has no debug UI or free starting funds; debug mode exists only on a local dev server whose
+page URL carries `?debug=1` (see Journey map). Automated tests seed isolated browser fixtures only.
 
 ## Contextual construction and impact timing
 
@@ -92,3 +95,17 @@ Damage is resolved once at contact on the shared paused battle clock: melee at 4
 ## Battlefield overlays
 
 The game fills the viewport. HUD, raid counter, exit controls and learning/launch actions float over the terrain. Questions and newly unlocked vocabulary use a compact centered dialog, leaving terrain visible around it. The optional BaseGameComponent.presentNewItems hook preserves the shared engine unlock/persistence lifecycle while Hexkeep presents new words without routing away. The new-items list is cleared only after its last word. Other games retain their existing news route. Upgrades replace all four tower types with distinct level-two and level-three models, including reinforced corner towers and level-three banners.
+
+## Journey map
+
+Every move between regions goes through the journey map (phase `levels`): a
+Kenney Cartography Pack parchment with one inked village per region, joined by a
+dashed road that reads right to left. A new campaign starts inside the first
+village; winning a region's final raid opens the map, draws the road to the next
+village and picks it in the detail card. Reopening the game mid-region lands
+directly in that region; closing on the map reopens on the map. Locked villages
+are greyed and cannot be picked. Layout data lives in `HEXKEEP_ATLAS`.
+
+Debug mode (local dev server only — localhost/127.0.0.1 with `?debug=1`; off in production): a separate save slot (`_HexkeepDebug_v4`), every
+region loads with 9999 points, every village is open, and header buttons open the
+map or win the current region at once. Turning it off restores the real campaign.
