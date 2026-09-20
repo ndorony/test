@@ -84,3 +84,15 @@ exist (debug returned in fca180c behind a localhost `?debug=1` gate), and the
 context suite still expected the pre-rebalance level-two catapult stone.
 
 Cache version: v204-hexkeep-water.
+
+Heading and pace correction (v204): the Pirate Kit hulls already carry their bow
+on +Z, which is the axis the walker sheets bake headings against, so the extra
+half-turn the first bake applied sailed every boat stern-first; the boats are
+re-baked at `yaw: 0` and now face along the lane. The raider boat's speed cap
+came down a hex in both regions (two on the river, three in the bay), and towers
+now pick the attacker with the fewest steps left to the village instead of the
+highest raw step, which is the same order on a one-route region but fair across
+a road and a lane. The storm bay was retuned around the slower boats — they stay
+inside an ironclad's plating longer, which made the region harder — so its
+commander, escorts and toughness came down and the mixed battery line wins it
+for the same 520 answers as before.

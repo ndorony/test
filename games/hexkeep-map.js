@@ -166,18 +166,18 @@
   {id:'river',map:river,board:river.board,name:'נהר הסוחרים',region:'מעלה הנהר',waves:10,tough:1.45,
    blurb:'סירות פשיטה מחליקות על הנהר וצוברות מהירות בכל פעימה שאיש לא פוגע בהן. ירי צפוף מרסן אותן — ועל המים אי אפשר לבנות.',
    count:wave=>5+Math.floor((wave-1)*.9),
-   enemy:(wave,index)=>index%3===0?{kind:'skiff',hp:4+Math.floor(wave/2),armor:0,speed:1,surge:3}
+   enemy:(wave,index)=>index%3===0?{kind:'skiff',hp:4+Math.floor(wave/2),armor:0,speed:1,surge:2}
     :index%3===1?{kind:'runner',hp:3+Math.floor((wave-1)/3),armor:0,speed:2}
     :{kind:'brute',hp:5+wave,armor:wave>=3?2:1},
-   boss:{kind:'skiff',name:'רב-החובל של הנהר',hp:118,armor:1,surge:3}},
-  {id:'coast',map:coast,board:coast.board,name:'מפרץ הסערה',region:'חוף הים',waves:10,tough:1.7,
+   boss:{kind:'skiff',name:'רב-החובל של הנהר',hp:118,armor:1,surge:2}},
+  {id:'coast',map:coast,board:coast.board,name:'מפרץ הסערה',region:'חוף הים',waves:10,tough:1.6,
    blurb:'הים פתוח והספינות המשוריינות מצפות גם את הסירות שלידן. חצים מחליקים מהשריון וקסם חודר אותו — צריך את שניהם יחד.',
    count:wave=>6+wave,
-   enemy:(wave,index)=>index%5===0?{kind:'warship',hp:8+wave,armor:3,plate:2}
+   enemy:(wave,index)=>index%5===0?{kind:'warship',hp:7+wave,armor:3,plate:2}
     :index%5===2?{kind:'knight',hp:5+Math.floor(wave/2),armor:1,shield:2+Math.floor(wave/4)}
     :index%5===4?{kind:'brute',hp:6+wave,armor:2}
-    :{kind:'skiff',hp:8+wave,armor:0,speed:1,surge:4},
-   boss:{kind:'warship',name:'ספינת הדגל',hp:138,armor:3,plate:2}}
+    :{kind:'skiff',hp:7+wave,armor:0,speed:1,surge:3},
+   boss:{kind:'warship',name:'ספינת הדגל',hp:124,armor:3,plate:2}}
  ];
 
  // The journey map between regions, drawn with Kenney's Cartography Pack on a

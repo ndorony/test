@@ -124,11 +124,13 @@ village, and a boat that reaches its landing costs a heart exactly as a walker
 does. Towers are land structures: a plot on a water hex cannot be bought at any
 price, and a plot qualifies by seeing either route, so a shore battery may
 defend only the lane. Soldiers hold the road, so a boat is never blocked, never
-duels and ships no melee atlas. Catapult splash stays on its target's own route.
+duels and ships no melee atlas. Catapult splash stays on its target's own route, and every tower shoots
+whichever attacker has the fewest steps left to the village, so two routes of
+different lengths are compared fairly.
 
 | Attacker | Behaviour | Counter |
 |---|---|---|
-| Raider boat (`skiff`) | Gathers a hex of speed every beat nothing touches it, up to its own limit; any wound that lands drops it back to a crawl | Arrows, which land on every beat and pin it; slow artillery lets it run between stones |
+| Raider boat (`skiff`) | Gathers a hex of speed every beat nothing touches it, up to its own limit — two hexes on the river, three in the bay; any wound that lands drops it back to a crawl | Arrows, which land on every beat and pin it; slow artillery lets it run between stones |
 | Ironclad (`warship`) | Heavy armour, and it plates every boat within one lane hex — itself excluded, so sinking it strips the whole escort at once | Magic, which ignores armour and plate alike |
 
 The two are mixed with attackers the player already knows, so neither a

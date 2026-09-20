@@ -30,10 +30,11 @@ const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
 // across), `yaw` turns the hull so its bow points along the sheet's heading,
 // and `heave`/`roll`/`pitch` are the amplitudes of the swell.
 const BOATS=[
- // The Pirate Kit hulls sail along their own -Z, so every one is turned to put
- // its bow on the sheet's heading; `draft` sinks the keel under the waterline.
- {kind:'skiff',model:'skiff',fit:1.9,yaw:Math.PI,draft:.1,heave:.1,roll:.1,pitch:.05},
- {kind:'warship',model:'warship',fit:2.5,yaw:Math.PI,draft:.16,heave:.07,roll:.05,pitch:.035}
+ // Both Pirate Kit hulls already carry their bow on +Z, which is the heading
+ // axis the walker sheets use, so no extra yaw is needed; `draft` sinks the
+ // keel under the waterline.
+ {kind:'skiff',model:'skiff',fit:1.9,yaw:0,draft:.1,heave:.1,roll:.1,pitch:.05},
+ {kind:'warship',model:'warship',fit:2.5,yaw:0,draft:.16,heave:.07,roll:.05,pitch:.035}
 ];
 const only=new URLSearchParams(location.search).get('only');
 (async()=>{try{

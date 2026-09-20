@@ -108,7 +108,11 @@
    if(e.duelTicks%2===1)b.impacts.push({kind:'melee',enemyId:e.id,guardId:defender.id,damage:b.buildings[defender.site].level,at:440,done:false});
   });
   b.buildings.forEach((v,i)=>{if(!v||v.type==='guard')return;if(b.turn%TYPES[v.type].every)return;
-   const targets=b.enemies.filter(e=>{const P=pathOf(M,e);return e.hp-reservedDamage(b,e)>0&&e.step>=0&&e.step<P.length&&M.distance(M.sites[i].tile,P[e.step])<=range(v);}).sort((a,c)=>c.step-a.step);if(!targets.length)return;
+   // Whoever is closest to the village is shot first. Counting the steps still
+   // to run rather than the steps already taken keeps that fair across two
+   // routes of different lengths; on a one-route region it is the same order.
+   const left=e=>pathOf(M,e).length-1-e.step;
+   const targets=b.enemies.filter(e=>{const P=pathOf(M,e);return e.hp-reservedDamage(b,e)>0&&e.step>=0&&e.step<P.length&&M.distance(M.sites[i].tile,P[e.step])<=range(v);}).sort((a,c)=>left(a)-left(c));if(!targets.length)return;
    const target=targets[0],power=TYPES[v.type].damage[v.level-1];
    // Splash stays on the target's own route: a stone dropped in the lane never
    // scatters onto the road beside it.
