@@ -6,12 +6,13 @@ const ctx={console,Vue:{component:(n,o)=>o,extend:o=>o},getLocalStorage:(k,d)=>r
 vm.createContext(ctx);for(const file of ['games/hexkeep-map.js','games/hexkeep.js','themes.js','apps.js','worlds.js'])vm.runInContext(fs.readFileSync(file,'utf8'),ctx);
 const H=ctx.HEXKEEP,M=ctx.HEXKEEP_MAP;
 check(M.tiles.length===48,'full tiled battlefield');for(let i=1;i<M.path.length;i++)check(M.distance(M.path[i-1],M.path[i])===1,'continuous winding road');
-check(Object.keys(H.types).join()==='guard,archer,mage,catapult','four combat towers');
+check(Object.keys(H.types).join()==='guard,archer,mage,catapult,shipyard','five towers, two of which garrison a route instead of shooting it');
+check(Object.keys(H.crew).join()==='guard,shipyard'&&H.crew.guard.route==='land'&&H.crew.shipyard.route==='water','the barracks garrisons the road and the shipyard the water lane');
 // A pricier ranged tower always hits harder per second than a cheaper one at the same level.
 for(let level=1;level<=3;level++){const ranged=['archer','mage','catapult'].sort((x,y)=>H.types[x].cost-H.types[y].cost),rate=t=>H.types[t].damage[level-1]/H.types[t].every;for(let i=1;i<ranged.length;i++)check(rate(ranged[i])>rate(ranged[i-1]),ranged[i]+' outdamages '+ranged[i-1]+' at level '+level);}
 for(const t of Object.keys(H.types))check(H.types[t].damage.every((d,i)=>!i||d>H.types[t].damage[i-1]),t+' upgrades raise damage');
 const MAPS=ctx.HEXKEEP_MAPS,LEVELS=ctx.HEXKEEP_LEVELS;
-check(LEVELS.map(l=>l.id).join()==='valley,marsh,ridge,frost,ash,river,coast','seven regions, played in order');
+check(LEVELS.map(l=>l.id).join()==='valley,marsh,ridge,frost,ash,river,coast,harbour','eight regions, played in order');
 check(LEVELS[0].map===M&&H.freshBattle().level==='valley','the first region is still the legacy battlefield');
 check(LEVELS.every(l=>l.board===l.map.board)&&new Set(LEVELS.map(l=>l.board)).size===LEVELS.length,'each region paints its own board');
 for(const level of LEVELS){const map=level.map,tag=level.id;
@@ -23,7 +24,14 @@ for(const level of LEVELS){const map=level.map,tag=level.id;
  const routes=Object.keys(map.routes).map(key=>map.routes[key]);
  check(map.routes.land===map.path,tag+' the road is the land route');
  map.sites.forEach(s=>{check(!routes.some(route=>route.includes(s.tile))&&routes.some(route=>route.some(id=>map.distance(id,s.tile)<=1)),tag+' plot '+s.tile+' borders a route it can defend');
-  check(map.path[s.rally]!==undefined&&map.distance(s.tile,map.path[s.rally])<=2,tag+' plot '+s.tile+' rallies onto its own stretch of road');});
+  // A garrison stands where its plot says: `rally` is a step on the road and
+  // `lane` a step on the water. A plot declares one for every route it can
+  // hold, and an island simply has no road to declare.
+  const garrisons=[['rally','land'],['lane','water']].filter(([key])=>s[key]!==undefined);
+  check(garrisons.length>0,tag+' plot '+s.tile+' declares at least one garrison station');
+  garrisons.forEach(([key,name])=>{const line=map.routes[name];
+   check(line&&line[s[key]]!==undefined&&map.distance(s.tile,line[s[key]])<=2,tag+' plot '+s.tile+' stations its '+name+' garrison on its own stretch');
+   check(line.some(id=>map.distance(id,s.tile)<=1),tag+' plot '+s.tile+' touches the '+name+' route it garrisons');});});
  // Water is terrain, not decoration: the road stays dry, no plot is ever wet,
  // and a boat lane is continuous open water that also reaches the village.
  check([...map.water].every(id=>map.tiles[id].role==='water'),tag+' every wet hex is painted as water');
@@ -64,13 +72,17 @@ b=H.freshBattle();b.supplies=12;H.build(b,0,'guard');b.spawned=H.targetCount(b);
 // Multiple guards cannot actually hit simultaneously, making this an overestimate.
 let dp=Array(200).fill(-Infinity);dp[0]=0;
 for(let site=0;site<M.sites.length;site++){
- const choices=[{cost:0,damage:0}];for(const type of Object.keys(H.types)){let cost=H.types[type].cost;
+ const choices=[{cost:0,damage:0}];for(const type of Object.keys(H.types)){
+  // The valley is dry, so it can never take a shipyard; the bound only counts
+  // what this plot could actually be sold.
+  if(!H.placement(H.freshBattle(),site,type))continue;
+  let cost=H.types[type].cost;
   for(let level=1;level<=3;level++){if(level>1)cost+=level===2?H.types[type].upgrade:H.types[type].master;let damage=0;
    // A boss always enters on an odd tick. Cover every alignment of the
    // two-tick magic and three-tick artillery cooldowns conservatively.
    for(const start of [1,3,5]){let candidate=0;for(let step=0;step<M.path.length;step++){
     const nearby=M.distance(M.sites[site].tile,M.path[step])<=H.range({type,level});
-    if(type==='guard'){if(nearby||step>0&&M.distance(M.sites[site].tile,M.path[step-1])<=H.range({type,level}))candidate+=level;continue;}
+    if(H.crew[type]){if(nearby||step>0&&M.distance(M.sites[site].tile,M.path[step-1])<=H.range({type,level}))candidate+=level;continue;}
     if(!nearby||(start+step)%H.types[type].every)continue;
     const power=H.types[type].damage[level-1];candidate+=type==='mage'?power:Math.max(1,power-1);
    }damage=Math.max(damage,candidate);}
@@ -213,19 +225,31 @@ for(const level of LEVELS){
 }
 // The same all-magic ladder that clears the valley for 240 answers is not
 // enough further out: the marsh asks 320 and the ridge 400.
-function ladderOf(types){const steps=types.map((type,site)=>[site,type]);for(let round=0;round<2;round++)types.forEach((type,site)=>steps.push([site,'upgrade']));return steps;}
+function ladderOf(types){const steps=types.map((type,site)=>[site,type]).filter(step=>step[1]);
+ for(let round=0;round<2;round++)types.forEach((type,site)=>{if(type)steps.push([site,'upgrade']);});return steps;}
+// The harbour is the one region where build order matters as much as the mix:
+// the shore plots barely see the bay, so a ladder there is written out in the
+// order it is meant to be bought rather than by plot number.
+function ladderIn(order){const steps=order.slice();for(let round=0;round<2;round++)order.forEach(([site])=>steps.push([site,'upgrade']));return steps;}
 const allMagic=ladderOf(Array(6).fill('mage')),mixed=ladderOf(['archer','mage','archer','mage','archer','mage']);
 const allArrows=ladderOf(Array(6).fill('archer')),allStones=ladderOf(Array(6).fill('catapult'));
 // The coast plots are ordered island battery, cove, square, ridge, bay, breakwater:
 // magic goes on the three that actually see the shipping lane.
 const seaMix=ladderOf(['mage','archer','mage','archer','mage','mage']);
+// Harbour plots are: 0 pier head, 1 warehouses, 2 bay gate (all shore),
+// 3/4/5 the three islands, which are the only berths a shipyard can use.
+// Plot 4 is Mast Rock, the island the lane bends around twice, so a blockade
+// berthed there is the one that holds the bay.
+const harbourFleet=ladderIn([[4,'shipyard'],[3,'mage'],[5,'mage'],[2,'mage'],[1,'archer'],[0,'archer']]);
+const harbourGuns=ladderIn([[4,'mage'],[3,'mage'],[5,'mage'],[2,'mage'],[1,'archer'],[0,'archer']]);
+const harbourBlockade=ladderIn([[4,'shipyard'],[3,'shipyard'],[5,'shipyard'],[2,'mage'],[1,'archer'],[0,'archer']]);
 function ladderWins(id,perWave,ladder=allMagic){let run=H.freshBattle(1,id),bought=0;const waves=H.levelOf({level:id}).waves;
  for(let wave=1;wave<=waves;wave++){for(let i=0;i<perWave;i++)H.rewardAnswer(run);
   while(bought<ladder.length){const [site,move]=ladder[bought];if(!(move==='upgrade'?H.upgrade(run,site):H.build(run,site,move)))break;bought++;}
   for(let tick=0;tick<300&&!run.outcome;tick++)run=H.resolveTurn(run);
   if(!['cleared','victory'].includes(run.outcome))return false;if(wave<waves)H.prepareRaid(run,true);}
  return run.outcome==='victory';}
-for(const [id,perWave,ladder,plan] of [['valley',24,allMagic,'magic'],['marsh',32,allMagic,'magic'],['ridge',40,allMagic,'magic'],['frost',32,mixed,'archer-and-magic'],['ash',40,allMagic,'magic'],['river',36,mixed,'archer-and-magic'],['coast',52,seaMix,'magic-on-the-batteries']]){
+for(const [id,perWave,ladder,plan] of [['valley',24,allMagic,'magic'],['marsh',32,allMagic,'magic'],['ridge',40,allMagic,'magic'],['frost',32,mixed,'archer-and-magic'],['ash',40,allMagic,'magic'],['river',36,mixed,'archer-and-magic'],['coast',52,seaMix,'magic-on-the-batteries'],['harbour',36,harbourFleet,'a-shipyard-and-guns']]){
  check(ladderWins(id,perWave,ladder),id+' is winnable for '+perWave*10+' correct answers with a '+plan+' defence');
  check(!ladderWins(id,perWave-4,ladder),id+' still resists '+(perWave-4)*10+' correct answers');
 }
@@ -238,6 +262,12 @@ check(!ladderWins('river',36,allMagic),'on the river a magic-only line fires too
 check(!ladderWins('river',36,allArrows),'on the river arrows alone cannot crack the heavy escorts walking the bank');
 check(!ladderWins('coast',52,allMagic),'in the storm bay surging raider boats slip past a magic-only line that the mixed batteries pin for the same answers');
 check(!ladderWins('coast',56,allArrows),'in the storm bay ironclad plating floors every arrow, so an arrow-only line never clears it');
+// The harbour is the region built around the shipyard: a fleet of our own is
+// what holds the bay, and the guns behind it are what sink the black ship.
+check(!ladderWins('harbour',36,harbourGuns),'in the harbour the same six plots without a shipyard cannot hold the bay for the answers a blockade holds it with');
+check(ladderWins('harbour',56,harbourGuns),'those island guns do hold it once the player pays half as many answers again');
+check(!ladderWins('harbour',72,harbourBlockade),'a blockade with no guns behind it never clears the harbour at any price, because the black ship rakes the boats and sails on');
+check(!ladderWins('harbour',72,allArrows),'plated warships floor every arrow in the harbour too');
 // --- travelling between regions ---
 for(const key of ['_v5','_v4','_v3','_v2'])records.delete('6_0_HexkeepCampaign'+key);
 g=game();g.restoreCampaign();g.startGame();
@@ -288,6 +318,49 @@ check(g.battle.level==='river'&&g.battle.supplies>=9999,'the debug shortcut jump
 g.debugJump('coast');check(g.battle.level==='coast'&&g.battle.supplies>=9999,'and straight into the storm bay');
 g.toggleDebug();check(!g.debugMode&&g.battle.level==='marsh'&&g.battle.supplies<9999,'turning debug off restores the real campaign');
 g=game();g.toggleDebug();check(!g.debugMode,'debug cannot be switched on without the URL flag');
+
+// --- the harbour shipyard: a blockade of our own on the water ---
+const HM=MAPS.harbour;
+const island=HM.sites.findIndex(site=>site.rally===undefined),shore=HM.sites.findIndex(site=>site.lane===undefined);
+check(island>=0&&shore>=0,'the harbour has both island berths and shore plots');
+b=H.freshBattle(1,'harbour');b.supplies=400;
+check(!H.placement(b,island,'guard')&&H.placement(b,island,'shipyard'),'an island has no road to garrison, only a lane to patrol');
+check(H.placement(b,shore,'guard')&&!H.placement(b,shore,'shipyard'),'a plot away from the water garrisons the road and nothing else');
+check(!H.placement(H.freshBattle(1,'valley'),0,'shipyard'),'a dry region has no lane at all, so it never offers a shipyard');
+check(H.build(b,island,'shipyard'),'the island berth takes a shipyard');
+check(b.guards.length===2&&b.guards.every(g=>g.route==='water'),'a new shipyard launches two patrol boats onto the lane');
+check(b.guards.every(g=>g.step===HM.sites[island].lane),'the patrol boats take the station the plot declares on the lane');
+check(H.upgrade(b,island)&&b.guards.length===3,'upgrading the shipyard launches another boat');
+check(H.stationStep(HM,island,'shipyard')===HM.sites[island].lane&&H.stationStep(HM,island,'guard')===null,'a plot only ever stations the garrison it can actually hold');
+// A patrol boat holds a raider on the water. A crew can only ever stand in the
+// way of its own route, which is what keeps the two blockades separate.
+b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);
+const berth=b.guards[0].step;
+b.enemies=[{id:400,step:berth-1,hp:30,maxHp:30,armor:0,speed:1,route:'water',kind:'skiff'}];
+let held=H.resolveTurn(b);
+check(held.enemies[0].step===berth&&!!held.enemies[0].guardId,'a patrol boat stops a raider boat on the lane');
+held=H.resolveTurn(held);
+check(held.enemies[0].step===berth&&held.enemies[0].hp<30&&held.guards.some(g=>g.hp<g.maxHp),'the two of them fight where they met, and both take damage');
+b.enemies=[{id:401,step:berth-1,hp:30,maxHp:30,armor:0,speed:1,kind:'raider'}];
+check(!H.resolveTurn(b).enemies[0].guardId,'a patrol boat can never reach a walker on the road');
+// A garrison hits for its own tower's damage entry, so a shipyard is worth
+// more in a duel than a barracks even though both block the same way.
+check(H.types.shipyard.damage[0]>H.types.guard.damage[0],'a patrol boat hits harder than a single soldier');
+b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);
+b.enemies=[{id:402,step:b.guards[0].step,hp:40,maxHp:40,armor:0,speed:1,route:'water',kind:'skiff'}];
+b=H.resolveTurn(b);b=H.resolveTurn(b);
+check(40-b.enemies[0].hp===H.types.shipyard.damage[0],'the exchange lands the shipyard damage entry, not the tower level');
+// The black ship answers a blockade with its guns, so boats alone never hold
+// it: it rakes every patrol boat beside it and sails on regardless.
+b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);b.turn=1;
+b.enemies=[{id:410,step:b.guards[0].step,hp:90,maxHp:90,armor:2,route:'water',kind:'manowar',broadside:2,boss:true}];
+const crewBefore=b.guards.map(g=>g.hp),shipBefore=b.enemies[0].step;
+let raked=H.resolveTurn(b);
+check(raked.guards.every((g,i)=>g.hp<crewBefore[i]),'the black ship rakes every patrol boat beside it');
+check(raked.enemies[0].step>shipBefore,'and sails straight on, because a commander is never blocked');
+b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);b.turn=1;
+b.enemies=[{id:411,step:b.guards[0].step,hp:90,maxHp:90,armor:2,kind:'raider',broadside:2}];
+check(H.resolveTurn(b).guards.every((g,i)=>g.hp===b.guards[i].hp),'guns fired from the road never reach the patrol boats');
 
 // --- replaying a village without touching the journey ---
 for(const key of ['_v5','_v4','_v3','_v2'])records.delete('6_0_HexkeepCampaign'+key);

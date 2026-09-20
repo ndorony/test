@@ -5,7 +5,8 @@ User revisions supersede the original answer-per-turn slice and its six support 
 ## Learning and battle loop
 
 All instructions are Hebrew, with content direction handled per question/answer.
-Seven regions are played in order: valley, marsh, ridge, frost, ash, river, coast.
+Eight regions are played in order: valley, marsh, ridge, frost, ash, river,
+coast, harbour.
 The existing English registrations remain: ch51/ch51s and g611/g611h. Legacy
 6_0 and Adventure encounters remain compatible; no positional IDs are reordered.
 
@@ -30,10 +31,18 @@ Four original KayKit combat towers replace the former support roster:
 
 | Tower | Build | Level 2 | Level 3 | Hit (L1/L2/L3), every | Role |
 |---|---:|---:|---:|---|---|
-| Guards | 12 | 16 | 20 | 1/2/3, 2 beats | Block normal enemies, melee, rally, respawn |
+| Guards | 12 | 16 | 20 | 1/2/3, 2 beats | Garrison the road: block, melee, rally, respawn |
 | Archers | 14 | 18 | 20 | 1/2/3, 1 beat | Fast long-range arrows; affected by armor |
 | Mages | 18 | 22 | 26 | 3/5/8, 2 beats | Slower magic that ignores armor |
 | Catapults | 20 | 24 | 28 | 5/8/13, 3 beats | Area damage against groups |
+| Shipyard | 16 | 20 | 24 | 2/3/5, 2 beats | Garrison the water lane with 2/3/4 patrol boats |
+
+Guards and the shipyard are garrison towers: they put units on a route instead
+of shooting at it, and they never also fire. Both hit for their own damage entry,
+and a plot is only offered the towers it can hold — a garrison needs a station
+its plot declares on its own route (`rally` on the road, `lane` on the water)
+plus a tile of that route within range, so an island never takes a barracks and
+a dry region never offers a shipyard.
 
 All six plots are buildable; the sixth moved off the road to tile 35. Range tiles
 show the selected tower's actual hex-distance footprint. Every upgrade increases
@@ -116,7 +125,7 @@ the real campaign.
 
 ## Water regions
 
-Regions six and seven are fought over water. A region with boats carries a
+Regions six, seven and eight are fought over water. A region with boats carries a
 second route: `routes.land` is the road every walker follows and `routes.water`
 is the lane every boat follows. Nothing changes route mid-raid, so a walker
 never enters the water and a boat never lands. Both routes end beside the same
@@ -133,12 +142,24 @@ different lengths are compared fairly.
 | Raider boat (`skiff`) | Gathers a hex of speed every beat nothing touches it, up to its own limit — two hexes on the river, three in the bay; any wound that lands drops it back to a crawl | Arrows, which land on every beat and pin it; slow artillery lets it run between stones |
 | Ironclad (`warship`) | Heavy armour, and it plates every boat within one lane hex — itself excluded, so sinking it strips the whole escort at once | Magic, which ignores armour and plate alike |
 
-The two are mixed with attackers the player already knows, so neither a
-magic-only nor an arrow-only line clears either region. `river` closes with a
-raiding captain, `coast` with the ironclad flagship. Boat sprites come from the
+| Ship of the line (`manowar`) | Every other beat it rakes every patrol boat within one lane hex, and like every commander it cannot be blocked | Guns behind the blockade: the boats buy the time, the towers do the sinking |
+
+The three are mixed with attackers the player already knows, so neither a
+magic-only nor an arrow-only line clears any of the regions. `river` closes with
+a raiding captain, `coast` with the ironclad flagship, `harbour` with the black
+ship.
+
+`harbour` is the region built around the shipyard: almost the whole board is
+open sea, the causeway along the northern shore is short, and the only dry
+ground out in the bay is three rock islands. A blockade berthed on the middle
+island holds the bay for 360 answers; the same six plots with guns alone need
+560; a blockade with no guns behind it never clears the region at all, because
+the black ship rakes the boats and sails on. Boat sprites come from the
 CC0 Kenney Pirate Kit, baked with the same rig, crop and lighting as the
 walkers; the Pirate Kit has no animation clips, so the sailing atlas is one
-heave-and-roll swell per two battle beats.
+heave-and-roll swell per two battle beats. The harbour's own patrol boat is the
+same rig with the shared colormap repainted blue, so a blockade never reads as a
+raid.
 
 ## Journey progress and replay
 

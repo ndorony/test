@@ -11,7 +11,10 @@
   // every tile on it is open water, so the two routes never overlap.
   const lane=spec.lane||null,wet=[...(spec.water||[]),...(lane||[])];
   wet.forEach(id=>tiles[id].role='water');
-  (spec.island||[]).forEach(id=>tiles[id].role='island');
+  // An island keeps its own dressing even when a plot is built on it, so the
+  // set is kept beside the roles rather than only in them.
+  const islands=new Set(spec.island||[]);
+  islands.forEach(id=>{tiles[id].role='island';});
   (spec.forest||[]).forEach(id=>tiles[id].role='forest');
   (spec.hill||[]).forEach(id=>tiles[id].role='hill');
   (spec.homes||[]).forEach(id=>tiles[id].role='village');
@@ -38,7 +41,7 @@
   const routes={land:spec.path};if(lane)routes.water=lane;
   const water=new Set(wet);
   return {id:spec.id,board:spec.board,palette:spec.palette,scenery:spec.scenery||{},riverRot:spec.riverRot||Math.PI/3,
-   tiles,apron,path:spec.path,lane,routes,water,sites:spec.sites,world,cellWorld,distance,village:spec.village};
+   tiles,apron,path:spec.path,lane,routes,water,islands,sites:spec.sites,world,cellWorld,distance,village:spec.village};
  }
 
  // Region 1 — the original winding route: forest bend, crossing, south loop,
@@ -107,7 +110,7 @@
   path:[32,33,25,17,18,19,27,28,36,37,38,30,31],
   lane:[0,1,9,10,2,3,4,5,13,14,6,7,15],
   forest:[8,12,26,34,40,44,46],hill:[35,42,47],homes:[23,22],village:23,
-  sites:[{tile:16,name:'שער הנמל',rally:3},{tile:24,name:'מעלה הגדה',rally:2},{tile:11,name:'לשון היבשה',rally:5},{tile:20,name:'מחסן הסוחרים',rally:7},{tile:21,name:'סוללת המעגן',rally:11},{tile:29,name:'מגדלור הכפר',rally:11}],
+  sites:[{tile:16,name:'שער הנמל',rally:3},{tile:24,name:'מעלה הגדה',rally:2},{tile:11,name:'לשון היבשה',rally:5,lane:6},{tile:20,name:'מחסן הסוחרים',rally:7},{tile:21,name:'סוללת המעגן',rally:11,lane:8},{tile:29,name:'מגדלור הכפר',rally:11}],
   palette:{ground:0xffffff,water:0xffffff,swatches:{grass:['#9ed17f','#3c7a4e'],water:['#3a9fc4','#0e4b73']}},
   scenery:{flagTile:31,boulderTile:32,shore:true,dockTile:15},
   edge:{forest:3,river:()=>-99,road:(c,r)=>r===4&&c<0,water:(c,r)=>r===-1||(c<0||c>=8)&&r>=-1&&r<=1}});
@@ -118,12 +121,26 @@
   path:[8,9,17,18,10,11,3,4,12,13,21,22,23],
   lane:[40,41,42,34,35,43,44,36,37,45,46,38,39],water:[24,25,26,32,47],
   island:[33],forest:[0,1,6,7,14,15,20],hill:[2],homes:[30,31],village:31,
-  sites:[{tile:27,name:'סוללת האי',rally:10},{tile:16,name:'מפרץ הדייגים',rally:2},{tile:19,name:'כיכר החוף',rally:4},{tile:5,name:'משמר הרכס',rally:7},{tile:28,name:'סוללת המפרץ',rally:10},{tile:29,name:'שובר הגלים',rally:11}],
+  sites:[{tile:27,name:'סוללת האי',lane:7},{tile:16,name:'מפרץ הדייגים',rally:2},{tile:19,name:'כיכר החוף',rally:4},{tile:5,name:'משמר הרכס',rally:7},{tile:28,name:'סוללת המפרץ',rally:10,lane:8},{tile:29,name:'שובר הגלים',rally:11,lane:11}],
   palette:{ground:0xffffff,water:0xffffff,swatches:{grass:['#b9cc84','#5c7f4a'],water:['#2f93bd','#08415f']}},
   scenery:{flagTile:23,boulderTile:8,shore:true,dockTile:39},
   edge:{forest:2,river:()=>-99,road:(c,r)=>r===1&&c<0,water:(c,r)=>r>=4||c<0&&r>=3||c>=8&&r>=2}});
 
- const maps={valley,marsh,ridge,frost,ash,river,coast};
+ // Region 8 — the stone harbour: open sea across almost the whole board, a
+ // short causeway along the northern shore, and three rock islands that are the
+ // only dry ground out in the bay. The fleet lane is the long way round.
+ const harbour=buildMap({id:'harbour',board:'harbour.png',
+  path:[0,1,9,10,2,3,4,5,6,7],
+  lane:[40,41,42,43,35,34,26,27,28,36,37,38,30,22,14],
+  water:[13,16,17,18,19,20,21,24,31,32,33,39,45,46,47],
+  island:[25,29,44],homes:[15,23],village:15,
+  sites:[{tile:8,name:'ראש המזח',rally:0},{tile:11,name:'מחסני הנמל',rally:3},{tile:12,name:'שער המפרץ',rally:6},
+   {tile:25,name:'אי המערב',lane:6},{tile:29,name:'סלע התורן',lane:8},{tile:44,name:'שובר הגלים הדרומי',lane:9}],
+  palette:{ground:0xffffff,water:0xffffff,swatches:{grass:['#c6cf8e','#5f7f4e'],water:['#2b8ab5','#06395c']}},
+  scenery:{flagTile:7,boulderTile:0,shore:true,dockTile:14},
+  edge:{forest:2,river:()=>-99,road:(c,r)=>r===0&&c<0,water:(c,r)=>r>=2||c<0&&r>=1||c>=8&&r>=1}});
+
+ const maps={valley,marsh,ridge,frost,ash,river,coast,harbour};
 
  // Regions are played in order; each one is its own ten-raid campaign with its
  // own attackers. `enemy(wave,index)` describes a single arrival (its hp is
@@ -177,7 +194,14 @@
     :index%5===2?{kind:'knight',hp:5+Math.floor(wave/2),armor:1,shield:2+Math.floor(wave/4)}
     :index%5===4?{kind:'brute',hp:6+wave,armor:2}
     :{kind:'skiff',hp:7+wave,armor:0,speed:1,surge:3},
-   boss:{kind:'warship',name:'ספינת הדגל',hp:124,armor:3,plate:2}}
+   boss:{kind:'warship',name:'ספינת הדגל',hp:124,armor:3,plate:2}},
+  {id:'harbour',map:harbour,board:harbour.board,name:'נמל האבן',region:'המפרץ הגדול',waves:10,tough:2,
+   blurb:'כמעט הכול ים, והצי שלהם בא מכל כיוון. במספנה אפשר לשלוח סירות משלנו שיחסמו אותם על המים — אבל הספינה השחורה מרסקת כל סירה שנעמדת מולה, אז צריך גם מגדלי ירי.',
+   count:wave=>7+wave,
+   enemy:(wave,index)=>index%4===0?{kind:'warship',hp:6+Math.floor(wave/2),armor:3,plate:2}
+    :index%4===2?{kind:'raider',hp:4+Math.floor(wave/2),armor:wave>=4?1:0}
+    :{kind:'skiff',hp:5+Math.floor(wave/2),armor:0,speed:1,surge:3},
+   boss:{kind:'manowar',name:'הספינה השחורה',hp:120,armor:2,plate:2,broadside:2}}
  ];
 
  // The journey map between regions, drawn with Kenney's Cartography Pack on a
@@ -185,21 +209,25 @@
  // the two water villages continue it into the western sea.
  // roads[i] leads from levels[i] to levels[i+1].
  const atlas={
-  width:2200,
-  nodes:{valley:{x:1930,y:740,icon:'mill'},marsh:{x:1640,y:470,icon:'houseViking'},ridge:{x:1360,y:720,icon:'castleTall'},frost:{x:1090,y:330,icon:'towerWatch'},ash:{x:830,y:620,icon:'castleWide'},river:{x:520,y:300,icon:'dock'},coast:{x:170,y:640,icon:'ship'}},
-  start:'M 2210 900 Q 2050 900 1930 740',
-  roads:['M 1930 740 Q 1900 500 1640 470','M 1640 470 Q 1600 760 1360 720','M 1360 720 Q 1120 700 1090 330','M 1090 330 Q 800 330 830 620','M 830 620 Q 700 300 520 300','M 520 300 Q 290 350 170 640'],
+  width:2500,
+  nodes:{valley:{x:2260,y:740,icon:'mill'},marsh:{x:1970,y:470,icon:'houseViking'},ridge:{x:1690,y:720,icon:'castleTall'},frost:{x:1420,y:330,icon:'towerWatch'},ash:{x:1160,y:620,icon:'castleWide'},river:{x:850,y:300,icon:'dock'},coast:{x:500,y:640,icon:'ship'},harbour:{x:150,y:300,icon:'dock'}},
+  start:'M 2540 900 Q 2380 900 2260 740',
+  roads:['M 2260 740 Q 2230 500 1970 470','M 1970 470 Q 1930 760 1690 720','M 1690 720 Q 1450 700 1420 330','M 1420 330 Q 1130 330 1160 620','M 1160 620 Q 1030 300 850 300','M 850 300 Q 620 350 500 640','M 500 640 Q 250 640 150 300'],
   scenery:[
-   {icon:'compass',x:2100,y:130,w:170},
-   {icon:'treePines',x:2080,y:600,w:120},{icon:'treePine',x:1790,y:640,w:80},{icon:'treePinesSmall',x:1780,y:900,w:100},{icon:'bush',x:2090,y:790,w:70},{icon:'houses',x:2000,y:880,w:80},
-   {icon:'lake',x:1810,y:330,w:230},{icon:'lakeRound',x:1470,y:420,w:120},{icon:'textureWater',x:1930,y:200,w:120},{icon:'bush',x:1530,y:600,w:70},{icon:'dock',x:1710,y:250,w:80},
-   {icon:'rocksMountain',x:1220,y:880,w:130},{icon:'rocksTall',x:1500,y:890,w:110},{icon:'rocks',x:1200,y:590,w:100},{icon:'bridge',x:1510,y:710,w:80},
-   {icon:'rocksMountain',x:960,y:170,w:160},{icon:'rocksA',x:1160,y:140,w:130},{icon:'rocksB',x:1310,y:240,w:120},{icon:'rocksTall',x:1420,y:130,w:110},{icon:'treePineTall',x:920,y:390,w:80},{icon:'treePineLarge',x:1260,y:420,w:100},
-   {icon:'vulcano',x:730,y:400,w:160},{icon:'skull',x:960,y:830,w:80},{icon:'cactus',x:720,y:800,w:80},{icon:'campfire',x:990,y:560,w:70},{icon:'graveyard',x:850,y:880,w:110},{icon:'rocksA',x:680,y:600,w:90},
+   {icon:'compass',x:2430,y:130,w:170},
+   {icon:'treePines',x:2410,y:600,w:120},{icon:'treePine',x:2120,y:640,w:80},{icon:'treePinesSmall',x:2110,y:900,w:100},{icon:'bush',x:2420,y:790,w:70},{icon:'houses',x:2330,y:880,w:80},
+   {icon:'lake',x:2140,y:330,w:230},{icon:'lakeRound',x:1800,y:420,w:120},{icon:'textureWater',x:2260,y:200,w:120},{icon:'bush',x:1860,y:600,w:70},{icon:'dock',x:2040,y:250,w:80},
+   {icon:'rocksMountain',x:1550,y:880,w:130},{icon:'rocksTall',x:1830,y:890,w:110},{icon:'rocks',x:1530,y:590,w:100},{icon:'bridge',x:1840,y:710,w:80},
+   {icon:'rocksMountain',x:1290,y:170,w:160},{icon:'rocksA',x:1490,y:140,w:130},{icon:'rocksB',x:1640,y:240,w:120},{icon:'rocksTall',x:1750,y:130,w:110},{icon:'treePineTall',x:1250,y:390,w:80},{icon:'treePineLarge',x:1590,y:420,w:100},
+   {icon:'vulcano',x:1060,y:400,w:160},{icon:'skull',x:1290,y:830,w:80},{icon:'cactus',x:1050,y:800,w:80},{icon:'campfire',x:1320,y:560,w:70},{icon:'graveyard',x:1180,y:880,w:110},{icon:'rocksA',x:1010,y:600,w:90},
    // The western half of the parchment is open water: the river mouth and the bay.
-   {icon:'lake',x:250,y:180,w:200},{icon:'textureWater',x:380,y:120,w:200},{icon:'textureWater',x:120,y:300,w:180},{icon:'textureWater',x:300,y:850,w:220},{icon:'textureWater',x:60,y:560,w:160},
-   {icon:'lakeRound',x:400,y:520,w:140},{icon:'ship',x:620,y:180,w:90},{icon:'ship',x:300,y:720,w:110},{icon:'ship',x:90,y:430,w:80},
-   {icon:'dock',x:560,y:380,w:70},{icon:'bridge',x:660,y:450,w:80},{icon:'bush',x:470,y:660,w:60},{icon:'rocks',x:120,y:830,w:90},{icon:'rocksTall',x:430,y:240,w:90},{icon:'treePine',x:590,y:560,w:70},{icon:'houses',x:300,y:530,w:70}
+   {icon:'lake',x:580,y:180,w:200},{icon:'textureWater',x:710,y:120,w:200},{icon:'textureWater',x:450,y:300,w:180},{icon:'textureWater',x:630,y:850,w:220},{icon:'textureWater',x:390,y:560,w:160},
+   {icon:'lakeRound',x:730,y:520,w:140},{icon:'ship',x:950,y:180,w:90},{icon:'ship',x:630,y:720,w:110},{icon:'ship',x:420,y:430,w:80},
+   {icon:'dock',x:890,y:380,w:70},{icon:'bridge',x:990,y:450,w:80},{icon:'bush',x:800,y:660,w:60},{icon:'rocks',x:450,y:830,w:90},{icon:'rocksTall',x:760,y:240,w:90},{icon:'treePine',x:920,y:560,w:70},{icon:'houses',x:630,y:530,w:70},
+   // The far west is the great bay: the stone harbour and its approaches.
+   {icon:'textureWater',x:300,y:520,w:190},{icon:'textureWater',x:120,y:820,w:170},{icon:'textureWater',x:260,y:140,w:150},
+   {icon:'ship',x:330,y:420,w:100},{icon:'ship',x:120,y:560,w:80},{icon:'dock',x:300,y:250,w:70},
+   {icon:'lakeRound',x:170,y:900,w:130},{icon:'rocks',x:60,y:420,w:80},{icon:'rocksTall',x:400,y:760,w:90},{icon:'bush',x:230,y:640,w:60}
   ]};
 
  g.HEXKEEP_MAPS=maps;g.HEXKEEP_LEVELS=levels;g.HEXKEEP_ATLAS=atlas;

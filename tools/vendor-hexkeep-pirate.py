@@ -1,8 +1,9 @@
 """Vendor the pinned CC0 Kenney Pirate Kit inputs. Run only during asset preparation.
 
 The medieval hexes, roads and water tiles keep coming from the KayKit pack
-(tools/vendor-hexkeep.py); this script only adds what the two water regions
-need on top of them: the attacking boats and the shore decorations. Kenney
+(tools/vendor-hexkeep.py); this script only adds what the water regions need
+on top of them: the attacking boats, the harbour's own patrol boat and the
+shore decorations. Kenney
 ships one shared colormap beside the GLBs, so the texture is vendored too and
 the relative `Textures/colormap.png` URI inside every GLB keeps resolving.
 """
@@ -13,6 +14,8 @@ INSIDE = 'Models/GLB format/'
 models = {
     'skiff': 'ship-pirate-small',
     'warship': 'ship-large',
+    'manowar': 'ship-pirate-large',
+    'patrol': 'ship-small',
     'palm': 'palm-detailed-straight',
     'palmBend': 'palm-detailed-bend',
     'shoreRock': 'rocks-sand-a',

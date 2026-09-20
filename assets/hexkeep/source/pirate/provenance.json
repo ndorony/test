@@ -8,6 +8,12 @@
     "warship": {
       "source": "Models/GLB format/ship-large.glb"
     },
+    "manowar": {
+      "source": "Models/GLB format/ship-pirate-large.glb"
+    },
+    "patrol": {
+      "source": "Models/GLB format/ship-small.glb"
+    },
     "palm": {
       "source": "Models/GLB format/palm-detailed-straight.glb"
     },

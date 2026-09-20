@@ -78,10 +78,12 @@
 ## Hexkeep water regions (games/hexkeep.js, games/hexkeep-map.js)
 
 - **Files:** `assets/hexkeep/river.png`, `assets/hexkeep/coast.png`,
-  `assets/hexkeep/enemy-skiff-walk.png`, `assets/hexkeep/enemy-warship-walk.png`,
-  and the vendored inputs in `assets/hexkeep/source/pirate/`.
+  `assets/hexkeep/harbour.png`, `assets/hexkeep/enemy-skiff-walk.png`,
+  `assets/hexkeep/enemy-warship-walk.png`, `assets/hexkeep/enemy-manowar-walk.png`,
+  `assets/hexkeep/patrol-sail.png`, `assets/hexkeep/shipyard*.png`, and the
+  vendored inputs in `assets/hexkeep/source/pirate/`.
 - **Source:** **Kenney "Pirate Kit"** — https://kenney.nl/assets/pirate-kit. The
-  eleven GLB models the boards actually place (two hulls, palms, shore rocks, a
+  twelve GLB models the boards actually place (four hulls, palms, shore rocks, a
   dock, a wreck, a barrel and a sand patch) plus the pack's shared
   `Textures/colormap.png` are vendored by `tools/vendor-hexkeep-pirate.py`, which
   pins the download URL and records per-model provenance in
@@ -95,6 +97,10 @@
   same world as a road. Only the boats and the shore decorations come from the
   Pirate Kit, and they keep their own colormap rather than the per-region palette
   atlas.
+  The harbour's patrol boat is the same Pirate Kit hull with the shared colormap
+  repainted blue on a canvas at bake time, and the shipyard tower is a KayKit
+  lumber workshop standing on a Pirate Kit dock.
 - **Runtime:** The app loads only the baked PNGs. three.js and GLTFLoader are used
-  at bake time by `tools/hexkeep-board-render.html` and
-  `tools/hexkeep-boat-render.html`, never by the game.
+  at bake time by `tools/hexkeep-board-render.html`,
+  `tools/hexkeep-boat-render.html` and `tools/hexkeep-tower-render.html`, never
+  by the game.

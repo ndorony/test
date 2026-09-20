@@ -109,8 +109,13 @@ const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
    // The crossing tile's road runs two sixth-turns behind its river; the bridge
    // spans that road, i.e. across the water on every river orientation.
    if(t.role==='bridge')add('bridge',w.x,w.z,map.riverRot-2*Math.PI/3);
-   // An island is dry land ringed by water: sand, palms and a shore rock.
-   if(t.role==='island'){fitAdd('sandPatch',w.x,w.z,0,.02);fitAdd(t.id%2?'palm':'palmBend',w.x-.2,w.z+.15,t.id%6,.04);fitAdd('shoreRock',w.x+.5,w.z-.4,2,.02);}
+   // An island is dry land ringed by water: sand, palms and a shore rock. A
+   // plot built on one keeps the sand and the rock; only the palm steps aside.
+   if(map.islands.has(t.id)){fitAdd('shoreRock',w.x+.5,w.z-.4,2,.02);
+    // A bare island gets its full beach and a palm; one that carries a plot
+    // keeps the beach to the seaward edge so the building pad stays readable.
+    if(t.role==='build')fitAdd('sandPatch',w.x-.6,w.z+.5,0,.002,1.1);
+    else {fitAdd('sandPatch',w.x,w.z,0,.002);fitAdd(t.id%2?'palm':'palmBend',w.x-.2,w.z+.15,t.id%6,.04);}}
    if(t.role==='forest'){add(t.id%2?'broadleaf':'tree',w.x,w.z,0,1.28);add('rock',w.x+.52,w.z+.62,1,2.2);}
    if(t.role==='hill'&&map.scenery.rockyHills)add('rock',w.x-.35,w.z+.4,2,2.6);
    if(t.role==='build')add('site',w.x,w.z,0,.66,.005);
@@ -120,7 +125,7 @@ const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
    // A coastal village keeps its landing: a dock on the last lane hex, and a
    // palm and beached rock wherever dry land meets the water.
    if(t.id===map.scenery.dockTile){fitAdd('dock',w.x,w.z,map.scenery.dockRot||0,.03);fitAdd('barrel',w.x+.5,w.z+.3,0,.06);}
-   if(map.scenery.shore&&t.role!=='water'&&t.role!=='island'&&neighboursWater(map,t.id)){
+   if(map.scenery.shore&&t.role!=='water'&&!map.islands.has(t.id)&&neighboursWater(map,t.id)){
     if((t.id*7)%3===0)fitAdd(t.id%2?'palm':'palmBend',w.x+.5,w.z-.45,t.id%6);
     else if((t.id*7)%3===1)fitAdd('shoreRock',w.x-.55,w.z+.45,t.id%6);
    }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v204-hexkeep-water';
+const CACHE_NAME = 'my-app-cache-v205-hexkeep-harbour';
 const CORE_ASSETS = [
   "/assets/models/shooter/shooter_models.js",
   "/data.js?v=2",
@@ -29,6 +29,7 @@ const CORE_ASSETS = [
   '/assets/hexkeep/ash.png',
   '/assets/hexkeep/river.png',
   '/assets/hexkeep/coast.png',
+  '/assets/hexkeep/harbour.png',
   '/assets/hexkeep/atlas/bridge.png',
   '/assets/hexkeep/atlas/bush.png',
   '/assets/hexkeep/atlas/cactus.png',
@@ -72,6 +73,8 @@ const CORE_ASSETS = [
   '/assets/hexkeep/enemy-warlock-fight.png',
   '/assets/hexkeep/enemy-skiff-walk.png',
   '/assets/hexkeep/enemy-warship-walk.png',
+  '/assets/hexkeep/enemy-manowar-walk.png',
+  '/assets/hexkeep/patrol-sail.png',
   '/assets/hexkeep/guard.png',
   '/assets/hexkeep/guard-2.png',
   '/assets/hexkeep/guard-3.png',
@@ -81,6 +84,9 @@ const CORE_ASSETS = [
   '/assets/hexkeep/mage-3.png',
   '/assets/hexkeep/catapult-2.png',
   '/assets/hexkeep/catapult-3.png',
+  '/assets/hexkeep/shipyard.png',
+  '/assets/hexkeep/shipyard-2.png',
+  '/assets/hexkeep/shipyard-3.png',
 
   '/assets/hexkeep/archer.png',
   '/assets/hexkeep/mage.png',

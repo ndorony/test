@@ -5,6 +5,7 @@
 
     node tools/hexkeep-bake.cjs boats
     node tools/hexkeep-bake.cjs 'boats?only=skiff'
+    node tools/hexkeep-bake.cjs 'boats?only=patrol'
 
   Same rig, crop window and sheet layout as the walkers
   (tools/hexkeep-unit-render.html), so a boat drops straight into the same
@@ -34,7 +35,12 @@ const BOATS=[
  // axis the walker sheets use, so no extra yaw is needed; `draft` sinks the
  // keel under the waterline.
  {kind:'skiff',model:'skiff',fit:1.9,yaw:0,draft:.1,heave:.1,roll:.1,pitch:.05},
- {kind:'warship',model:'warship',fit:2.5,yaw:0,draft:.16,heave:.07,roll:.05,pitch:.035}
+ {kind:'warship',model:'warship',fit:2.5,yaw:0,draft:.16,heave:.07,roll:.05,pitch:.035},
+ {kind:'manowar',model:'manowar',fit:2.9,yaw:0,draft:.18,heave:.06,roll:.04,pitch:.03},
+ // The harbour's own patrol boat. Re-inked in the defenders' steel blue so it
+ // never reads as one of the raiders, and it ships as `patrol-sail.png`
+ // rather than an `enemy-` sheet because nothing about it attacks the village.
+ {kind:'patrol',model:'patrol',fit:2.0,yaw:0,draft:.1,heave:.09,roll:.08,pitch:.045,tint:0x2f6ad0,sheet:'patrol-sail.png'}
 ];
 const only=new URLSearchParams(location.search).get('only');
 (async()=>{try{
@@ -45,6 +51,23 @@ const only=new URLSearchParams(location.search).get('only');
  const camera=new T.OrthographicCamera(-10.7,10.7,6.019,-6.019,.1,100);
  camera.position.set(8,13,18);camera.lookAt(0,0,0);camera.updateMatrixWorld();
 
+ // Kenney's hulls all share one colormap, and a material colour multiply is
+ // washed out by the sun and the tone mapping. Repainting the shared texture is
+ // what actually reads as a different fleet, the same way a region repaints the
+ // hex palette atlas.
+ let tinted=null;
+ async function tintedMap(hex){
+  if(tinted)return tinted;
+  const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src='/assets/hexkeep/source/pirate/Textures/colormap.png';});
+  const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+  const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+  // 'color' keeps the kit's shading and takes only the hue, which is what turns
+  // a tan hull genuinely blue; a multiply only ever greys it down.
+  ctx.globalCompositeOperation='color';
+  ctx.fillStyle='#'+hex.toString(16).padStart(6,'0');ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.globalCompositeOperation='source-over';
+  tinted=new T.CanvasTexture(canvas);tinted.flipY=false;tinted.encoding=T.sRGBEncoding;return tinted;
+ }
  async function sheet(boat){
   const asset=await loader.loadAsync('/assets/hexkeep/source/pirate/'+boat.model+'.glb'),model=asset.scene;
   // Fit the hull to the hex grid and stand it on its own waterline, so every
@@ -52,6 +75,7 @@ const only=new URLSearchParams(location.search).get('only');
   const box=new T.Box3().setFromObject(model),size=box.getSize(new T.Vector3()),centre=box.getCenter(new T.Vector3());
   const scale=boat.fit/Math.max(size.x,size.z);
   model.scale.setScalar(scale);
+  if(boat.tint){const map=await tintedMap(boat.tint);model.traverse(o=>{if(o.isMesh&&o.material.map){o.material=o.material.clone();o.material.map=map;}});}
   model.position.set(-centre.x*scale,-box.min.y*scale-(boat.draft||0),-centre.z*scale);
   const hull=new T.Group();hull.add(model);hull.rotation.y=boat.yaw||0;
   const pivot=new T.Group();pivot.add(hull);
@@ -77,7 +101,7 @@ const only=new URLSearchParams(location.search).get('only');
  const raider=JSON.parse(current.slice(current.indexOf('{'),current.lastIndexOf('}')+1));
  const variants=Object.assign({},raider.variants||{});
  for(const boat of BOATS.filter(b=>!only||only.split(',').includes(b.kind))){
-  await post('enemy-'+boat.kind+'-walk.png',await sheet(boat));
+  await post(boat.sheet||('enemy-'+boat.kind+'-walk.png'),await sheet(boat));
   // One swell per two battle beats reads as a boat riding the water rather
   // than marching; the walker sheets keep their own clip timings.
   variants[boat.kind]={frames:24,directions:6,duration:2200,clip:'swell',model:boat.model,route:'water'};

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+  hexkeep-tower-render.html — bakes a tower sprite and its projection entry.
+  Driven headlessly by tools/hexkeep-bake.cjs:
+
+    node tools/hexkeep-bake.cjs towers
+    node tools/hexkeep-bake.cjs 'towers?only=shipyard'
+
+  Same rig, camera and lights as the boards and the original tower bake
+  (tools/render-hexkeep-upgrades.cjs), so a new tower sits on the hex grid
+  exactly like the four that were there first. Each level is autocropped and
+  its box is written into assets/hexkeep/projection.js beside the others;
+  every sprite already in that file is preserved.
+
+  The shipyard is a KayKit lumber workshop standing on a Pirate Kit dock, so it
+  reads as ours on the water: level two adds a second dock arm and its stores,
+  level three raises a mast and the harbour banner.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<script src="/tools/vendor/three.min.js"></script>
+<script src="/tools/vendor/GLTFLoader.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
+const TOWERS={shipyard:{deck:'dock',house:'lumber',accent:0x2474ba}};
+const only=new URLSearchParams(location.search).get('only');
+(async()=>{try{
+ const T=THREE,loader=new T.GLTFLoader(),models={};
+ const kay=Object.keys((await (await fetch('/assets/hexkeep/provenance.json')).json()).models);
+ for(const key of kay)models[key]=(await loader.loadAsync('/assets/hexkeep/source/'+key+'.gltf')).scene;
+ const pirate=Object.keys((await (await fetch('/assets/hexkeep/source/pirate/provenance.json')).json()).models);
+ for(const key of pirate)models[key]=(await loader.loadAsync('/assets/hexkeep/source/pirate/'+key+'.glb')).scene;
+
+ const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
+ renderer.setSize(1600,900);renderer.outputEncoding=T.sRGBEncoding;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+ renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+ const camera=new T.OrthographicCamera(-10.7,10.7,6.019,-6.019,.1,100);
+ camera.position.set(8,13,18);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+ const project=(x,y,z)=>{const v=new T.Vector3(x,y,z).project(camera);return {x:(v.x+1)*50,y:(1-v.y)*50};};
+ const scene=new T.Scene();
+ scene.add(new T.HemisphereLight(0xfff5de,0x536e68,.85));
+ const sun=new T.DirectionalLight(0xffefce,1.3);sun.position.set(-8,16,7);sun.castShadow=true;
+ Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50});
+ sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0008;scene.add(sun);
+
+ // A pirate prop is authored much larger than a KayKit hex, so it is placed by
+ // the span it should cover rather than by a raw scale factor.
+ function put(group,key,x,z,rotation,y,span){
+  const m=models[key].clone(true);
+  if(span){const box=new T.Box3().setFromObject(m),size=box.getSize(new T.Vector3());m.scale.multiplyScalar(span/Math.max(size.x,size.z));}
+  m.position.set(x,y,z);m.rotation.y=rotation;
+  m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  group.add(m);return m;
+ }
+
+ function build(spec,level){
+  const g=new T.Group();
+  put(g,spec.deck,0,0,0,0,1.45);
+  const house=put(g,spec.house,-.15,.05,Math.PI/6,.18,null);
+  house.scale.multiplyScalar(level===1?1:level===2?1.12:1.24);
+  if(level>=2){put(g,spec.deck,1,-.55,Math.PI/3,0,1);put(g,'crate',.95,-.5,0,.22,null).scale.multiplyScalar(1.1);put(g,'barrel',-.8,-.5,0,.14,.36);}
+  if(level>=3){
+   const mast=new T.Mesh(new T.CylinderGeometry(.04,.05,2.6,8),new T.MeshStandardMaterial({color:0x8a6035,roughness:.85}));
+   mast.position.set(.75,1.45,.5);mast.castShadow=true;g.add(mast);
+   const banner=new T.Mesh(new T.BoxGeometry(.62,.42,.03),new T.MeshStandardMaterial({color:spec.accent,roughness:.6}));
+   banner.position.set(1.06,2.35,.5);banner.castShadow=true;g.add(banner);
+   put(g,'barrel',.3,.7,0,.14,.36);
+  }
+  return g;
+ }
+
+ const current=await (await fetch('/assets/hexkeep/projection.js')).text();
+ const art=JSON.parse(current.slice(current.indexOf('{'),current.lastIndexOf('}')+1));
+ const origin=project(0,0,0);
+ for(const type of Object.keys(TOWERS).filter(t=>!only||only.split(',').includes(t))){
+  for(const level of [1,2,3]){
+   const key=type+(level>1?'-'+level:''),group=build(TOWERS[type],level);
+   scene.add(group);renderer.render(scene,camera);
+   const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=900;
+   const ctx=canvas.getContext('2d');ctx.drawImage(renderer.domElement,0,0);
+   const pixels=ctx.getImageData(0,0,1600,900).data;
+   let x0=1600,y0=900,x1=0,y1=0;
+   for(let y=0;y<900;y++)for(let x=0;x<1600;x++)if(pixels[(y*1600+x)*4+3]>2){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+   const crop=document.createElement('canvas');crop.width=x1-x0+5;crop.height=y1-y0+5;
+   crop.getContext('2d').drawImage(canvas,x0-2,y0-2,crop.width,crop.height,0,0,crop.width,crop.height);
+   await post(key+'.png',crop.toDataURL('image/png').split(',')[1]);
+   art.sprites[key]={w:crop.width/16,h:crop.height/9,dx:(x0-2)/16-origin.x,dy:(y0-2)/9-origin.y};
+   scene.remove(group);
+  }
+ }
+ renderer.dispose();
+ await post('projection.js',btoa('window.HEXKEEP_ART = '+JSON.stringify(art)+';\n'));
+ await post('_done','');
+}catch(e){await post('_error',String(e&&e.stack||e));}})();
+</script>
+</body>
+</html>

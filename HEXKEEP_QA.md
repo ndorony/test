@@ -96,3 +96,24 @@ a road and a lane. The storm bay was retuned around the slower boats — they st
 inside an ironclad's plating longer, which made the region harder — so its
 commander, escorts and toughness came down and the mixed battery line wins it
 for the same 520 answers as before.
+
+Harbour revision (v205): an eighth region, `harbour`, and a fifth tower. The
+shipyard is a garrison tower like the barracks, but on the water: it berths
+2/3/4 patrol boats at the station its plot declares on the lane, and they block
+and duel enemy boats exactly as soldiers block walkers. Coverage: an island
+offers a shipyard and no barracks and a shore plot the reverse, a dry region
+offers no shipyard at all, a patrol boat stops a raider boat and never reaches
+a walker on the road, guns fired from the road never reach the patrol boats, and
+the black ship rakes every boat beside it before sailing on. Two bugs the new
+tower exposed are fixed with it: a garrison tower was also firing as a ranged
+tower every beat, and melee damage was reading the tower's level instead of its
+damage entry (identical for the barracks, which is why it had never shown).
+
+Balance: the blockade build clears the harbour for 360 answers, the same six
+plots with guns alone need 560, a blockade with no guns behind it never clears
+it at any price, and arrows alone never clear it either. The journey parchment
+is now 2500x1000 and carries all eight villages.
+
+Screenshots: artifacts/hexkeep/harbour-battle.png.
+
+Cache version: v205-hexkeep-harbour.
