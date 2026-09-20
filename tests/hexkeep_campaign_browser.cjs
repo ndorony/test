@@ -10,7 +10,7 @@ try{
  async function enter(id='grp-ch51-6',fresh=true){
   await page.goto('http://127.0.0.1:8767/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>typeof BaseGameComponent!=='undefined');
-  await page.evaluate(({id,fresh})=>{const a=getItemById(apps,id);if(fresh){setLocalStorage(id+'_HexkeepCampaign_v4',null);setLocalStorage(id+'_HexkeepCampaign_v3',null);setLocalStorage(getActivityMode()+'_'+id+'_Weights',getDataList(a.listName).map(()=>15));setLocalStorage(id+'_CurrentLevelProgress',{progress:0,total:9999});setLocalStorage(id+'_new_items',[]);}location.hash='/play/hexkeep/'+id;},{id,fresh});
+  await page.evaluate(({id,fresh})=>{const a=getItemById(apps,id);if(fresh){setLocalStorage(id+'_HexkeepCampaign_v5',null);setLocalStorage(id+'_HexkeepCampaign_v4',null);setLocalStorage(id+'_HexkeepCampaign_v3',null);setLocalStorage(getActivityMode()+'_'+id+'_Weights',getDataList(a.listName).map(()=>15));setLocalStorage(id+'_CurrentLevelProgress',{progress:0,total:9999});setLocalStorage(id+'_new_items',[]);}location.hash='/play/hexkeep/'+id;},{id,fresh});
   await page.waitForSelector('.hk-game');
  }
  async function answer(correct=true){const i=await state(g=>g.options.indexOf(g.question.result));await page.locator('.hk-answers button').nth(correct?i:(i+1)%4).click();}
@@ -31,7 +31,7 @@ try{
  for(let wave=1;wave<=10;wave++){
   await page.evaluate(target=>{const g=document.querySelector('.hk-game').__vue__;while(g.battle.earned<target){if(g.phase==='resolved')g.continueGame();g.answer(g.options.indexOf(g.question.result));if(g.phase==='completed')throw Error('unexpected curriculum exit');}},wave*24);
   await page.locator('.hk-return').click();
-  while(purchase<plan.length){const [index,type]=plan[purchase];const ok=await page.locator('.hk-game').evaluate((el,{index,type})=>{const g=el.__vue__;g.selectSite(index);if(type==='upgrade'){if(!g.canUpgrade())return false;g.upgradeSelected();}else{g.selectedType=type;if(!g.canBuild())return false;g.buildSelected();}return true;},{index,type});if(!ok)break;purchase++;}
+  while(purchase<plan.length){const [index,type]=plan[purchase];const ok=await page.locator('.hk-game').evaluate((el,{index,type})=>{const g=el.__vue__;g.selectSite(index);let bought;if(type==='upgrade'){bought=g.canUpgrade();if(bought)g.upgradeSelected();}else{g.selectedType=type;bought=g.canBuild();if(bought)g.buildSelected();}g.closeBuildMenu();return bought;},{index,type});if(!ok)break;purchase++;}
   await page.locator('.hk-launch').click();
   if(wave===1){
    await page.clock.runFor(2200);check(await state(g=>g.battle.turn)===2,'raid advances automatically without questions');
@@ -65,7 +65,7 @@ try{
   await enter(id);await page.locator('.hk-opening button').click();await page.locator('.hk-study').click();await page.evaluate(()=>{const g=document.querySelector('.hk-game').__vue__,w=getDataList(g.currentApp.listName).map(()=>0);w[g.questionIndex]=1;setLocalStorage(getActivityMode()+'_'+g.currentAppId+'_Weights',w);setLocalStorage(g.currentAppId+'_CurrentLevelProgress',{progress:0,total:1});});
   await answer();await page.waitForFunction(()=>!document.querySelector('.hk-game'));
   check(await page.evaluate(({id})=>location.hash.includes(id.startsWith('adv-')?'/adventure/world/hexkeep':'/app/'+id),{id}),'engine completion route '+id);
-  check(await page.evaluate(id=>getLocalStorage(id+'_HexkeepCampaign_v4').levels.valley.battle.earned,id)===1,'final answer currency saved before navigation '+id);
+  check(await page.evaluate(id=>getLocalStorage(id+'_HexkeepCampaign_v5').levels.valley.battle.earned,id)===1,'final answer currency saved before navigation '+id);
  }
  check(!errors.length,'no page errors: '+errors.join('; '));console.log(checks+' campaign browser checks passed');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

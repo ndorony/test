@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v203-hexkeep-balance';
+const CACHE_NAME = 'my-app-cache-v204-hexkeep-water';
 const CORE_ASSETS = [
   "/assets/models/shooter/shooter_models.js",
   "/data.js?v=2",
@@ -27,6 +27,8 @@ const CORE_ASSETS = [
   '/assets/hexkeep/ridge.png',
   '/assets/hexkeep/frost.png',
   '/assets/hexkeep/ash.png',
+  '/assets/hexkeep/river.png',
+  '/assets/hexkeep/coast.png',
   '/assets/hexkeep/atlas/bridge.png',
   '/assets/hexkeep/atlas/bush.png',
   '/assets/hexkeep/atlas/cactus.png',
@@ -68,6 +70,8 @@ const CORE_ASSETS = [
   '/assets/hexkeep/enemy-knight-fight.png',
   '/assets/hexkeep/enemy-warlock-walk.png',
   '/assets/hexkeep/enemy-warlock-fight.png',
+  '/assets/hexkeep/enemy-skiff-walk.png',
+  '/assets/hexkeep/enemy-warship-walk.png',
   '/assets/hexkeep/guard.png',
   '/assets/hexkeep/guard-2.png',
   '/assets/hexkeep/guard-3.png',

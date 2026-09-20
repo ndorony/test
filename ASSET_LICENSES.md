@@ -74,3 +74,27 @@
   for the rail room; the rails themselves are drawn at runtime, not a sprite.
 - **Runtime:** Plain `<img>` loads drawn to a 2D canvas. No loader, atlas or 3D
   library is involved.
+
+## Hexkeep water regions (games/hexkeep.js, games/hexkeep-map.js)
+
+- **Files:** `assets/hexkeep/river.png`, `assets/hexkeep/coast.png`,
+  `assets/hexkeep/enemy-skiff-walk.png`, `assets/hexkeep/enemy-warship-walk.png`,
+  and the vendored inputs in `assets/hexkeep/source/pirate/`.
+- **Source:** **Kenney "Pirate Kit"** — https://kenney.nl/assets/pirate-kit. The
+  eleven GLB models the boards actually place (two hulls, palms, shore rocks, a
+  dock, a wreck, a barrel and a sand patch) plus the pack's shared
+  `Textures/colormap.png` are vendored by `tools/vendor-hexkeep-pirate.py`, which
+  pins the download URL and records per-model provenance in
+  `assets/hexkeep/source/pirate/provenance.json`. The pack's licence ships beside
+  them as `LICENSE.txt`.
+- **License:** Creative Commons Zero (CC0 1.0 Universal) — free for personal,
+  educational and commercial use; attribution to Kenney is not required.
+- **Notes:** The hexes, roads, water tiles and buildings on both boards are still
+  the KayKit Medieval Hexagon Pack already vendored for the other five regions,
+  rendered with the same camera, lights and tone mapping, so a shore reads as the
+  same world as a road. Only the boats and the shore decorations come from the
+  Pirate Kit, and they keep their own colormap rather than the per-region palette
+  atlas.
+- **Runtime:** The app loads only the baked PNGs. three.js and GLTFLoader are used
+  at bake time by `tools/hexkeep-board-render.html` and
+  `tools/hexkeep-boat-render.html`, never by the game.

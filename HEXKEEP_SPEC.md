@@ -5,6 +5,7 @@ User revisions supersede the original answer-per-turn slice and its six support 
 ## Learning and battle loop
 
 All instructions are Hebrew, with content direction handled per question/answer.
+Seven regions are played in order: valley, marsh, ridge, frost, ash, river, coast.
 The existing English registrations remain: ch51/ch51s and g611/g611h. Legacy
 6_0 and Adventure encounters remain compatible; no positional IDs are reordered.
 
@@ -104,8 +105,48 @@ dashed road that reads right to left. A new campaign starts inside the first
 village; winning a region's final raid opens the map, draws the road to the next
 village and picks it in the detail card. Reopening the game mid-region lands
 directly in that region; closing on the map reopens on the map. Locked villages
-are greyed and cannot be picked. Layout data lives in `HEXKEEP_ATLAS`.
+are greyed and cannot be picked. Layout data lives in `HEXKEEP_ATLAS`, on a
+2200x1000 parchment that carries all seven villages.
 
-Debug mode (local dev server only — localhost/127.0.0.1 with `?debug=1`; off in production): a separate save slot (`_HexkeepDebug_v4`), every
-region loads with 9999 points, every village is open, and header buttons open the
-map or win the current region at once. Turning it off restores the real campaign.
+Debug mode (local dev server only — localhost/127.0.0.1 with `?debug=1`; off in production): a separate save slot (`_HexkeepDebug_v5`), every
+region loads with 9999 points, every village is open, header buttons open the
+map or win the current region at once, and a numbered village list jumps
+straight into any region, the two water ones included. Turning it off restores
+the real campaign.
+
+## Water regions
+
+Regions six and seven are fought over water. A region with boats carries a
+second route: `routes.land` is the road every walker follows and `routes.water`
+is the lane every boat follows. Nothing changes route mid-raid, so a walker
+never enters the water and a boat never lands. Both routes end beside the same
+village, and a boat that reaches its landing costs a heart exactly as a walker
+does. Towers are land structures: a plot on a water hex cannot be bought at any
+price, and a plot qualifies by seeing either route, so a shore battery may
+defend only the lane. Soldiers hold the road, so a boat is never blocked, never
+duels and ships no melee atlas. Catapult splash stays on its target's own route.
+
+| Attacker | Behaviour | Counter |
+|---|---|---|
+| Raider boat (`skiff`) | Gathers a hex of speed every beat nothing touches it, up to its own limit; any wound that lands drops it back to a crawl | Arrows, which land on every beat and pin it; slow artillery lets it run between stones |
+| Ironclad (`warship`) | Heavy armour, and it plates every boat within one lane hex — itself excluded, so sinking it strips the whole escort at once | Magic, which ignores armour and plate alike |
+
+The two are mixed with attackers the player already knows, so neither a
+magic-only nor an arrow-only line clears either region. `river` closes with a
+raiding captain, `coast` with the ironclad flagship. Boat sprites come from the
+CC0 Kenney Pirate Kit, baked with the same rig, crop and lighting as the
+walkers; the Pirate Kit has no animation clips, so the sailing atlas is one
+heave-and-roll swell per two battle beats.
+
+## Journey progress and replay
+
+Journey progress (`cleared`) and battle state (`levels`) are separate records.
+Winning a region's final raid marks the village on the journey map at once and
+drops that region's battle state, so entering a completed village starts a fresh
+run from wave 1 with its own starting board. A region still in progress resumes
+exactly where it was left, and offers a start-over control beside the launch
+button. The victory card offers both "play again" and "continue to the next
+village". A replay never re-locks a village or changes any other region's
+progress, however it ends. Saves are version 5; a version 4 record parked on a
+finished final raid migrates to a completed village with no battle state, while
+a region still mid-run keeps its saved raid.

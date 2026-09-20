@@ -1,0 +1,36 @@
+{
+  "pack": "Kenney Pirate Kit",
+  "url": "https://kenney.nl/media/pages/assets/pirate-kit/e6d4bb1525-1771333093/kenney_pirate-kit.zip",
+  "models": {
+    "skiff": {
+      "source": "Models/GLB format/ship-pirate-small.glb"
+    },
+    "warship": {
+      "source": "Models/GLB format/ship-large.glb"
+    },
+    "palm": {
+      "source": "Models/GLB format/palm-detailed-straight.glb"
+    },
+    "palmBend": {
+      "source": "Models/GLB format/palm-detailed-bend.glb"
+    },
+    "shoreRock": {
+      "source": "Models/GLB format/rocks-sand-a.glb"
+    },
+    "shoreRockB": {
+      "source": "Models/GLB format/rocks-sand-b.glb"
+    },
+    "dock": {
+      "source": "Models/GLB format/structure-platform-dock.glb"
+    },
+    "wreck": {
+      "source": "Models/GLB format/ship-wreck.glb"
+    },
+    "barrel": {
+      "source": "Models/GLB format/barrel.glb"
+    },
+    "sandPatch": {
+      "source": "Models/GLB format/patch-sand.glb"
+    }
+  }
+}

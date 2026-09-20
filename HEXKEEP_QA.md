@@ -51,3 +51,36 @@ Impact/context revision: 84 tactical checks include delayed catapult splash and 
 Overlay revision (v197): `tests/hexkeep_overlay_browser.cjs` verifies newly unlocked vocabulary stays on the play route, preserves battle state, clears the shared new-items list only after presentation, then opens normal questions. Dialog bounds leave the map visible at 1440×900, 390×844 and 844×390. Real purchases produce three distinct tower asset URLs. New sprites are included in the offline manifest. Screenshots: new-words-overlay.png, question-overlay-390.png and upgraded-battlefield.png.
 
 Production correction (v199): debug UI, state and activation method removed entirely. Browser tests assert absence and zero starting funds before seeding isolated test fixtures. Tactical suite now has 82 checks.
+
+Water revision (v204): two new regions, `river` and `coast`, each with its own
+board, ten raids, roster and commander. Every board keeps one shared 8x6 grid
+and camera, so `assets/hexkeep/projection.js` still places every sprite; the
+bake re-measures the anchors and they match to the digit. Tactical coverage adds
+the second route (a boat sails past the guard line, splash never crosses between
+road and lane, a wet plot cannot be bought), the raider boat's surge (it gathers
+way untouched, caps, and drops to a crawl on any wound; arrows pin it where
+magic lets it run) and the ironclad's plating (it plates its escort, never
+itself, and sinking it strips the escort at once; arrows floor to one, magic
+ignores it). The ladder proofs add both regions and the two negative claims that
+mirror the frost-pass shield test: an artillery-only or magic-only line never
+clears the river, and in the storm bay a magic-only line loses the answers a
+mixed battery line wins with.
+
+Replay revision (v204): journey progress and battle state are separate records
+and the save format is version 5. Coverage: a village in progress resumes where
+it was left and offers a start-over; winning marks the village and leaves no
+battle state, in memory or in storage; play again restarts at wave 1 without
+touching `cleared` or the roads; losing or quitting a replay keeps every village
+already won; a version 4 save parked on a finished final raid migrates to a
+completed village that starts fresh, while a mid-run region keeps its raid.
+
+Screenshots: artifacts/hexkeep/river-battle.png, coast-battle.png,
+journey-seven-villages.png, replay-victory-card.png and replay-start-over.png.
+
+Three browser suites were stale against the committed tree before this change
+and now pass again: `hexkeep_context_browser.cjs`, `hexkeep_melee_browser.cjs`
+and `hexkeep_overlay_browser.cjs` still asserted that the debug method did not
+exist (debug returned in fca180c behind a localhost `?debug=1` gate), and the
+context suite still expected the pre-rebalance level-two catapult stone.
+
+Cache version: v204-hexkeep-water.

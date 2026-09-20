@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<!--
+  hexkeep-boat-render.html — bakes the sailing atlases for the attackers that
+  the two water regions bring. Driven headlessly by tools/hexkeep-bake.cjs:
+
+    node tools/hexkeep-bake.cjs boats
+    node tools/hexkeep-bake.cjs 'boats?only=skiff'
+
+  Same rig, crop window and sheet layout as the walkers
+  (tools/hexkeep-unit-render.html), so a boat drops straight into the same
+  .hk-walker box: 24 frames across, 6 headings down, 192px cells, with the
+  waterline landing on the hex anchor.
+
+  The Pirate Kit models carry no animation clips, so the "gait" is a swell:
+  each sheet is one full heave-and-roll cycle. Boats never duel — a soldier on
+  the road cannot reach the lane — so no melee sheet is baked for them.
+  Only `variants` is rewritten; every existing walker timing is preserved.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<script src="/tools/vendor/three.min.js"></script>
+<script src="/tools/vendor/GLTFLoader.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
+// `fit` is the hull's longest horizontal span in world units (a hex is 2
+// across), `yaw` turns the hull so its bow points along the sheet's heading,
+// and `heave`/`roll`/`pitch` are the amplitudes of the swell.
+const BOATS=[
+ // The Pirate Kit hulls sail along their own -Z, so every one is turned to put
+ // its bow on the sheet's heading; `draft` sinks the keel under the waterline.
+ {kind:'skiff',model:'skiff',fit:1.9,yaw:Math.PI,draft:.1,heave:.1,roll:.1,pitch:.05},
+ {kind:'warship',model:'warship',fit:2.5,yaw:Math.PI,draft:.16,heave:.07,roll:.05,pitch:.035}
+];
+const only=new URLSearchParams(location.search).get('only');
+(async()=>{try{
+ const T=THREE,loader=new T.GLTFLoader();
+ const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
+ renderer.setSize(1600,900);renderer.outputEncoding=T.sRGBEncoding;
+ renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+ const camera=new T.OrthographicCamera(-10.7,10.7,6.019,-6.019,.1,100);
+ camera.position.set(8,13,18);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+
+ async function sheet(boat){
+  const asset=await loader.loadAsync('/assets/hexkeep/source/pirate/'+boat.model+'.glb'),model=asset.scene;
+  // Fit the hull to the hex grid and stand it on its own waterline, so every
+  // boat meets the anchor point the walkers use.
+  const box=new T.Box3().setFromObject(model),size=box.getSize(new T.Vector3()),centre=box.getCenter(new T.Vector3());
+  const scale=boat.fit/Math.max(size.x,size.z);
+  model.scale.setScalar(scale);
+  model.position.set(-centre.x*scale,-box.min.y*scale-(boat.draft||0),-centre.z*scale);
+  const hull=new T.Group();hull.add(model);hull.rotation.y=boat.yaw||0;
+  const pivot=new T.Group();pivot.add(hull);
+  const scene=new T.Scene();scene.add(pivot);
+  scene.add(new T.HemisphereLight(0xfff5de,0x536e68,.85));
+  const sun=new T.DirectionalLight(0xffefce,1.3);sun.position.set(-8,16,7);scene.add(sun);
+  const frames=24,directions=6,size2=192,canvas=document.createElement('canvas');
+  canvas.width=frames*size2;canvas.height=directions*size2;const ctx=canvas.getContext('2d');
+  for(let row=0;row<directions;row++)for(let frame=0;frame<frames;frame++){
+   const phase=frame/frames*Math.PI*2;
+   pivot.rotation.y=Math.PI/6+row*Math.PI/3;
+   hull.position.y=Math.sin(phase)*boat.heave;
+   hull.rotation.z=Math.sin(phase)*boat.roll;
+   hull.rotation.x=Math.cos(phase)*boat.pitch;
+   pivot.updateMatrixWorld(true);
+   renderer.render(scene,camera);
+   ctx.drawImage(renderer.domElement,704,290,size2,size2,frame*size2,row*size2,size2,size2);
+  }
+  return canvas.toDataURL('image/png').split(',')[1];
+ }
+
+ const current=await (await fetch('/assets/hexkeep/walk.js')).text();
+ const raider=JSON.parse(current.slice(current.indexOf('{'),current.lastIndexOf('}')+1));
+ const variants=Object.assign({},raider.variants||{});
+ for(const boat of BOATS.filter(b=>!only||only.split(',').includes(b.kind))){
+  await post('enemy-'+boat.kind+'-walk.png',await sheet(boat));
+  // One swell per two battle beats reads as a boat riding the water rather
+  // than marching; the walker sheets keep their own clip timings.
+  variants[boat.kind]={frames:24,directions:6,duration:2200,clip:'swell',model:boat.model,route:'water'};
+ }
+ renderer.dispose();
+ await post('walk.js',btoa('window.HEXKEEP_WALK = '+JSON.stringify(Object.assign({},raider,{variants}))+';\n'));
+ await post('_done','');
+}catch(e){await post('_error',String(e&&e.stack||e));}})();
+</script>
+</body>
+</html>
