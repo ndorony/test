@@ -125,3 +125,7 @@
 /* Five tower types no longer fit a desktop menu at any height. */
 .hk-build-menu{max-height:min(74vh,600px);overflow:auto}
 @media(max-width:760px){.hk-sailor{scale:1}}
+/* A patrol boat's own gun: a small iron ball with a muzzle glow, and a white
+   splash where it lands rather than the catapult's dust. */
+.hk-shot-cannon{width:8px;height:8px;background:#2d3138;box-shadow:0 0 0 2px #ffd89a,0 0 6px 2px #ff9c3c}
+.hk-impact-splash{background:radial-gradient(circle,#ffffff 0 35%,#9fe0ef 55%,transparent 72%)}

@@ -348,18 +348,34 @@ check(!H.resolveTurn(b).enemies[0].guardId,'a patrol boat can never reach a walk
 check(H.types.shipyard.damage[0]>H.types.guard.damage[0],'a patrol boat hits harder than a single soldier');
 b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);
 b.enemies=[{id:402,step:b.guards[0].step,hp:40,maxHp:40,armor:0,speed:1,route:'water',kind:'skiff'}];
-b=H.resolveTurn(b);b=H.resolveTurn(b);
-check(40-b.enemies[0].hp===H.types.shipyard.damage[0],'the exchange lands the shipyard damage entry, not the tower level');
+b=H.resolveTurn(b);const exchange=H.resolveTurn(b,true).impacts.find(hit=>hit.kind==='melee');
+check(exchange&&exchange.damage===H.types.shipyard.damage[0],'the exchange lands the shipyard damage entry, not the tower level');
+// A blockade is not only a wall: every patrol boat carries a gun and fires it
+// from where it floats, at whatever is closest to the village in its reach.
+b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);
+const gun=H.crew.shipyard.cannon,anchored=b.guards[0].step;
+check(gun&&gun.range>1&&!H.crew.guard.cannon,'the patrol boats carry a gun that reaches past their own hex, and the soldiers carry none');
+b.enemies=[{id:403,step:anchored-2,hp:40,maxHp:40,armor:0,speed:1,route:'water',kind:'skiff'}];
+b.turn=1;let volley=H.resolveTurn(b,true);
+check(volley.shots.length===b.guards.length&&volley.shots.every(shot=>shot.type==='cannon'),'every living patrol boat fires on its own beat');
+check(volley.shots.every(shot=>shot.fromStep===anchored&&shot.fromRoute==='water'),'the ball leaves the boat that fired it, not the shipyard');
+check(volley.impacts.filter(hit=>hit.type==='cannon').every(hit=>hit.damage===gun.damage[0]),'a ball lands the cannon entry for the shipyard level');
+const before=volley.enemies[0].hp;H.applyImpacts(volley,520);
+check(volley.enemies[0].hp===before-b.guards.length*gun.damage[0],'the balls wound the ship they were aimed at');
+// The guns stay on the water: a walker on the road is never a target.
+b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);
+b.enemies=[{id:404,step:b.guards[0].step,hp:40,maxHp:40,armor:0,speed:1,kind:'raider'}];b.turn=1;
+check(H.resolveTurn(b,true).shots.length===0,'a patrol boat never fires at the road');
 // The black ship answers a blockade with its guns, so boats alone never hold
 // it: it rakes every patrol boat beside it and sails on regardless.
 b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);b.turn=1;
-b.enemies=[{id:410,step:b.guards[0].step,hp:90,maxHp:90,armor:2,route:'water',kind:'manowar',broadside:2,boss:true}];
+b.enemies=[{id:410,step:b.guards[0].step,hp:90,maxHp:90,armor:2,route:'water',kind:'manowar',broadside:{every:2,damage:6},boss:true}];
 const crewBefore=b.guards.map(g=>g.hp),shipBefore=b.enemies[0].step;
 let raked=H.resolveTurn(b);
 check(raked.guards.every((g,i)=>g.hp<crewBefore[i]),'the black ship rakes every patrol boat beside it');
 check(raked.enemies[0].step>shipBefore,'and sails straight on, because a commander is never blocked');
 b=H.freshBattle(1,'harbour');b.supplies=400;H.build(b,island,'shipyard');b.spawned=H.targetCount(b);b.turn=1;
-b.enemies=[{id:411,step:b.guards[0].step,hp:90,maxHp:90,armor:2,kind:'raider',broadside:2}];
+b.enemies=[{id:411,step:b.guards[0].step,hp:90,maxHp:90,armor:2,kind:'raider',broadside:{every:2,damage:6}}];
 check(H.resolveTurn(b).guards.every((g,i)=>g.hp===b.guards[i].hp),'guns fired from the road never reach the patrol boats');
 
 // --- replaying a village without touching the journey ---

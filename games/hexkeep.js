@@ -13,12 +13,15 @@
   archer:{name:'מגדל קשתים',subtitle:'ירי מהיר לטווח רחוק',cost:14,upgrade:18,master:20,range:3,every:1,damage:[1,2,3],detail:'יורה חץ בכל פעימת קרב לעבר האויב המתקדם ביותר בטווח. כל שדרוג מגדיל את הנזק. יעיל נגד אויבים קלים.'},
   mage:{name:'מגדל קוסמים',subtitle:'קסם שחודר שריון',cost:18,upgrade:22,master:26,range:2,every:2,damage:[3,5,8],detail:'משגר קסם חזק בכל שתי פעימות קרב. מתעלם משריון. שדרוג מוסיף נזק ומרחיב את הטווח.'},
   catapult:{name:'מגדל קטפולטה',subtitle:'פגיעה בכמה אויבים יחד',cost:20,upgrade:24,master:28,range:3,every:3,damage:[5,8,13],detail:'משגר אבן בכל שלוש פעימות קרב ופוגע בכל האויבים ליד המטרה. שדרוג מגדיל את הנזק ואת אזור הפגיעה.'},
-  shipyard:{name:'מספנה',subtitle:'שולחת סירות שחוסמות במים',cost:16,upgrade:20,master:24,range:1,every:2,damage:[2,3,5],detail:'שולחת 2 סירות משמר אל נתיב המים. כל סירה עוצרת ספינה אחת ונלחמת בה, וספינות נוספות ממשיכות להפליג. כל שדרוג מוסיף סירה ומגדיל את הנזק. אפשר לבנות אותה רק בחלקה שצופה על המים.'}
+  shipyard:{name:'מספנה',subtitle:'סירות שחוסמות ויורות במים',cost:16,upgrade:20,master:24,range:1,every:2,damage:[2,3,5],detail:'שולחת 2 סירות משמר אל נתיב המים. כל סירה עוצרת ספינה אחת ונלחמת בה מקרוב, ובנוסף יורה כדור תותח בכל שתי פעימות אל הספינה הקרובה ביותר לכפר בטווח 2. כל שדרוג מוסיף סירה ומגדיל את שני הנזקים. אפשר לבנות אותה רק בחלקה שצופה על המים.'}
  };
  // Two towers put units on a route instead of shooting at it: the barracks
  // garrisons the road and the shipyard the water lane. Everything else about
  // them — stations, duels, respawn, upgrades — is shared.
- const CREW={guard:{route:'land',size:level=>level+2,hp:5,unit:'חייל'},shipyard:{route:'water',size:level=>level+1,hp:10,unit:'סירת משמר'}};
+ // `cannon` is a weapon the unit itself carries, fired from where it floats
+// rather than from its tower. Soldiers have none; patrol boats do.
+const CREW={guard:{route:'land',size:level=>level+2,hp:5,unit:'חייל'},
+ shipyard:{route:'water',size:level=>level+1,hp:10,unit:'סירת משמר',cannon:{every:2,range:2,damage:[1,2,3]}}};
  function crewOf(v){return v&&CREW[v.type]||null;}
  // A garrison hits for its tower's own damage entry, like every other tower.
  // The barracks table is 1/2/3, which is what the level used to supply, so the
@@ -35,7 +38,7 @@
   knight:{name:'אביר אופל',note:'המגן שלו בולע קליע שלם בכל פגיעה. חצים מהירים שוברים אותו, ושומרים נלחמים בו בלי מגן.'},
   warlock:{name:'מזמן',note:'מקים שלדים חדשים לצדו בזמן ההליכה. כל פעימה שהוא חי מוסיפה אויבים.'},
   skiff:{name:'סירת פשיטה',route:'water',note:'שטה רק על המים. כל פעימה שאיש לא פוגע בה היא מאיצה, וכל פגיעה מחזירה אותה לקצב איטי.'},
-  manowar:{name:'ספינת קרב',route:'water',note:'ספינת דגל כבדה. בכל כמה פעימות היא פותחת באש על כל סירת משמר שנעמדת לידה, ולכן אי אפשר לעצור אותה בחסימה בלבד.'},
+  manowar:{name:'ספינת קרב',route:'water',note:'ספינת דגל כבדה. בכל כמה פעימות היא פותחת מטח על כל סירת משמר שנעמדת לידה ומרסקת אותה, ולכן אי אפשר לעצור אותה בחסימה בלבד.'},
   warship:{name:'ספינה משוריינת',route:'water',note:'שריון כבד שמקהה חצים ואבנים, והיא מצפה בשריון גם את הסירות שלידה. קסם מתעלם משריון — הפילו אותה ראשונה.'}
  };
  // Every attacker walks its own route: `land` is the road, `water` is the lane
@@ -110,7 +113,7 @@
   // limit, and any wound that lands drops it back to a crawl. Steady fire pins
   // it; slow artillery lets it run between the stones.
   b.enemies.forEach(e=>{if(!e.surge)return;if(e.hurt){e.speed=1;e.hurt=false;}else e.speed=Math.min(e.surge,(e.speed||1)+1);});
-  if(b.spawned<targetCount(b)&&b.turn%2===1&&!(b.wave>=L.waves&&b.spawned===targetCount(b)-1&&b.enemies.length)){const spec=arrival(b);b.enemies.push({id:++b.serial,step:-1,hp:spec.hp,maxHp:spec.hp,armor:spec.armor||0,speed:spec.speed||1,heal:spec.heal||0,shield:spec.shield||0,summon:spec.summon||null,summoned:0,surge:spec.surge||0,plate:spec.plate||0,broadside:spec.broadside||0,hurt:false,route:routeOf(spec),kind:spec.kind||'raider',boss:!!spec.boss});b.spawned++;b.events.push(arrivalNote(b,spec));}
+  if(b.spawned<targetCount(b)&&b.turn%2===1&&!(b.wave>=L.waves&&b.spawned===targetCount(b)-1&&b.enemies.length)){const spec=arrival(b);b.enemies.push({id:++b.serial,step:-1,hp:spec.hp,maxHp:spec.hp,armor:spec.armor||0,speed:spec.speed||1,heal:spec.heal||0,shield:spec.shield||0,summon:spec.summon||null,summoned:0,surge:spec.surge||0,plate:spec.plate||0,broadside:spec.broadside||null,hurt:false,route:routeOf(spec),kind:spec.kind||'raider',boss:!!spec.boss});b.spawned++;b.events.push(arrivalNote(b,spec));}
   // Reserve ongoing pairs before assigning newcomers, so one soldier holds
   // exactly one enemy. A full squad never blocks the rest of the road.
   const occupied=new Set();
@@ -147,18 +150,32 @@
    b.shots.push({id,type:v.type,site:i,step:target.step,route:routeOf(target),enemyId:target.id,aim:JSON.parse(JSON.stringify(target)),duration,radius:v.level,landed:false});
    b.impacts.push({kind:'shot',type:v.type,shotId:id,enemyId:target.id,victims:victims.map(e=>e.id),damage:power,at:duration,done:false});b.events.push(TYPES[v.type].name+' משגר קליע.');
   });
+  // A blockade is not only a wall: every living crew that carries a gun fires
+  // along its own route on its own beat, from where it is standing.
+  b.guards.forEach(unit=>{
+   const v=b.buildings[unit.site],crew=crewOf(v),gun=crew&&crew.cannon;
+   if(!gun||unit.hp<=0||b.turn%gun.every)return;
+   const route=crewRoute(unit),P=M.routes[route];if(!P||P[unit.step]===undefined)return;
+   const reach=e=>routeOf(e)===route&&e.step>=0&&e.step<P.length&&M.distance(P[unit.step],P[e.step])<=gun.range;
+   const targets=b.enemies.filter(e=>e.hp-reservedDamage(b,e)>0&&reach(e)).sort((a,c)=>a.step===c.step?0:c.step-a.step);
+   if(!targets.length)return;
+   const target=targets[0],id='gun'+b.turn+'-'+unit.id;
+   b.shots.push({id,type:'cannon',site:unit.site,fromStep:unit.step,fromRoute:route,fromSlot:unit.slot||0,step:target.step,route:routeOf(target),enemyId:target.id,aim:JSON.parse(JSON.stringify(target)),duration:520,radius:0,landed:false});
+   b.impacts.push({kind:'shot',type:'cannon',shotId:id,enemyId:target.id,victims:[target.id],damage:gun.damage[v.level-1],at:520,done:false});
+   b.events.push('סירת משמר ירתה כדור תותח.');
+  });
   // Summoners raise a fresh skeleton beside themselves on their own beat, up to
   // a fixed number per caster, so a quick kill caps the swarm.
   b.enemies.filter(e=>e.summon&&e.hp>0&&e.step>=0&&e.step<pathOf(M,e).length-1&&(e.summoned||0)<e.summon.max&&b.turn%e.summon.every===0).forEach(caster=>{
    caster.summoned=(caster.summoned||0)+1;const hp=3+Math.floor(b.wave/3);
-   b.enemies.push({id:++b.serial,step:caster.step,previous:caster.step,hp,maxHp:hp,armor:0,speed:1,heal:0,shield:0,summon:null,surge:0,plate:0,broadside:0,hurt:false,route:routeOf(caster),kind:'raider',raised:true,boss:false});
+   b.enemies.push({id:++b.serial,step:caster.step,previous:caster.step,hp,maxHp:hp,armor:0,speed:1,heal:0,shield:0,summon:null,surge:0,plate:0,broadside:null,hurt:false,route:routeOf(caster),kind:'raider',raised:true,boss:false});
    b.events.push('המזמן הקים שלד חדש.');
   });
   // A ship with guns rakes every crew standing near it on its own route, which
   // is why a blockade alone never holds one: it needs shooting towers beside it.
-  b.enemies.filter(e=>e.broadside&&e.hp>0&&b.turn%e.broadside===0).forEach(ship=>{
+  b.enemies.filter(e=>e.broadside&&e.hp>0&&b.turn%e.broadside.every===0).forEach(ship=>{
    const raked=b.guards.filter(g=>g.hp>0&&crewRoute(g)===routeOf(ship)&&Math.abs(g.step-ship.step)<=1);
-   raked.forEach(g=>{g.hp=Math.max(0,g.hp-2);});
+   raked.forEach(g=>{g.hp=Math.max(0,g.hp-ship.broadside.damage);});
    if(raked.length)b.events.push('הספינה פתחה באש על סירות המשמר.');
   });
   // Healers mend their neighbours, never themselves, so the escort dies with
@@ -194,7 +211,7 @@
      <img class="hk-terrain" :src="'assets/hexkeep/'+level.board" :alt="'מפת '+level.name+': שביל משושים מפותל שמוביל אל הכפר'">
      <span v-for="tile in rangeTiles" :key="'range'+tile.id" class="hk-range-cell" :style="anchorStyle(tile.id)" aria-hidden="true"></span>
      <span v-for="shot in battle.shots" :key="'shot'+shot.id" class="hk-projectile" :class="'hk-shot-'+shot.type" :data-shot-id="shot.id" :style="shotStyle(shot)" aria-hidden="true"></span>
-     <span v-for="shot in battle.shots" :key="'impact'+shot.id" class="hk-impact" :class="{'hk-impact-stone':shot.type==='catapult'}" :data-impact-id="shot.id" :style="impactStyle(shot)" aria-hidden="true"></span><template v-for="(building,i) in battle.buildings"><img v-if="building" :key="'building'+i" class="hk-object" :class="{'hk-firing':battle.shots.some(s=>s.site===i&&s.type==='catapult')}" :src="'assets/hexkeep/'+towerArt(building)+'.png'" :style="spriteStyle(towerArt(building),map.sites[i].tile)" alt=""></template>
+     <span v-for="shot in battle.shots" :key="'impact'+shot.id" class="hk-impact" :class="{'hk-impact-stone':shot.type==='catapult','hk-impact-splash':shot.type==='cannon'}" :data-impact-id="shot.id" :style="impactStyle(shot)" aria-hidden="true"></span><template v-for="(building,i) in battle.buildings"><img v-if="building" :key="'building'+i" class="hk-object" :class="{'hk-firing':battle.shots.some(s=>s.site===i&&s.type==='catapult')}" :src="'assets/hexkeep/'+towerArt(building)+'.png'" :style="spriteStyle(towerArt(building),map.sites[i].tile)" alt=""></template>
      <button v-for="(site,i) in map.sites" :key="'site'+i" class="hk-site" :data-site-index="i" :class="{'hk-selected':menuOpen&&selectedSite===i,'hk-occupied':battle.buildings[i]}" :style="siteStyle(i)" :aria-label="site.name+': '+(battle.buildings[i]?'שדרוג '+types[battle.buildings[i].type].name:'בניית מגדל')" :aria-expanded="menuOpen&&selectedSite===i" aria-haspopup="dialog" :disabled="!canPlan" @click.stop="selectSite(i)"><span v-if="!battle.buildings[i]" aria-hidden="true">+</span></button>
      <div v-for="guard in battle.guards.filter(g=>g.hp>0)" :key="'guard'+guard.id" class="hk-soldier" :class="{'hk-crew-sea':guard.route==='water'}" :data-guard-id="guard.id" :style="guardStyle(guard)" role="group" :aria-label="guard.route==='water'?'סירת משמר':'חייל'"><span v-if="guard.route==='water'" class="hk-sailor" :style="sailorStyle(guard)" aria-hidden="true"></span><template v-else><span v-if="guard.enemyId" class="hk-fighter hk-guard-fighter" :style="guardFightStyle(guard)" aria-hidden="true"></span><img v-else class="hk-guard-idle" src="assets/hexkeep/knight.png" :style="guardIdleStyle()" alt=""></template><span class="hk-health hk-health-guard" role="progressbar" :aria-label="guard.route==='water'?'חיי סירת המשמר':'חיי החייל'" :aria-valuenow="guard.hp" :aria-valuemax="guard.maxHp" aria-valuemin="0" :title="guard.hp+' / '+guard.maxHp"><i :style="{transform:'scaleX('+guard.hp/guard.maxHp+')'}"></i></span></div>
      <div v-for="enemy in battle.enemies" :key="'enemy'+enemy.id" class="hk-enemy" :data-enemy-id="enemy.id" :style="enemyStyle(enemy)" role="group" :aria-label="enemy.boss?level.boss.name:kinds[enemy.kind||'raider'].name"><span class="hk-walker" :class="['hk-walk-'+(enemy.kind||'raider'),enemy.guardId?'hk-enemy-fighter hk-fight-'+(enemy.kind||'raider'):'',{'hk-armored':enemy.armor,'hk-shielded':enemy.shield>0,'hk-boss':enemy.boss}]" :style="walkStyle(enemy)" aria-hidden="true"></span><span v-if="enemy.shield>0" class="hk-shield" :title="'מגן: עוד '+enemy.shield+' פגיעות'" :aria-label="'מגן: עוד '+enemy.shield+' פגיעות'">{{enemy.shield}}</span><span class="hk-health hk-health-enemy" role="progressbar" aria-label="חיי האויב" :aria-valuenow="Math.max(0,enemy.hp)" :aria-valuemax="enemy.maxHp" aria-valuemin="0" :title="enemy.hp+' / '+enemy.maxHp"><i :style="{transform:'scaleX('+Math.max(0,enemy.hp)/enemy.maxHp+')'}"></i></span></div>
@@ -371,7 +388,11 @@
    enemyStyle(e){const p=this.enemyPoint(e);return {transform:'translate('+p.x+'cqw,'+p.y+'cqh)',zIndex:Math.round(p.y)};},
    walkStyle(e){if(e.guardId)return {backgroundPosition:(this.duelFrame(e)/23*100)+'% 0%'};const M=this.map,meta=this.walkMeta(e),P=this.routeTiles(e),step=Math.max(1,Math.min(e.step,P.length-1)),from=M.world(P[step-1]),to=M.world(P[step]),angle=Math.atan2(to.x-from.x,to.z-from.z),row=((Math.round((angle-Math.PI/6)/(Math.PI/3))%6)+6)%6,moving=e.previous!==e.step,frame=this.reduced||!moving?0:Math.floor((this.motionState().walkTime+e.id*137)%meta.duration/meta.duration*meta.frames);return {backgroundPosition:(frame/(meta.frames-1)*100)+'% '+(row/(meta.directions-1)*100)+'%'};},
    shotTarget(shot){return shot.aim?this.enemyPoint(shot.aim,shot.duration):this.roadPoint(shot,shot.step);},
-   shotStyle(shot){const from=this.art.anchors[this.map.sites[shot.site].tile],to=this.shotTarget(shot),t=Math.min(1,this.motionState().elapsed/(shot.duration||500)),arc=shot.type==='catapult'?Math.sin(Math.PI*t)*9:0;return {transform:'translate('+(from.x+(to.x-from.x)*t)+'cqw,'+(from.y-6+(to.y-from.y+6)*t-arc)+'cqh)',opacity:t<1?'1':'0'};},
+   // A tower's shot starts at its plot; a crew's starts wherever that crew is
+   // floating, so a cannonball leaves the boat that fired it.
+   shotOrigin(shot){if(shot.fromStep===undefined)return this.art.anchors[this.map.sites[shot.site].tile];
+    return this.guardPoint({step:shot.fromStep,route:shot.fromRoute,slot:shot.fromSlot});},
+   shotStyle(shot){const from=this.shotOrigin(shot),to=this.shotTarget(shot),t=Math.min(1,this.motionState().elapsed/(shot.duration||500)),arc=shot.type==='catapult'?Math.sin(Math.PI*t)*9:shot.type==='cannon'?Math.sin(Math.PI*t)*4:0;return {transform:'translate('+(from.x+(to.x-from.x)*t)+'cqw,'+(from.y-6+(to.y-from.y+6)*t-arc)+'cqh)',opacity:t<1?'1':'0'};},
    impactStyle(shot){const to=this.shotTarget(shot),age=this.motionState().elapsed-(shot.duration||500),t=Math.max(0,Math.min(1,age/240));return {transform:'translate('+to.x+'cqw,'+to.y+'cqh) translate(-50%,-50%) scale('+(1+t)+')',opacity:age>=0&&age<240?String(1-t):'0'};},
    siteStyle(i){const M=this.map,v=this.battle.buildings[i];if(!v)return this.anchorStyle(M.sites[i].tile);const p=this.spriteStyle(this.towerArt(v),M.sites[i].tile);return {left:(parseFloat(p.left)+parseFloat(p.width)/2)+'%',top:(parseFloat(p.top)+parseFloat(p.height)/2)+'%',width:p.width,height:p.height};},
    selectSite(i){if(!this.canPlan)return;this.selectedSite=i;this.menuOpen=true;

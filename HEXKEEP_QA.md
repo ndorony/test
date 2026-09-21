@@ -117,3 +117,13 @@ is now 2500x1000 and carries all eight villages.
 Screenshots: artifacts/hexkeep/harbour-battle.png.
 
 Cache version: v205-hexkeep-harbour.
+
+Patrol gunnery (v205): the boats were only ever a wall, so each one now carries
+a cannon and fires it from where it floats — every other beat, at whatever is
+closest to the village within two lane hexes, never at the road. Coverage: every
+living boat fires on its own beat, the ball leaves the boat rather than the
+shipyard, it lands the cannon entry for the shipyard's level, and a walker on
+the road is never a target. The black ship's broadside became a volley with its
+own damage so a fleet with no towers behind it is still wrecked; the harbour was
+rescaled around both changes and the three claims hold at the new weights:
+blockade and guns 360 answers, towers alone 560, blockade alone never.

@@ -35,10 +35,14 @@ Four original KayKit combat towers replace the former support roster:
 | Archers | 14 | 18 | 20 | 1/2/3, 1 beat | Fast long-range arrows; affected by armor |
 | Mages | 18 | 22 | 26 | 3/5/8, 2 beats | Slower magic that ignores armor |
 | Catapults | 20 | 24 | 28 | 5/8/13, 3 beats | Area damage against groups |
-| Shipyard | 16 | 20 | 24 | 2/3/5, 2 beats | Garrison the water lane with 2/3/4 patrol boats |
+| Shipyard | 16 | 20 | 24 | 2/3/5, 2 beats | Garrison the water lane with 2/3/4 patrol boats, each with a 1/2/3 cannon |
 
 Guards and the shipyard are garrison towers: they put units on a route instead
-of shooting at it, and they never also fire. Both hit for their own damage entry,
+of shooting at it, and the tower itself never also fires. A unit may carry a
+weapon of its own, and a patrol boat does: every other beat each living boat
+fires a cannon from where it floats at whatever is closest to the village within
+two lane hexes, so a blockade is a gun line as well as a wall. Soldiers carry no
+such weapon. Both hit for their own damage entry,
 and a plot is only offered the towers it can hold — a garrison needs a station
 its plot declares on its own route (`rally` on the road, `lane` on the water)
 plus a tile of that route within range, so an island never takes a barracks and
@@ -142,7 +146,7 @@ different lengths are compared fairly.
 | Raider boat (`skiff`) | Gathers a hex of speed every beat nothing touches it, up to its own limit — two hexes on the river, three in the bay; any wound that lands drops it back to a crawl | Arrows, which land on every beat and pin it; slow artillery lets it run between stones |
 | Ironclad (`warship`) | Heavy armour, and it plates every boat within one lane hex — itself excluded, so sinking it strips the whole escort at once | Magic, which ignores armour and plate alike |
 
-| Ship of the line (`manowar`) | Every other beat it rakes every patrol boat within one lane hex, and like every commander it cannot be blocked | Guns behind the blockade: the boats buy the time, the towers do the sinking |
+| Ship of the line (`manowar`) | Every other beat it fires a volley that wrecks every patrol boat within one lane hex, and like every commander it cannot be blocked | Guns behind the blockade: the boats buy the time and wound it, the towers do the sinking |
 
 The three are mixed with attackers the player already knows, so neither a
 magic-only nor an arrow-only line clears any of the regions. `river` closes with
@@ -152,9 +156,10 @@ ship.
 `harbour` is the region built around the shipyard: almost the whole board is
 open sea, the causeway along the northern shore is short, and the only dry
 ground out in the bay is three rock islands. A blockade berthed on the middle
-island holds the bay for 360 answers; the same six plots with guns alone need
-560; a blockade with no guns behind it never clears the region at all, because
-the black ship rakes the boats and sails on. Boat sprites come from the
+island holds the bay for 360 answers; the same six plots with towers alone need
+560; a blockade with no towers behind it never clears the region at all, because
+the black ship's volley wrecks the boats faster than the shipyards replace them
+and it sails on regardless. Boat sprites come from the
 CC0 Kenney Pirate Kit, baked with the same rig, crop and lighting as the
 walkers; the Pirate Kit has no animation clips, so the sailing atlas is one
 heave-and-roll swell per two battle beats. The harbour's own patrol boat is the

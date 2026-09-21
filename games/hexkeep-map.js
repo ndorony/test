@@ -195,13 +195,13 @@
     :index%5===4?{kind:'brute',hp:6+wave,armor:2}
     :{kind:'skiff',hp:7+wave,armor:0,speed:1,surge:3},
    boss:{kind:'warship',name:'ספינת הדגל',hp:124,armor:3,plate:2}},
-  {id:'harbour',map:harbour,board:harbour.board,name:'נמל האבן',region:'המפרץ הגדול',waves:10,tough:2,
-   blurb:'כמעט הכול ים, והצי שלהם בא מכל כיוון. במספנה אפשר לשלוח סירות משלנו שיחסמו אותם על המים — אבל הספינה השחורה מרסקת כל סירה שנעמדת מולה, אז צריך גם מגדלי ירי.',
-   count:wave=>7+wave,
+  {id:'harbour',map:harbour,board:harbour.board,name:'נמל האבן',region:'המפרץ הגדול',waves:10,tough:2.4,
+   blurb:'כמעט הכול ים, והצי שלהם בא מכל כיוון. במספנה אפשר לשלוח סירות משלנו — הן חוסמות ספינות, נלחמות מקרוב ויורות בתותח. אבל הספינה השחורה פותחת מטח שמרסק כל סירה שנעמדת מולה, אז צריך גם מגדלי ירי מאחוריהן.',
+   count:wave=>8+wave,
    enemy:(wave,index)=>index%4===0?{kind:'warship',hp:6+Math.floor(wave/2),armor:3,plate:2}
     :index%4===2?{kind:'raider',hp:4+Math.floor(wave/2),armor:wave>=4?1:0}
     :{kind:'skiff',hp:5+Math.floor(wave/2),armor:0,speed:1,surge:3},
-   boss:{kind:'manowar',name:'הספינה השחורה',hp:120,armor:2,plate:2,broadside:2}}
+   boss:{kind:'manowar',name:'הספינה השחורה',hp:150,armor:2,plate:2,broadside:{every:2,damage:6}}}
  ];
 
  // The journey map between regions, drawn with Kenney's Cartography Pack on a
