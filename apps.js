@@ -333,6 +333,7 @@ apps =  {
                 {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51-4'},
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51-5'},
                 {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51-6'},
+                {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-ch51-7'},
               ]
             },
         {
@@ -353,6 +354,7 @@ apps =  {
                 {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51s-4'},
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51s-5'},
                 {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51s-6'},
+                {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-ch51s-7'},
               ]
             },
         {
@@ -554,6 +556,7 @@ apps =  {
                         {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-g611h-10'},
                         {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611h-11'},
                         {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-g611h-12'},
+                        {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-g611h-13'},
                       ]
                     },
                     {
@@ -573,6 +576,7 @@ apps =  {
                         {icon: 'arrow_downward', name:'תשובות נופלות',  type: 'app', link: '/play/falling_answers/grp-g611-10'},
                         {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611-11'},
                         {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-g611-12'},
+                        {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-g611-13'},
                       ]
                     },
                   ]

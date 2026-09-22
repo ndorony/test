@@ -132,6 +132,11 @@ const SHARED_GROUPS = {
     SHARED_GROUPS[groupId].games.push({appType: 'hexkeep', icon: 'holiday_village', name: 'Hexkeep · הכפר החי', title: 'תרגלו את מילות הפרק ובנו כפר חי'});
 });
 
+// Momentum Factory is appended; existing positional IDs and shared knowledge stay stable.
+['ch51', 'ch51s', 'g611'].forEach(groupId => {
+    SHARED_GROUPS[groupId].games.push({appType: 'momentum_factory', icon: 'precision_manufacturing', name: 'מפעל תנופה', title: 'למדו, הוסיפו מכונות והפכו את המפעל לאוטומטי'});
+});
+
 // The reverse direction is a separate learning skill, but uses the exact same
 // games and order as g611 so the two menu halves cannot drift apart.
 SHARED_GROUPS.g611h = {
