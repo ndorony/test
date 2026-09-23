@@ -105,7 +105,11 @@
    sailing loop rather than a gait. */
 .hk-walk-skiff{background-image:url('../assets/hexkeep/enemy-skiff-walk.png')}.hk-walk-warship{background-image:url('../assets/hexkeep/enemy-warship-walk.png')}
 .hk-walker.hk-walk-skiff:not(.hk-boss){filter:drop-shadow(0 0 3px #ffd98a)}.hk-walker.hk-walk-warship:not(.hk-boss){filter:drop-shadow(0 1px 2px #123a5a)}
-.hk-walker.hk-walk-skiff,.hk-walker.hk-walk-warship{transform-origin:50% 72%}
+.hk-walker.hk-walk-skiff,.hk-walker.hk-walk-warship{transform-origin:50% 54%}
+/* A boat sheet has 256px cells, not a walker's 192px, so the box grows by the
+   same amount around the same waterline anchor. */
+.hk-walker.hk-walk-skiff,.hk-walker.hk-walk-warship,.hk-walker.hk-walk-manowar{left:-8cqw;width:16cqw;height:28.444444cqh}
+.hk-walker.hk-walk-manowar{transform-origin:50% 62.5%}
 .hk-entry-sea{background:#14476bdd!important;border-color:#9fe0ef!important}
 /* Replay controls: continuing the journey stays the primary action, playing the
    same village again is the quieter one beside it. */
@@ -116,9 +120,9 @@
 .hk-debug-jump .hk-debug-here{border-color:#ffd35a!important;color:#ffd35a!important}
 @media(max-width:760px){.hk-debug-jump{top:132px;left:8px;font-size:9px}}
 
-/* The harbour's own patrol boats. Same sheet geometry as an attacker, inked
-   steel blue at bake time so a blockade never reads as a raid. */
-.hk-sailor{position:absolute;left:-6cqw;top:-17.777778cqh;width:12cqw;height:21.333333cqh;background-image:url('../assets/hexkeep/patrol-sail.png');background-size:2400% 600%;background-repeat:no-repeat;transform-origin:50% 83.333333%;transition:none!important;filter:drop-shadow(0 0 3px #8fd6ff)}
+/* The harbour's own patrol boats. Same sheet geometry as an attacking boat,
+   inked steel blue at bake time so a blockade never reads as a raid. */
+.hk-sailor{position:absolute;left:-8cqw;top:-17.777778cqh;width:16cqw;height:28.444444cqh;background-image:url('../assets/hexkeep/patrol-sail.png');background-size:2400% 600%;background-repeat:no-repeat;transform-origin:50% 62.5%;transition:none!important;filter:drop-shadow(0 0 3px #8fd6ff)}
 .hk-crew-sea .hk-health-guard{top:2.4cqh}
 .hk-walk-manowar{background-image:url('../assets/hexkeep/enemy-manowar-walk.png')}
 .hk-walker.hk-walk-manowar:not(.hk-boss){filter:drop-shadow(0 0 3px #ff9c6b)}

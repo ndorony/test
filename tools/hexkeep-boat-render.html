@@ -7,10 +7,12 @@
     node tools/hexkeep-bake.cjs 'boats?only=skiff'
     node tools/hexkeep-bake.cjs 'boats?only=patrol'
 
-  Same rig, crop window and sheet layout as the walkers
-  (tools/hexkeep-unit-render.html), so a boat drops straight into the same
-  .hk-walker box: 24 frames across, 6 headings down, 192px cells, with the
-  waterline landing on the hex anchor.
+  Same rig, camera and sheet layout as the walkers
+  (tools/hexkeep-unit-render.html) — 24 frames across, 6 headings down — but
+  with 256px cells: a walker's 192px cell grown 32px at each side and 64px
+  below, because a long hull ran off the old one. games/hexkeep.css grows the
+  .hk-walker box to match for every boat. The waterline lands on the hex
+  anchor and the hull below it is clipped away.
 
   The Pirate Kit models carry no animation clips, so the "gait" is a swell:
   each sheet is one full heave-and-roll cycle. Boats never duel — a soldier on
@@ -32,15 +34,18 @@ const post=(name,body)=>fetch('/_bake/'+name,{method:'POST',body});
 // and `heave`/`roll`/`pitch` are the amplitudes of the swell.
 const BOATS=[
  // Both Pirate Kit hulls already carry their bow on +Z, which is the heading
- // axis the walker sheets use, so no extra yaw is needed; `draft` sinks the
- // keel under the waterline.
- {kind:'skiff',model:'skiff',fit:1.9,yaw:0,draft:.1,heave:.1,roll:.1,pitch:.05},
- {kind:'warship',model:'warship',fit:2.5,yaw:0,draft:.16,heave:.07,roll:.05,pitch:.035},
- {kind:'manowar',model:'manowar',fit:2.9,yaw:0,draft:.18,heave:.06,roll:.04,pitch:.03},
+ // axis the walker sheets use, so no extra yaw is needed. `draft` is how far
+ // the hull sits under the waterline, in world units after the fit: every kit
+ // hull steps in where the lower body meets the upper hull, and that ledge is
+ // the painted waterline, so each boat sinks exactly to it. Everything below
+ // the water is clipped away rather than drawn.
+ {kind:'skiff',model:'skiff',fit:1.9,yaw:0,draft:.42,heave:.06,roll:.1,pitch:.05},
+ {kind:'warship',model:'warship',fit:2.5,yaw:0,draft:.4,heave:.05,roll:.05,pitch:.035},
+ {kind:'manowar',model:'manowar',fit:2.9,yaw:0,draft:.46,heave:.04,roll:.04,pitch:.03},
  // The harbour's own patrol boat. Re-inked in the defenders' steel blue so it
  // never reads as one of the raiders, and it ships as `patrol-sail.png`
  // rather than an `enemy-` sheet because nothing about it attacks the village.
- {kind:'patrol',model:'patrol',fit:2.0,yaw:0,draft:.1,heave:.09,roll:.08,pitch:.045,tint:0x2f6ad0,sheet:'patrol-sail.png'}
+ {kind:'patrol',model:'patrol',fit:2.0,yaw:0,draft:.44,heave:.06,roll:.08,pitch:.045,tint:0x2f6ad0,sheet:'patrol-sail.png'}
 ];
 const only=new URLSearchParams(location.search).get('only');
 (async()=>{try{
@@ -48,6 +53,9 @@ const only=new URLSearchParams(location.search).get('only');
  const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
  renderer.setSize(1600,900);renderer.outputEncoding=T.sRGBEncoding;
  renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+ // The sea is the world plane y=0: nothing under it is drawn, so a hull reads
+ // as floating in the board's water instead of standing on top of it.
+ renderer.clippingPlanes=[new T.Plane(new T.Vector3(0,1,0),0)];
  const camera=new T.OrthographicCamera(-10.7,10.7,6.019,-6.019,.1,100);
  camera.position.set(8,13,18);camera.lookAt(0,0,0);camera.updateMatrixWorld();
 
@@ -82,8 +90,11 @@ const only=new URLSearchParams(location.search).get('only');
   const scene=new T.Scene();scene.add(pivot);
   scene.add(new T.HemisphereLight(0xfff5de,0x536e68,.85));
   const sun=new T.DirectionalLight(0xffefce,1.3);sun.position.set(-8,16,7);scene.add(sun);
-  const frames=24,directions=6,size2=192,canvas=document.createElement('canvas');
-  canvas.width=frames*size2;canvas.height=directions*size2;const ctx=canvas.getContext('2d');
+  // A boat cell is bigger than a walker's 192px one, centred on the same hex
+  // anchor, which sits 160px down: a long hull seen end-on or broadside ran
+  // off the old cell at the sides and below the waterline.
+  const frames=24,directions=6,cell=256,canvas=document.createElement('canvas');
+  canvas.width=frames*cell;canvas.height=directions*cell;const ctx=canvas.getContext('2d');
   for(let row=0;row<directions;row++)for(let frame=0;frame<frames;frame++){
    const phase=frame/frames*Math.PI*2;
    pivot.rotation.y=Math.PI/6+row*Math.PI/3;
@@ -92,7 +103,7 @@ const only=new URLSearchParams(location.search).get('only');
    hull.rotation.x=Math.cos(phase)*boat.pitch;
    pivot.updateMatrixWorld(true);
    renderer.render(scene,camera);
-   ctx.drawImage(renderer.domElement,704,290,size2,size2,frame*size2,row*size2,size2,size2);
+   ctx.drawImage(renderer.domElement,672,290,cell,cell,frame*cell,row*cell,cell,cell);
   }
   return canvas.toDataURL('image/png').split(',')[1];
  }

@@ -367,13 +367,33 @@ const CREW={guard:{route:'land',size:level=>level+2,hp:5,unit:'חייל'},
    fitMap(){this.$nextTick(()=>{const viewport=this.$el&&this.$el.querySelector('.hk-map-viewport');if(viewport)viewport.scrollLeft=(viewport.scrollWidth-viewport.clientWidth)*.58;});},
    towerArt(v){return v.type+(v.level>1?'-'+v.level:'');},
    spriteStyle(key,tile,dx=0){const p=this.art.anchors[tile],s=this.art.sprites[key];return {left:(p.x+s.dx+dx)+'%',top:(p.y+s.dy)+'%',width:s.w+'%',height:s.h+'%',zIndex:Math.round(p.y)};},
-   guardPoint(g){const p=this.art.anchors[this.routeTiles(g)[g.step]],slot=g.slot||0,wide=g.route==='water';
-    return {x:p.x+(slot%3-1)*(wide?4.4:2.3),y:p.y+(wide?.4:1)+Math.floor(slot/3)*(wide?3.4:1.8)};},
+   guardPoint(g){if(g.route==='water')return this.boatPoint(g);const p=this.art.anchors[this.routeTiles(g)[g.step]],slot=g.slot||0;
+    return {x:p.x+(slot%3-1)*2.3,y:p.y+1+Math.floor(slot/3)*1.8};},
+   // A hull is nearly a hex long, so a berth cannot hold a fleet side by side:
+   // every boat takes a lane hex of its own, the free one nearest its station,
+   // and stands a little off its own island, out on open water. Berths go out
+   // slot by slot across every shipyard, so each yard's first boat holds its
+   // own station and no fleet is pushed down the lane by a neighbour's. Only the
+   // picture moves; the blockade still holds at the station step.
+   boatSteps(){const P=this.map.routes&&this.map.routes.water,taken=new Set(),steps=new Map();if(!P)return steps;
+    this.battle.guards.filter(g=>g.route==='water').sort((a,b)=>(a.slot||0)-(b.slot||0)||a.site-b.site).forEach(g=>{
+     for(let k=0;k<P.length*2;k++){const at=g.step+(k%2?-1:1)*Math.ceil(k/2);if(at<0||at>=P.length||taken.has(at))continue;taken.add(at);steps.set(g.id,at);return;}
+     steps.set(g.id,g.step);});
+    return steps;},
+   // The lane hex a boat is drawn on; a boat with no id is drawn at its station.
+   boatStep(g){const own=g.id===undefined?undefined:this.boatSteps().get(g.id);return own===undefined?g.step:own;},
+   boatPoint(g){const P=this.routeTiles(g),A=this.art.anchors,
+    p=A[P[this.boatStep(g)]],site=this.map.sites[g.site],home=site&&A[site.tile];
+    let x=p.x,y=p.y+.4;
+    if(home){const dx=p.x-home.x,dy=p.y-home.y,d=Math.hypot(dx,dy)||1;x+=dx/d*1.6;y+=dy/d*1.6;}
+    return {x,y};},
    guardStyle(g){const p=this.guardPoint(g);return {transform:'translate('+p.x+'cqw,'+p.y+'cqh)',zIndex:Math.round(p.y)};},
    guardIdleStyle(){const s=this.art.sprites.knight;return {left:s.dx+'cqw',top:s.dy+'cqh',width:s.w+'cqw',height:s.h+'cqh',transformOrigin:(-s.dx/s.w*100)+'% '+(-s.dy/s.h*100)+'%'};},
    // A patrol boat rides the same swell as the attackers but faces back up the
-   // lane, so a blockade reads as facing the ships it is there to stop.
-   sailorStyle(g){const M=this.map,P=this.routeTiles(g),meta=this.walkMeta({kind:'patrol'}),step=Math.max(1,Math.min(g.step,P.length-1)),
+   // lane, so a blockade reads as facing the ships it is there to stop. The
+   // heading follows the hex the boat is drawn on, which on a bend is not
+   // always its station's.
+   sailorStyle(g){const M=this.map,P=this.routeTiles(g),meta=this.walkMeta({kind:'patrol'}),step=Math.max(1,Math.min(this.boatStep(g),P.length-1)),
     from=M.world(P[step]),to=M.world(P[step-1]),angle=Math.atan2(to.x-from.x,to.z-from.z),
     row=((Math.round((angle-Math.PI/6)/(Math.PI/3))%6)+6)%6,
     frame=this.reduced?0:Math.floor((this.motionState().walkTime+g.id*211)%meta.duration/meta.duration*meta.frames);
@@ -384,14 +404,16 @@ const CREW={guard:{route:'land',size:level=>level+2,hp:5,unit:'חייל'},
    // road and the water lane alike; step -1 is extrapolated off the near edge.
    routeTiles(e){const M=this.map,key=e&&e.route==='water'?'water':'land';return (M.routes&&M.routes[key])||M.path;},
    roadPoint(e,step){const P=this.routeTiles(e);if(step<0){const a=this.art.anchors[P[0]],b=this.art.anchors[P[1]];return {x:2*a.x-b.x,y:2*a.y-b.y};}return this.art.anchors[P[Math.min(step,P.length-1)]];},
-   enemyPoint(e,elapsed=this.motionState().elapsed){const guard=this.battle.guards.find(g=>g.id===e.guardId),oldGuard=this.battle.guards.find(g=>g.id===e.previousGuardId),offset=g=>{const p=this.guardPoint(g);return g.route==='water'?{x:p.x-2.8,y:p.y-2.9}:{x:p.x-1.3,y:p.y-1.8};},a=oldGuard?offset(oldGuard):this.roadPoint(e,e.previous===undefined?e.step:e.previous),b=guard?offset(guard):this.roadPoint(e,e.step),t=this.reduced?1:Math.min(1,elapsed/CAMPAIGN.tickMs);return {x:a.x+(b.x-a.x)*t+(guard||oldGuard?0:.35),y:a.y+(b.y-a.y)*t};},
+   // A ship held by the blockade heaves to beside the station itself, not beside
+   // whichever berth its opponent is drawn on, so it never jumps down the lane.
+   enemyPoint(e,elapsed=this.motionState().elapsed){const guard=this.battle.guards.find(g=>g.id===e.guardId),oldGuard=this.battle.guards.find(g=>g.id===e.previousGuardId),offset=g=>{const p=g.route==='water'?this.boatPoint(Object.assign({},g,{id:undefined})):this.guardPoint(g);return g.route==='water'?{x:p.x-2.8,y:p.y-2.9}:{x:p.x-1.3,y:p.y-1.8};},a=oldGuard?offset(oldGuard):this.roadPoint(e,e.previous===undefined?e.step:e.previous),b=guard?offset(guard):this.roadPoint(e,e.step),t=this.reduced?1:Math.min(1,elapsed/CAMPAIGN.tickMs);return {x:a.x+(b.x-a.x)*t+(guard||oldGuard?0:.35),y:a.y+(b.y-a.y)*t};},
    enemyStyle(e){const p=this.enemyPoint(e);return {transform:'translate('+p.x+'cqw,'+p.y+'cqh)',zIndex:Math.round(p.y)};},
    walkStyle(e){if(e.guardId)return {backgroundPosition:(this.duelFrame(e)/23*100)+'% 0%'};const M=this.map,meta=this.walkMeta(e),P=this.routeTiles(e),step=Math.max(1,Math.min(e.step,P.length-1)),from=M.world(P[step-1]),to=M.world(P[step]),angle=Math.atan2(to.x-from.x,to.z-from.z),row=((Math.round((angle-Math.PI/6)/(Math.PI/3))%6)+6)%6,moving=e.previous!==e.step,frame=this.reduced||!moving?0:Math.floor((this.motionState().walkTime+e.id*137)%meta.duration/meta.duration*meta.frames);return {backgroundPosition:(frame/(meta.frames-1)*100)+'% '+(row/(meta.directions-1)*100)+'%'};},
    shotTarget(shot){return shot.aim?this.enemyPoint(shot.aim,shot.duration):this.roadPoint(shot,shot.step);},
    // A tower's shot starts at its plot; a crew's starts wherever that crew is
    // floating, so a cannonball leaves the boat that fired it.
    shotOrigin(shot){if(shot.fromStep===undefined)return this.art.anchors[this.map.sites[shot.site].tile];
-    return this.guardPoint({step:shot.fromStep,route:shot.fromRoute,slot:shot.fromSlot});},
+    return this.guardPoint(Object.assign({},this.battle.guards.find(g=>g.site===shot.site&&(g.slot||0)===shot.fromSlot&&g.route===shot.fromRoute)||{},{step:shot.fromStep,route:shot.fromRoute,slot:shot.fromSlot,site:shot.site}));},
    shotStyle(shot){const from=this.shotOrigin(shot),to=this.shotTarget(shot),t=Math.min(1,this.motionState().elapsed/(shot.duration||500)),arc=shot.type==='catapult'?Math.sin(Math.PI*t)*9:shot.type==='cannon'?Math.sin(Math.PI*t)*4:0;return {transform:'translate('+(from.x+(to.x-from.x)*t)+'cqw,'+(from.y-6+(to.y-from.y+6)*t-arc)+'cqh)',opacity:t<1?'1':'0'};},
    impactStyle(shot){const to=this.shotTarget(shot),age=this.motionState().elapsed-(shot.duration||500),t=Math.max(0,Math.min(1,age/240));return {transform:'translate('+to.x+'cqw,'+to.y+'cqh) translate(-50%,-50%) scale('+(1+t)+')',opacity:age>=0&&age<240?String(1-t):'0'};},
    siteStyle(i){const M=this.map,v=this.battle.buildings[i];if(!v)return this.anchorStyle(M.sites[i].tile);const p=this.spriteStyle(this.towerArt(v),M.sites[i].tile);return {left:(parseFloat(p.left)+parseFloat(p.width)/2)+'%',top:(parseFloat(p.top)+parseFloat(p.height)/2)+'%',width:p.width,height:p.height};},

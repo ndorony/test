@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v205-hexkeep-harbour';
+const CACHE_NAME = 'my-app-cache-v206-hexkeep-boats';
 const CORE_ASSETS = [
   "/assets/models/shooter/shooter_models.js",
   "/data.js?v=2",

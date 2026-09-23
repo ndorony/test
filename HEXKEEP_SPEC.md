@@ -160,11 +160,20 @@ island holds the bay for 360 answers; the same six plots with towers alone need
 560; a blockade with no towers behind it never clears the region at all, because
 the black ship's volley wrecks the boats faster than the shipyards replace them
 and it sails on regardless. Boat sprites come from the
-CC0 Kenney Pirate Kit, baked with the same rig, crop and lighting as the
-walkers; the Pirate Kit has no animation clips, so the sailing atlas is one
-heave-and-roll swell per two battle beats. The harbour's own patrol boat is the
-same rig with the shared colormap repainted blue, so a blockade never reads as a
-raid.
+CC0 Kenney Pirate Kit, baked with the same rig, camera and lighting as the
+walkers but in 256px cells, since a long hull ran off a walker's 192px one. Each
+hull sinks to the ledge where its lower body meets the upper hull — the kit's
+painted waterline — and everything under the water is clipped away, so a boat
+floats in the board's sea instead of standing on it. The Pirate Kit has no
+animation clips, so the sailing atlas is one heave-and-roll swell per two battle
+beats. The harbour's own patrol boat is the same rig with the shared colormap
+repainted blue, so a blockade never reads as a raid. A hull is nearly a hex
+long, so a shipyard's boats are drawn strung out along the lane, one to a lane
+hex, the free one nearest the station, and set a little off their island.
+Berths are handed out slot by slot across every shipyard, so each yard's first
+boat holds its own station. The blockade itself still holds at the station
+step, and a ship it stops is drawn beside that station, never beside a berth
+further down the lane.
 
 ## Journey progress and replay
 
