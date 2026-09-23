@@ -51,3 +51,79 @@ Impact/context revision: 84 tactical checks include delayed catapult splash and 
 Overlay revision (v197): `tests/hexkeep_overlay_browser.cjs` verifies newly unlocked vocabulary stays on the play route, preserves battle state, clears the shared new-items list only after presentation, then opens normal questions. Dialog bounds leave the map visible at 1440×900, 390×844 and 844×390. Real purchases produce three distinct tower asset URLs. New sprites are included in the offline manifest. Screenshots: new-words-overlay.png, question-overlay-390.png and upgraded-battlefield.png.
 
 Production correction (v199): debug UI, state and activation method removed entirely. Browser tests assert absence and zero starting funds before seeding isolated test fixtures. Tactical suite now has 82 checks.
+
+Water revision (v204): two new regions, `river` and `coast`, each with its own
+board, ten raids, roster and commander. Every board keeps one shared 8x6 grid
+and camera, so `assets/hexkeep/projection.js` still places every sprite; the
+bake re-measures the anchors and they match to the digit. Tactical coverage adds
+the second route (a boat sails past the guard line, splash never crosses between
+road and lane, a wet plot cannot be bought), the raider boat's surge (it gathers
+way untouched, caps, and drops to a crawl on any wound; arrows pin it where
+magic lets it run) and the ironclad's plating (it plates its escort, never
+itself, and sinking it strips the escort at once; arrows floor to one, magic
+ignores it). The ladder proofs add both regions and the two negative claims that
+mirror the frost-pass shield test: an artillery-only or magic-only line never
+clears the river, and in the storm bay a magic-only line loses the answers a
+mixed battery line wins with.
+
+Replay revision (v204): journey progress and battle state are separate records
+and the save format is version 5. Coverage: a village in progress resumes where
+it was left and offers a start-over; winning marks the village and leaves no
+battle state, in memory or in storage; play again restarts at wave 1 without
+touching `cleared` or the roads; losing or quitting a replay keeps every village
+already won; a version 4 save parked on a finished final raid migrates to a
+completed village that starts fresh, while a mid-run region keeps its raid.
+
+Screenshots: artifacts/hexkeep/river-battle.png, coast-battle.png,
+journey-seven-villages.png, replay-victory-card.png and replay-start-over.png.
+
+Three browser suites were stale against the committed tree before this change
+and now pass again: `hexkeep_context_browser.cjs`, `hexkeep_melee_browser.cjs`
+and `hexkeep_overlay_browser.cjs` still asserted that the debug method did not
+exist (debug returned in fca180c behind a localhost `?debug=1` gate), and the
+context suite still expected the pre-rebalance level-two catapult stone.
+
+Cache version: v204-hexkeep-water.
+
+Heading and pace correction (v204): the Pirate Kit hulls already carry their bow
+on +Z, which is the axis the walker sheets bake headings against, so the extra
+half-turn the first bake applied sailed every boat stern-first; the boats are
+re-baked at `yaw: 0` and now face along the lane. The raider boat's speed cap
+came down a hex in both regions (two on the river, three in the bay), and towers
+now pick the attacker with the fewest steps left to the village instead of the
+highest raw step, which is the same order on a one-route region but fair across
+a road and a lane. The storm bay was retuned around the slower boats — they stay
+inside an ironclad's plating longer, which made the region harder — so its
+commander, escorts and toughness came down and the mixed battery line wins it
+for the same 520 answers as before.
+
+Harbour revision (v205): an eighth region, `harbour`, and a fifth tower. The
+shipyard is a garrison tower like the barracks, but on the water: it berths
+2/3/4 patrol boats at the station its plot declares on the lane, and they block
+and duel enemy boats exactly as soldiers block walkers. Coverage: an island
+offers a shipyard and no barracks and a shore plot the reverse, a dry region
+offers no shipyard at all, a patrol boat stops a raider boat and never reaches
+a walker on the road, guns fired from the road never reach the patrol boats, and
+the black ship rakes every boat beside it before sailing on. Two bugs the new
+tower exposed are fixed with it: a garrison tower was also firing as a ranged
+tower every beat, and melee damage was reading the tower's level instead of its
+damage entry (identical for the barracks, which is why it had never shown).
+
+Balance: the blockade build clears the harbour for 360 answers, the same six
+plots with guns alone need 560, a blockade with no guns behind it never clears
+it at any price, and arrows alone never clear it either. The journey parchment
+is now 2500x1000 and carries all eight villages.
+
+Screenshots: artifacts/hexkeep/harbour-battle.png.
+
+Cache version: v205-hexkeep-harbour.
+
+Patrol gunnery (v205): the boats were only ever a wall, so each one now carries
+a cannon and fires it from where it floats — every other beat, at whatever is
+closest to the village within two lane hexes, never at the road. Coverage: every
+living boat fires on its own beat, the ball leaves the boat rather than the
+shipyard, it lands the cannon entry for the shipyard's level, and a walker on
+the road is never a target. The black ship's broadside became a volley with its
+own damage so a fleet with no towers behind it is still wrecked; the harbour was
+rescaled around both changes and the three claims hold at the new weights:
+blockade and guns 360 answers, towers alone 560, blockade alone never.

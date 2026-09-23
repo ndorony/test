@@ -132,6 +132,10 @@ const SHARED_GROUPS = {
     SHARED_GROUPS[groupId].games.push({appType: 'hexkeep', icon: 'holiday_village', name: 'Hexkeep · הכפר החי', title: 'תרגלו את מילות הפרק ובנו כפר חי'});
 });
 
+// Momentum Factory is appended; existing positional IDs and shared knowledge stay stable.
+['ch51', 'ch51s', 'g611'].forEach(groupId => {
+    SHARED_GROUPS[groupId].games.push({appType: 'momentum_factory', icon: 'precision_manufacturing', name: 'מפעל תנופה', title: 'למדו, הוסיפו מכונות והפכו את המפעל לאוטומטי'});
+});
 // The 5_1 word list the OTHER way round: the Hebrew word is shown and spoken,
 // and the answer is the English one. Producing a word is a different skill from
 // recognising it, so this is its own group with its own key (grp-ch51h) — the

@@ -59,7 +59,7 @@
 .hk-atlas-debug{font:12px Arial,sans-serif;background:#5a1f1f;border-radius:8px;padding:6px 10px}
 .hk-atlas-exit{margin-inline-start:auto;min-height:44px;padding:6px 14px;background:#2c1a0c!important;color:#fbe9c0!important;border:2px solid #8a5a2b!important;font-size:14px}
 .hk-atlas-scroll{flex:1;min-height:0;overflow:auto;display:flex;padding:4px 12px 12px;container-type:size}
-.hk-atlas-board{position:relative;flex:none;margin:auto;aspect-ratio:16/10;width:min(100cqw - 24px,(100cqh - 16px)*1.6);min-width:760px;container-type:inline-size;background:#e8cf9c url('../assets/hexkeep/atlas/parchment.jpg') center/100% 100%;border:12px solid #6d4526;border-radius:16px;box-shadow:inset 0 0 70px #7a4a1d80,inset 0 0 0 2px #3d2410,0 0 0 3px #2c1a0c,0 12px 40px #000b}
+.hk-atlas-board{position:relative;flex:none;margin:auto;aspect-ratio:25/10;width:min(100cqw - 24px,(100cqh - 16px)*2.5);min-width:1185px;container-type:inline-size;background:#e8cf9c url('../assets/hexkeep/atlas/parchment.jpg') center/100% 100%;border:12px solid #6d4526;border-radius:16px;box-shadow:inset 0 0 70px #7a4a1d80,inset 0 0 0 2px #3d2410,0 0 0 3px #2c1a0c,0 12px 40px #000b}
 .hk-atlas-prop{position:absolute;transform:translate(-50%,-50%);opacity:.78;mix-blend-mode:multiply;pointer-events:none;user-select:none}
 .hk-atlas-roads{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .hk-road{fill:none;stroke:#5c3a1d;stroke-linecap:round}.hk-road-open{stroke-width:9;stroke-dasharray:22 15}.hk-road-locked{stroke-width:6;stroke-dasharray:2 16;opacity:.35}
@@ -99,3 +99,37 @@
 .hk-fight-knight{background-image:url('../assets/hexkeep/enemy-knight-fight.png')}.hk-fight-warlock{background-image:url('../assets/hexkeep/enemy-warlock-fight.png')}
 .hk-walker.hk-walk-warlock:not(.hk-boss){filter:drop-shadow(0 0 3px #c58bff)}
 .hk-power{display:block;font:700 12px Arial,sans-serif;font-style:normal;color:#b3471d;margin:3px 0}.hk-power-line{font-size:14px;margin:6px 0 10px!important}.hk-power-line span{color:#3f7a3a}
+
+/* Water regions. Boats sail their own lane, so they never carry a melee sheet:
+   a soldier on the road can never reach them, and the walk sheet is a baked
+   sailing loop rather than a gait. */
+.hk-walk-skiff{background-image:url('../assets/hexkeep/enemy-skiff-walk.png')}.hk-walk-warship{background-image:url('../assets/hexkeep/enemy-warship-walk.png')}
+.hk-walker.hk-walk-skiff:not(.hk-boss){filter:drop-shadow(0 0 3px #ffd98a)}.hk-walker.hk-walk-warship:not(.hk-boss){filter:drop-shadow(0 1px 2px #123a5a)}
+.hk-walker.hk-walk-skiff,.hk-walker.hk-walk-warship{transform-origin:50% 54%}
+/* A boat sheet has 256px cells, not a walker's 192px, so the box grows by the
+   same amount around the same waterline anchor. */
+.hk-walker.hk-walk-skiff,.hk-walker.hk-walk-warship,.hk-walker.hk-walk-manowar{left:-8cqw;width:16cqw;height:28.444444cqh}
+.hk-walker.hk-walk-manowar{transform-origin:50% 62.5%}
+.hk-entry-sea{background:#14476bdd!important;border-color:#9fe0ef!important}
+/* Replay controls: continuing the journey stays the primary action, playing the
+   same village again is the quieter one beside it. */
+.hk-replay,.hk-restart{margin-top:8px;font-size:14px}
+.hk-ending .hk-replay{width:100%}
+.hk-debug-jump{position:absolute;z-index:109;left:16px;top:150px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.hk-debug-jump .hk-debug{min-height:0!important;padding:3px 8px!important;background:#2c1a0ceb!important;color:#ffefc0!important;border:1px solid #8a5a2b!important}
+.hk-debug-jump .hk-debug-here{border-color:#ffd35a!important;color:#ffd35a!important}
+@media(max-width:760px){.hk-debug-jump{top:132px;left:8px;font-size:9px}}
+
+/* The harbour's own patrol boats. Same sheet geometry as an attacking boat,
+   inked steel blue at bake time so a blockade never reads as a raid. */
+.hk-sailor{position:absolute;left:-8cqw;top:-17.777778cqh;width:16cqw;height:28.444444cqh;background-image:url('../assets/hexkeep/patrol-sail.png');background-size:2400% 600%;background-repeat:no-repeat;transform-origin:50% 62.5%;transition:none!important;filter:drop-shadow(0 0 3px #8fd6ff)}
+.hk-crew-sea .hk-health-guard{top:2.4cqh}
+.hk-walk-manowar{background-image:url('../assets/hexkeep/enemy-manowar-walk.png')}
+.hk-walker.hk-walk-manowar:not(.hk-boss){filter:drop-shadow(0 0 3px #ff9c6b)}
+/* Five tower types no longer fit a desktop menu at any height. */
+.hk-build-menu{max-height:min(74vh,600px);overflow:auto}
+@media(max-width:760px){.hk-sailor{scale:1}}
+/* A patrol boat's own gun: a small iron ball with a muzzle glow, and a white
+   splash where it lands rather than the catapult's dust. */
+.hk-shot-cannon{width:8px;height:8px;background:#2d3138;box-shadow:0 0 0 2px #ffd89a,0 0 6px 2px #ff9c3c}
+.hk-impact-splash{background:radial-gradient(circle,#ffffff 0 35%,#9fe0ef 55%,transparent 72%)}

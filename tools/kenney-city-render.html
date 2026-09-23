@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!-- kenney-city-render.html - renders Kenney city/factory GLB models to 512x512 isometric PNGs
+     for the Factory City game (assets/factory-city/*.png). Screenshot each key:
+       msedge --headless=new --window-size=512,512 --default-background-color=00000000
+              --virtual-time-budget=15000 --screenshot=out.png
+              "http://localhost:8123/render.html#factory-1" -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}canvas{display:block}</style>
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+const FAC = 'factory-kit/Models/GLB format/';
+const COM = 'city-commercial/Models/GLB format/';
+const IND = 'city-industrial/Models/GLB format/';
+const SUB = 'city-suburban/Models/GLB format/';
+const MKT = 'minimarket/Models/GLB format/';
+const CST = 'coaster/Models/GLB format/';
+const CAR = 'car-kit/Models/GLB format/';
+
+function sizeOf(scene){const b=new THREE.Box3().setFromObject(scene);const v=new THREE.Vector3();b.getSize(v);return v;}
+function add(group, scene, x, y, z, opts){
+    const c = scene.clone(true);
+    c.position.set(x, y, z);
+    if (opts && opts.ry) c.rotation.y = opts.ry;
+    if (opts && opts.s) c.scale.setScalar(opts.s);
+    group.add(c);
+    return c;
+}
+// place a model so its base sits on y=0 at (x,z)
+function ground(group, scene, x, z, opts){
+    const c = add(group, scene, x, 0, z, opts);
+    const b = new THREE.Box3().setFromObject(c);
+    c.position.y -= b.min.y;
+    return c;
+}
+function one(file, ry){ return {files:{m:file}, compose(p){const g=new THREE.Group(); ground(g,p.m,0,0,ry?{ry:ry}:undefined); return g;}}; }
+
+function miniMarket(){
+    return {
+        files: {
+            floor: MKT+'floor.glb',
+            back: MKT+'wall-window.glb',
+            side: MKT+'wall-door-rotate.glb',
+            fruit: MKT+'display-fruit.glb',
+            bread: MKT+'display-bread.glb',
+            freezer: MKT+'freezer.glb',
+            till: MKT+'cash-register.glb'
+        },
+        compose(p){
+            const g = new THREE.Group();
+            [[-.5,-.5],[.5,-.5],[-.5,.5],[.5,.5]].forEach(pos => ground(g,p.floor,pos[0],pos[1]));
+            ground(g,p.back,0,-1);
+            ground(g,p.side,-1,0,{ry:Math.PI/2});
+            ground(g,p.fruit,-.43,.24,{ry:Math.PI/2,s:.9});
+            ground(g,p.bread,.36,.24,{ry:Math.PI/2,s:.9});
+            ground(g,p.freezer,.53,-.47,{ry:Math.PI,s:.85});
+            ground(g,p.till,-.52,-.42,{ry:Math.PI/2,s:.9});
+            return g;
+        }
+    };
+}
+
+// compose helper: main model + optional extras placed relative to its footprint
+function withExtras(main, extras){
+    const files = {m: main};
+    (extras||[]).forEach((e,i)=>files['e'+i]=e.file);
+    return {files, compose(p){
+        const g=new THREE.Group(); const b=ground(g,p.m,0,0); const s=sizeOf(b);
+        (extras||[]).forEach((e,i)=>ground(g,p['e'+i], s.x*(e.x||0), s.z*(e.z||0), e.s?{s:e.s}:undefined));
+        return g;
+    }};
+}
+
+const ITEMS = {
+    // ---- central HQ: factory-kit machine yard, grows per tier ----
+    'hq-1': one(FAC+'machine.glb'),
+    'hq-2': withExtras(FAC+'machine.glb', [{file:FAC+'hopper-high-square.glb', x:0.72, z:-0.30}]),
+    'hq-3': withExtras(FAC+'machine.glb', [{file:FAC+'hopper-high-square.glb', x:0.72, z:-0.30},
+                                           {file:FAC+'crane.glb', x:-0.62, z:0.42, s:0.85},
+                                           {file:FAC+'robot-arm-a.glb', x:0.05, z:0.55, s:0.9}]),
+
+    // ---- factory (city-industrial) ----
+    'factory-1': one(IND+'building-a.glb'),
+    'factory-2': one(IND+'building-e.glb'),
+    'factory-3': withExtras(IND+'building-j.glb', [{file:IND+'chimney-large.glb', x:0.34, z:-0.30},
+                                                   {file:IND+'detail-tank.glb', x:-0.36, z:0.30, s:0.9}]),
+
+    // ---- power plant (city-industrial + chimneys) ----
+    'power-1': withExtras(IND+'building-b.glb', [{file:IND+'chimney-small.glb', x:0.30, z:-0.26}]),
+    'power-2': withExtras(IND+'building-h.glb', [{file:IND+'chimney-medium.glb', x:0.32, z:-0.26}]),
+    'power-3': withExtras(IND+'building-n.glb', [{file:IND+'chimney-large.glb', x:0.36, z:-0.24},
+                                                 {file:IND+'detail-tank.glb', x:-0.34, z:0.34, s:0.9}]),
+
+    // ---- warehouse (city-industrial flatter blocks) ----
+    'warehouse-1': one(IND+'building-c.glb'),
+    'warehouse-2': one(IND+'building-g.glb'),
+    'warehouse-3': one(IND+'building-m.glb'),
+
+    // ---- office (city-commercial -> skyscraper) ----
+    'office-1': one(COM+'building-c.glb'),
+    'office-2': one(COM+'building-h.glb'),
+    'office-3': one(COM+'building-skyscraper-c.glb'),
+
+    // ---- shop / market (city-commercial small) ----
+    'market-1': miniMarket(),
+    'shop-1': one(COM+'building-a.glb'),
+    'shop-2': one(COM+'building-e.glb'),
+    'shop-3': one(COM+'building-k.glb'),
+
+    // ---- house (city-suburban) ----
+    'house-1': one(SUB+'building-type-a.glb'),
+    'house-2': one(SUB+'building-type-f.glb'),
+    'house-3': one(SUB+'building-type-k.glb'),
+
+    // ---- amusement park (coaster-kit) ----
+    'park-1': one(CST+'park-entrance.glb'),
+    'park-2': one(CST+'station.glb'),
+    'park-3': one(CST+'coaster-steel-looping.glb'),
+
+    // ---- props / decorations ----
+    'tree-large': one(SUB+'tree-large.glb'),
+    'tree-small': one(SUB+'tree-small.glb'),
+    'tree-round': one(CST+'tree.glb'),
+    'flowers': one(CST+'flowers.glb'),
+    'planter': one(SUB+'planter.glb'),
+    'fence': one(SUB+'fence.glb'),
+    'bench': one(CST+'bench.glb'),
+    'cog': one(FAC+'cog-a.glb'),
+    'crane': one(FAC+'crane.glb'),
+    'cart': one(MKT+'shopping-cart.glb'),
+    'stall-food': one(CST+'stall-food.glb'),
+    'citizen': one(MKT+'character-employee.glb'),
+
+    // ---- active production props (Factory Kit 3.0 + City Industrial) ----
+    'conveyor-straight': one(FAC+'conveyor-long-stripe-sides.glb'),
+    'conveyor-corner': one(FAC+'conveyor-stripe-corner.glb'),
+    'conveyor-junction': one(FAC+'conveyor-stripe-junction-t.glb'),
+    'cargo-box': one(FAC+'box-large.glb'),
+    'cargo-box-wide': one(FAC+'box-wide.glb'),
+    'crane-magnet': one(FAC+'crane-magnet.glb'),
+    'catwalk-stairs': one(FAC+'catwalk-stairs.glb'),
+    'industrial-tank': one(IND+'detail-tank.glb'),
+    'industrial-chimney': one(IND+'chimney-medium.glb'),
+    'delivery-vehicle': one(CAR+'delivery.glb'),
+    'yard-loader': one(CAR+'tractor-shovel.glb'),
+
+    // ---- ground tiles ----
+    'floor': one(FAC+'floor.glb'),
+    'grass': one(CST+'grass.glb'),
+    'path': one(SUB+'path-stones-long.glb'),
+};
+
+const key = (location.hash || '#factory-1').slice(1);
+const item = ITEMS[key];
+if (!item) { document.title = 'ERR-unknown-' + key; throw new Error('unknown ' + key); }
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer:true});
+renderer.setSize(512, 512);
+renderer.setClearColor(0x000000, 0);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.add(new THREE.AmbientLight(0xffffff, .42));
+scene.add(new THREE.HemisphereLight(0xdfefff, 0xcbb08a, .55));
+const sun = new THREE.DirectionalLight(0xfff2dc, .95); sun.position.set(4,6,3); scene.add(sun);
+const fill = new THREE.DirectionalLight(0xbcd8ff, .3); fill.position.set(-4,3,-2); scene.add(fill);
+
+const loader = new THREE.GLTFLoader();
+const names = Object.keys(item.files);
+Promise.all(names.map(n => new Promise((res,rej)=>loader.load(item.files[n], g=>res([n,g.scene]), undefined, rej))))
+.then(entries => {
+    const parts = Object.fromEntries(entries);
+    const model = item.compose(parts);
+    scene.add(model);
+
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const radius = Math.max(size.x, size.y, size.z) * .5;
+
+    const yaw = Math.PI/4, pitch = THREE.MathUtils.degToRad(30);
+    const dist = radius * 6;
+    const cam = new THREE.OrthographicCamera(-1,1,1,-1,.1,dist*4);
+    cam.position.set(
+        center.x + dist*Math.cos(pitch)*Math.sin(yaw),
+        center.y + dist*Math.sin(pitch),
+        center.z + dist*Math.cos(pitch)*Math.cos(yaw)
+    );
+    cam.lookAt(center);
+    cam.updateMatrixWorld();
+    const inv = cam.matrixWorldInverse;
+    let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+    for (let i=0;i<8;i++){
+        const corner = new THREE.Vector3(i&1?box.max.x:box.min.x, i&2?box.max.y:box.min.y, i&4?box.max.z:box.min.z).applyMatrix4(inv);
+        minX=Math.min(minX,corner.x);maxX=Math.max(maxX,corner.x);
+        minY=Math.min(minY,corner.y);maxY=Math.max(maxY,corner.y);
+    }
+    const half = Math.max(maxX-minX, maxY-minY)*.5*1.06;
+    const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+    cam.left=cx-half; cam.right=cx+half; cam.top=cy+half; cam.bottom=cy-half;
+    cam.updateProjectionMatrix();
+
+    renderer.render(scene, cam);
+    document.title = 'DONE-' + key;
+})
+.catch(e => { document.title = 'ERR-' + key + '-' + e; });
+</script>
+</body>
+</html>

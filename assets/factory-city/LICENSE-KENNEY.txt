@@ -1,0 +1,33 @@
+Factory City art assets
+
+Derived from asset packs by Kenney (https://kenney.nl), all licensed
+Creative Commons Zero (CC0) - free for personal and commercial use,
+no attribution required (but appreciated!).
+http://creativecommons.org/publicdomain/zero/1.0/
+
+The kits ship as 3D models; each chosen model was rendered to a 512x512
+isometric PNG (yaw 45 deg, pitch 30 deg, orthographic) by
+tools/kenney-city-render.html and cropped with tools/autocrop-png.js.
+
+Sources:
+- Factory Kit (https://kenney.nl/assets/factory-kit)
+  the central factory "HQ" yard (machine, hopper, crane, robot arm),
+  concrete ground tile, cog decoration, active conveyor pieces, cargo boxes,
+  crane magnet and service stairs.
+- City Kit (Commercial) (https://kenney.nl/assets/city-kit-commercial)
+  the office towers (small building -> glass skyscraper) and the shops.
+- City Kit (Industrial) (https://kenney.nl/assets/city-kit-industrial)
+  the factory, power-plant and warehouse buildings, plus standalone chimneys
+  and tanks that appear as the production district expands.
+- City Kit (Suburban) (https://kenney.nl/assets/city-kit-suburban)
+  the houses, trees, planter, fence and stone-path tile.
+- Coaster Kit (https://kenney.nl/assets/coaster-kit)
+  the amusement-park plot (entrance arch, station, steel coaster loop),
+  the food stall, bench, round tree, flowers and the grass ground tile.
+- Mini Market (https://kenney.nl/assets/mini-market)
+  the shopping-cart prop and the citizen character.
+- Car Kit (https://kenney.nl/assets/car-kit)
+  the complete isometric delivery vehicle and the compact yard loader used on
+  the outbound service road and factory floor.
+
+Donate: http://support.kenney.nl

@@ -9912,6 +9912,7 @@ const Login = {
 
 // Standalone games are loaded before tester.js and instantiated here, after
 // BaseGameComponent exists but before the router is finalized.
+var MomentumFactoryComponent = typeof createMomentumFactoryComponent === 'function' ? createMomentumFactoryComponent(BaseGameComponent) : null;
 var HexkeepComponent = typeof createHexkeepComponent === 'function' ? createHexkeepComponent(BaseGameComponent) : null;
 var WaterPipelineComponent = null;
 if (typeof createWaterPipelineComponent === 'function') {
@@ -9962,6 +9963,7 @@ const routes = [
     {path: '/login', component: Login },
 ]
 
+if (MomentumFactoryComponent) routes.push({path: '/play/momentum_factory/:currentAppId', component: MomentumFactoryComponent, props: true});
 if (HexkeepComponent) routes.push({path: '/play/hexkeep/:currentAppId', component: HexkeepComponent, props: true});
 if (WaterPipelineComponent) {
     routes.push({path: '/play/water_pipeline/:currentAppId', component: WaterPipelineComponent, props: true});

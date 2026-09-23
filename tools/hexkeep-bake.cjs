@@ -7,14 +7,19 @@
 //
 //   node tools/hexkeep-bake.cjs boards     # per-level battlefield PNGs
 //   node tools/hexkeep-bake.cjs units      # enemy walk/fight atlases
+//   node tools/hexkeep-bake.cjs boats      # boat sailing atlases
+//   node tools/hexkeep-bake.cjs towers     # tower sprites + projection boxes
 //   node tools/hexkeep-bake.cjs 'units?only=knight,warlock'   # a subset
+//   node tools/hexkeep-bake.cjs 'boards?only=river,coast'     # one region
+//   node tools/hexkeep-bake.cjs 'boats?only=warship'          # one boat
 //
 // three.min.js + GLTFLoader.js (r128, examples/js build) must sit in
 // tools/vendor/. They are dev-only and intentionally untracked.
 const fs=require('fs'),path=require('path'),http=require('http'),{spawn}=require('child_process');
 const root=path.join(__dirname,'..'),port=8791;
 const job=process.argv[2]||'boards';
-const page=job.includes('.html')?job:{boards:'hexkeep-board-render.html',units:'hexkeep-unit-render.html'}[job.split('?')[0]]+(job.includes('?')?job.slice(job.indexOf('?')):'');
+const pages={boards:'hexkeep-board-render.html',units:'hexkeep-unit-render.html',boats:'hexkeep-boat-render.html',towers:'hexkeep-tower-render.html'};
+const page=job.includes('.html')?job:pages[job.split('?')[0]]&&pages[job.split('?')[0]]+(job.includes('?')?job.slice(job.indexOf('?')):'');
 if(!page){console.error('unknown job '+job);process.exit(2);}
 
 const TYPES={'.html':'text/html','.js':'text/javascript','.json':'application/json','.png':'image/png','.gltf':'model/gltf+json','.bin':'application/octet-stream','.glb':'model/gltf-binary','.css':'text/css','.txt':'text/plain'};

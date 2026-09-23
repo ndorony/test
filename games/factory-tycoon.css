@@ -21,6 +21,28 @@
 .ft-hud-title strong{display:block;font-size:clamp(13px,3.6vw,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ft-hud-title span{display:block;font-size:11.5px;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* Idle-style growth card: one calm, persistent goal keeps the next satisfying
+   purchase visible while the factory keeps producing. It sits bottom-right,
+   clear of the machine badges, and steps aside while the station sheet is open. */
+.ft-idle-card{position:absolute;z-index:29;bottom:calc(14px + env(safe-area-inset-bottom));right:calc(10px + env(safe-area-inset-right));width:min(240px,calc(100vw - 84px));padding:10px 13px 9px;border-radius:16px;background:var(--ft-panel);color:var(--ft-panel-ink);box-shadow:0 4px 14px rgba(10,14,26,.3);direction:rtl;pointer-events:none;animation:ft-goal-in .35s cubic-bezier(.2,.9,.25,1.1)}
+.ft-sheet-open .ft-idle-card{display:none}
+.ft-idle-kicker{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;opacity:.72;margin-bottom:3px}
+.ft-live-dot{width:7px;height:7px;border-radius:50%;background:var(--ft-resource);animation:ft-live 1.8s ease-in-out infinite}
+.ft-idle-card strong{display:block;font-size:16px;line-height:1.15;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ft-idle-card>span{display:block;font-size:11.5px;opacity:.76;line-height:1.25}
+.ft-idle-progress{height:8px;border-radius:99px;background:rgba(125,138,170,.22);overflow:hidden;margin:7px 0 3px}
+.ft-idle-progress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--ft-resource),var(--ft-glow));transition:width .45s ease}
+.ft-idle-card small{display:block;font-size:11px;font-weight:900;direction:ltr;text-align:left;opacity:.65}
+@keyframes ft-goal-in{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ft-live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.78)}}
+/* compact on small screens: title + progress only */
+@media (max-width:480px),(max-height:520px){
+  .ft-idle-card{width:min(200px,calc(100vw - 84px));padding:8px 11px 7px}
+  .ft-idle-kicker,.ft-idle-card>span{display:none}
+  .ft-idle-card strong{font-size:14px}
+  .ft-idle-progress{margin:5px 0 2px}
+}
+
 /* zoom cluster */
 .ft-zoom{position:absolute;z-index:30;left:calc(10px + env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;transition:transform .28s cubic-bezier(.2,.9,.25,1.15)}
 .ft-sheet-open .ft-zoom{transform:translateY(-190px)}
@@ -86,4 +108,6 @@
   .ft-bottom-sheet,.ft-modal,.ft-modal-scrim{animation:none}
   .ft-money-pop{animation:none}
   .ft-zoom{transition:none}
+  .ft-idle-card,.ft-live-dot{animation:none}
+  .ft-idle-progress i{transition:none}
 }

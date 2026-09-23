@@ -1,0 +1,291 @@
+{
+  "packs": [
+    {
+      "id": "kenney-factory",
+      "version": "3.0",
+      "creator": "Kenney",
+      "source": "https://kenney.nl/assets/factory-kit",
+      "license": "CC0",
+      "archive_sha256": "7e31fb2308e90304672bd15cd18fa9d9f02c03731a8cbc57a8e3e1c181dfb0a7"
+    },
+    {
+      "id": "kaykit-platformer",
+      "version": "1.0 FREE",
+      "creator": "Kay Lousberg",
+      "source": "https://kaylousberg.itch.io/kaykit-platformer",
+      "license": "CC0",
+      "archive_sha256": "7e140ee01abf99a5896cf93a02ff3dc6a23a7222109fd04854821f44a3a3adeb"
+    }
+  ],
+  "models": {
+    "k-floor": {
+      "file": "source/kenney-floor.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/floor.glb",
+      "sha256": "6fd1acd1b3fed85093fd000410cd9b010f4c169e4f10a53699993f0c5667b3a9"
+    },
+    "k-floor-large": {
+      "file": "source/kenney-floor-large.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/floor-large.glb",
+      "sha256": "6d4cf453bcacd653389a4a3071468ae1167b98c2b13f042aba55e8fe3de21db0"
+    },
+    "k-machine": {
+      "file": "source/kenney-machine.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/machine.glb",
+      "sha256": "a39e3042bcb7789274428357383317d70e1c31906e5301c99e7d9e90ac584863"
+    },
+    "k-machine-window": {
+      "file": "source/kenney-machine-window.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/machine-window.glb",
+      "sha256": "1387bd337354fca7c7cb4163e6bd4bef8711373bbe23dae01ba9d42cd35681b7"
+    },
+    "k-machine-fortified": {
+      "file": "source/kenney-machine-fortified.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/machine-fortified.glb",
+      "sha256": "0907f6616f49bbdaa20241ac4b568b780f30352f204851c53568b8e7df59b528"
+    },
+    "k-machine-bed": {
+      "file": "source/kenney-machine-bed.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/machine-bed.glb",
+      "sha256": "17dc8afaa1cd627d1cdb59691b5921ba85846a0b7aeb9c3c6d885fe27db77878"
+    },
+    "k-hopper-square": {
+      "file": "source/kenney-hopper-square.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/hopper-square.glb",
+      "sha256": "1b88e30011629015cea65777c5157026088ea557163bee43596d5083f1df0f39"
+    },
+    "k-hopper-high-round": {
+      "file": "source/kenney-hopper-high-round.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/hopper-high-round.glb",
+      "sha256": "b07d0f43ce8e2c007cc298abcefd577672625edd3323ef3a99c6d8dec6521975"
+    },
+    "k-robot-arm-a": {
+      "file": "source/kenney-robot-arm-a.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/robot-arm-a.glb",
+      "sha256": "ad3f766791adadd1cfb5ccc27d2b2ac8787848282f2a15b3c407f350dc281b68"
+    },
+    "k-robot-arm-b": {
+      "file": "source/kenney-robot-arm-b.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/robot-arm-b.glb",
+      "sha256": "0563cb35d985d4de73b8f07f9e0c16bbac76784e09a5753e4f6d9b77bdc8e163"
+    },
+    "k-piston-square": {
+      "file": "source/kenney-piston-square.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/piston-square.glb",
+      "sha256": "21b5e5dd9bfe39ddc2e77ff432f89f4dc20cabf31bd37a630ce260dcb93280dc"
+    },
+    "k-conveyor": {
+      "file": "source/kenney-conveyor.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/conveyor.glb",
+      "sha256": "879c75a74fdf972326f3f177738d893bce79bafc2f0f557cc5e84adcfda6d6d5"
+    },
+    "k-conveyor-long": {
+      "file": "source/kenney-conveyor-long.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/conveyor-long.glb",
+      "sha256": "9087ec11d9dcc85ada9d14a66910244bfbb5df57c64b2647956a32525935dee3"
+    },
+    "k-conveyor-stripe": {
+      "file": "source/kenney-conveyor-stripe.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/conveyor-stripe.glb",
+      "sha256": "c120efb00c977c69322de43d5209d5ebc9318905042e3dc9f37e0475bbd24dc0"
+    },
+    "k-conveyor-corner": {
+      "file": "source/kenney-conveyor-corner.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/conveyor-corner.glb",
+      "sha256": "e1169e56b61e952350545664993d7d1662dc4b33fa301100f3bad4b0e07870e2"
+    },
+    "k-crane": {
+      "file": "source/kenney-crane.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/crane.glb",
+      "sha256": "ceaf20fb976ce0415d2b3d40e723b6ad377845818fa4fa68b55434108b1a6880"
+    },
+    "k-crane-lift": {
+      "file": "source/kenney-crane-lift.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/crane-lift.glb",
+      "sha256": "060197cd67598ed4359ecbcb0af980d4505992213c1ab6cc9f56812dff7bbf07"
+    },
+    "k-box-small": {
+      "file": "source/kenney-box-small.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/box-small.glb",
+      "sha256": "fd2ea1ac4f24a9515dc9c53a4a589a8897c824fa5865771799f965a252f684f0"
+    },
+    "k-box-large": {
+      "file": "source/kenney-box-large.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/box-large.glb",
+      "sha256": "f5c7a7b4d7ec48c2695dc5241d62a38dbb54b487e6be0f089548582c91bacdfd"
+    },
+    "k-box-long": {
+      "file": "source/kenney-box-long.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/box-long.glb",
+      "sha256": "6a6d7bfed3058809a9833606a6a3e78a156b6f3d898fba59fc054c62b5499c94"
+    },
+    "k-screen-panel-small": {
+      "file": "source/kenney-screen-panel-small.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/screen-panel-small.glb",
+      "sha256": "e3b43cfb99a49382de983f476bc19c0c76b79c199008f663d19b7faf9b8543a3"
+    },
+    "k-screen-wide": {
+      "file": "source/kenney-screen-wide.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/screen-wide.glb",
+      "sha256": "220211ee38d51a521475caec06bb27aa231f5b1d43fd74cb93393cca47edfda3"
+    },
+    "k-structure-short": {
+      "file": "source/kenney-structure-short.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/structure-short.glb",
+      "sha256": "7d5f736601a24d40196376fb113aabf9aed840249776c652e1c6a63e43b3612e"
+    },
+    "k-structure-window": {
+      "file": "source/kenney-structure-window.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/structure-window.glb",
+      "sha256": "d0551b5784c24fde97cd42664daec955d79830b0cc967eddd5572ad3459fbaad"
+    },
+    "k-structure-doorway-wide": {
+      "file": "source/kenney-structure-doorway-wide.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/structure-doorway-wide.glb",
+      "sha256": "588655c5594b55d6f715ca6251febb18f9636f6804e0e193e31d68643e7b2107"
+    },
+    "k-pipe-large-valve": {
+      "file": "source/kenney-pipe-large-valve.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/pipe-large-valve.glb",
+      "sha256": "57126374dce5b172e06d5d6f8cbaab97c9cffe3e5e726060eb14c50a5bd519b6"
+    },
+    "k-pipe-large-bend": {
+      "file": "source/kenney-pipe-large-bend.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/pipe-large-bend.glb",
+      "sha256": "e234cba2e29bd825b9acdab56c0ff36504a6ceea4c74b21dafbbd98e84bb793b"
+    },
+    "k-cog-a": {
+      "file": "source/kenney-cog-a.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/cog-a.glb",
+      "sha256": "71fac911b6f760a97af12fe81814186e84b8d8f8b380f211afe8175baba96a12"
+    },
+    "k-cone": {
+      "file": "source/kenney-cone.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/cone.glb",
+      "sha256": "deb6ea20fe61bc094f0e64a3d6891b029ff552c5ab00bf57b763798624228e41"
+    },
+    "k-warning-traffic": {
+      "file": "source/kenney-warning-traffic.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/warning-traffic.glb",
+      "sha256": "b231e97424839b252e80555bc97d7360d2f04006cb3919675725a297bae049cd"
+    },
+    "p-platform_6x6x1_blue": {
+      "file": "source/p-platform_6x6x1_blue.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x6x1_blue.gltf",
+      "sha256": "f9738f2ef27077b846ba26887bc397e2325df71a8041825f2a6cbf7512f6edba",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-pipe_90_A_blue": {
+      "file": "source/p-pipe_90_A_blue.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_90_A_blue.gltf",
+      "sha256": "a1a76bb7d7a8c7eb51b931275449ea90ef8f58dc22396ce2d8acbbfd0bdf11f8",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-pipe_straight_A_blue": {
+      "file": "source/p-pipe_straight_A_blue.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_straight_A_blue.gltf",
+      "sha256": "08281e03108f8bb86d37a13ec977cfe26bad5bcad1900a09100c89269624f47d",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-railing_straight_double_blue": {
+      "file": "source/p-railing_straight_double_blue.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_straight_double_blue.gltf",
+      "sha256": "bb6ff17edbacc538264a06c069471bbac77bc8224050cfdc3a07a97b65d1fbe3",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-bracing_medium_blue": {
+      "file": "source/p-bracing_medium_blue.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/bracing_medium_blue.gltf",
+      "sha256": "ddf4472aba06b947da3850a12732765f73bf45914c31519fb531b6d0a38f2c15",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-signage_arrow_stand_blue": {
+      "file": "source/p-signage_arrow_stand_blue.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/signage_arrow_stand_blue.gltf",
+      "sha256": "fd2558e57f8b371f2ea4d7f155ebf6e9e8d1094a7c4ba7cb634474689ef24662",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-platform_2x2x1_yellow": {
+      "file": "source/p-platform_2x2x1_yellow.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/yellow/platform_2x2x1_yellow.gltf",
+      "sha256": "7afe84641ea7ce06c5c37fd1b6af175f0f25edb586f7454b366b4591ece13c92",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "p-cone_yellow": {
+      "file": "source/p-cone_yellow.gltf",
+      "pack": "kaykit-platformer",
+      "original": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/yellow/cone_yellow.gltf",
+      "sha256": "7030af39d31b58562067f8892561118d858cf01ef57da78d3e06277fa26a1efb",
+      "note": "Dependency URIs flattened for local baking; geometry unchanged."
+    },
+    "k-crane-magnet": {
+      "file": "source/kenney-crane-magnet.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/crane-magnet.glb",
+      "sha256": "9ed1d4690e03fd4cafcd30d182b2319cc6c743794a50108332cab9d76a083f6e"
+    },
+    "k-machine-connection-pipe": {
+      "file": "source/kenney-machine-connection-pipe.glb",
+      "pack": "kenney-factory",
+      "original": "Models/GLB format/machine-connection-pipe.glb",
+      "sha256": "b2893e5f6ae2484b8d5be0d4538bc90e50dba98715976ac8c82f55b413f8985f"
+    }
+  },
+  "character": {
+    "source": "../models/duel/Knight.glb",
+    "provenance": "../hexkeep/unit-provenance.json",
+    "clips": [
+      "Walking_A",
+      "Interact",
+      "Cheer"
+    ],
+    "changes": "Hide original sword and shield meshes; retain helmet as worker protective headgear. Cheer supplies companion portraits; preserve original texture with optional team material tints.",
+    "sha256": "60428e3abc09ba83e595d256e3af8c5c976b46cdae599f0802fc82b4a3445168"
+  },
+  "dependencies": [
+    {
+      "file": "source/p-platformer_texture.png",
+      "sha256": "2771a7c3f7fd59bcba08dc967858942d9f83820ecc9146e98d25707a07210273"
+    },
+    {
+      "file": "source/Textures/colormap.png",
+      "sha256": "35d7bd6900dde0208429eeaec87fa17fbf024ed59f3f4eab54bc92802eba9dd7"
+    }
+  ]
+}
