@@ -437,6 +437,179 @@ async function run() {
             'answers are still reported when the bar cannot be drawn');
     }
 
+    // --- 15. The child's design pack comes from LearnBox --------------------
+    // The pack is kept on the LearnBox server so it follows the child between
+    // tablets. The bridge stores it where getTheme() reads it and reloads once
+    // so every game repaints — and never reloads in a loop.
+    {
+        function themed(serverTheme, options) {
+            const settings = options || {};
+            const env = makeContext(call =>
+                call.url.indexOf('/child/me') !== -1
+                    ? ok(Object.assign({}, CHILD, {theme: serverTheme}))
+                    : ok({accepted: 1, coins_awarded: 0, counter: 0}));
+            const stored = {theme: settings.stored};
+            env.reloads = 0;
+            env.ctx.themeOptions = {base: {}, space: {}, unicorn: {}};
+            env.ctx.getLocalStorage = (key, fallback) =>
+                stored[key] === undefined ? fallback : stored[key];
+            env.ctx.setTheme = key => {
+                if (!settings.refuseWrites) stored.theme = key;
+            };
+            env.ctx.sessionStorage = settings.session || makeStorage();
+            env.ctx.location = {reload: () => { env.reloads += 1; }};
+            env.stored = stored;
+            return env;
+        }
+
+        const changed = themed('space', {stored: 'base'});
+        vm.runInContext(BRIDGE, changed.ctx);
+        await settle();
+        assert.strictEqual(changed.stored.theme, 'space',
+            'the server pack is stored where the games read it');
+        assert.strictEqual(changed.reloads, 1, 'and the page reloads once to repaint');
+
+        // The reloaded page finds the pack already stored: nothing more to do.
+        const again = themed('space', {stored: 'space', session: changed.ctx.sessionStorage});
+        vm.runInContext(BRIDGE, again.ctx);
+        await settle();
+        assert.strictEqual(again.reloads, 0, 'a pack already worn causes no reload');
+
+        const unknown = themed('neon', {stored: 'unicorn'});
+        vm.runInContext(BRIDGE, unknown.ctx);
+        await settle();
+        assert.strictEqual(unknown.stored.theme, 'unicorn',
+            'a key this application has no pack for is ignored');
+        assert.strictEqual(unknown.reloads, 0);
+
+        const refused = themed('space', {stored: 'base', refuseWrites: true});
+        vm.runInContext(BRIDGE, refused.ctx);
+        await settle();
+        assert.strictEqual(refused.reloads, 0,
+            'storage that refuses the pack must not turn into a reload loop');
+
+        // Even if the stored copy is lost between loads, one tab reloads once.
+        const session = makeStorage();
+        session.setItem('learnbox.themeReload', 'space');
+        const lost = themed('space', {stored: 'base', session});
+        vm.runInContext(BRIDGE, lost.ctx);
+        await settle();
+        assert.strictEqual(lost.reloads, 0, 'a tab reloads at most once per pack');
+
+        const standalone = themed(undefined, {stored: 'unicorn'});
+        vm.runInContext(BRIDGE, standalone.ctx);
+        await settle();
+        assert.strictEqual(standalone.stored.theme, 'unicorn',
+            'a LearnBox that sends no pack leaves the local choice alone');
+        assert.strictEqual(standalone.reloads, 0);
+    }
+
+    // --- 15b. Learning or practice comes from LearnBox --------------------
+    // The parent sets it on the server. The bridge stores it where
+    // getActivityMode() reads it and reloads once so a started game picks its
+    // weights again; 'learning' (this app's own screen) counts as learn.
+    {
+        function moded(serverMode, options) {
+            const settings = options || {};
+            const env = makeContext(call =>
+                call.url.indexOf('/child/me') !== -1
+                    ? ok(Object.assign({}, CHILD, {activity_mode: serverMode}))
+                    : ok({accepted: 1, coins_awarded: 0, counter: 0}));
+            const stored = {mode: settings.stored};
+            env.reloads = 0;
+            env.ctx.getActivityMode = () =>
+                stored.mode === undefined ? 'learn' : stored.mode;
+            env.ctx.setActivityMode = mode => {
+                if (!settings.refuseWrites) stored.mode = mode;
+            };
+            env.ctx.sessionStorage = settings.session || makeStorage();
+            env.ctx.location = {reload: () => { env.reloads += 1; }};
+            env.stored = stored;
+            return env;
+        }
+
+        const changed = moded('practicing', {});
+        vm.runInContext(BRIDGE, changed.ctx);
+        await settle();
+        assert.strictEqual(changed.stored.mode, 'practicing',
+            'the server mode is stored where the games read it');
+        assert.strictEqual(changed.reloads, 1, 'and the page reloads once');
+
+        const again = moded('practicing', {stored: 'practicing', session: changed.ctx.sessionStorage});
+        vm.runInContext(BRIDGE, again.ctx);
+        await settle();
+        assert.strictEqual(again.reloads, 0, 'a mode already in place causes no reload');
+
+        const back = moded('learn', {stored: 'practicing'});
+        vm.runInContext(BRIDGE, back.ctx);
+        await settle();
+        assert.strictEqual(back.stored.mode, 'learn', 'the parent can switch it back');
+        assert.strictEqual(back.reloads, 1);
+
+        const same = moded('learn', {stored: 'learning'});
+        vm.runInContext(BRIDGE, same.ctx);
+        await settle();
+        assert.strictEqual(same.stored.mode, 'learning',
+            "the app's own 'learning' is already learn mode");
+        assert.strictEqual(same.reloads, 0);
+
+        const refused = moded('practicing', {refuseWrites: true});
+        vm.runInContext(BRIDGE, refused.ctx);
+        await settle();
+        assert.strictEqual(refused.reloads, 0,
+            'storage that refuses the mode must not turn into a reload loop');
+
+        const unknown = moded('hologram', {stored: 'practicing'});
+        vm.runInContext(BRIDGE, unknown.ctx);
+        await settle();
+        assert.strictEqual(unknown.stored.mode, 'practicing', 'an unknown mode is ignored');
+
+        const standalone = moded(undefined, {stored: 'practicing'});
+        vm.runInContext(BRIDGE, standalone.ctx);
+        await settle();
+        assert.strictEqual(standalone.stored.mode, 'practicing',
+            'a LearnBox that sends no mode leaves the local choice alone');
+        assert.strictEqual(standalone.reloads, 0);
+    }
+
+    // --- 16. The bar shows how far the child is from the next coins -------
+    {
+        const made = [];
+        const {ctx} = makeContext(call =>
+            call.url.indexOf('/child/me') !== -1
+                ? ok({child: {display_name: 'רוני'},
+                      earning: {counter: 2, required: 5, coins_per_cycle: 10, balance: 30}})
+                : ok({accepted: 1, coins_awarded: 0, counter: 3, required: 5,
+                      coins_per_cycle: 10, balance: 30}));
+        ctx.document.createElement = () => {
+            const el = {
+                style: {cssText: '', width: '', display: ''},
+                attrs: {},
+                textContent: '',
+                setAttribute: (key, value) => { el.attrs[key] = value; },
+                appendChild: () => {},
+            };
+            made.push(el);
+            return el;
+        };
+        vm.runInContext(BRIDGE, ctx);
+        await settle();
+
+        const meter = made.find(el => el.attrs.role === 'meter');
+        assert.ok(meter, 'the bar has a meter');
+        assert.strictEqual(meter.attrs['aria-valuenow'], '2');
+        assert.ok(made.some(el => el.textContent === 'עוד 3 למטבע הבא'),
+            'the count left is shown from /child/me');
+        assert.ok(made.some(el => el.style.width === '40%'));
+
+        ctx.onLearnBoxAnswer('grp-g611-0', true, 1);
+        await settle();
+        assert.strictEqual(meter.attrs['aria-valuenow'], '3',
+            'each answer reply moves the meter without another request');
+        assert.ok(made.some(el => el.textContent === 'עוד 2 למטבע הבא'));
+        assert.ok(made.some(el => el.textContent === '30 מטבעות'));
+    }
+
     console.log('learnbox_bridge_test: all assertions passed');
 }
 

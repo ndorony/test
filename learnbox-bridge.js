@@ -158,15 +158,21 @@
     //
     // A child sent straight into a game has no way back and no idea what the
     // answers are earning, because this application has neither notion. So
-    // LearnBox adds its own small bar: the balance, and the way home. It is
+    // LearnBox adds its own small bar: the balance, how many more correct
+    // answers until the next coins, and the way home. It is
     // built only when a LearnBox is actually behind the origin, so opening
     // index.html anywhere else looks exactly as it always did.
     var hudEl = null;
     var hudCoinsEl = null;
+    var hudMeterEl = null;
+    var hudFillEl = null;
+    var hudLeftEl = null;
 
-    function showHud(balance) {
+    // earning: {balance, counter, required, coins_per_cycle} — the shape both
+    // /child/me and every answer reply carry.
+    function showHud(earning) {
         if (hudEl || typeof document === 'undefined' || !document.body) {
-            updateHud(balance);
+            updateHud(earning);
             return;
         }
         hudEl = document.createElement('div');
@@ -193,23 +199,68 @@
             'color:#e2a92e', 'backdrop-filter:blur(4px)'
         ].join(';');
 
+        // How far to the next coins: a bar a non-reader can follow, and the
+        // count for the one who can.
+        hudMeterEl = document.createElement('span');
+        hudMeterEl.setAttribute('role', 'meter');
+        hudMeterEl.style.cssText = [
+            'display:none', 'align-items:center', 'gap:8px', 'min-height:40px',
+            'padding:0 14px', 'border-radius:999px', 'background:rgba(16,26,46,.85)',
+            'color:#e2a92e', 'backdrop-filter:blur(4px)'
+        ].join(';');
+        var track = document.createElement('span');
+        track.style.cssText = [
+            'display:inline-block', 'width:64px', 'height:10px', 'border-radius:999px',
+            'background:rgba(255,255,255,.18)', 'overflow:hidden'
+        ].join(';');
+        hudFillEl = document.createElement('span');
+        hudFillEl.style.cssText = [
+            'display:block', 'height:100%', 'width:0', 'background:#e2a92e',
+            'transition:width .3s ease'
+        ].join(';');
+        hudLeftEl = document.createElement('span');
+        track.appendChild(hudFillEl);
+        hudMeterEl.appendChild(track);
+        hudMeterEl.appendChild(hudLeftEl);
+
         hudEl.appendChild(back);
         hudEl.appendChild(hudCoinsEl);
+        hudEl.appendChild(hudMeterEl);
         document.body.appendChild(hudEl);
-        updateHud(balance);
+        updateHud(earning);
     }
 
-    function updateHud(balance) {
-        if (hudCoinsEl && typeof balance === 'number') {
-            hudCoinsEl.textContent = balance + ' מטבעות';
+    function updateHud(earning) {
+        if (!earning) {
+            return;
         }
+        if (hudCoinsEl && typeof earning.balance === 'number') {
+            hudCoinsEl.textContent = earning.balance + ' מטבעות';
+        }
+        var required = earning.required;
+        if (!hudMeterEl || typeof required !== 'number' || required <= 0 ||
+            typeof earning.counter !== 'number') {
+            return;
+        }
+        var done = Math.min(Math.max(earning.counter, 0), required);
+        var left = required - done;
+        var sentence = 'עוד ' + left + ' תשובות נכונות ומקבלים ' +
+            (earning.coins_per_cycle || '') + ' מטבעות';
+        hudFillEl.style.width = Math.round(done / required * 100) + '%';
+        hudLeftEl.textContent = 'עוד ' + left + ' למטבע הבא';
+        hudMeterEl.setAttribute('aria-valuemin', '0');
+        hudMeterEl.setAttribute('aria-valuemax', String(required));
+        hudMeterEl.setAttribute('aria-valuenow', String(done));
+        hudMeterEl.setAttribute('aria-label', sentence);
+        hudMeterEl.setAttribute('title', sentence);
+        hudMeterEl.style.display = 'inline-flex';
     }
 
     function announce(result) {
         if (!result) {
             return;
         }
-        safely(updateHud, result.balance);
+        safely(updateHud, result);
         if (!result.coins_awarded) {
             return;
         }
@@ -239,8 +290,10 @@
             .then(function (result) {
                 safely(announce, result);
                 flush();
-                // The gate may have just opened. Refreshing here means the menu
-                // is already unlocked when the child walks back out to it.
+                // Answering no longer opens the menu -- only a parent does --
+                // but a parent may have opened it while the child was playing.
+                // Refreshing here means the guard already knows by the time the
+                // child walks back out, instead of bouncing them once more.
                 if (assignment && assignment.restricted) {
                     refreshAssignment();
                 }
@@ -309,7 +362,9 @@
     // application is simply not the way in while an assignment is open. This
     // guard is what makes that true rather than merely intended: it sends the
     // child back to that screen if they navigate to the menu, or into a game
-    // outside the assignment, before today's target is met.
+    // outside the assignment. Meeting today's target does not lift it -- the
+    // assignment is the list of what this child may play, and only a parent
+    // opening the day (LearnBox clears `restricted` for it) widens that list.
     //
     // It stays entirely inside this file. Nothing in the learning application
     // is aware of it, and with no LearnBox behind the origin it never runs.
@@ -343,6 +398,78 @@
             return;
         }
         window.location.href = LEARN_SCREEN;
+    }
+
+    // ---- the child's design pack --------------------------------------
+    //
+    // LearnBox keeps each child's pack on its server, under this application's
+    // own theme keys, so the choice follows the child between tablets. The
+    // LearnBox screens copy it into this application's storage before a game
+    // is opened, so this is normally a no-op; it matters for a tablet that
+    // reached a game some other way, or whose copy is from another tablet's
+    // older choice.
+    //
+    // Games read their pack once, when they start, so the only repaint that
+    // reaches all of them is a reload. It happens at most once per pack per
+    // tab, and only after the new key has verifiably been stored — a storage
+    // that refuses the write must not turn into a reload loop.
+    var THEME_RELOAD_KEY = 'learnbox.themeReload';
+
+    function adoptTheme(theme) {
+        if (typeof theme !== 'string' ||
+            typeof themeOptions === 'undefined' || !themeOptions[theme] ||
+            typeof getLocalStorage !== 'function' || typeof setTheme !== 'function') {
+            return;
+        }
+        if (getLocalStorage('theme', 'base') === theme) {
+            return;
+        }
+        setTheme(theme);
+        if (getLocalStorage('theme', 'base') !== theme) {
+            return;
+        }
+        var session = window.sessionStorage;
+        if (!session || session.getItem(THEME_RELOAD_KEY) === theme) {
+            return;
+        }
+        session.setItem(THEME_RELOAD_KEY, theme);
+        window.location.reload();
+    }
+
+    // ---- learning or practice -----------------------------------------
+    //
+    // The parent sets it on the LearnBox server; the settings screen where this
+    // application lets it be chosen is one LearnBox does not let anyone reach.
+    // Same shape as the pack: the portal normally hands it over before a game
+    // opens, this catches a tablet that got here some other way, and a game
+    // that already started in the other mode picks its weights again only on a
+    // reload — once per mode per tab, and only after the write has held.
+    var MODE_RELOAD_KEY = 'learnbox.activityModeReload';
+
+    function adoptActivityMode(mode) {
+        if ((mode !== 'learn' && mode !== 'practicing') ||
+            typeof getActivityMode !== 'function' ||
+            typeof setActivityMode !== 'function') {
+            return;
+        }
+        // The application treats anything but 'practicing' as learning, and
+        // its own screen stores 'learning' for it: that is not a difference.
+        var practicing = function () {
+            return getActivityMode() === 'practicing';
+        };
+        if (practicing() === (mode === 'practicing')) {
+            return;
+        }
+        setActivityMode(mode);
+        if (practicing() !== (mode === 'practicing')) {
+            return;
+        }
+        var session = window.sessionStorage;
+        if (!session || session.getItem(MODE_RELOAD_KEY) === mode) {
+            return;
+        }
+        session.setItem(MODE_RELOAD_KEY, mode);
+        window.location.reload();
     }
 
     window.learnBoxAssignment = function () {
@@ -404,7 +531,13 @@
                     // The bar is a convenience and earning coins is not, so a
                     // DOM that will not take it must never cost the child a
                     // single answer.
-                    safely(showHud, body.earning ? body.earning.balance : undefined);
+                    safely(showHud, body.earning);
+                    // Decoration too: a pack that cannot be applied leaves the
+                    // game in the one it already wears.
+                    safely(adoptTheme, body.theme);
+                    // Not decoration, but a mode that cannot be stored still
+                    // leaves a working game in the mode it already had.
+                    safely(adoptActivityMode, body.activity_mode);
                 } else {
                     writeQueue([]);
                 }
