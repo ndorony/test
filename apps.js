@@ -333,6 +333,20 @@ apps =  {
                 {icon: 'security',       name:'הגנת הידע',    type: 'app', link: '/play/knowledge_defense/grp-ch51-4'},
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51-5'},
                 {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51-6'},
+                // The village the other way round: the Hebrew word is asked and
+                // the English one is the answer. Its own group (ch51h), so this
+                // ladder is climbed apart from the games above it. It sits in a
+                // submenu of its own because the portal names a topic by the
+                // menu holding it — sharing this menu would offer the parent
+                // two rows reading "5_1 (התקדמות משותפת)" with no way to tell
+                // the directions apart.
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51h-0'},
+                  ]
+                },
               ]
             },
         {

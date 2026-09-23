@@ -101,6 +101,10 @@ check('g611h uses the 6.1_1 list in Hebrew-to-English mode',
     reverseGroup.listName === '6.1_1' && reverseGroup.questionIndex === 'hebrew'
     && reverseGroup.resultIndex === 'english' && reverseGroup.questionType === 'text_to_speech'
     && reverseGroup.setItems === 8);
+check('only Hebrew-to-English reads the answer aloud on a correct pick',
+    reverseGroup.speakAnswerOnCorrect === true && !group.speakAnswerOnCorrect
+    && run('resolveSharedGroupApp("grp-g611h-0").speakAnswerOnCorrect') === true
+    && !run('resolveSharedGroupApp("grp-g611-0").speakAnswerOnCorrect'));
 check('the group exposes all 13 compatible games', group.games.length === 13, group.games.length);
 check('Hexkeep is appended without changing previous game indexes',
     group.games[11].appType === 'crystal_arena' && group.games[12].appType === 'hexkeep');

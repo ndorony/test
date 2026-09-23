@@ -109,7 +109,6 @@ const SHARED_GROUPS = {
         questionIndex: 'english_name',
         resultIndex: 'hebrew',
         questionType: 'text_to_speech',
-        speakAnswerOnCorrect: true, // read the Hebrew answer aloud once it is picked right
         setItems: 8,
         games: [
             {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',      title: 'בחרו את התרגום הנכון'},
@@ -133,6 +132,24 @@ const SHARED_GROUPS = {
     SHARED_GROUPS[groupId].games.push({appType: 'hexkeep', icon: 'holiday_village', name: 'Hexkeep · הכפר החי', title: 'תרגלו את מילות הפרק ובנו כפר חי'});
 });
 
+// The 5_1 word list the OTHER way round: the Hebrew word is shown and spoken,
+// and the answer is the English one. Producing a word is a different skill from
+// recognising it, so this is its own group with its own key (grp-ch51h) — the
+// same reasoning that keeps ch51 and ch51s apart. Only the village is offered
+// in this direction for now; the same append-only rule applies here, so a new
+// game goes at the END of this list.
+SHARED_GROUPS.ch51h = {
+    listName: '5_1',
+    questionIndex: 'hebrew',
+    resultIndex: 'english',
+    questionType: 'text_to_speech', // the Hebrew word is spoken in Hebrew
+    speakAnswerOnCorrect: true,     // read the English answer aloud once it is picked right
+    setItems: 5,
+    games: [
+        {appType: 'hexkeep', icon: 'holiday_village', name: 'Hexkeep · הכפר החי (עברית לאנגלית)', title: 'תרגמו לאנגלית ובנו כפר חי'},
+    ],
+};
+
 // The reverse direction is a separate learning skill, but uses the exact same
 // games and order as g611 so the two menu halves cannot drift apart.
 SHARED_GROUPS.g611h = {
@@ -140,6 +157,7 @@ SHARED_GROUPS.g611h = {
     questionIndex: 'hebrew',
     resultIndex: 'english',
     questionType: 'text_to_speech',
+    speakAnswerOnCorrect: true, // read the English answer aloud once it is picked right
     setItems: 8,
     games: SHARED_GROUPS.g611.games,
 };

@@ -125,22 +125,54 @@ const readingLinks = submenuLinks('5_1 (התקדמות משותפת)');
 const listeningLinks = submenuLinks('5_1 שמיעה (התקדמות משותפת)');
 check('both 5_1 submenus exist', Array.isArray(readingLinks) && Array.isArray(listeningLinks),
     JSON.stringify([readingLinks, listeningLinks]));
+// The reading submenu ends with a submenu of its own — the same village played
+// the other way round, out of its own group (ch51h). Its links therefore come
+// back as undefined from submenuLinks, which only reads item.link.
+// "עברית לאנגלית" names a submenu in half a dozen places in the English menu,
+// so the reverse village is read out of the 5_1 menu itself, not by name.
+const reverseMenu = run(`
+    (function find(node) {
+        if (node.type === 'menu' && node.name === '5_1 (התקדמות משותפת)') return node.items[node.items.length - 1];
+        if (!node.items) return null;
+        for (const child of node.items) { const r = find(child); if (r) return r; }
+        return null;
+    })(apps);
+`);
+const reverseLinks = reverseMenu && reverseMenu.items ? reverseMenu.items.map(item => item.link) : null;
+const readingOwnLinks = readingLinks.filter(link => link !== undefined);
 check('the reading submenu matches groups.js game order exactly',
-    JSON.stringify(readingLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51').map(i => i.link)`)),
+    JSON.stringify(readingOwnLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51').map(i => i.link)`)),
     JSON.stringify(readingLinks));
+check('the Hebrew-to-English village hangs under the reading submenu, named apart',
+    readingLinks.length === readingOwnLinks.length + 1 && readingLinks[readingLinks.length - 1] === undefined
+    && reverseMenu.type === 'menu' && reverseMenu.name === 'עברית לאנגלית'
+    && JSON.stringify(reverseLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51h').map(i => i.link)`)),
+    JSON.stringify(reverseLinks));
 check('the listening submenu matches groups.js game order exactly',
     JSON.stringify(listeningLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51s').map(i => i.link)`)),
     JSON.stringify(listeningLinks));
 check('the reading submenu shows the word, the listening one never does',
-    readingLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === undefined)
+    readingOwnLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === undefined)
     && listeningLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === 'speech'),
     JSON.stringify(listeningLinks.map(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`))));
 check('the same games are offered in both halves, in the same order',
-    readingLinks.map(link => link.split('/')[2]).join(',')
+    readingOwnLinks.map(link => link.split('/')[2]).join(',')
     === listeningLinks.map(link => link.split('/')[2]).join(','),
-    readingLinks.map(link => link.split('/')[2]).join(',') + ' vs ' + listeningLinks.map(link => link.split('/')[2]).join(','));
+    readingOwnLinks.map(link => link.split('/')[2]).join(',') + ' vs ' + listeningLinks.map(link => link.split('/')[2]).join(','));
+check('the reverse village asks in Hebrew and answers in English, aloud',
+    run(`(function () {
+        const app = resolveSharedGroupApp('grp-ch51h-0');
+        return app && app.appType === 'hexkeep' && app.listName === '5_1'
+            && app.questionIndex === 'hebrew' && app.resultIndex === 'english'
+            && app.questionType === 'text_to_speech' && app.speakAnswerOnCorrect === true;
+    })()`),
+    JSON.stringify(run(`resolveSharedGroupApp('grp-ch51h-0')`)));
+check('the reverse village climbs its own ladder',
+    run(`getSharedGroupKnowledgeKey('ch51h')`) === 'grp-ch51h'
+    && run(`normalizeSharedGroupKey('grp-ch51h-0')`) === 'grp-ch51h'
+    && run(`normalizeSharedGroupKey('grp-ch51h-0')`) !== run(`normalizeSharedGroupKey('grp-ch51-6')`));
 check('every menu link resolves to the appType named in its own URL',
-    run(`['ch51', 'ch51s'].every(id => getSharedGroupMenuItems(id)
+    run(`['ch51', 'ch51s', 'ch51h'].every(id => getSharedGroupMenuItems(id)
         .every(i => { const parts = i.link.split('/'); return resolveSharedGroupApp(parts[3]).appType === parts[2]; }))`));
 
 console.log('--- 4. shared knowledge across the four games ---');
