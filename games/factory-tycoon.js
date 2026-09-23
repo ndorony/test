@@ -319,6 +319,15 @@
             g.fillStyle(0xd9b13c, 0.5);
             g.fillRect(236, L.groundY + 26, 260, 5);
             g.fillRect(236, L.groundY + 120, 260, 5);
+            // Footstep marks along the lane centre trace the crew's route from
+            // the truck dock (x≈190) to the depot, with a short spur up to it.
+            g.lineStyle(3, 0xffe08a, 0.7);
+            for (x = 190; x <= 470; x += 34) {
+                g.strokeCircle(x, L.groundY + 74, 4);
+                g.strokeCircle(x + 12, L.groundY + 80, 2.5);
+            }
+            g.lineStyle(2, 0xffe08a, 0.5);
+            g.lineBetween(470, L.groundY + 74, 470, L.groundY + 42);
             // bottom apron shade
             g.fillStyle(0x8e8069, 0.55); g.fillRect(0, W.height - 44, W.width, 44);
 
@@ -412,7 +421,7 @@
             root.input.cursor = 'pointer';
             root.on('pointerup', function (pointer) { if (isTap(pointer)) selectMachine(id); });
             var lamp = lampPos ? scene.add.ellipse(lampPos.x, lampPos.y, 15, 15, 0x57d06b, 0.9).setDepth(36) : null;
-            machines[id] = {root: root, lamp: lamp, w: w, h: h};
+            machines[id] = {root: root, lamp: lamp, w: w, h: h, levelTag: null};
             return machines[id];
         }
 
@@ -597,9 +606,13 @@
                 var dx = tx - w.c.x, dy = ty - w.c.y;
                 var dist = Math.sqrt(dx * dx + dy * dy);
                 var step = w.speed * dt;
-                w.c.scaleX = dx < -2 ? -1 : (dx > 2 ? 1 : w.c.scaleX);
+                // Turn smoothly toward the next waypoint so the walk reads as a
+                // deliberate route through the factory instead of a teleport.
+                var face = dx < -2 ? -1 : (dx > 2 ? 1 : (w.c.scaleX < 0 ? -1 : 1));
+                w.c.scaleX = reduced ? face : w.c.scaleX + (face - w.c.scaleX) * Math.min(1, dt * 12);
                 if (dist <= step) {
                     w.c.setPosition(tx, ty);
+                    w.c.scaleX = face;   // never leave a half-finished turn squashed
                     workerSetWalk(w, false);
                     if (w.state === 'toPickup') {
                         w.state = 'pickup'; w.waitT = 240;
@@ -985,6 +998,17 @@
                 var kind = (i % 3 === 2) ? 'crate' : 'pBox';
                 shelfStock.push(img(bx, by, kind, kind === 'crate' ? 0.72 : 0.95, 21, 0.5, 1));
             }
+            // A compact level tag on each station (gold from level 3) makes the
+            // machine feel more capable before the player even opens its panel.
+            var levelIds = ['sawmill', 'workshop', 'packaging', 'conveyor1', 'conveyor2', 'storage'];
+            levelIds.forEach(function (id) {
+                var m = machines[id];
+                if (!m || !m.root) return;
+                var b = m.root.getBounds ? m.root.getBounds() : new P.Geom.Rectangle(m.root.x, m.root.y, m.w, m.h);
+                var level = d.machines[id] || 1;
+                if (!m.levelTag) m.levelTag = scene.add.text(b.right - 8, b.top + 8, '', {fontFamily: 'Arial', fontSize: '18px', fontStyle: '900', color: '#fff8d5', stroke: '#29324a', strokeThickness: 5}).setOrigin(1, 0).setDepth(74);
+                m.levelTag.setPosition(b.right - 8, b.top + 8).setText('L' + level).setColor(level >= 3 ? '#ffd45e' : '#fff8d5');
+            });
             // sign: lights up once its upgrade is bought
             if (d.signLit && !signLit) {
                 signLit = true;
@@ -1174,6 +1198,13 @@
                 <div class="ft-hud-title"><strong>{{ ftTheme.motif.sceneName }}</strong><span>{{ ppm }} מטבעות בדקה</span></div>
                 <button class="ft-icon-btn" type="button" @click="fitFactory" aria-label="התאמה למסך"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
               </header>
+              <aside class="ft-idle-card">
+                <div class="ft-idle-kicker"><span class="ft-live-dot"></span> המפעל עובד</div>
+                <strong>{{ idleGoal.title }}</strong>
+                <span>{{ idleGoal.detail }}</span>
+                <div class="ft-idle-progress"><i :style="{width: idleGoal.progress+'%'}"></i></div>
+                <small>{{ idleGoal.current }}<template v-if="idleGoal.target"> / {{ idleGoal.target }}</template></small>
+              </aside>
               <div class="ft-zoom">
                 <button class="ft-icon-btn" type="button" @click="zoomIn" aria-label="התקרבות"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
                 <button class="ft-icon-btn" type="button" @click="zoomOut" aria-label="התרחקות"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
@@ -1266,6 +1297,22 @@
                         value: this.productValue(),
                         next: next
                     };
+                },
+                // The cheapest open upgrade across every station, so the goal is
+                // affordable whenever any "+" badge is.
+                idleGoal: function () {
+                    var hints = this.upgradeHints(), current = Math.floor(this.money), best = null;
+                    Object.keys(hints).forEach(function (id) {
+                        if (hints[id].available && (!best || hints[id].cost < best.cost)) best = hints[id];
+                    });
+                    if (!best) return {title: 'המפעל משגשג!', detail: 'כל השדרוגים פתוחים — המשיכו לצבור מטבעות', current: current, target: 0, progress: 100};
+                    return {
+                        title: best.title,
+                        detail: best.affordable ? 'אפשר לשדרג עכשיו — לחצו על הסימן + במפעל' : 'עוד קצת הכנסות והשדרוג שלכם מוכן',
+                        current: current,
+                        target: best.cost,
+                        progress: Math.min(100, Math.round(current / best.cost * 100))
+                    };
                 }
             },
             methods: {
@@ -1319,7 +1366,7 @@
                     Object.keys(STATION_INFO).forEach(function (id) {
                         var next = this.nextUpgradeFor(id);
                         hints[id] = next
-                            ? {available: true, affordable: this.money >= next.cost, cost: next.cost}
+                            ? {available: true, affordable: this.money >= next.cost, cost: next.cost, title: getUpgradeDefinition(next).title}
                             : {available: false};
                     }, this);
                     return hints;

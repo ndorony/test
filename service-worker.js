@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v220-momentum-factory';
+const CACHE_NAME = 'my-app-cache-v221-factory-idle-goal';
 const CORE_ASSETS = [
   '/assets/momentum-factory/belt.png',
 
