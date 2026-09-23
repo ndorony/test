@@ -8,7 +8,9 @@ const stored = new Map();
 const key = request => typeof request === 'string' ? request : request.url;
 let installed = [], deleted = [], network;
 const cache = {
-    async addAll(urls) { installed = Array.from(urls); },
+    async addAll(urls) { installed = installed.concat(Array.from(urls)); },
+    // the worker caches each asset on its own so one 404 cannot void the install
+    async add(url) { installed.push(url); },
     async put(request, response) { stored.set(key(request), response); },
 };
 const context = {
