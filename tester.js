@@ -252,9 +252,11 @@ const updateWeightForKey = (key, index, change) => {
     // Only a genuine answer counts, and every answer site passes exactly ±1.
     // A non-answer caller uses a different magnitude — factory-tycoon passes
     // -15 to force-master an item the child BOUGHT with in-game money — and
-    // must not mint coins, so test for -1 rather than for "negative".
+    // must not mint coins, so test for -1 rather than for "negative". The
+    // fourth argument says the answer was wrong (+1), so a retry the child
+    // gets right straight after missing it is not paid (see the bridge).
     if (typeof onLearnBoxAnswer === 'function') {
-        onLearnBoxAnswer(key, change === -1, index);
+        onLearnBoxAnswer(key, change === -1, index, change === 1);
     }
     // Apps flagged speakAnswerOnCorrect read the answer aloud on a correct pick.
     // Hooked here so every game gets it without its own change.

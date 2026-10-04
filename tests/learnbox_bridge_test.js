@@ -171,6 +171,41 @@ async function run() {
             'only accepted correct answers are reported');
     }
 
+    // --- 3a. A retry got right straight after a miss earns no coin -----------
+    {
+        const {ctx, calls} = makeContext(() => ok(CHILD));
+        vm.runInContext(BRIDGE, ctx);
+        await settle();
+        const paid = () => events(calls).map(call => call.body.item_key);
+
+        ctx.onLearnBoxAnswer('grp-g611-0', false, 4, true);   // missed word 4
+        ctx.onLearnBoxAnswer('grp-g611-0', true, 4, false);   // then got it on the retry
+        await settle();
+        assert.deepStrictEqual(paid(), [], 'the retry after a miss is not paid');
+
+        ctx.onLearnBoxAnswer('grp-g611-0', true, 4, false);   // word 4 again, first try
+        await settle();
+        assert.deepStrictEqual(paid(), ['4'], 'only the retry right after the miss is withheld');
+
+        ctx.onLearnBoxAnswer('grp-g611-0', false, 5, true);   // missed word 5
+        ctx.onLearnBoxAnswer('grp-g611-0', true, 6, false);   // moved on to word 6
+        ctx.onLearnBoxAnswer('grp-g611-0', true, 5, false);   // word 5 comes round later
+        await settle();
+        assert.deepStrictEqual(paid(), ['4', '6', '5'],
+            'a missed word coming round again later pays as usual');
+
+        ctx.onLearnBoxAnswer('grp-g611-1', false, 7, true);   // missed in one game
+        ctx.onLearnBoxAnswer('grp-g611-2', true, 7, false);   // right in another
+        await settle();
+        assert.deepStrictEqual(paid(), ['4', '6', '5', '7'], 'a miss belongs to its own game');
+
+        ctx.onLearnBoxAnswer('grp-g611-3', false, 8, false);  // -15: bought, not answered
+        ctx.onLearnBoxAnswer('grp-g611-3', true, 8, false);
+        await settle();
+        assert.deepStrictEqual(paid(), ['4', '6', '5', '7', '8'],
+            'an in-game purchase is not a miss, so it withholds nothing');
+    }
+
     // --- 4. A transport failure queues, and the queue flushes as a batch ----
     {
         let allowEvents = false;
@@ -403,7 +438,7 @@ async function run() {
         const tester = fs.readFileSync(path.join(ROOT, 'tester.js'), 'utf8');
         const call = /onLearnBoxAnswer\(([^)]*)\)/.exec(tester);
         assert.ok(call, 'tester.js still calls the bridge');
-        assert.ok(/change === -1/.test(call[1]),
+        assert.ok(/change === -1/.test(call[1]) && /change === 1\b/.test(call[1]),
             'the hook must test change === -1, not "negative", or an in-game ' +
             'purchase mints coins — got: ' + call[1]);
 

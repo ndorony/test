@@ -11,7 +11,7 @@
 // whose balance grows or by how much.
 //
 // Wiring (one guarded call, matching the onAdventureAnswer idiom):
-//   tester.js updateWeightForKey -> onLearnBoxAnswer(key, isCorrect, index)
+//   tester.js updateWeightForKey -> onLearnBoxAnswer(key, isCorrect, index, isWrong)
 
 (function () {
     'use strict';
@@ -476,18 +476,35 @@
         return assignment;
     };
 
+    // The question each game last got wrong. Most games hold a missed question
+    // on screen until it is answered, so the right answer that follows is a
+    // retry with one option fewer, not knowledge — it still teaches (the app
+    // records it) but it earns no coin. Only the very next answer in the same
+    // game is affected, and only in this page: the word coming round again
+    // later, or tomorrow, pays as usual.
+    var missed = {};
+
     // The one entry point tester.js calls. Only accepted correct answers are
     // reported; wrong answers are the learning app's own business.
-    window.onLearnBoxAnswer = function (key, isCorrect, itemIndex) {
-        if (!isCorrect || available === false || typeof key !== 'string') {
+    window.onLearnBoxAnswer = function (key, isCorrect, itemIndex, isWrong) {
+        if (typeof key !== 'string') {
+            return;
+        }
+        var item = (itemIndex === undefined || itemIndex === null) ? null : String(itemIndex);
+        var retried = item !== null && missed[key] === item;
+        if (isWrong) {
+            missed[key] = item;
+        } else if (isCorrect) {
+            delete missed[key];
+        }
+        if (!isCorrect || retried || available === false) {
             return;
         }
         var event = {
             event_id: uuid(),
             app_key: key.slice(0, 120),
             topic: topicForApp(key),
-            item_key: (itemIndex === undefined || itemIndex === null)
-                ? null : String(itemIndex),
+            item_key: item,
             occurred_at: new Date().toISOString()
         };
         // Off the synchronous answer path. The game writes its own weights to
