@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Each Google account reads and writes its own synced data and nothing else.
+// Paste into Firebase console > Firestore > Rules, or deploy with
+// `firebase deploy --only firestore:rules`.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
