@@ -452,20 +452,77 @@ function getItemById(currentItem, id) {
           return groupApp;
       }
   }
-  // Split the ID into an array of indices
-  const indices = id.split('_').map(Number);
+  // Split the ID into its steps: an index into the current menu, or the
+  // explicit `id` of an item anywhere below it (2_0, my-menu, my-menu_1).
+  const steps = String(id).split('_');
 
   // Recursively traverse the items structure
-  for (const index of indices) {
+  for (const step of steps) {
     if (!currentItem || !currentItem.hasOwnProperty('items')) {
       return null; // Item not found
     }
 
-    currentItem = currentItem.items[index];
+    currentItem = /^\d+$/.test(step) ? currentItem.items[Number(step)] : findItemByOwnId(currentItem, step);
   }
 
   // Return the found item
   return currentItem;
+}
+
+// An item that names itself with `id` keeps that address however the menu
+// around it is reordered, which a positional id (2_0) cannot — and the address
+// is also the key its progress is stored under. Items added from outside this
+// repository (learnbox-extra.js) rely on it: they are appended after whatever
+// the menu holds today, so their position moves every time a game is added
+// here. Ids are matched depth-first and must not contain "_".
+function findItemByOwnId(menu, id) {
+  if (!menu || !Array.isArray(menu.items)) {
+    return null;
+  }
+  for (const item of menu.items) {
+    if (item && item.id === id) {
+      return item;
+    }
+    const inner = findItemByOwnId(item, id);
+    if (inner) {
+      return inner;
+    }
+  }
+  return null;
+}
+
+// Game types defined outside this repository. learnbox-extra.js, loaded after
+// apps.js and before this file, may list them in EXTRA_GAME_TYPES as
+// {appType, create}: create works like createHexkeepComponent, receiving
+// BaseGameComponent and returning the game's component. Each one becomes a
+// /play/<appType>/:currentAppId route. A built-in type is never replaced, and
+// a game that fails to build is skipped so the rest of the app still starts.
+function getExtraGameRoutes(baseComponent, taken) {
+  const extra = typeof EXTRA_GAME_TYPES !== 'undefined' && Array.isArray(EXTRA_GAME_TYPES) ? EXTRA_GAME_TYPES : [];
+  const routes = [];
+  extra.forEach(entry => {
+    const appType = entry && entry.appType;
+    if (typeof appType !== 'string' || !/^[a-z0-9_]+$/.test(appType) || typeof entry.create !== 'function') {
+      console.error('learnbox-extra: a game type needs an appType ([a-z0-9_]+) and a create function', entry);
+      return;
+    }
+    const path = '/play/' + appType + '/:currentAppId';
+    if (taken.indexOf(path) !== -1) {
+      console.error(`learnbox-extra: game type "${appType}" already exists here and is not replaced`);
+      return;
+    }
+    try {
+      const component = entry.create(baseComponent);
+      if (!component) {
+        throw new Error('create returned nothing');
+      }
+      routes.push({path: path, component: component, props: true});
+      taken.push(path);
+    } catch (error) {
+      console.error(`learnbox-extra: game type "${appType}" could not be built`, error);
+    }
+  });
+  return routes;
 }
 
 function getSetItems(currentApp, defaultValue=1){
@@ -9508,6 +9565,10 @@ var MenuComponent = Vue.component('menu',{
         if (app.link) {
           return app.link;
         }
+        // An item with its own id is addressed by it (see findItemByOwnId)
+        if (app.id) {
+          return `/${app.type}/${app.id}`;
+        }
         menu = this.menu;
         route = this.$route.params.currentMenu;
         link = `/${app.type}/${route}_${id}`;
@@ -9988,6 +10049,9 @@ if (CrystalArenaComponent) {
 if (typeof getAdventureRoutes === 'function') {
     getAdventureRoutes().forEach(route => routes.push(route));
 }
+
+// Game types from learnbox-extra.js — after every built-in one, which they never replace
+getExtraGameRoutes(BaseGameComponent, routes.map(route => route.path)).forEach(route => routes.push(route));
 
 const router = new VueRouter({
     routes

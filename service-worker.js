@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v224-firebase-sync-changes';
+const CACHE_NAME = 'my-app-cache-v225-extra-games';
 // Third-party libraries, vendored under /vendor at the versions index.html used
 // to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
 // are what the app cannot start without: with no internet and no local copy,
@@ -122,6 +122,7 @@ const CORE_ASSETS = [
   '/apps.js',
   '/groups.js',
   '/learnbox-bridge.js',
+  '/learnbox-extra.js',
   '/worlds.js',
   '/adventure.js',
   '/adventure.css',
