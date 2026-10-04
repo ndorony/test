@@ -24,7 +24,8 @@ let _firebaseReady = false;
 
 try {
     firebaseApp = firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
+    // No firebase.analytics() here: its SDK is not loaded, so the call threw
+    // and took sign-in down with it. Analytics comes from gtag (vendor/analytics.js).
     firebaseAuth = firebase.auth();
     firebaseDb = firebase.firestore();
     _firebaseReady = true;
