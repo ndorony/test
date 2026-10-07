@@ -472,6 +472,359 @@
         window.location.reload();
     }
 
+    // ---- progress that follows the child --------------------------------
+    //
+    // This application keeps everything a child has learned in this browser's
+    // storage, under `${key}_${name}_LocalData` (storage.js). LearnBox mirrors
+    // the chosen child's keys on its server, so a second tablet — or the same
+    // one behind another family member's sign-in email — carries on from the
+    // same words, scores and saved games. The server knows the child from the
+    // session, never from the email.
+    //
+    // One exchange both ways (/child/learning-state/sync): what changed here,
+    // each with the version it was based on, and back what changed anywhere
+    // else. Changes are found by comparing every one of the child's keys with
+    // the hash recorded at the last exchange, so a game that writes storage
+    // directly is covered as well as one that goes through storage.js.
+    //
+    // Learning records (weights, attempt history, scores) that changed on two
+    // tablets are merged by the server, so a word learned on either counts on
+    // both. For anything else, until a page has caught up, the server's newer
+    // copy wins: a game that opened with an old copy may already have saved
+    // it. Once caught up this tablet is the one being played, and its writes
+    // win (`force`). Either way the server archives the losing copy. When catching up changed what the
+    // open game already read, the page reloads once so the game starts again
+    // from the child's real progress.
+    var STATE_META_PREFIX = 'learnbox.stateSync.';
+    var STATE_REAPPLY_KEY = 'learnbox.stateReapply';
+    var STATE_RELOAD_KEY = 'learnbox.stateReload';
+    // LearnBox already owns these and hands them over itself (see above).
+    var STATE_SKIP = {theme: true, activityMode: true};
+    var STATE_MAX_CHARS = 900000;
+    var STATE_BATCH = 150;
+    var STATE_SOON_MS = 3000;
+    var STATE_EVERY_MS = 60000;
+
+    var stateChild = null; // {id, suffix} once LearnBox has named the child
+    var stateCaughtUp = false;
+    var stateBusy = null;
+    var stateAgain = false;
+    var stateSoon = null;
+
+    // A cheap 53-bit string hash (cyrb53): enough to notice a changed value
+    // without keeping a second copy of the child's progress.
+    function hashText(text) {
+        var h1 = 0xdeadbeef;
+        var h2 = 0x41c6ce57;
+        for (var i = 0; i < text.length; i++) {
+            var ch = text.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761);
+            h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+    }
+
+    function readStateMeta() {
+        try {
+            var meta = JSON.parse(localStorage.getItem(STATE_META_PREFIX + stateChild.id) || 'null');
+            if (meta && typeof meta.seq === 'number' && meta.keys && typeof meta.keys === 'object') {
+                return meta;
+            }
+        } catch (error) {
+            /* a corrupt record is only a slower first exchange */
+        }
+        return {seq: 0, keys: {}};
+    }
+
+    function writeStateMeta(meta) {
+        try {
+            localStorage.setItem(STATE_META_PREFIX + stateChild.id, JSON.stringify(meta));
+        } catch (error) {
+            /* Quota: the next exchange resends a little more, nothing breaks. */
+        }
+    }
+
+    // The child's keys in this browser, by their name without the user tail;
+    // null where the storage cannot be listed.
+    function localState() {
+        if (typeof localStorage.length !== 'number' || typeof localStorage.key !== 'function') {
+            return null;
+        }
+        var suffix = stateChild.suffix;
+        var found = {};
+        for (var i = 0; i < localStorage.length; i++) {
+            var full = localStorage.key(i);
+            if (typeof full !== 'string' || full.length <= suffix.length ||
+                full.slice(-suffix.length) !== suffix) {
+                continue;
+            }
+            var key = full.slice(0, -suffix.length);
+            if (!STATE_SKIP[key]) {
+                found[key] = localStorage.getItem(full);
+            }
+        }
+        return found;
+    }
+
+    function stateChanges(meta, local) {
+        var changes = [];
+        Object.keys(local).forEach(function (key) {
+            var value = local[key];
+            if (value === null || value.length > STATE_MAX_CHARS) {
+                return;
+            }
+            var known = meta.keys[key];
+            var hash = hashText(value);
+            if (!known || known.hash !== hash) {
+                changes.push({key: key, value: value, base: known ? known.seq : 0, hash: hash});
+            }
+        });
+        Object.keys(meta.keys).forEach(function (key) {
+            if (!(key in local) && meta.keys[key].hash !== null) {
+                changes.push({key: key, value: null, base: meta.keys[key].seq, hash: null});
+            }
+        });
+        return changes;
+    }
+
+    function currentHash(key) {
+        var value = localStorage.getItem(key + stateChild.suffix);
+        return value === null ? null : hashText(value);
+    }
+
+    // Take in the server's answer. Returns the keys whose stored value it
+    // changed, as {full storage key: new value or null}.
+    function applyState(meta, sent, result) {
+        var sentByKey = {};
+        sent.forEach(function (change) {
+            sentByKey[change.key] = change;
+        });
+        (result.stored || []).forEach(function (entry) {
+            var change = sentByKey[entry.key];
+            if (change) {
+                meta.keys[entry.key] = {seq: entry.seq, hash: change.hash};
+            }
+        });
+        var applied = {};
+        (result.keys || []).forEach(function (row) {
+            var known = meta.keys[row.key];
+            var here = currentHash(row.key);
+            var change = sentByKey[row.key];
+            // Changed here and not (or no longer) what went up: this tablet's
+            // own newer write stays, and goes up on top of this version later.
+            var dirty = change ? here !== change.hash : here !== (known ? known.hash : null);
+            if (dirty) {
+                return;
+            }
+            var full = row.key + stateChild.suffix;
+            try {
+                if (row.value === null) {
+                    localStorage.removeItem(full);
+                } else {
+                    localStorage.setItem(full, row.value);
+                }
+            } catch (error) {
+                return; // quota: left for the next exchange
+            }
+            var hash = row.value === null ? null : hashText(row.value);
+            if (hash !== here) {
+                applied[full] = row.value;
+            }
+            meta.keys[row.key] = {seq: row.seq, hash: hash};
+        });
+        meta.seq = result.seq;
+        writeStateMeta(meta);
+        return applied;
+    }
+
+    function postState(payload, final) {
+        var text = JSON.stringify(payload);
+        return fetch(API + '/child/learning-state/sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: text,
+            credentials: 'same-origin',
+            // Lets the last exchange of a closing tab finish; browsers only
+            // allow it for small bodies.
+            keepalive: !!final && text.length < 60000
+        }).then(function (response) {
+            if (!response.ok) {
+                var error = new Error('LearnBox ' + response.status);
+                error.status = response.status;
+                throw error;
+            }
+            return response.json();
+        });
+    }
+
+    // One exchange; more follow at once while either side has more to say.
+    // Resolves with everything the exchanges changed in this browser.
+    function syncState(final, appliedSoFar) {
+        var applied = appliedSoFar || {};
+        if (!stateChild) {
+            return Promise.resolve(applied);
+        }
+        if (stateBusy) {
+            stateAgain = true;
+            return stateBusy;
+        }
+        var meta = readStateMeta();
+        var local = localState();
+        if (!local) {
+            return Promise.resolve(applied);
+        }
+        var changes = stateChanges(meta, local);
+        var sent = changes.slice(0, STATE_BATCH);
+        stateBusy = postState({
+            since: meta.seq,
+            force: stateCaughtUp,
+            changes: sent.map(function (change) {
+                return {key: change.key, value: change.value, base: change.base};
+            })
+        }, final).then(function (result) {
+            var now = applyState(meta, sent, result);
+            Object.keys(now).forEach(function (full) {
+                applied[full] = now[full];
+            });
+            var more = result.more || changes.length > sent.length || stateAgain;
+            stateAgain = false;
+            stateBusy = null;
+            return more ? syncState(false, applied) : applied;
+        }, function (error) {
+            stateBusy = null;
+            if (isPermanent(error)) {
+                stateChild = null; // no such route or no child: stay quiet
+            }
+            throw error;
+        });
+        return stateBusy;
+    }
+
+    function syncStateSoon() {
+        if (!stateChild || stateSoon !== null) {
+            return;
+        }
+        stateSoon = window.setTimeout(function () {
+            stateSoon = null;
+            syncState().catch(function () {});
+        }, STATE_SOON_MS);
+    }
+
+    function activeUserIsChild() {
+        try {
+            return typeof getUser === 'function' &&
+                '_' + getUser() + '_LocalData' === stateChild.suffix;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // The open game read the old copy. Reload once, and make sure whatever it
+    // saves while the page goes away does not survive into the new one.
+    function restartWith(applied, seq) {
+        var session = window.sessionStorage;
+        if (!session || session.getItem(STATE_RELOAD_KEY) === String(seq)) {
+            return;
+        }
+        session.setItem(STATE_RELOAD_KEY, String(seq));
+        // Nothing this page still writes may go up: it is the old copy.
+        stateChild = null;
+        try {
+            session.setItem(STATE_REAPPLY_KEY, JSON.stringify(applied));
+        } catch (error) {
+            /* too big for this tab's storage: the unload listeners below cover it */
+        }
+        var reapply = function () {
+            reapplyState(applied);
+        };
+        window.addEventListener('pagehide', reapply);
+        if (typeof document !== 'undefined' && document.addEventListener) {
+            document.addEventListener('visibilitychange', reapply);
+        }
+        window.location.reload();
+    }
+
+    function reapplyState(applied) {
+        Object.keys(applied).forEach(function (full) {
+            try {
+                if (applied[full] === null) {
+                    localStorage.removeItem(full);
+                } else {
+                    localStorage.setItem(full, applied[full]);
+                }
+            } catch (error) {
+                /* already as good as storage allows */
+            }
+        });
+    }
+
+    // Runs as this script loads, before any game reads its progress.
+    (function reapplyAfterRestart() {
+        try {
+            var session = window.sessionStorage;
+            var stash = session && session.getItem(STATE_REAPPLY_KEY);
+            if (stash) {
+                session.removeItem(STATE_REAPPLY_KEY);
+                reapplyState(JSON.parse(stash));
+            }
+        } catch (error) {
+            /* nothing stashed that can be read */
+        }
+    })();
+
+    function startStateSync(child) {
+        var name = typeof child.display_name === 'string' ? child.display_name.trim() : '';
+        if (!child.id || !name) {
+            return;
+        }
+        stateChild = {id: String(child.id), suffix: '_' + name + '_LocalData'};
+        // storage.js reports every write here (the hook firebase.js answers),
+        // so a change goes up within seconds rather than at the next round.
+        var reported = window.firebaseSyncLocalStorageKey;
+        window.firebaseSyncLocalStorageKey = function (key) {
+            if (typeof reported === 'function') {
+                reported.apply(this, arguments);
+            }
+            if (stateChild && typeof key === 'string' &&
+                key.slice(-stateChild.suffix.length) === stateChild.suffix) {
+                syncStateSoon();
+            }
+        };
+        syncState().then(function (applied) {
+            stateCaughtUp = true;
+            if (Object.keys(applied).length && activeUserIsChild()) {
+                restartWith(applied, readStateMeta().seq);
+            }
+        }, function () {
+            // Offline or refused: this tablet keeps playing on its own copy,
+            // and its writes still lose to anything newer until it catches up.
+        });
+        if (typeof window.setInterval === 'function') {
+            window.setInterval(function () {
+                syncState().then(function () {
+                    stateCaughtUp = true;
+                }, function () {});
+            }, STATE_EVERY_MS);
+        }
+        var goingAway = function () {
+            syncState(true).catch(function () {});
+        };
+        window.addEventListener('pagehide', goingAway);
+        if (typeof document !== 'undefined' && document.addEventListener) {
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') {
+                    goingAway();
+                }
+            });
+        }
+    }
+
+    window.learnBoxSyncState = function () {
+        return syncState();
+    };
+
     window.learnBoxAssignment = function () {
         return assignment;
     };
@@ -555,6 +908,8 @@
                     // Not decoration, but a mode that cannot be stored still
                     // leaves a working game in the mode it already had.
                     safely(adoptActivityMode, body.activity_mode);
+                    // After the pack and mode, which may already reload.
+                    safely(startStateSync, body.child);
                 } else {
                     writeQueue([]);
                 }

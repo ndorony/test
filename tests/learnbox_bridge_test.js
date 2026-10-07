@@ -645,6 +645,115 @@ async function run() {
         assert.ok(made.some(el => el.textContent === '30 מטבעות'));
     }
 
+    // --- 17. A child's progress follows the profile between tablets -------
+    {
+        // LearnBox's side, as the cloud answers /child/learning-state/sync:
+        // per key a value and a version; a write based on an older version
+        // loses unless the tablet says it is the one being played.
+        const server = {seq: 0, rows: new Map()};
+        function exchange(body) {
+            const stored = [];
+            const kept = [];
+            for (const change of body.changes) {
+                const row = server.rows.get(change.key);
+                if (row && row.value === change.value) { stored.push({key: change.key, seq: row.seq}); continue; }
+                if (row && row.seq > change.base && !body.force) { kept.push({key: change.key, ...row}); continue; }
+                server.seq += 1;
+                server.rows.set(change.key, {value: change.value, seq: server.seq});
+                stored.push({key: change.key, seq: server.seq});
+            }
+            const known = new Set([...stored, ...kept].map(entry => entry.key));
+            const keys = kept.slice();
+            for (const [key, row] of server.rows) {
+                if (row.seq > body.since && !known.has(key)) keys.push({key, ...row});
+            }
+            return {seq: server.seq, more: false, stored, keys};
+        }
+
+        function storageWithKeys(initial) {
+            const storage = makeStorage();
+            Object.defineProperty(storage, 'length', {get: () => storage._map.size});
+            storage.key = index => [...storage._map.keys()][index] ?? null;
+            for (const [key, value] of Object.entries(initial)) storage.setItem(key, value);
+            return storage;
+        }
+
+        function tablet(initial) {
+            const syncs = [];
+            const made = makeContext(call => {
+                if (call.url.indexOf('/child/me') !== -1) {
+                    return ok({child: {id: 'child-1', display_name: 'רוני'}});
+                }
+                if (call.url.indexOf('/learning-state/sync') !== -1) {
+                    syncs.push(call.body);
+                    return ok(exchange(call.body));
+                }
+                return ok({topics: []});
+            }, {storage: storageWithKeys(initial)});
+            made.syncs = syncs;
+            made.reloads = 0;
+            made.ctx.sessionStorage = makeStorage();
+            made.ctx.location = {hash: '#/play/word_school/grp-g611-15', reload: () => { made.reloads++; }};
+            made.ctx.getUser = () => 'רוני';
+            return made;
+        }
+
+        const WEIGHTS = 'grp-g611_Weights_רוני_LocalData';
+        const first = tablet({
+            [WEIGHTS]: '{"1":3}',
+            'theme_רוני_LocalData': 'space',
+            'score7_נועה_LocalData': '4',
+            users: '["רוני","נועה"]',
+        });
+        vm.runInContext(BRIDGE, first.ctx);
+        await settle(12);
+        assert.deepStrictEqual(first.syncs[0].changes.map(change => change.key), ['grp-g611_Weights'],
+            'only this child\'s progress goes up, without the user tail, and not what LearnBox owns');
+        assert.strictEqual(first.syncs[0].force, false, 'a page that has not caught up yet does not force');
+        assert.strictEqual(server.rows.get('grp-g611_Weights').value, '{"1":3}');
+        assert.strictEqual(first.reloads, 0, 'nothing newer came back, so no reload');
+
+        // Another tablet, signed in to LearnBox with a different email, whose
+        // game already saved an old copy before hearing from the server.
+        const second = tablet({[WEIGHTS]: '{"old":1}'});
+        vm.runInContext(BRIDGE, second.ctx);
+        await settle(12);
+        assert.strictEqual(server.rows.get('grp-g611_Weights').value, '{"1":3}',
+            'a stale tablet does not overwrite the child\'s progress');
+        assert.strictEqual(second.localStorage.getItem(WEIGHTS), '{"1":3}',
+            'it takes the child\'s progress instead');
+        assert.strictEqual(second.reloads, 1, 'and restarts the game once to read it');
+        assert.strictEqual(JSON.parse(second.ctx.sessionStorage.getItem('learnbox.stateReapply'))[WEIGHTS], '{"1":3}');
+
+        // The reloaded page: a save made while the old one went away is undone
+        // before any game reads storage, and nothing needs a second reload.
+        second.localStorage.setItem(WEIGHTS, '{"old":1}');
+        const reloaded = tablet({});
+        reloaded.ctx.sessionStorage = second.ctx.sessionStorage;
+        reloaded.ctx.localStorage = second.localStorage;
+        reloaded.localStorage = second.localStorage;
+        vm.runInContext(BRIDGE, reloaded.ctx);
+        assert.strictEqual(reloaded.localStorage.getItem(WEIGHTS), '{"1":3}');
+        await settle(12);
+        assert.strictEqual(reloaded.reloads, 0);
+        assert.deepStrictEqual(reloaded.syncs[0].changes, [], 'already in step');
+
+        // Playing there: a write reported by storage.js goes up within seconds,
+        // and now wins.
+        reloaded.localStorage.setItem(WEIGHTS, '{"1":3,"2":1}');
+        reloaded.ctx.firebaseSyncLocalStorageKey(WEIGHTS, '{"1":3,"2":1}');
+        assert.strictEqual(reloaded.timers.length, 1, 'one short wait, however many writes');
+        reloaded.timers.shift().fn();
+        await settle(12);
+        assert.strictEqual(server.rows.get('grp-g611_Weights').value, '{"1":3,"2":1}');
+        assert.strictEqual(reloaded.syncs[1].force, true);
+
+        // Back on the first tablet, the next exchange brings it over.
+        await first.ctx.learnBoxSyncState();
+        assert.strictEqual(first.localStorage.getItem(WEIGHTS), '{"1":3,"2":1}');
+        assert.strictEqual(first.reloads, 0, 'a page already playing is not reloaded');
+    }
+
     console.log('learnbox_bridge_test: all assertions passed');
 }
 
