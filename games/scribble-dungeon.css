@@ -30,6 +30,12 @@
     display: block;
 }
 
+/* Pawn and signs above a gateway room that is being played in 3D. */
+.sd-overlay {
+    z-index: 3;
+    pointer-events: none;
+}
+
 /* ------------------------------------------------------------------ HUD
    Nothing in the HUD is allowed to look like app chrome: it is all pencil
    written onto the same page the dungeon is drawn on. */

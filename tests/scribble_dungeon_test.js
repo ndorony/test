@@ -363,6 +363,7 @@ function answerHarness(correct) {
         persist() { calls.push(['persist']); },
         setRoomLabel() { },
         playSound: component.methods.playSound,
+        queueModeTransitionIfDue: component.methods.queueModeTransitionIfDue,
         onCorrect: component.methods.onCorrect,
         onWrong: component.methods.onWrong,
         beginWalk: component.methods.beginWalk,
@@ -481,6 +482,7 @@ test('a reload restarts the map but keeps the score and the gems', () => {
     const component = context.createScribbleDungeonComponent({ name: 'base' });
     const state = {
         // As if the page had just reloaded: restore() has already run.
+        $route: {query: {}},
         score: 112, gems: 9, explored: 14, depth: 8, streak: 5, gemsRestored: true,
         _sd: {
             rooms: [{}, {}], taken: { a: 1 }, owner: { a: 1 },

@@ -611,7 +611,10 @@ var BaseGameComponent = Vue.component('base-game',{
                        this.presentNewItems();
                        return false;
                    }
-                   this.$router.push('/display/news/' + this.currentAppId);
+                   const entry = typeof scribbleTransitionEntryRoute === 'function'
+                       ? scribbleTransitionEntryRoute(this.currentApp, this.currentAppId, this.$route.query) : null;
+                   this.$router.push(entry ? {path: '/display/news/' + this.currentAppId, query: entry.query}
+                       : '/display/news/' + this.currentAppId);
                    return false;
                 }
             }
@@ -5693,7 +5696,9 @@ var DisplayComponent = Vue.component('display',{
 
             if (this.displayNew){
                 setLocalStorage(`${this.currentAppId}_new_items`, []);
-                this.$router.push('/play/' + this.currentAppType + '/' + this.currentAppId);
+                const entry = typeof scribbleTransitionEntryRoute === 'function'
+                    ? scribbleTransitionEntryRoute(this.currentApp, this.currentAppId, this.$route.query) : null;
+                this.$router.push(entry || '/play/' + this.currentAppType + '/' + this.currentAppId);
                 return
             }
             this.$router.push('/app/' + this.currentAppId);
@@ -5713,7 +5718,9 @@ var DisplayComponent = Vue.component('display',{
         if (!this.items || this.items.length === 0) {
             if (this.displayNew) {
                 setLocalStorage(`${this.currentAppId}_new_items`, []);
-                this.$router.push('/play/' + this.currentAppType + '/' + this.currentAppId);
+                const entry = typeof scribbleTransitionEntryRoute === 'function'
+                    ? scribbleTransitionEntryRoute(this.currentApp, this.currentAppId, this.$route.query) : null;
+                this.$router.push(entry || '/play/' + this.currentAppType + '/' + this.currentAppId);
                 return;
             }
             this.$router.push('/app/' + this.currentAppId);
@@ -9996,6 +10003,13 @@ if (typeof createScribbleDungeonComponent === 'function') {
     ScribbleDungeonComponent = createScribbleDungeonComponent(BaseGameComponent);
 }
 
+// The side-view half of the Scribble pair. It has no menu entry of its own
+// yet: it is reached through the dungeon's 3D mode transitions.
+var ScribblePlatformerComponent = null;
+if (typeof createScribblePlatformerComponent === 'function') {
+    ScribblePlatformerComponent = createScribblePlatformerComponent(BaseGameComponent);
+}
+
 var CrystalArenaComponent = null;
 if (typeof createCrystalArenaComponent === 'function') {
     CrystalArenaComponent = createCrystalArenaComponent(BaseGameComponent);
@@ -10041,6 +10055,10 @@ if (FactoryTycoonComponent) {
 
 if (ScribbleDungeonComponent) {
     routes.push({path: '/play/scribble_dungeon/:currentAppId', component: ScribbleDungeonComponent, props: true});
+}
+
+if (ScribblePlatformerComponent) {
+    routes.push({path: '/play/scribble_platformer/:currentAppId', component: ScribblePlatformerComponent, props: true});
 }
 
 if (CrystalArenaComponent) {

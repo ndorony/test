@@ -4,10 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scribble Fall Transition</title>
+<script>
+// The shared link opens the actual learning loop. Capture/manual inspection is
+// still available explicitly with #inspect&p=0 (or the capture tool's #bare).
+if (!/(?:^|[#&])(?:inspect|bare)(?:&|$)/.test(location.hash)) {
+  location.replace('../index.html#/play/scribble_dungeon/0_46?scribbleEntry=bridge');
+}
+</script>
 <link rel="stylesheet" href="scribble-transition-preview.css">
 </head>
 <body class="fall-preview">
-<header><h1>Falling object transition: side-view to top-down</h1></header>
+<header><h1>Falling object transition: side-view to top-down</h1>
+  <a href="../index.html#/play/scribble_dungeon/0_46?scribbleEntry=bridge">פתיחת שלב המשחק עם שאלות</a>
+</header>
 <div class="controls">
   <button id="play" type="button">Play</button>
   <button id="reset" type="button" class="secondary">Reset</button>
@@ -30,7 +39,7 @@
 </div>
 <pre class="readout" id="readout"></pre>
 <script src="../vendor/three-0.128.0.min.js"></script>
-<script src="../games/scribble-bridge.js?v=115"></script>
+<script src="../games/scribble-bridge.js?v=116"></script>
 <script src="scribble-transition-preview.js"></script>
 <script src="scribble-fall-transition-adapter.js?v=159"></script>
 <script>createScribbleTransitionPreview(createScribbleFallTransitionPreviewAdapter());</script>

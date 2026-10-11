@@ -149,12 +149,30 @@
             wrongText: 'הארגז היה ריק — נסו ארגז אחר', env: 'yard', variants: 2,
             decor: [['background_cloudA', 1], ['tile_fence', 1]],
         },
+        fall: {          // a real three-answer room immediately above the shaft
+            name: 'הארגז שמעל הפיר', icon: '📦',
+            hint: 'בחרו את הארגז הנכון כדי לפתוח את הפיר',
+            ground: 'tile_grass', block: 'tile_crate', layout: 'pit',
+            wrongText: 'הארגז לא פתח את הפיר — נסו אחר', gap: [4, 6], env: 'shaft',
+            decor: [['background_cloudA', 1]],
+        },
         tower: {         // tall ladders on a stone tower base
             name: 'טיפוס במגדל', icon: '🪜',
             hint: 'טפסו לשלב עם התשובה הנכונה',
             ground: 'tile_stone', block: 'tile_ladder', layout: 'tower',
             wrongText: 'השלב נשבר — נסו שלב אחר', env: 'tower', variants: 3,
             decor: [['background_cloudA', 1], ['background_cloudB', 1], ['tile_tree', 1]],
+        },
+        // The side view of the 3D room a magic-door transition ends in: a full
+        // brick back wall with a crown, three ladders standing against it and
+        // the floor's cross-section as the ground. Entered only from that
+        // transition, never dealt by the cycle; it is climbed like the tower.
+        handoff: {
+            name: 'חדר הנחיתה', icon: '🪜',
+            hint: 'טפסו לשלב עם התשובה הנכונה',
+            ground: 'tile_stone', block: 'tile_ladder', layout: 'tower',
+            wrongText: 'השלב נשבר — נסו שלב אחר', env: 'handoff',
+            decor: [],
         },
         rail: {          // a dirt mine floor with carts on tracks
             name: 'בחירת המסלול', icon: '🛤️',
@@ -328,6 +346,55 @@
      * fallback when a block is off screen. Normally the answer is written on the
      * block itself, in world space.
      */
+    EXITS.handoff = EXITS.tower;
+    FAILS.handoff = FAILS.tower;
+
+    // Rooms the pawn leaves by walking or hopping right, onto the next room at
+    // the same level: the only rooms the shaft room may follow.
+    const SIDE_EXIT_KINDS = KIND_CYCLE.filter(function (kind) {
+        const exit = EXITS[kind];
+        if (!exit || exit.transition === 'pageflip' || !exit.place) return false;
+        const placed = exit.place({x0: 0, x1: PITCH, y0: 0});
+        return placed.x0 === PITCH && placed.y0 === 0;
+    });
+
+    /** The room before the shaft: this depth's own kind if it leaves sideways. */
+    function sideExitKindFor(depth) {
+        const kind = kindForDepth(depth);
+        return SIDE_EXIT_KINDS.indexOf(kind) >= 0 ? kind : SIDE_EXIT_KINDS[depth % SIDE_EXIT_KINDS.length];
+    }
+
+    /**
+     * The landing room in tile units, shared with the 3D transition that
+     * builds the same room: columns from the room's left edge, rows up from
+     * the ground line. One description, two renderings.
+     */
+    const HANDOFF_ROOM = {
+        columns: ROOM_TILES,
+        wall: 'tile_brick', wallRows: 5,
+        crown: 'tile_castle',
+        ladder: 'tile_ladder', ladderRows: 7,
+        ground: 'tile_stone', dirt: 'tile', dirtAlpha: 0.9,
+    };
+    /**
+     * The fall room in tile units, shared with the 3D fall that builds the
+     * same ledge: the grass course with its soil, the three-tile gap, the
+     * shaft's back wall seen through it, and the answer crates. Columns count
+     * from the room's left edge; the shaft is centred on the room.
+     */
+    const FALL_ROOM = {
+        columns: ROOM_TILES,
+        gap: ROOM_KINDS.fall.gap.slice(),
+        ground: ROOM_KINDS.fall.ground, dirt: 'tile', dirtAlpha: 0.9, cliffAlpha: 0.8,
+        shaftWall: 'tile_brick', crate: ROOM_KINDS.fall.block,
+    };
+    FALL_ROOM.crateColumns = buildBlocks({kind: 'fall', x0: 0, x1: ROOM_TILES * PITCH, y0: GROUND_Y},
+        3, mulberry(1)).map(b => b.wx / PITCH - 0.5);
+
+    // The answer ladders stand where this game's own tower layout puts them.
+    HANDOFF_ROOM.ladderColumns = buildBlocks({kind: 'handoff', x0: 0, x1: ROOM_TILES * PITCH, y0: GROUND_Y},
+        3, mulberry(1)).map(b => b.wx / PITCH - 0.5);
+
     const SIGN_SLOTS = {
         2: [{ x: 0.30, y: 0.40 }, { x: 0.70, y: 0.40 }],
         3: [{ x: 0.22, y: 0.42 }, { x: 0.50, y: 0.30 }, { x: 0.78, y: 0.42 }],
@@ -631,6 +698,12 @@
                 // whole (widened) span so the labels above them don't crowd each other.
                 wx = room.x0 + PITCH * (2.5 + frac * (ROOM_TILES - 5));
                 wy = room.y0 - PITCH * 0.15;           // set down onto the arch deck, as the walkway itself
+            } else if (layout === 'pit') {             // crates side by side across the pit, one per gap column
+                const gap = spec.gap || [0, 0];
+                const span = gap[1] - gap[0];
+                const c = count > 1 ? gap[0] + Math.round(i * span / (count - 1)) : gap[0] + span / 2;
+                wx = room.x0 + PITCH * (c + 0.5);
+                wy = room.y0 - PITCH * 0.5;            // level with the ground, bridging the gap
             } else if (layout === 'tower') {           // full-height ladders side by side; climb the right one
                 wx = room.x0 + PITCH * (2.5 + frac * (ROOM_TILES - 5));
                 wy = room.y0 - PITCH * 2.2;            // the sign sits at a readable point on the ladder
@@ -817,7 +890,23 @@
                     g.rand = mulberry(seed);
                     RUN_SALT = seed >>> 0;
 
-                    const start = makeRoom(0, 0, kindForDepth(0));
+                    // A magic-door handoff already ends on ladders. Preserve that
+                    // visual sentence by opening its destination in the tower room;
+                    // normal entries keep the ordinary opening room.
+                    const arrival = this.$route.query && this.$route.query.scribbleArrival;
+                    const fallEntry = this.$route.query && this.$route.query.scribbleEntry === 'fall';
+                    const start = makeRoom(0, 0, fallEntry ? 'fall' : arrival === 'ladder' ? 'handoff' : kindForDepth(0));
+                    if (fallEntry) {
+                        start.transitionGateway = 'scribble_dungeon';
+                        start.decor = [];
+                    }
+                    if (arrival === 'ladder') {
+                        // Match the brick-and-ladder handoff room: no meadow props
+                        // or variant swap may replace the wall the spell just reached.
+                        start.variant = 0;
+                        start.decor = [];
+                        start.handoffStage = true;
+                    }
                     start.state = 'visited';
                     start.reveal = 1;
                     g.rooms.push(start);
@@ -849,7 +938,10 @@
                     const room = g.current;
                     const wrong = q.options.filter(o => o !== q.result);
                     const count = Math.min(3, 1 + wrong.length);
-                    const labels = this.shuffle([q.result].concat(this.shuffle(wrong).slice(0, count - 1)));
+                    const dealt = [q.result].concat(this.shuffle(wrong).slice(0, count - 1));
+                    // Every crate stands over the shaft; the 3D fall drops
+                    // whichever one was chosen.
+                    const labels = this.shuffle(dealt);
 
                     room.blocks = buildBlocks(room, count, mulberry(roomSeed(room.index) ^ 0x51ed));
                     room.blocks.forEach((b, i) => {
@@ -898,6 +990,94 @@
                     else this.onWrong(block);
                 },
 
+                /**
+                 * One score segment belongs to one Scribble reading. Keep the
+                 * learning score and weights on this same app id, then hand only
+                 * the visual game type to the companion route.
+                 */
+                queueModeTransitionIfDue: function () {
+                    if (typeof scribbleNextModeForScore !== 'function') return false;
+                    return scribbleNextModeForScore(this.currentAppId, 'scribble_platformer', this.score) || null;
+                },
+
+                /** Starts the fall inside this same playable question room. */
+                startModeTransition: function (nextMode) {
+                    if (!nextMode) return false;
+                    const g = this._sp;
+                    const sourceCanvas = this.$refs.canvas;
+                    g.state = 'transitioning';
+                    this.locked = true;
+                    this.hotspots = [];
+                    if (typeof commitScribbleModeTransition === 'function') {
+                        commitScribbleModeTransition(this.currentAppId, nextMode, this.score);
+                    }
+                    const liveFrame = function () {
+                        const room = g.current;
+                        const centre = room.x0 + ROOM_W / 2;
+                        const block = room.blocks.find(function (item) { return item.state === 'solved'; }) ||
+                            room.blocks.find(function (item) { return Math.abs(item.wx - centre) < 1; });
+                        return {
+                            target: [(g.cam.x - centre) / PITCH, (room.y0 - g.cam.y) / PITCH, 0],
+                            unit: PITCH * g.cam.z,
+                            objectY: block ? (room.y0 - block.wy) / PITCH : .5,
+                            objectX: block ? (block.wx - centre) / PITCH : 0,
+                            // Crates still standing over the pit (a wrong one has
+                            // already dropped in).
+                            standingX: room.blocks.filter(function (item) { return item.state === 'closed'; })
+                                .map(function (item) { return (item.wx - centre) / PITCH; }),
+                            fallRoom: room.kind === 'fall' ? FALL_ROOM : null,
+                        };
+                    };
+                    const run = typeof runScribbleModeTransition === 'function'
+                        ? runScribbleModeTransition('scribble_platformer', {
+                            reduced: this.reduced,
+                            host: this.$refs.stage,
+                            liveRoom: true,
+                            holdForArrival: true,
+                            palette: {ink: g.pal.ink, paper: g.pal.floor},
+                            // The page the fall leaves from, exactly as this frame
+                            // shows it, so the shaft opens in the notebook.
+                            // (The registered, unbound methods: an instance's own are
+                            // bound to its live state and ignore the painter's.)
+                            departurePage: paintPaper(registeredMethods() || this, g.pal, g.view, g.dpr,
+                                {x: g.cam.x, y: g.cam.y, z: g.cam.z}),
+                            arrivalPage: nextMode === 'scribble_dungeon' &&
+                                typeof paintScribbleDungeonFallPaper === 'function'
+                                ? paintScribbleDungeonFallPaper : null,
+                            live: liveFrame,
+                            // The pawn stays standing on the ledge: its picture is
+                            // stood in the 3D room where this frame shows it.
+                            pinned: {image: this.snapshotPawn(), frame: (function () {
+                                const f = liveFrame();
+                                return {facing: [0, 0, 1], centre: [f.target[0], f.target[1], 0.41],
+                                    width: g.view.w / f.unit, height: g.view.h / f.unit};
+                            })()},
+                            onState: function (frame) {
+                                const mix = frame.entryMix;
+                                frame.root.style.transition = 'none';
+                                frame.root.style.opacity = String(mix);
+                                // The 3D frame carries its own page, so it fades in
+                                // over the canvas; fading both would let the stage's
+                                // own background show through halfway.
+                                if (sourceCanvas) sourceCanvas.style.opacity = mix >= 1 ? '0' : '1';
+                            },
+                            onFinish: function () {
+                                if (sourceCanvas) sourceCanvas.style.opacity = '';
+                            },
+                        })
+                        : {promise: Promise.resolve(false), cancel: function () {}};
+                    this._modeTransition = run;
+                    run.promise.then(() => {
+                        if (this._destroyed || this._modeTransition !== run) return;
+                        this._modeTransition = null;
+                        this.$router.push({
+                            path: '/play/' + nextMode + '/' + this.currentAppId,
+                            query: nextMode === 'scribble_dungeon' ? {scribbleArrival: 'fall'} : {},
+                        });
+                    });
+                    return true;
+                },
+
                 onCorrect: function (block) {
                     const g = this._sp;
                     this.streak++;
@@ -925,6 +1105,13 @@
                         this.launchArrow({ x: g.pawn.x + PITCH * 0.4, y: g.pawn.y - PITCH * 0.1 },
                             { x: block.wx, y: block.wy }, { dur: 0.45, arc: PITCH * 0.5 });
                     }
+                    if (g.current.transitionGateway) {
+                        this.feedback = 'הארגז נופל אל תוך הפיר…';
+                        this.startModeTransition(g.current.transitionGateway);
+                        return;
+                    }
+                    const transitionTarget = this.queueModeTransitionIfDue();
+                    if (transitionTarget) g.transitionTarget = transitionTarget;
                     this.beginAdvance(block);
                 },
 
@@ -1005,7 +1192,7 @@
                     const b = w.failBlock;
                     if (g.current.kind === 'doors') {   // a gate does not break — it locks
                         b.state = 'locked'; b.rattleT = 0; this.shake(5);
-                    } else if (g.current.kind === 'tower') {   // the ladder snaps off and drops with the pawn
+                    } else if (ROOM_KINDS[g.current.kind].layout === 'tower') {   // the ladder snaps off and drops with the pawn
                         b.state = 'falling'; b.fallT = 0; this.shake(12);
                         this.puff({ x: g.pawn.x, y: g.pawn.y }, 'bad', 12);
                     } else if (g.current.kind === 'rail') {    // the cart looped back — parked and crossed out
@@ -1058,7 +1245,19 @@
                     const from = g.current;
                     const exit = EXITS[from.kind] || EXITS.jump;
                     const placed = exit.place(from);
-                    const next = makeRoom(from.index + 1, placed.x0, kindForDepth(from.index + 1), placed.y0);
+                    // The shaft room is entered from the side, so it only follows a
+                    // room the pawn leaves sideways at its own level. From any
+                    // other room, one such room comes first and the shaft after it.
+                    const transitionTarget = g.transitionTarget;
+                    const intoShaft = !!transitionTarget && SIDE_EXIT_KINDS.indexOf(from.kind) >= 0;
+                    const kind = intoShaft ? 'fall'
+                        : transitionTarget ? sideExitKindFor(from.index + 1) : kindForDepth(from.index + 1);
+                    const next = makeRoom(from.index + 1, placed.x0, kind, placed.y0);
+                    if (intoShaft) {
+                        next.transitionGateway = transitionTarget;
+                        next.decor = [];
+                        g.transitionTarget = null;
+                    }
                     next.state = 'visited';
                     next.reveal = 0;
                     this.explored++;
@@ -1172,9 +1371,63 @@
                     g.state = 'flipping';
                 },
 
+                /** The fall gateway, once reached, and how far the map has faded. */
+                isolatedRoom: function () {
+                    const g = this._sp;
+                    const room = g.current;
+                    if (!room || room.kind !== 'fall' || !room.transitionGateway || !g.isolate) return null;
+                    return {room: room, fade: g.isolate};
+                },
+
+                /** A picture of the pawn alone, exactly where this frame draws it. */
+                snapshotPawn: function () {
+                    const g = this._sp;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = g.canvas.width;
+                    canvas.height = g.canvas.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+                    ctx.translate(g.view.w / 2, g.view.h / 2);
+                    ctx.scale(g.cam.z, g.cam.z);
+                    ctx.translate(-g.cam.x, -g.cam.y);
+                    this.drawPawn(ctx);
+                    return canvas;
+                },
+
+                /**
+                 * The pawn of a magic-door arrival walks into the landing room
+                 * from beyond the left edge of the frame; the round is dealt once
+                 * it stands at the room's entrance.
+                 */
+                enterFromLeft: function () {
+                    const g = this._sp;
+                    const room = g.current;
+                    if (this.reduced || !room || !room.handoffStage) return false;
+                    const stand = landAt(room);
+                    const offscreen = g.cam.x - g.view.w / (2 * g.cam.z) - PITCH;
+                    // The ladders the 3D room ended on stay standing while the
+                    // pawn walks in; the round then deals its answers onto them
+                    // (the same seed puts them in the same columns).
+                    room.blocks = buildBlocks(room, 3, mulberry(roomSeed(room.index) ^ 0x51ed));
+                    g.pawn.x = offscreen;
+                    g.pawn.y = stand.y;
+                    g.state = 'entering';
+                    g.walk = {t: 0, dur: this.dur(1.5), style: 'walk',
+                        pts: [{x: offscreen, y: stand.y}, stand], entering: true, landAt: stand};
+                    return true;
+                },
+
                 finishWalk: function () {
                     const g = this._sp;
                     const w = g.walk;
+                    if (w && w.entering) {
+                        g.pawn.x = w.landAt.x;
+                        g.pawn.y = w.landAt.y;
+                        g.walk = null;
+                        g.state = 'idle';
+                        this.own(() => { if (!this._destroyed) this.prepareRound(); }, this.dur(0.25) * 1000);
+                        return;
+                    }
                     // A door walk turns the page through the doorway instead of arriving.
                     if (w && w.flipTo) {
                         g.walk = null;
@@ -1342,6 +1595,20 @@
                     if (g.current && ROOM_KINDS[g.current.kind].layout === 'span') {
                         lift += (block.index % 2) * (h + 26);
                     }
+                    // Crates over a pit touch each other, so their signs are spread
+                    // across the page instead, the middle one a little higher, and
+                    // the leader arrows reach down to their crates.
+                    if (g.current && ROOM_KINDS[g.current.kind].layout === 'pit') {
+                        const count = (g.current.blocks || []).length;
+                        const slot = slotsFor(count)[block.index] || {x: 0.5};
+                        const middle = count === 3 && block.index === 1;
+                        lift += PITCH * g.cam.z * 0.9 + (middle ? h * 0.6 : 0);
+                        return {
+                            x: Math.max(pad, Math.min(g.view.w - w - pad, g.view.w * slot.x - w / 2)),
+                            y: Math.max(112, Math.min(g.view.h - h - 60, s.y - h - lift)),
+                            w: w, h: h,
+                        };
+                    }
                     return {
                         x: Math.max(pad, Math.min(g.view.w - w - pad, s.x - w / 2)),
                         y: Math.max(112, Math.min(g.view.h - h - 60, s.y - h - lift)),
@@ -1488,7 +1755,7 @@
                         const k = this.colReveal(room, px);
                         if (k <= 0) continue;
                         if (gap && c >= gap[0] && c <= gap[1]) {
-                            if (spikes) this.blitPx(ctx, spikes, px, cy + PITCH * 2.6, 0, k * 0.85, 1);
+                            if (spikes && !room.transitionGateway) this.blitPx(ctx, spikes, px, cy + PITCH * 2.6, 0, k * 0.85, 1);
                             continue;
                         }
                         this.blitPx(ctx, floor, px, cy, 0, k, 1 + (1 - k) * 0.12);
@@ -1605,6 +1872,17 @@
                             tile('tile_crate', col(c), cy - PITCH * 0.5, 0.5);
                             tile('tile_crateSmall', col(c), cy - PITCH * 1.25, 0.5, 0.8);
                         });
+                    } else if (env === 'shaft') {           // the fall room: the shaft's back wall through the gap
+                        const gap = ROOM_KINDS[room.kind].gap || [0, -1];
+                        for (let c = gap[0]; c <= gap[1]; c++) {
+                            for (let r = 0; r < 14; r++) tile(FALL_ROOM.shaftWall, col(c), cy + PITCH * r, 1);
+                        }
+                    } else if (env === 'handoff') {         // the transition's landing room, seen from the side
+                        for (let c = 0; c < HANDOFF_ROOM.columns; c++) {
+                            const px = col(c);
+                            for (let r = 1; r <= HANDOFF_ROOM.wallRows; r++) tile(HANDOFF_ROOM.wall, px, cy - PITCH * r, 1);
+                            tile(HANDOFF_ROOM.crown, px, cy - PITCH * (HANDOFF_ROOM.wallRows + 1), 1);
+                        }
                     } else if (env === 'tower') {           // tower — three keep looks
                         const v = room.variant || 0;
                         const left = 2, right = ROOM_TILES - 3, midc = (left + right) / 2;
@@ -1859,7 +2137,7 @@
 
                 drawBlocks: function (ctx, room, color, surface, pal) {
                     const g = this._sp;
-                    const isTower = room.kind === 'tower';
+                    const isTower = ROOM_KINDS[room.kind].layout === 'tower';
                     const isDoors = room.kind === 'doors';
                     const isRail = room.kind === 'rail';
                     const block = this.inked(ROOM_KINDS[room.kind].block, color, surface);
@@ -2217,8 +2495,37 @@
                     ctx.scale(g.cam.z, g.cam.z);
                     ctx.translate(-g.cam.x, -g.cam.y);
 
-                    g.rooms.filter(r => r.state !== 'visited').forEach(r => this.drawRoom(ctx, r));
-                    g.rooms.filter(r => r.state === 'visited').forEach(r => this.drawRoom(ctx, r));
+                    // The fall room is the side view of a shaft that runs down
+                    // through the page, so the rest of the map fades from around
+                    // it: the 3D fall then starts on exactly this picture.
+                    const lone = this.isolatedRoom();
+                    const others = lone ? g.rooms.filter(r => r !== lone.room) : g.rooms;
+                    const drawMap = target => {
+                        others.filter(r => r.state !== 'visited').forEach(r => this.drawRoom(target, r));
+                        others.filter(r => r.state === 'visited').forEach(r => this.drawRoom(target, r));
+                    };
+                    if (!lone) {
+                        drawMap(ctx);
+                    } else {
+                        if (lone.fade < 1) {
+                            if (!g.layer || g.layer.width !== g.canvas.width || g.layer.height !== g.canvas.height) {
+                                g.layer = document.createElement('canvas');
+                                g.layer.width = g.canvas.width;
+                                g.layer.height = g.canvas.height;
+                            }
+                            const lctx = g.layer.getContext('2d');
+                            lctx.setTransform(1, 0, 0, 1, 0, 0);
+                            lctx.clearRect(0, 0, g.layer.width, g.layer.height);
+                            lctx.setTransform(ctx.getTransform());
+                            drawMap(lctx);
+                            ctx.save();
+                            ctx.setTransform(1, 0, 0, 1, 0, 0);
+                            ctx.globalAlpha = 1 - lone.fade;
+                            ctx.drawImage(g.layer, 0, 0);
+                            ctx.restore();
+                        }
+                        this.drawRoom(ctx, lone.room);
+                    }
                     if (!g.hidePawn) this.drawPawn(ctx);
                     this.drawShots(ctx);
                     this.drawFx(ctx);
@@ -2231,7 +2538,7 @@
                     ctx.restore();
                 },
 
-                drawPaperGrid: function (ctx) {
+                drawPaperGrid: function (ctx, marginX) {
                     const g = this._sp;
                     const step = GRID_STEP * g.cam.z;
                     if (step < 4) return;
@@ -2267,8 +2574,9 @@
                     ctx.strokeStyle = g.pal.margin || g.pal.grid;
                     ctx.lineWidth = 1.6;
                     ctx.beginPath();
-                    ctx.moveTo(46.5, 0);
-                    ctx.lineTo(46.5, g.view.h);
+                    const margin = marginX == null ? 46.5 : marginX;
+                    ctx.moveTo(margin, 0);
+                    ctx.lineTo(margin, g.view.h);
                     ctx.stroke();
                     ctx.restore();
                 },
@@ -2453,6 +2761,9 @@
                         });
                     });
 
+                    const isolating = g.current && g.current.kind === 'fall' && g.current.transitionGateway && !g.walk;
+                    g.isolate = isolating ? Math.min(1, (g.isolate || 0) + (this.reduced ? 1 : dt / 0.8)) : 0;
+
                     if (g.walk) {
                         g.walk.t += dt;
                         const u = Math.min(1, g.walk.t / g.walk.dur);
@@ -2614,6 +2925,10 @@
             created: function () {
                 this._timers = new Set();
                 this._destroyed = false;
+                this._modeTransition = null;
+                if (typeof ensureScribbleModeSegment === 'function') {
+                    ensureScribbleModeSegment(this.currentAppId, 'scribble_platformer', this.score);
+                }
                 this.roundToken = 0;
                 this.reduced = !!(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches);
                 const savedPace = typeof getLocalStorage === 'function'
@@ -2664,6 +2979,7 @@
                     time: 0,
                     last: performance.now(),
                     shakeAmp: 0,
+                    transitionTarget: null,
                     raf: null,
                 };
 
@@ -2678,15 +2994,24 @@
                     this.startRun();          // must precede resize(): it aims the camera
                     this.resize();
                     this.snapCamera();
-                    this.prepareRound();
+                    if (!this.enterFromLeft()) this.prepareRound();
+                    if (typeof consumeScribbleQuestionRoomEntry === 'function') {
+                        this._questionRoomCleanup = consumeScribbleQuestionRoomEntry(this.$refs.stage);
+                    }
+                    if (typeof consumeScribbleTransitionArrival === 'function') {
+                        consumeScribbleTransitionArrival(this.$refs.stage, canvas);
+                    }
                     this._sp.last = performance.now();
                     this._sp.raf = requestAnimationFrame(this.loop);
                 });
             },
 
             beforeDestroy: function () {
+                if (this._questionRoomCleanup) this._questionRoomCleanup();
                 this._destroyed = true;
                 this.roundToken++;
+                if (this._modeTransition) this._modeTransition.cancel();
+                this._modeTransition = null;
                 this._timers.forEach(clearTimeout);
                 this._timers.clear();
                 global.removeEventListener('resize', this._onResize);
@@ -2727,4 +3052,69 @@
     global.scribblePlatformerSamplePath = samplePath;
     global.scribblePlatformerMulberry = mulberry;
     global.createScribblePlatformerComponent = createScribblePlatformerComponent;
+
+    // The registered game itself; calling the factory would re-register it.
+    function registeredMethods() {
+        const registered = typeof Vue !== 'undefined' && Vue.component('scribble-platformer');
+        return registered && registered.options && registered.options.methods;
+    }
+
+    /**
+     * Where this game's camera frames the landing room at `view`, as the 3D
+     * transition needs it: the frame centre in tiles from the room's left edge
+     * and up from its ground line, and pixels per tile. Uses the game's own
+     * framing, so the 3D route ends on exactly this game's first frame.
+     */
+    function handoffFrame(view, methods) {
+        const frameFor = (methods || registeredMethods() || {}).frameFor;
+        if (!frameFor) return null;
+        const room = {x0: 0, x1: ROOM_TILES * PITCH, y0: GROUND_Y};
+        const f = frameFor.call({_sp: {view: {w: view.w, h: view.h}}}, room);
+        return {centre: [f.x / PITCH, (GROUND_Y - f.y) / PITCH], unit: f.z * PITCH, zoom: f.z};
+    }
+
+    /**
+     * The notebook page behind the landing room: this game's paper, ruling and
+     * margin exactly as its first frame draws them, extended a full view on
+     * every side so the 3D route can see past the room's walls. `view` is the
+     * stage size; the canvas is three views wide and tall, the middle one being
+     * the stage.
+     */
+    function paintHandoffPaper(view, dpr) {
+        const methods = registeredMethods();
+        const frame = methods && handoffFrame(view, methods);
+        if (!frame) return Promise.resolve(null);
+        const themeKey = (typeof getLocalStorage === 'function' && getLocalStorage('theme', 'base')) || 'base';
+        const pal = resolvePlatformerTheme(THEME_INK[themeKey] ? themeKey : 'base');
+        return Promise.resolve(paintPaper(methods, pal, view, dpr,
+            {x: frame.centre[0] * PITCH, y: GROUND_Y - frame.centre[1] * PITCH, z: frame.zoom}));
+    }
+
+    /**
+     * This game's paper, ruling and margin as a frame at `cam` draws them,
+     * extended a full view on every side: a canvas three views wide and tall
+     * whose middle third is the stage.
+     */
+    function paintPaper(methods, pal, view, dpr, cam) {
+        const ratio = dpr || 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(view.w * 3 * ratio);
+        canvas.height = Math.round(view.h * 3 * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        const grad = ctx.createLinearGradient(0, view.h, 0, view.h * 2);
+        grad.addColorStop(0, pal.paper);
+        grad.addColorStop(1, pal.paper2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, view.w * 3, view.h * 3);
+        const painter = {_sp: {pal: pal, view: {w: view.w * 3, h: view.h * 3}, cam: cam}};
+        methods.drawPaperGrid.call(painter, ctx, view.w + 46.5);
+        return canvas;
+    }
+
+    global.SCRIBBLE_HANDOFF_ROOM = HANDOFF_ROOM;
+    global.SCRIBBLE_FALL_ROOM = FALL_ROOM;
+    global.SCRIBBLE_SIDE_EXIT_KINDS = SIDE_EXIT_KINDS;
+    global.scribblePlatformerHandoffFrame = function (view) { return handoffFrame(view); };
+    global.paintScribblePlatformerHandoffPaper = paintHandoffPaper;
 })(typeof window !== 'undefined' ? window : globalThis);

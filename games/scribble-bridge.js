@@ -303,7 +303,7 @@
         const door = opts.door || [0, 0.35, -3.35];
         const entry = opts.entry || [0, 1.5, -4.8];
         const defaultImpact = opts.impact || [entry[0] + 4, handoffEyeHeight, -53.1];
-        const route = smoothRoute(opts.route || [
+        const authoredRoute = opts.route || [
             entry,
             [entry[0], entry[1], -12],
             [entry[0] + 9, entry[1], -12],
@@ -320,7 +320,8 @@
             [entry[0] - 2, entry[1], -46],
             [entry[0] + 4, handoffEyeHeight, -46],
             defaultImpact,
-        ]);
+        ];
+        const route = smoothRoute(authoredRoute);
         const routeInfo = routeMetrics(route);
         const impact = route[route.length - 1];
         const approachRoute = [];
@@ -338,10 +339,10 @@
         const characterEnd = 0.96;
         const initialMultiplier = opts.initialMultiplier || 1.35;
         const fastMultiplier = opts.fastMultiplier || 2.4;
-        const fastStartPoint = opts.fastStart || route[Math.min(4, route.length - 1)];
+        const fastStartPoint = opts.fastStart || authoredRoute[Math.min(4, authoredRoute.length - 1)];
         const fastStartDistance = Math.min(flightInfo.total,
             approachInfo.total + nearestRouteDistance(route, routeInfo, fastStartPoint));
-        const destinationEntryPoint = opts.destinationEntry || route[Math.max(0, route.length - 2)];
+        const destinationEntryPoint = opts.destinationEntry || authoredRoute[Math.max(0, authoredRoute.length - 2)];
         const destinationStartDistance = Math.min(flightInfo.total,
             approachInfo.total + nearestRouteDistance(route, routeInfo, destinationEntryPoint));
         const weightedFastStart = fastStartDistance / initialMultiplier;
@@ -371,6 +372,9 @@
             view.h / (tunnelHeight - 0.35)
         );
         const handoffFov = opts.handoffFov || 46;
+        // The frame stops on the wall's own base. Nothing is shown below it, which
+        // also keeps the floor plate — which recedes in perspective from this eye
+        // height — entirely off screen.
         const handoffDistance = opts.handoffDistance ||
             (handoffEyeHeight / Math.tan(handoffFov * Math.PI / 360) - 0.02);
 
@@ -415,10 +419,17 @@
         const flash = p >= flightEnd && p < flightEnd + 0.018 ?
             Math.sin(flashProgress * Math.PI) * 0.58 : 0;
 
+        // When a live 2D canvas is drawn underneath, the camera cannot chase the
+        // bolt: the painted room would slide against the 3D layer standing on it.
+        // The frame stays locked on the room the player is looking at and only
+        // releases onto the bolt once that canvas has begun to fade.
+        const roomTarget = opts.roomTarget || [start[0], 0, 0];
+        const holdRoomFrame = !!opts.holdRoomFrame;
+
         let pose;
         if (p < perspectiveStart) {
-            const follow = easeInOut(segment(p, flightStart, perspectiveStart - 0.018));
-            const roomTarget = opts.roomTarget || [start[0], 0, 0];
+            const follow = holdRoomFrame ? 0
+                : easeInOut(segment(p, flightStart, perspectiveStart - 0.018));
             const target = pointLerp(roomTarget, [bolt[0], 0, bolt[2]], follow);
             pose = {
                 target: target,
@@ -442,7 +453,12 @@
                 lerp(54, handoffFov, easeInOut(segment(p, destinationStartProgress, flightEnd)));
             const topDistance = view.h /
                 (2 * desiredUnit * Math.tan(fov * Math.PI / 360));
-            const flatTarget = [bolt[0], 0, bolt[2]];
+            // The locked room frame hands over to the bolt across the same beats
+            // the live canvas uses to fade, so neither layer jumps at the seam.
+            const lockRelease = holdRoomFrame
+                ? easeInOut(segment(p, perspectiveStart, zoomStart)) : 1;
+            const flatTarget = pointLerp([roomTarget[0], 0, roomTarget[2]],
+                [bolt[0], 0, bolt[2]], lockRelease);
             const travelled = Math.max(0, flightDistance - flightDistanceAt(turnStart));
             const lagDistance = Math.min(closeRadius * turn, travelled * 0.65);
             const chasePosition = routePoint(route, routeInfo,
@@ -605,17 +621,29 @@
             });
         }
 
-        [-2.4, 0, 2.4].forEach(function (offset, index) {
+        // A playable room puts each door exactly on its ring tile, where the
+        // dungeon draws it; the authored preview keeps its wider, larger leaves.
+        const onRing = !!spec.doorOffsets;
+        const doorOffsets = spec.doorOffsets || [-2.4, 0, 2.4];
+        const doorSize = onRing ? [1, 1] : [1.45, 1.25];
+        const doorDepth = onRing ? doorZ : doorZ + 0.14;
+        doorOffsets.forEach(function (offset, index) {
             plane('magic-door-' + index, top.door || top.wall,
-                [centreX + offset, 0.035, doorZ + 0.14], [-90, 0, 0], [1.45, 1.25], null, 'top',
+                [centreX + offset, 0.035, doorDepth], [-90, 0, 0], doorSize, null, 'top',
                 index === 1 ? 'selected-door' : 'chamber-floor');
         });
         plane('magic-door-open', top.openDoor || top.floor,
-            [centreX, 0.035, doorZ + 0.14], [-90, 0, 0], [1.45, 1.25], null, 'top',
+            [centreX, 0.035, doorDepth], [-90, 0, 0], doorSize, null, 'top',
             'selected-door-open');
+        // The doorway the pawn walked in through, open on the near wall.
+        if (spec.entryOffset != null) {
+            plane('entry-door', top.openDoor || top.floor,
+                [centreX + spec.entryOffset, 0.035, oz + spec.depth - 1], [-90, 0, 180],
+                [1, 1], null, 'top', 'chamber-floor');
+        }
         plane('magic-wand', top.wand || top.floor,
             [centreX, 0.055, oz + spec.depth - 2], [-90, 0, 0], [1.2, 1.2], null, 'top',
-            'chamber-floor');
+            'chamber-wand');
 
         const narrowTunnelWidth = Math.max(2, Math.round(spec.narrowTunnelWidth || 2));
         const narrowAfterSegment = spec.narrowAfterSegment == null ? 4 : spec.narrowAfterSegment;
@@ -648,13 +676,28 @@
                 [centreX - 7, firstZ - 42], [centreX - 2, firstZ - 42]],
         ];
         const occupied = new Set();
-        const destinationRoom = {
+        // A landing room is the platformer's own stage, described in tiles:
+        // the destination is built to exactly that width, wall and ladders,
+        // centred where the route meets the far wall.
+        const landing = spec.landingRoom || null;
+        const landingHalf = landing ? Math.floor((landing.columns - 1) / 2) : 0;
+        const destinationRoom = landing ? {
+            minX: centreX + 4 - landingHalf,
+            maxX: centreX + 4 - landingHalf + landing.columns - 1,
+            minZ: firstZ - 63,
+            maxZ: firstZ - 50,
+        } : {
             minX: centreX - 3,
             maxX: centreX + 11,
             minZ: firstZ - 63,
             maxZ: firstZ - 50,
         };
-        const destinationLadders = [centreX - 1, centreX + 2, centreX + 6, centreX + 9];
+        // The destination is the actual three-answer tower stage. Keep these
+        // three rungs centred like its answer columns so the arrival crossfade
+        // does not add or remove a fourth, non-playable ladder.
+        const destinationLadders = landing
+            ? landing.ladderColumns.map(function (c) { return destinationRoom.minX + c; })
+            : [centreX - .5, centreX + 4, centreX + 8.5];
         const handoffEyeHeight = spec.handoffEyeHeight || 3.4;
 
         function occupySegment(from, to, width) {
@@ -719,6 +762,7 @@
         const wallCaps = new Set();
         const studioCapFace = 0.66;
         const studioCapTopInset = 0.02;
+        const stageWallHeight = landing ? landing.wallRows : (spec.stageWallHeight || 4.8);
 
         function boundaryWall(x, z, nx, nz, rotation) {
             if (occupied.has((x + nx) + ',' + (z + nz))) return;
@@ -727,17 +771,28 @@
             if (opensIntoChamber) return;
             const onImpact = nx === finalDx && nz === finalDz &&
                 Math.abs((x - last[0]) * finalDx + (z - last[1]) * finalDz) < 0.01;
+            // The destination is read from the side, as a stage. Its walls stop at a
+            // battlement with paper above, so the last frame is a level under a sky
+            // instead of brick running past every edge of the viewport.
+            const inDestination = x >= destinationRoom.minX && x <= destinationRoom.maxX &&
+                z >= destinationRoom.minZ && z <= destinationRoom.maxZ;
+            const height = inDestination ? stageWallHeight : tunnelHeight;
             plane((onImpact ? 'tunnel-impact-wall-' : 'tunnel-wall-') + wallIndex,
                 side.wall,
-                [x + nx * 0.5, tunnelHeight / 2, z + nz * 0.5], rotation,
-                [1, tunnelHeight], [1, tunnelHeight], null, 'tunnel-walls');
+                [x + nx * 0.5, height / 2, z + nz * 0.5], rotation,
+                [1, height], [1, height], null, 'tunnel-walls');
+            if (inDestination && side.end) {
+                plane('destination-crown-' + wallIndex, side.end,
+                    [x + nx * 0.5, height + 0.5, z + nz * 0.5], rotation,
+                    [1, 1], [1, 1], null, 'destination-details');
+            }
             const capX = x + nx * studioCapFace;
             const capZ = z + nz * studioCapFace;
             const capKey = capX.toFixed(3) + ',' + capZ.toFixed(3);
             if (!wallCaps.has(capKey)) {
                 wallCaps.add(capKey);
                 plane('tunnel-wall-cap-' + wallIndex, side.cap || side.wall,
-                    [capX, tunnelHeight - studioCapTopInset, capZ],
+                    [capX, height - studioCapTopInset, capZ],
                     [-90, 0, nz ? 90 : 0], [1, 1], [1, 1],
                     'top', 'tunnel-wall-tops');
             }
@@ -753,11 +808,29 @@
             boundaryWall(x, z, 0, 1, [0, 180, 0]);
         });
 
+        // The ladders are the stage's three answer columns, so they stand on the
+        // ground line and stop below the battlement rather than running off-frame.
+        const ladderHeight = landing ? landing.ladderRows : Math.max(1, stageWallHeight - 0.4);
+        const ladderWidth = landing ? 1 : 1.15;
         destinationLadders.forEach(function (x, index) {
             plane('destination-ladder-' + index, side.ladder || side.wall,
-                [x, 2.55, destinationRoom.minZ - 0.48], [0, 0, 0],
-                [1.15, 5.1], [1, 5], null, 'destination-details');
+                [x, ladderHeight / 2, destinationRoom.minZ - 0.48], [0, 0, 0],
+                [ladderWidth, ladderHeight], [1, Math.round(ladderHeight)], null, 'destination-details');
         });
+
+        // The floor is a slab: its cut face under the ground line is the
+        // landing stage's ground — the surface course and the soil below it.
+        // It is hidden by the floor until the camera looks at it level.
+        if (landing) {
+            for (let c = 0; c < landing.columns; c++) {
+                const x = destinationRoom.minX + c;
+                plane('destination-ground-' + c, landing.ground,
+                    [x, -0.5, destinationRoom.minZ - 0.49], [0, 0, 0], [1, 1], null, null, 'destination-details');
+                plane('destination-soil-' + c, landing.dirt,
+                    [x, -1.5, destinationRoom.minZ - 0.49], [0, 0, 0], [1, 1], null, null, 'destination-soil');
+            }
+        }
+
 
         stage.instances.push({
             name: 'arrival-character',
@@ -800,6 +873,8 @@
             }),
             destinationEntry: [centreX + 4, 1.5, destinationRoom.maxZ],
             destinationRoom: Object.assign({}, destinationRoom),
+            landing: landing ? {wallZ: destinationRoom.minZ - 0.5, left: destinationRoom.minX - 0.5,
+                soilAlpha: landing.dirtAlpha == null ? 1 : landing.dirtAlpha} : null,
             destinationLadders: destinationLadders.slice(),
             arrivalCharacter: 'arrival-character',
             tunnelWidth: tunnelWidth,
@@ -1369,6 +1444,64 @@
         });
     };
 
+    /**
+     * A picture laid into the scene, seen square-on at its own scale: the next
+     * game's notebook page hung behind its landing room, or the pawn a 2D game
+     * drew, pinned to the floor it stood on. `options.overlay` draws it after
+     * the room (still hidden behind walls) and blends its transparent pixels;
+     * otherwise it is an opaque sheet. Sampled smoothly and never tinted.
+     */
+    ScribbleBridge.prototype.setDecal = function (name, image, options) {
+        if (this.disposed) return;
+        const THREE = global.THREE;
+        const overlay = !!(options && options.overlay);
+        this.decals = this.decals || {};
+        let mesh = this.decals[name];
+        if (!mesh) {
+            const geometry = new THREE.PlaneGeometry(1, 1);
+            const material = new THREE.MeshBasicMaterial({side: THREE.DoubleSide,
+                transparent: overlay, depthWrite: !overlay});
+            this.geometries.push(geometry);
+            this.materials.push(material);
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.name = 'decal-' + name;
+            mesh.visible = false;
+            if (overlay) mesh.renderOrder = 10;
+            this.roomRoot.add(mesh);
+            this.decals[name] = mesh;
+        }
+        const texture = new THREE.CanvasTexture(image);
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+        this.textures.push(texture);
+        const previous = mesh.material.map;
+        mesh.material.map = texture;
+        mesh.material.needsUpdate = true;
+        if (previous) {
+            previous.dispose();
+            this.textures = this.textures.filter(function (t) { return t !== previous; });
+        }
+    };
+
+    /**
+     * Places a decal: `centre`, its size in units, and either `flat` (lying on
+     * the floor, image-top toward -Z like every top-down plane) or `facing`
+     * (standing, turned toward that direction). `opacity` fades it.
+     */
+    ScribbleBridge.prototype.placeDecal = function (name, frame) {
+        const mesh = this.decals && this.decals[name];
+        if (this.disposed || !mesh) return;
+        const opacity = frame && frame.opacity != null ? frame.opacity : 1;
+        mesh.visible = !!(frame && frame.visible && mesh.material.map && opacity > 0);
+        if (!mesh.visible) return;
+        mesh.position.set(frame.centre[0], frame.centre[1], frame.centre[2]);
+        if (frame.flat) mesh.rotation.set(-Math.PI / 2, 0, 0);
+        else mesh.rotation.set(0, Math.atan2(frame.facing[0], frame.facing[2]), 0);
+        mesh.scale.set(frame.width, frame.height, 1);
+        mesh.material.opacity = opacity;
+    };
+
     ScribbleBridge.prototype.setObjectState = function (name, state) {
         if (this.disposed || !name) return;
         const object = this.roomRoot.getObjectByName(name);
@@ -1772,6 +1905,8 @@
             camera = this.perspectiveCamera;
             camera.aspect = this.view.w / Math.max(1, this.view.h);
             camera.fov = pose.fov || 54;
+            camera.near = pose.near || 0.05;
+            camera.far = Math.max(5000, (pose.near || 0) + 200);
         } else {
             const frustum = bridgeFrustum(this.view, pose.unit / this.pitch, this.pitch);
             camera.left = frustum.left;
@@ -1800,6 +1935,7 @@
         this.magicBolt = null;
         this.doorBurst = null;
         this.wallBurst = null;
+        this.decals = null;
     };
 
     /**

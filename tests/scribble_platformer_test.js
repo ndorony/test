@@ -62,6 +62,19 @@ test('every art file the game asks for exists on disk', () => {
     });
 });
 
+test('browser shell loads and caches the Scribble Platformer module', () => {
+    const index = fs.readFileSync('index.html', 'utf8');
+    const worker = fs.readFileSync('service-worker.js', 'utf8');
+    assert.match(index, /games\/scribble-platformer\.css/);
+    assert.match(index, /games\/scribble-platformer\.js/);
+    assert.match(worker, /games\/scribble-platformer\.css/);
+    assert.match(worker, /games\/scribble-platformer\.js/);
+    CFG.sprites.forEach(name => {
+        assert.ok(worker.includes(`/assets/scribble-platformer/${name}.png`) || worker.includes(`'${name}'`),
+            `service worker missing sprite ${name}`);
+    });
+});
+
 test('rooms are deterministic: the same index always draws the same decor', () => {
     const a = context.scribblePlatformerMakeRoom(0, 0, 'jump');
     const b = context.scribblePlatformerMakeRoom(0, 0, 'jump');
@@ -188,6 +201,7 @@ function answerHarness(correct) {
         frameFor: () => ({ x: 0, y: 0, z: 1 }), mapMode: false,
         setRoomLabel() { },
         playSound: component.methods.playSound,
+        queueModeTransitionIfDue: component.methods.queueModeTransitionIfDue,
         onCorrect: component.methods.onCorrect,
         onWrong: component.methods.onWrong,
         beginAdvance: component.methods.beginAdvance,

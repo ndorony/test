@@ -55,6 +55,29 @@
     ];
     const OPPOSITE = { n: 's', s: 'n', e: 'w', w: 'e' };
 
+    // Keep the handoff doorway at the top of the notebook view, the same
+    // direction used by the 2D-to-3D bridge. A gateway reached from another
+    // side rotates into this heading while the pawn is walking into it.
+    function gatewayCameraTurn(from) {
+        const side = OPPOSITE[from || 's'];
+        const direction = DIRS.find(d => d.key === side) || DIRS[0];
+        return -Math.PI / 2 - Math.atan2(direction.dy, direction.dx);
+    }
+
+    // The gateway's three answer doors, two tiles apart on the wall opposite
+    // its entry. The 3D room is built from these before the round deals them.
+    function gatewayDoorTiles(room) {
+        const side = OPPOSITE[room.from || 's'];
+        const horizontal = side === 'n' || side === 's';
+        const centre = Math.floor(((horizontal ? room.w : room.h) - 1) / 2);
+        return [centre - 2, centre, centre + 2].map(offset => ({
+            side: side,
+            tile: horizontal
+                ? {x: room.x + offset, y: side === 'n' ? room.y : room.y + room.h - 1}
+                : {x: side === 'w' ? room.x : room.x + room.w - 1, y: room.y + offset},
+        }));
+    }
+
     /**
      * Room kinds. `shapes` are the footprints (width x height in tiles, wall ring
      * included) the kind may take — this is what stops the map reading as a grid
@@ -120,6 +143,14 @@
             shapes: [[13, 9], [11, 11], [9, 13]],
             floor: 'grass',
             decor: [['puddle', 2], ['tree', 2], ['plants', 3], ['water', 2]],
+        },
+        // This fixed room is the top-down opening of the magic-door bridge.
+        gateway: {
+            name: 'חדר השרביט', icon: '🪄',
+            shapes: [[9, 7]],
+            floor: 'tiles',
+            decor: [],
+            gateway: true,
         },
 
         // ---- challenge rooms -------------------------------------------------
@@ -442,6 +473,7 @@
      * the pawn always has somewhere to stand.
      */
     function layoutDecor(room, spec, rand) {
+        if (spec.gateway) return [];
         const decor = [];
         const cx = Math.floor((room.w - 1) / 2);
         const cy = Math.floor((room.h - 1) / 2);
@@ -562,8 +594,8 @@
      * tile already used. Returns null when nothing fits, which is the generator's
      * signal to try another direction.
      */
-    function placeNeighbour(taken, room, dir, depth, rand, attempts) {
-        const kindKey = kindForDepth(depth);
+    function placeNeighbour(taken, room, dir, depth, rand, attempts, kindOverride) {
+        const kindKey = kindOverride || kindForDepth(depth);
         const tries = attempts || 48;
 
         // The footprints to try, in order. The kind's own shapes come first; once
@@ -577,7 +609,7 @@
         for (let t = 0; t < tries; t++) {
             // First third: the kind's real shapes at random. After that, walk from
             // smallest upward, then the closet shapes as a last resort.
-            const usingFallback = t >= tries * 0.75;
+            const usingFallback = !kindOverride && t >= tries * 0.75;
             const shape = t < tries / 3
                 ? pick(rand, candidates)
                 : (usingFallback
@@ -598,7 +630,9 @@
             const alongBase = horizontalWall ? room.x : room.y;
             const offsetSpan = Math.max(1, (horizontalWall ? bw : bh) - 2);
             const sweep = t >= tries / 3;
-            const along = alongBase + 1 + (sweep
+            const along = room.fallArrival
+                ? alongBase + Math.floor(((horizontalWall ? room.w : room.h) - 1) / 2)
+                : alongBase + 1 + (sweep
                 ? (t % alongSpan)
                 : Math.floor(rand() * alongSpan));
             const offset = 1 + (sweep
@@ -647,6 +681,18 @@
         return null;
     }
 
+    function releaseRoom(taken, owner, room) {
+        for (let c = 0; c < room.w; c++) {
+            for (let r = 0; r < room.h; r++) {
+                const key = tileKey(room.x + c, room.y + r);
+                if (owner[key] === room) {
+                    delete owner[key];
+                    delete taken[key];
+                }
+            }
+        }
+    }
+
     // ------------------------------------------------------------- validation
 
     function validateScribbleDungeonConfig(cfg) {
@@ -660,7 +706,7 @@
             const k = kinds[key];
             if (!k.name) errors.push(key + ': missing name');
             if (!k.floor) errors.push(key + ': missing floor tile');
-            if (!Array.isArray(k.decor) || !k.decor.length) errors.push(key + ': missing decor');
+            if (!Array.isArray(k.decor) || (!k.decor.length && !k.gateway)) errors.push(key + ': missing decor');
             if (!Array.isArray(k.shapes) || !k.shapes.length) errors.push(key + ': missing shapes');
             (k.shapes || []).forEach(s => {
                 if (s[0] < 3 || s[1] < 3) errors.push(key + ': shape too small to hold a wall ring');
@@ -685,6 +731,7 @@
     <div class="container sd-container">
       <div class="sd-stage" ref="stage" :class="'sd-theme-' + themeKey">
         <canvas class="sd-canvas" ref="canvas"></canvas>
+        <canvas class="sd-canvas sd-overlay" ref="overlay" aria-hidden="true"></canvas>
 
         <div class="sd-hud-top">
           <div class="sd-question" v-html="questionHtml"></div>
@@ -858,15 +905,33 @@
                     // Deal this run its own room order and furniture salt.
                     buildRunPlan(g.rand, seed);
 
-                    const shape = shapeFor(kindForDepth(0), g.rand);
+                    const arrival = this.$route.query && this.$route.query.scribbleArrival;
+                    const fromFall = arrival === 'fall';
+                    const shape = fromFall ? [11, 7] : shapeFor(kindForDepth(0), g.rand);
                     const start = makeRoom(0, 0, shape[0], shape[1], 0, 'hall');
+                    if (fromFall) {
+                        // Match the room already visible below the shaft. It is a
+                        // real first question room, with the open west entry and
+                        // the same sparse props, not a decorative arrival screen.
+                        start.from = 'w';
+                        start.entry = {c: 0, r: 3};
+                        start.fallArrival = true;
+                        start.decor = [
+                            {sprite: 'crate_small', c: 9, r: 1, rot: 0, phase: 0},
+                            {sprite: 'barrel', c: 8, r: 5, rot: 0, phase: 1},
+                            {sprite: 'plants', c: 2, r: 5, rot: 0, phase: 2},
+                            {sprite: 'plants', c: 7, r: 5, rot: 90, phase: 3},
+                        ];
+                    }
                     start.state = 'visited';
                     start.reveal = 1;
                     occupyRect(g.taken, start.x, start.y, start.w, start.h, g.owner, start);
                     g.rooms.push(start);
                     g.current = start;
 
-                    const c = roomCentre(start);
+                    const c = fromFall
+                        ? tileCentre(start.x + 1, start.y + 3)
+                        : roomCentre(start);
                     g.pawn.x = c.x;
                     g.pawn.y = c.y;
                     g.pawn.facing = 0;
@@ -907,7 +972,12 @@
                     // among them.
                     const wrong = q.options.filter(o => o !== q.result);
                     const labels = [q.result].concat(this.shuffle(wrong).slice(0, choices.length - 1));
-                    const shuffled = this.shuffle(labels);
+                    // The authored bridge flies through the middle door. Keep the
+                    // correct answer on that physical doorway so the live room and
+                    // the first 3D frame describe one continuous opening.
+                    const shuffled = room.transitionGateway && choices.length === 3
+                        ? [labels[1], q.result, labels[2]]
+                        : this.shuffle(labels);
                     choices.forEach((door, i) => {
                         door.label = shuffled[i];
                         door.plain = stripTags(shuffled[i]);
@@ -945,9 +1015,51 @@
                  */
                 buildExits: function (room) {
                     const spec = ROOM_KINDS[room.kind];
+                    if (room.transitionGateway) return this.buildTransitionGatewayDoors(room);
                     return spec.challenge
                         ? this.buildChallenge(room, spec.challenge)
                         : this.buildDoors(room);
+                },
+
+                buildTransitionGatewayDoors: function (room) {
+                    const made = gatewayDoorTiles(room).map((door, index) => ({
+                        dir: door.side,
+                        tile: door.tile,
+                        corridor: [], target: null, state: 'closed', swing: 0, sealT: 0,
+                        label: null, plain: '', index: index,
+                    }));
+                    room.doors = room.doors.concat(made);
+                    room.choices = made;
+                    return made;
+                },
+
+                replaceDoorDestinationWithGateway: function (door, nextMode) {
+                    const g = this._sd;
+                    const previous = door.target;
+                    const previousCorridor = door.corridor.slice();
+                    const index = g.rooms.indexOf(previous);
+                    if (!previous || index < 0) return false;
+
+                    releaseRoom(g.taken, g.owner, previous);
+                    previousCorridor.forEach(cell => { delete g.taken[tileKey(cell.x, cell.y)]; });
+                    g.rooms.splice(index, 1);
+                    const placed = placeNeighbour(g.taken, g.current, door.dir, g.current.depth + 1,
+                        g.rand, 160, 'gateway');
+                    if (!placed) {
+                        occupyRect(g.taken, previous.x, previous.y, previous.w, previous.h, g.owner, previous);
+                        previousCorridor.forEach(cell => { g.taken[tileKey(cell.x, cell.y)] = true; });
+                        g.rooms.splice(index, 0, previous);
+                        return false;
+                    }
+                    placed.target.transitionGateway = nextMode;
+                    placed.target.cameraTurn = gatewayCameraTurn(placed.target.from);
+                    occupyRect(g.taken, placed.target.x, placed.target.y, placed.target.w, placed.target.h, g.owner, placed.target);
+                    placed.corridor.forEach(cell => { g.taken[tileKey(cell.x, cell.y)] = true; });
+                    g.rooms.push(placed.target);
+                    door.tile = placed.doorTile;
+                    door.corridor = placed.corridor;
+                    door.target = placed.target;
+                    return true;
                 },
 
                 /**
@@ -1066,7 +1178,7 @@
                     const g = this._sd;
                     // Sometimes one of the ways out of an ordinary room is a stairwell
                     // down to a fresh page, rather than another door in a wall.
-                    const withStairs = g.rand() < 0.28;
+                    const withStairs = !room.fallArrival && g.rand() < 0.28;
                     const made = this.openWays(room, withStairs ? 2 : 3).map((p, i) => ({
                         dir: p.dir,
                         tile: p.doorTile,
@@ -1177,6 +1289,204 @@
                     }
                 },
 
+                /** Builds the 3D layer once, optionally holding on its first frame. */
+                /**
+                 * The live room expressed in the transition's own frame.
+                 *
+                 * `gatewayCameraTurn` has already rotated the notebook so the
+                 * gateway doors face north, which is the heading the 3D stage is
+                 * authored in. Rotating the room's own points by the same angle
+                 * therefore lands them exactly where the canvas paints them, and
+                 * `unit` reproduces the canvas scale, so the two layers share one
+                 * coordinate frame instead of merely resembling each other.
+                 */
+                transitionLiveFrame: function () {
+                    const g = this._sd;
+                    const room = g.current;
+                    if (!room) return null;
+                    const cos = Math.cos(g.cam.r), sin = Math.sin(g.cam.r);
+                    const centreX = room.x + (room.w - 1) / 2;
+                    const centreY = room.y + (room.h - 1) / 2;
+                    const aligned = (tx, ty) => {
+                        const dx = tx - centreX, dy = ty - centreY;
+                        return [dx * cos - dy * sin, dx * sin + dy * cos];
+                    };
+                    const quarterTurn = Math.abs(sin) > 0.5;
+                    const camera = aligned(g.cam.x / PITCH, g.cam.y / PITCH);
+                    const pawn = aligned(g.pawn.x / PITCH, g.pawn.y / PITCH);
+                    // The answer opens the door it was written on, so the spell flies
+                    // at the door the player actually chose, not always the middle one.
+                    const choices = room.choices || [];
+                    const chosen = choices.find(d => d.state === 'open') ||
+                        choices.find(d => d.target) || choices[1] || null;
+                    const door = chosen && chosen.tile
+                        ? aligned(chosen.tile.x, chosen.tile.y) : null;
+                    const entry = room.entry
+                        ? aligned(room.x + room.entry.c, room.y + room.entry.r) : null;
+                    return {
+                        width: quarterTurn ? room.h : room.w,
+                        depth: quarterTurn ? room.w : room.h,
+                        unit: g.cam.z * PITCH,
+                        target: [camera[0], 0, camera[1]],
+                        wand: [pawn[0], 0.22, pawn[1]],
+                        door: door ? [door[0], 0.35, door[1] - 0.35] : null,
+                        doorOffsets: room.transitionGateway
+                            ? gatewayDoorTiles(room).map(d => aligned(d.tile.x, d.tile.y)[0]) : null,
+                        entryOffset: entry ? entry[0] : null,
+                        landingRoom: room.transitionGateway && typeof SCRIBBLE_HANDOFF_ROOM !== 'undefined'
+                            ? SCRIBBLE_HANDOFF_ROOM : null,
+                    };
+                },
+
+                createModeTransition: function (nextMode, waitForStart, onReady) {
+                    const sourceCanvas = this.$refs.canvas;
+                    const overlayCanvas = this.$refs.overlay;
+                    const component = this;
+                    let readyDelivered = false;
+                    const deliverReady = () => {
+                        if (readyDelivered) return;
+                        readyDelivered = true;
+                        if (typeof onReady === 'function') onReady();
+                    };
+                    const run = typeof runScribbleModeTransition === 'function'
+                        ? runScribbleModeTransition('scribble_dungeon', {
+                            reduced: this.reduced,
+                            host: this.$refs.stage,
+                            liveRoom: true,
+                            holdForArrival: true,
+                            waitForStart: !!waitForStart,
+                            // The route beyond the doors appears only as the bolt
+                            // reaches them; until then the page owns that space.
+                            staged3d: false,
+                            wandHeld: true,
+                            roomIn3d: true,
+                            palette: {ink: this._sd.pal.ink, paper: this._sd.pal.floor},
+                            arrivalPage: nextMode === 'scribble_platformer' &&
+                                typeof paintScribblePlatformerHandoffPaper === 'function'
+                                ? paintScribblePlatformerHandoffPaper : null,
+                            live: function () { return component.transitionLiveFrame(); },
+                            onReady: deliverReady,
+                            onState: function (frame) {
+                                component._preparedTransitionRoot = frame.root;
+                                frame.root.style.transition = 'none';
+                                if (frame.waiting) {
+                                    // The 3D room fades in over the 2D one while the
+                                    // round is played; nothing beyond it shows yet.
+                                    frame.root.style.opacity = String(component._room3d ? component._room3d.mix : 0);
+                                    if (sourceCanvas) sourceCanvas.style.opacity = '1';
+                                    return;
+                                }
+                                frame.root.style.opacity = '1';
+                                const start = frame.state.timing.doorHit - 0.025;
+                                const end = frame.state.timing.doorHit + 0.09;
+                                const mix = Math.max(0, Math.min(1, (frame.progress - start) / (end - start)));
+                                if (sourceCanvas) sourceCanvas.style.opacity = String(1 - mix);
+                                // A pinned pawn lives on the 3D floor now; the flat
+                                // layer would stay on screen while the camera leaves.
+                                if (overlayCanvas) overlayCanvas.style.opacity = component._pinnedOverlay ? '0' : String(1 - mix);
+                                // The casting pawn belongs to the 2D room, so it fades out
+                                // with that canvas instead of popping the instant the bolt
+                                // leaves the wand. It is only truly hidden once the room is
+                                // invisible — before the 3D flip, where a flat pawn reads badly.
+                                if (component._sd && frame.progress >= end) {
+                                    component._sd.hidePawn = true;
+                                }
+                            },
+                            onFinish: function () {
+                                if (sourceCanvas) sourceCanvas.style.opacity = '';
+                                if (overlayCanvas) overlayCanvas.style.opacity = '';
+                                component._pinnedOverlay = false;
+                                component._preparedTransitionRoot = null;
+                                component._transitionRevealed = false;
+                                component._room3d = null;
+                            },
+                        })
+                        : {promise: Promise.resolve(false), cancel: function () {}, start: function () {}, available: false};
+
+                    // A missing bridge must not navigate while the player is still
+                    // answering the staged question. The ordinary fallback is
+                    // created only if that answer is actually accepted.
+                    if (waitForStart && run.available === false) {
+                        this.own(deliverReady, 0);
+                        return null;
+                    }
+
+                    run.nextMode = nextMode;
+                    run.startedByAnswer = !waitForStart;
+                    this._modeTransition = run;
+                    run.promise.then(() => {
+                        if (this._destroyed || this._modeTransition !== run) return;
+                        if (waitForStart && !run.startedByAnswer) {
+                            this._modeTransition = null;
+                            deliverReady();
+                            return;
+                        }
+                        this._modeTransition = null;
+                        this.$router.push({
+                            path: '/play/' + nextMode + '/' + this.currentAppId,
+                            query: nextMode === 'scribble_platformer' ? {scribbleArrival: 'ladder'} : {},
+                        });
+                    });
+                    return run;
+                },
+
+                /** Prepares the complete 3D stage while the question remains live. */
+                prepareModeTransition: function (nextMode, onReady) {
+                    if (!nextMode) return false;
+                    if (this._modeTransition && this._modeTransition.nextMode === nextMode) return true;
+                    this._transitionRevealed = false;
+                    return !!this.createModeTransition(nextMode, true, onReady);
+                },
+
+                /** Reveals the aligned 3D room, waves twice, then releases the spell. */
+                beginWandCast: function (nextMode) {
+                    if (!nextMode) return false;
+                    const g = this._sd;
+                    this.locked = true;
+                    this.hotspots = [];
+                    this._transitionRevealed = true;
+                    if (this._preparedTransitionRoot) {
+                        this._preparedTransitionRoot.style.transition = 'opacity 180ms ease-out';
+                        this._preparedTransitionRoot.style.opacity = '1';
+                    }
+                    g.state = 'wand-cast';
+                    g.wandCast = {t: 0, dur: this.dur(1.2), beats: 0, nextMode: nextMode};
+                    this.feedback = 'התשובה נכונה — שני ניפופים בשרביט…';
+                    this.feedbackGood = true;
+                    return true;
+                },
+
+                /** Releases the already-visible 3D first frame into motion. */
+                startModeTransition: function (nextMode) {
+                    if (!nextMode) return false;
+                    const g = this._sd;
+                    g.state = 'transitioning';
+                    this.locked = true;
+                    this.hotspots = [];
+                    if (typeof commitScribbleModeTransition === 'function') {
+                        commitScribbleModeTransition(this.currentAppId, nextMode, this.score);
+                    }
+                    let run = this._modeTransition;
+                    if (!run || run.nextMode !== nextMode) {
+                        run = this.createModeTransition(nextMode, false);
+                    }
+                    if (run) run.startedByAnswer = true;
+                    // The pawn stays in the gateway room: its picture is laid on
+                    // the 3D floor where it stands, and only the spark flies on.
+                    if (run && this._room3d && typeof run.pin === 'function') {
+                        this._pinnedOverlay = run.pin(this.snapshotOverlay());
+                    }
+                    if (run && typeof run.start === 'function') run.start();
+                    return true;
+                },
+
+                /** Returns the next visual mode once this score segment is complete. */
+                queueModeTransitionIfDue: function () {
+                    if (typeof scribbleNextModeForScore !== 'function') return false;
+                    const nextMode = scribbleNextModeForScore(this.currentAppId, 'scribble_dungeon', this.score);
+                    return nextMode || null;
+                },
+
                 onCorrect: function (choice) {
                     const g = this._sd;
                     const room = g.current;
@@ -1195,6 +1505,18 @@
 
                     if (!this.reloadProgress()) return;      // stage finished; router took over
                     this.saveScore();
+                    if (room.transitionGateway) {
+                        choice.state = 'open';
+                        this.beginWandCast(room.transitionGateway);
+                        return;
+                    }
+                    const transitionTarget = this.queueModeTransitionIfDue();
+                    const transitionDoor = choice.target ? choice : (room.exit && room.exit.target ? room.exit : null);
+                    if (transitionTarget && transitionDoor) {
+                        if (!this.replaceDoorDestinationWithGateway(transitionDoor, transitionTarget)) {
+                            g.transitionTarget = transitionTarget;
+                        }
+                    }
 
                     if (choice.challenge) {
                         choice.state = 'solved';
@@ -1307,6 +1629,11 @@
                     const from = g.current;
                     const to = door.target;
                     const d = DIRS.find(x => x.key === door.dir);
+                    if (g.transitionTarget) {
+                        to.transitionGateway = g.transitionTarget;
+                        to.cameraTurn = gatewayCameraTurn(to.from);
+                        g.transitionTarget = null;
+                    }
 
                     const pts = [{ x: g.pawn.x, y: g.pawn.y }, tileCentre(door.tile.x, door.tile.y)];
                     door.corridor.forEach(c => pts.push(tileCentre(c.x, c.y)));
@@ -1552,10 +1879,12 @@
                         g.cam.z = g.cam.tz = frame.z;
                         g.cam.x = g.cam.tx = c.x - (hole.x - g.view.w / 2) / frame.z;
                         g.cam.y = g.cam.ty = c.y - (hole.y - g.view.h / 2) / frame.z;
+                        g.cam.r = g.cam.tr = frame.r;
                     } else {
                         g.cam.x = g.cam.tx = frame.x;
                         g.cam.y = g.cam.ty = frame.y;
                         g.cam.z = g.cam.tz = frame.z;
+                        g.cam.r = g.cam.tr = frame.r;
                     }
                 },
 
@@ -1570,6 +1899,36 @@
                     g.walk = null;
                     g.current = to;
                     g.state = 'idle';
+
+                    if (to.transitionGateway) {
+                        // The handoff room looks like any other dungeon room but is
+                        // played in 3D: once its stage is built it takes over the
+                        // room from the canvas, and the correct answer simply starts
+                        // its camera. The pawn collects the wand first.
+                        g.state = 'wand-pickup';
+                        this.feedback = 'הדמות לוקחת את השרביט…';
+                        this.feedbackGood = true;
+                        this.own(() => {
+                            if (this._destroyed || g.current !== to) return;
+                            to.wandTaken = true;
+                            g.pawn.weapon = 'weapon_staff';
+                            this.puff(roomCentre(to), 'good', 24);
+                            this.feedback = 'השרביט ביד — המעבר נבנה…';
+                            // Build and display the complete 3D route now. The
+                            // question opens only after its first frame is ready,
+                            // and the correct answer continues that same scene.
+                            this.prepareModeTransition(to.transitionGateway, () => {
+                                if (this._destroyed || g.current !== to) return;
+                                if (this._modeTransition) this._room3d = {room: to, mix: 0, key: ''};
+                                this.feedback = 'השרביט ביד — בחרו תשובה';
+                                g.state = 'idle';
+                                this.own(() => {
+                                    if (!this._destroyed && g.current === to) this.prepareRound();
+                                }, this.dur(.12) * 1000);
+                            });
+                        }, this.dur(.55) * 1000);
+                        return;
+                    }
 
                     if (ROOM_KINDS[to.kind].reward && !to.looted) {
                         to.looted = true;
@@ -1604,7 +1963,7 @@
                     if (this.mapMode) return this.aimWholeMap();
                     const f = this.frameFor(room);
                     const g = this._sd;
-                    g.cam.tx = f.x; g.cam.ty = f.y; g.cam.tz = f.z;
+                    g.cam.tx = f.x; g.cam.ty = f.y; g.cam.tz = f.z; g.cam.tr = f.r;
                 },
 
                 /** The camera position and zoom that frames one room. */
@@ -1614,17 +1973,21 @@
                     const pad = VIEW_PAD * PITCH;
                     const w = b.w + pad * 2;
                     const h = b.h + pad * 2;
+                    const r = room.cameraTurn || 0;
+                    const quarterTurn = Math.abs(Math.sin(r)) > 0.5;
                     return {
                         x: b.x - pad + w / 2,
                         y: b.y - pad + h / 2,
                         z: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM,
-                            Math.min(g.view.w / w, g.view.h / h))),
+                            Math.min(g.view.w / (quarterTurn ? h : w), g.view.h / (quarterTurn ? w : h)))),
+                        r: r,
                     };
                 },
 
                 aimWholeMap: function () {
                     const g = this._sd;
                     if (!g.rooms.length) return;
+                    g.cam.tr = 0;
                     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                     g.rooms.forEach(r => {
                         const b = roomBounds(r);
@@ -1642,12 +2005,13 @@
                     g.cam.tx = x + w / 2;
                     g.cam.ty = y + h / 2;
                     g.cam.tz = zoom;
+                    g.cam.tr = 0;
                 },
 
                 snapCamera: function () {
                     const g = this._sd;
                     this.aimCamera();
-                    g.cam.x = g.cam.tx; g.cam.y = g.cam.ty; g.cam.z = g.cam.tz;
+                    g.cam.x = g.cam.tx; g.cam.y = g.cam.ty; g.cam.z = g.cam.tz; g.cam.r = g.cam.tr;
                 },
 
                 toggleMap: function () {
@@ -1658,9 +2022,12 @@
 
                 worldToScreen: function (x, y) {
                     const g = this._sd;
+                    const dx = (x - g.cam.x) * g.cam.z;
+                    const dy = (y - g.cam.y) * g.cam.z;
+                    const cos = Math.cos(g.cam.r), sin = Math.sin(g.cam.r);
                     return {
-                        x: (x - g.cam.x) * g.cam.z + g.view.w / 2,
-                        y: (y - g.cam.y) * g.cam.z + g.view.h / 2,
+                        x: dx * cos - dy * sin + g.view.w / 2,
+                        y: dx * sin + dy * cos + g.view.h / 2,
                     };
                 },
 
@@ -1741,7 +2108,7 @@
                 },
 
                 shake: function (amount) {
-                    if (this.reduced) return;
+                    if (this.reduced || this._room3d) return;
                     this._sd.shakeAmp = amount;
                 },
 
@@ -1767,6 +2134,11 @@
                     g.canvas.style.width = w + 'px';
                     g.canvas.style.height = h + 'px';
                     g.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    g.overlay.width = g.canvas.width;
+                    g.overlay.height = g.canvas.height;
+                    g.overlay.style.width = w + 'px';
+                    g.overlay.style.height = h + 'px';
+                    g.overlayDirty = false;
                     g.dpr = dpr;
                     if (this.mapMode) this.aimWholeMap(); else this.aimCamera();
                     this.syncHotspots();
@@ -1924,12 +2296,36 @@
                     }
 
                     if (!sketch && room.challenge) this.drawChallenge(ctx, room, color, pal, surface);
+                    if (!sketch && room.transitionGateway) {
+                        this.drawTransitionWand(ctx, room, color, surface);
+                    }
 
                     if (room.state === 'sealed') {
                         this.scrawlCross(ctx, ox + (room.w - 1) / 2, oy + (room.h - 1) / 2,
                             pal.bad, 0.5, Math.min(room.w, room.h) * 0.4,
                             room.sealT == null ? 1 : room.sealT);
                     }
+                },
+
+                // The handoff room displays the wand until the pawn picks it up.
+                drawTransitionWand: function (ctx, room, color, surface) {
+                    if (room.wandTaken) return;
+                    const c = room.x + (room.w - 1) / 2;
+                    const r = room.y + (room.h - 1) / 2;
+                    const wand = this.inked('weapon_staff', color, surface);
+                    this.blit(ctx, wand, c, r, -35, Math.min(1, room.reveal * 1.4), 1.05);
+                    ctx.save();
+                    ctx.translate(c * PITCH, r * PITCH);
+                    ctx.strokeStyle = color;
+                    ctx.globalAlpha = Math.min(1, room.reveal * 1.25);
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 3; i++) {
+                        const a = this._sd.time * 1.8 + i * Math.PI * 2 / 3;
+                        ctx.beginPath();
+                        ctx.arc(Math.cos(a) * PITCH * .3, Math.sin(a) * PITCH * .3, 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
                 },
 
                 /**
@@ -2098,6 +2494,14 @@
                     const weapon = p.weapon ? this.inked(p.weapon, g.pal.ink, g.pal.prop) : null;
                     const walking = !!g.walk;
                     const still = this.reduced;
+                    const casting = !!g.wandCast;
+                    const castProgress = casting && g.wandCast.dur
+                        ? clamp01(g.wandCast.t / g.wandCast.dur) : 0;
+                    const castEnvelope = casting ? Math.sin(castProgress * Math.PI) : 0;
+                    // Four π radians are two complete, readable wand sweeps.
+                    const wandWave = casting
+                        ? Math.sin(castProgress * Math.PI * 4) * castEnvelope * (still ? .28 : .95)
+                        : 0;
 
                     // Walking: a two-beat stride with the hands swinging out of phase.
                     // Standing: a slow breath so the token never looks frozen.
@@ -2119,7 +2523,7 @@
                     ctx.fill();
                     ctx.restore();
 
-                    ctx.rotate(p.facing + roll);
+                    ctx.rotate(p.facing + roll - wandWave * .055);
                     ctx.scale(1.3, 1.3);       // the pawn reads as a token, not a tile
                     if (body) ctx.drawImage(body, -SPRITE / 2, -SPRITE / 2, SPRITE, SPRITE);
                     // Hands sit either side of the body, weapon held between them.
@@ -2134,11 +2538,12 @@
                         // grip sits on that hand's disc and the blade runs out and
                         // away from the body, swinging with the same arm.
                         const handX = PITCH * 0.5;
-                        const handY = -PITCH * 0.3 + SPRITE * 0.16 - swing;
+                        const handY = -PITCH * 0.3 + SPRITE * 0.16 - swing
+                            - Math.abs(wandWave) * PITCH * .08;
                         const size = SPRITE * 0.72;
                         ctx.save();
                         ctx.translate(handX, handY);
-                        ctx.rotate(0.42 + (walking ? stride * 0.22 : breath * 0.06));
+                        ctx.rotate(0.42 + (walking ? stride * 0.22 : breath * 0.06) + wandWave);
                         // The art points up with the hilt at the bottom, so anchor the
                         // sprite's bottom edge on the hand.
                         ctx.drawImage(weapon, -size / 2, -size * 0.86, size, size);
@@ -2357,6 +2762,16 @@
                     ctx.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
                     ctx.clearRect(0, 0, g.view.w, g.view.h);
 
+                    // While the gateway is played in 3D, its room is the 3D layer's;
+                    // the pawn, shots and signs go on the overlay above that layer.
+                    const r3 = this._room3d && this._room3d.mix > 0 ? this._room3d : null;
+                    const top = r3 ? g.octx : ctx;
+                    if (r3 || g.overlayDirty) {
+                        g.octx.setTransform(1, 0, 0, 1, 0, 0);
+                        g.octx.clearRect(0, 0, g.overlay.width, g.overlay.height);
+                        g.overlayDirty = !!r3;
+                    }
+
                     // Paper.
                     const grad = ctx.createLinearGradient(0, 0, 0, g.view.h);
                     grad.addColorStop(0, pal.paper);
@@ -2371,6 +2786,7 @@
                     const sx = g.shakeAmp ? (Math.random() - 0.5) * g.shakeAmp : 0;
                     const sy = g.shakeAmp ? (Math.random() - 0.5) * g.shakeAmp : 0;
                     ctx.translate(g.view.w / 2 + sx, g.view.h / 2 + sy);
+                    ctx.rotate(g.cam.r);
                     ctx.scale(g.cam.z, g.cam.z);
                     ctx.translate(-g.cam.x, -g.cam.y);
 
@@ -2382,20 +2798,29 @@
                         });
                     });
                     g.rooms.filter(r => r.state !== 'visited').forEach(r => this.drawRoom(ctx, r));
-                    g.rooms.filter(r => r.state === 'visited').forEach(r => this.drawRoom(ctx, r));
-
-                    this.drawPawn(ctx);
-                    this.drawShots(ctx);
-                    this.drawFx(ctx);
+                    g.rooms.filter(r => r.state === 'visited' && !(r3 && r3.mix >= 1 && r === r3.room))
+                        .forEach(r => this.drawRoom(ctx, r));
                     ctx.restore();
+
+                    top.save();
+                    top.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+                    top.translate(g.view.w / 2 + sx, g.view.h / 2 + sy);
+                    top.rotate(g.cam.r);
+                    top.scale(g.cam.z, g.cam.z);
+                    top.translate(-g.cam.x, -g.cam.y);
+                    if (r3) this.drawRoom3dMarks(top);
+                    this.drawPawn(top);
+                    this.drawShots(top);
+                    this.drawFx(top);
+                    top.restore();
 
                     // Screen-space overlays.
-                    ctx.save();
-                    ctx.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
-                    this.drawSigns(ctx);
+                    top.save();
+                    top.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+                    this.drawSigns(top);
                     // The leaf being turned sits over everything, including the answers.
-                    this.drawPageTurn(ctx);
-                    ctx.restore();
+                    this.drawPageTurn(top);
+                    top.restore();
                 },
 
                 /**
@@ -2404,11 +2829,14 @@
                  * point, so cell edges fall on half-pitch offsets, and Kenney's floor
                  * art subdivides each tile into four — hence the half-pitch step.
                  */
-                drawPaperGrid: function (ctx) {
+                drawPaperGrid: function (ctx, marginX) {
                     const g = this._sd;
                     const step = GRID_STEP * g.cam.z;
                     if (step < 4) return;
                     ctx.save();
+                    ctx.translate(g.view.w / 2, g.view.h / 2);
+                    ctx.rotate(g.cam.r);
+                    ctx.translate(-g.view.w / 2, -g.view.h / 2);
                     ctx.lineWidth = 1;
                     // World 0 is a tile centre, which is itself a lattice line, so the
                     // ruling needs no extra offset: every multiple of GRID_STEP falls on
@@ -2444,11 +2872,14 @@
 
                     // The ruled margin of an exercise book, fixed to the page rather
                     // than to the map.
+                    ctx.restore();
+                    ctx.save();
                     ctx.strokeStyle = g.pal.margin || g.pal.grid;
                     ctx.lineWidth = 1.6;
                     ctx.beginPath();
-                    ctx.moveTo(46.5, 0);
-                    ctx.lineTo(46.5, g.view.h);
+                    const margin = marginX == null ? 46.5 : marginX;
+                    ctx.moveTo(margin, 0);
+                    ctx.lineTo(margin, g.view.h);
                     ctx.stroke();
                     ctx.restore();
                 },
@@ -2521,19 +2952,40 @@
                     g.cam.x += (g.cam.tx - g.cam.x) * k;
                     g.cam.y += (g.cam.ty - g.cam.y) * k;
                     g.cam.z += (g.cam.tz - g.cam.z) * k;
+                    g.cam.r += Math.atan2(Math.sin(g.cam.tr - g.cam.r), Math.cos(g.cam.tr - g.cam.r)) * k;
 
+                    if (this._room3d) this.stepRoom3d(dt);
                     if (g.shakeAmp) g.shakeAmp = Math.max(0, g.shakeAmp - dt * 40);
                     // The whole answers-then-arrows sequence runs over this, so it is
                     // the single biggest lever on how hurried the game feels.
                     if (g.state === 'question') g.signIn = Math.min(1, g.signIn + dt * this.rate(0.45));
+
+                    if (g.wandCast) {
+                        const cast = g.wandCast;
+                        cast.t = Math.min(cast.dur, cast.t + dt);
+                        const progress = cast.dur ? cast.t / cast.dur : 1;
+                        const beat = progress >= .72 ? 2 : progress >= .28 ? 1 : 0;
+                        while (cast.beats < beat) {
+                            cast.beats++;
+                            this.puff({x: g.pawn.x + PITCH * .42, y: g.pawn.y - PITCH * .42}, 'good', 8);
+                        }
+                        if (progress >= 1) {
+                            const nextMode = cast.nextMode;
+                            g.wandCast = null;
+                            this.feedback = 'קסם!';
+                            this.startModeTransition(nextMode);
+                        }
+                    }
                     /**
                      * Watchdog. Every transition here is driven by a timer that can be
                      * invalidated (route change, stage completion, a queued callback
                      * whose round token moved on). If one is ever dropped the scene
                      * would sit forever with nothing to click, so a long quiet spell
                      * with nothing animating resumes the round instead of hanging.
+                     * The 3D mode transition is animating the whole time, and it
+                     * owns its own ending, so it is never "quiet".
                      */
-                    if (g.state !== 'question' && !g.walk && !g.page) {
+                    if (g.state !== 'question' && g.state !== 'transitioning' && !g.walk && !g.page) {
                         g.idleFor = (g.idleFor || 0) + dt;
                         if (g.idleFor > 7) {
                             g.idleFor = 0;
@@ -2587,6 +3039,8 @@
                             g.cam.tx = a.x + (b.x - a.x) * e;
                             g.cam.ty = a.y + (b.y - a.y) * e;
                             g.cam.tz = a.z + (b.z - a.z) * e;
+                            g.cam.r = g.cam.tr = a.r +
+                                Math.atan2(Math.sin(b.r - a.r), Math.cos(b.r - a.r)) * e;
                         }
                         if (g.walk.target) {
                             g.walk.target.reveal = Math.max(g.walk.target.reveal,
@@ -2657,6 +3111,53 @@
                         m.y += m.vy * dt;
                         if (m.x < -0.05) m.x = 1.05; else if (m.x > 1.05) m.x = -0.05;
                         if (m.y < -0.05) m.y = 1.05; else if (m.y > 1.05) m.y = -0.05;
+                    });
+                },
+
+                /**
+                 * The 3D room is authored with the gateway doors facing up the
+                 * screen, so it takes over only while the camera holds that
+                 * heading (not in the whole-map view). It is redrawn whenever the
+                 * camera moves, so both layers keep one coordinate frame.
+                 */
+                stepRoom3d: function (dt) {
+                    const g = this._sd;
+                    const r3 = this._room3d;
+                    const run = this._modeTransition;
+                    const turn = r3.room.cameraTurn || 0;
+                    const heading = Math.abs(Math.atan2(Math.sin(turn - g.cam.r), Math.cos(turn - g.cam.r)));
+                    const aligned = !!run && !this.mapMode && g.current === r3.room && heading < 0.01;
+                    const goal = aligned ? 1 : 0;
+                    const k = this.reduced ? 1 : Math.min(1, dt / 0.25);
+                    r3.mix += Math.max(-k, Math.min(k, goal - r3.mix));
+                    if (run && !run.startedByAnswer && this._preparedTransitionRoot) {
+                        this._preparedTransitionRoot.style.opacity = String(r3.mix);
+                    }
+                    if (!run || r3.mix <= 0 || typeof run.refresh !== 'function') return;
+                    const key = [g.cam.x.toFixed(2), g.cam.y.toFixed(2), g.cam.z.toFixed(4),
+                        g.cam.r.toFixed(4), g.view.w, g.view.h].join(',');
+                    if (key === r3.key) return;
+                    r3.key = key;
+                    run.refresh();
+                },
+
+                /** A still copy of the layer above the 3D room (pawn, marks). */
+                snapshotOverlay: function () {
+                    const g = this._sd;
+                    if (!g || !g.overlay || !g.overlay.width) return null;
+                    const copy = document.createElement('canvas');
+                    copy.width = g.overlay.width;
+                    copy.height = g.overlay.height;
+                    copy.getContext('2d').drawImage(g.overlay, 0, 0);
+                    return copy;
+                },
+
+                /** A wrong door stays crossed out on top of the 3D room. */
+                drawRoom3dMarks: function (ctx) {
+                    const r3 = this._room3d;
+                    (r3.room.choices || []).forEach(door => {
+                        if (door.state !== 'sealed') return;
+                        this.scrawlCross(ctx, door.tile.x, door.tile.y, this._sd.pal.bad, 0.85, 0.42, door.sealT);
                     });
                 },
 
@@ -2760,6 +3261,12 @@
             created: function () {
                 this._timers = new Set();
                 this._destroyed = false;
+                this._modeTransition = null;
+                this._preparedTransitionRoot = null;
+                this._transitionRevealed = false;
+                if (typeof ensureScribbleModeSegment === 'function') {
+                    ensureScribbleModeSegment(this.currentAppId, 'scribble_dungeon', this.score);
+                }
                 this.roundToken = 0;
                 this.reduced = !!(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches);
                 const savedPace = typeof getLocalStorage === 'function'
@@ -2788,13 +3295,16 @@
                 this._sd = {
                     canvas: canvas,
                     ctx: canvas.getContext('2d'),
+                    overlay: this.$refs.overlay,
+                    octx: this.$refs.overlay.getContext('2d'),
+                    overlayDirty: false,
                     dpr: 1,
                     sprites: {},
                     inkCache: {},
                     optImages: {},
                     pal: resolveScribbleTheme(this.themeKey),
                     view: { w: 800, h: 600 },
-                    cam: { x: 0, y: 0, z: 0.6, tx: 0, ty: 0, tz: 0.6 },
+                    cam: { x: 0, y: 0, z: 0.6, r: 0, tx: 0, ty: 0, tz: 0.6, tr: 0 },
                     pawn: { x: 0, y: 0, facing: 0, color: 'red', weapon: null },
                     rooms: [],
                     taken: {},
@@ -2802,6 +3312,7 @@
                     rand: mulberry(1),
                     current: null,
                     walk: null,
+                    wandCast: null,
                     fx: [],
                     shots: [],
                     roundStart: 0,
@@ -2829,6 +3340,9 @@
                     this.resize();
                     this.snapCamera();
                     this.prepareRound();
+                    if (typeof consumeScribbleTransitionArrival === 'function') {
+                        consumeScribbleTransitionArrival(this.$refs.stage, canvas);
+                    }
                     this._sd.last = performance.now();
                     this._sd.raf = requestAnimationFrame(this.loop);
                 });
@@ -2837,6 +3351,10 @@
             beforeDestroy: function () {
                 this._destroyed = true;
                 this.roundToken++;
+                if (this._modeTransition) this._modeTransition.cancel();
+                this._modeTransition = null;
+                this._preparedTransitionRoot = null;
+                this._transitionRevealed = false;
                 this._timers.forEach(clearTimeout);
                 this._timers.clear();
                 global.removeEventListener('resize', this._onResize);
@@ -2899,8 +3417,40 @@
         signSlots: SIGN_SLOTS,
         slotsFor: slotsFor,
         tile: { pitch: PITCH, sprite: SPRITE },
+        camera: {padding: VIEW_PAD, minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM},
         dirs: DIRS,
     };
+    /**
+     * The notebook page the dungeon's fall-arrival room lies on: this game's
+     * paper, ruling and margin exactly as its first frame draws them around
+     * that 11 x 7 room, extended a full view on every side. The 3D fall lays it
+     * under its destination room, so the room is on the page from the moment
+     * the shaft opens onto it. The middle third of the canvas is the stage.
+     */
+    function paintFallPaper(view, dpr) {
+        const registered = typeof Vue !== 'undefined' && Vue.component('scribble-dungeon');
+        const methods = registered && registered.options && registered.options.methods;
+        if (!methods) return Promise.resolve(null);
+        const room = {x: 0, y: 0, w: 11, h: 7};
+        const frame = methods.frameFor.call({_sd: {view: {w: view.w, h: view.h}}}, room);
+        const themeKey = (typeof getLocalStorage === 'function' && getLocalStorage('theme', 'base')) || 'base';
+        const pal = resolveScribbleTheme(themeKey);
+        const ratio = dpr || 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(view.w * 3 * ratio);
+        canvas.height = Math.round(view.h * 3 * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        const grad = ctx.createLinearGradient(0, view.h, 0, view.h * 2);
+        grad.addColorStop(0, pal.paper);
+        grad.addColorStop(1, pal.paper2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, view.w * 3, view.h * 3);
+        methods.drawPaperGrid.call({_sd: {pal: pal, view: {w: view.w * 3, h: view.h * 3},
+            cam: {x: frame.x, y: frame.y, z: frame.z, r: 0}}}, ctx, view.w + 46.5);
+        return Promise.resolve(canvas);
+    }
+    global.paintScribbleDungeonFallPaper = paintFallPaper;
     global.validateScribbleDungeonConfig = validateScribbleDungeonConfig;
     global.resolveScribbleTheme = resolveScribbleTheme;
     global.scribbleDungeonRoomCentre = roomCentre;
