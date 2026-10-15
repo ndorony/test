@@ -373,6 +373,7 @@ apps =  {
                 {icon: 'back_hand',      name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-ch51s-5'},
                 {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51s-6'},
                 {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-ch51s-7'},
+                {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-ch51s-8'},
               ]
             },
         {
@@ -400,6 +401,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p1e-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p1e-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p1e-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p1e-7'},
                   ]
                 },
                 {
@@ -413,6 +415,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p1h-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p1h-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p1h-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p1h-7'},
                   ]
                 },
               ]
@@ -432,6 +435,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p2e-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p2e-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p2e-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p2e-7'},
                   ]
                 },
                 {
@@ -445,6 +449,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p2h-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p2h-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p2h-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p2h-7'},
                   ]
                 },
               ]
@@ -464,6 +469,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p3e-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p3e-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p3e-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p3e-7'},
                   ]
                 },
                 {
@@ -477,6 +483,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p3h-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p3h-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p3h-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p3h-7'},
                   ]
                 },
               ]
@@ -496,6 +503,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p4e-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p4e-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p4e-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p4e-7'},
                   ]
                 },
                 {
@@ -509,6 +517,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p4h-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p4h-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p4h-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p4h-7'},
                   ]
                 },
               ]
@@ -528,6 +537,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p5e-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p5e-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p5e-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p5e-7'},
                   ]
                 },
                 {
@@ -541,6 +551,7 @@ apps =  {
                     {icon: 'directions_run',  name:'הרפתקת ריצה',    type: 'app', link: '/play/platformer/grp-g6p5h-4'},
                     {icon: 'map',             name:'מבוך הקלף',      type: 'app', link: '/play/scribble_dungeon/grp-g6p5h-5'},
                     {icon: 'security',        name:'הגנת הידע',      type: 'app', link: '/play/knowledge_defense/grp-g6p5h-6'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g6p5h-7'},
                   ]
                 },
               ]
@@ -575,6 +586,7 @@ apps =  {
                         {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611h-11'},
                         {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-g611h-12'},
                         {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-g611h-13'},
+                        {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g611h-14'},
                       ]
                     },
                     {
@@ -595,6 +607,7 @@ apps =  {
                         {icon: 'back_hand',      name:'זירת הגבישים',   type: 'app', link: '/play/crystal_arena/grp-g611-11'},
                         {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-g611-12'},
                         {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-g611-13'},
+                        {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-g611-14'},
                       ]
                     },
                   ]

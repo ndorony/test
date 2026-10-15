@@ -1389,7 +1389,17 @@ test('10 slice registrations, route, load order, offline assets and the migratio
             walk(item, childId);
         });
     })(ctx.apps, null);
-    assert.deepStrictEqual(found.sort(), ['0_4_8', 'grp-ch51-8']);
+    // The English shared-progress groups: ch51 and its listening twin ch51s,
+    // g611 (whose games g611h shares) and the ten grade-6 MOE groups.
+    const sharedIds = ['grp-ch51-8', 'grp-ch51s-8', 'grp-g611-14', 'grp-g611h-14'];
+    [1, 2, 3, 4, 5].forEach(part => ['e', 'h'].forEach(dir => sharedIds.push('grp-g6p' + part + dir + '-7')));
+    assert.deepStrictEqual(found.sort(), ['0_4_8'].concat(sharedIds).sort());
+    sharedIds.forEach(id => {
+        const app = ctx.getItemById(ctx.apps, id);
+        assert.ok(app && app.appType === 'strike_ops', id + ' resolves to Strike Ops');
+        const q = ctx.generateFromList(app.listName, app.questionIndex, app.resultIndex, id, ctx.getSetItems(app), app.questionType);
+        assert.ok(q.question && q.result && q.options.indexOf(q.result) !== -1 && q.options.length >= 2, id + ' asks a question');
+    });
     const own = ctx.getItemById(ctx.apps, '0_4_8');
     assert.deepStrictEqual([own.appType, own.listName, own.questionIndex, own.resultIndex, own.setItems, own.icon], ['strike_ops', 'QUESTION', 'english_name', 'question_word_hebrew', 3, 'gps_fixed']);
     const grp = ctx.getItemById(ctx.apps, 'grp-ch51-8');

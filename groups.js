@@ -140,6 +140,8 @@ const SHARED_GROUPS = {
 // Strike Ops is appended; existing positional IDs and shared knowledge stay stable.
 const STRIKE_OPS_GROUP_GAME = {appType: 'strike_ops', icon: 'gps_fixed', name: 'כוח פריצה', title: 'פגעו בחייל עם התשובה הנכונה'};
 ['ch51'].forEach(groupId => SHARED_GROUPS[groupId].games.push(STRIKE_OPS_GROUP_GAME));
+SHARED_GROUPS.ch51s.games.push({appType: 'strike_ops', icon: 'gps_fixed', name: 'כוח פריצה', title: 'הקשיבו למילה ופגעו בחייל עם התרגום'});
+SHARED_GROUPS.g611.games.push(STRIKE_OPS_GROUP_GAME); // g611h shares this array
 // The 5_1 word list the OTHER way round: the Hebrew word is shown and spoken,
 // and the answer is the English one. Producing a word is a different skill from
 // recognising it, so this is its own group with its own key (grp-ch51h) — the
@@ -192,6 +194,7 @@ const GRADE6_MOE_GAMES = [
     {appType: 'scribble_dungeon',  icon: 'map',            name: 'מבוך הקלף',    title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
     {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'בנו מערך הגנה והצילו את הממלכה'},
 ];
+GRADE6_MOE_GAMES.push(STRIKE_OPS_GROUP_GAME); // appended: index 7 in all ten g6p groups
 
 // One shared games array for all ten groups, so their ids can never drift
 // apart. The same append-only rule applies: a game's index IS its id

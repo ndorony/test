@@ -105,11 +105,12 @@ check('only Hebrew-to-English reads the answer aloud on a correct pick',
     reverseGroup.speakAnswerOnCorrect === true && !group.speakAnswerOnCorrect
     && run('resolveSharedGroupApp("grp-g611h-0").speakAnswerOnCorrect') === true
     && !run('resolveSharedGroupApp("grp-g611-0").speakAnswerOnCorrect'));
-check('the group exposes all 14 compatible games', group.games.length === 14, group.games.length);
+check('the group exposes all 15 compatible games', group.games.length === 15, group.games.length);
 check('Hexkeep and Momentum Factory are appended without changing previous game indexes',
     group.games[11].appType === 'crystal_arena' && group.games[12].appType === 'hexkeep'
     && group.games[13].appType === 'momentum_factory');
-check('both directions expose the same 14 games in the same order',
+check('Strike Ops is appended last, at index 14', group.games[14].appType === 'strike_ops');
+check('both directions expose the same 15 games in the same order',
     JSON.stringify(group.games) === JSON.stringify(reverseGroup.games));
 check('every game type has a registered route',
     group.games.every(game => testerSource.includes('/play/' + game.appType + '/:currentAppId')),

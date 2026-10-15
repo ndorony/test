@@ -155,11 +155,8 @@ check('the reading submenu shows the word, the listening one never does',
     readingOwnLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === undefined)
     && listeningLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === 'speech'),
     JSON.stringify(listeningLinks.map(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`))));
-// Strike Ops joins the reading half first; the listening half (ch51s) gets it
-// only after its replay control is verified with speech-only questions
-// (STRIKE_OPS_SPEC.md §11.3). Drop it from this list when ch51s offers it.
-const READING_ONLY_TYPES = ['strike_ops'];
-const sharedReadingTypes = readingOwnLinks.map(link => link.split('/')[2]).filter(type => READING_ONLY_TYPES.indexOf(type) === -1);
+// Both halves now offer Strike Ops at index 8, so nothing is reading-only.
+const sharedReadingTypes = readingOwnLinks.map(link => link.split('/')[2]);
 check('the same games are offered in both halves, in the same order',
     sharedReadingTypes.join(',')
     === listeningLinks.map(link => link.split('/')[2]).join(','),
