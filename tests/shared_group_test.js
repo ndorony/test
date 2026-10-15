@@ -132,7 +132,7 @@ check('both 5_1 submenus exist', Array.isArray(readingLinks) && Array.isArray(li
 // so the reverse village is read out of the 5_1 menu itself, not by name.
 const reverseMenu = run(`
     (function find(node) {
-        if (node.type === 'menu' && node.name === '5_1 (התקדמות משותפת)') return node.items[node.items.length - 1];
+        if (node.type === 'menu' && node.name === '5_1 (התקדמות משותפת)') return node.items.find(i => i.type === 'menu' && i.name === 'עברית לאנגלית') || null;
         if (!node.items) return null;
         for (const child of node.items) { const r = find(child); if (r) return r; }
         return null;
@@ -144,8 +144,8 @@ check('the reading submenu matches groups.js game order exactly',
     JSON.stringify(readingOwnLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51').map(i => i.link)`)),
     JSON.stringify(readingLinks));
 check('the Hebrew-to-English village hangs under the reading submenu, named apart',
-    readingLinks.length === readingOwnLinks.length + 1 && readingLinks[readingLinks.length - 1] === undefined
-    && reverseMenu.type === 'menu' && reverseMenu.name === 'עברית לאנגלית'
+    readingLinks.length === readingOwnLinks.length + 1 && readingLinks.filter(l => l === undefined).length === 1
+    && reverseMenu && reverseMenu.type === 'menu' && reverseMenu.name === 'עברית לאנגלית'
     && JSON.stringify(reverseLinks) === JSON.stringify(run(`getSharedGroupMenuItems('ch51h').map(i => i.link)`)),
     JSON.stringify(reverseLinks));
 check('the listening submenu matches groups.js game order exactly',
@@ -155,10 +155,15 @@ check('the reading submenu shows the word, the listening one never does',
     readingOwnLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === undefined)
     && listeningLinks.every(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`) === 'speech'),
     JSON.stringify(listeningLinks.map(link => run(`resolveSharedGroupApp('${link.split('/')[3]}').questionType`))));
+// Strike Ops joins the reading half first; the listening half (ch51s) gets it
+// only after its replay control is verified with speech-only questions
+// (STRIKE_OPS_SPEC.md §11.3). Drop it from this list when ch51s offers it.
+const READING_ONLY_TYPES = ['strike_ops'];
+const sharedReadingTypes = readingOwnLinks.map(link => link.split('/')[2]).filter(type => READING_ONLY_TYPES.indexOf(type) === -1);
 check('the same games are offered in both halves, in the same order',
-    readingOwnLinks.map(link => link.split('/')[2]).join(',')
+    sharedReadingTypes.join(',')
     === listeningLinks.map(link => link.split('/')[2]).join(','),
-    readingOwnLinks.map(link => link.split('/')[2]).join(',') + ' vs ' + listeningLinks.map(link => link.split('/')[2]).join(','));
+    sharedReadingTypes.join(',') + ' vs ' + listeningLinks.map(link => link.split('/')[2]).join(','));
 check('the reverse village asks in Hebrew and answers in English, aloud',
     run(`(function () {
         const app = resolveSharedGroupApp('grp-ch51h-0');

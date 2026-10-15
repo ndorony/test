@@ -104,3 +104,27 @@
   at bake time by `tools/hexkeep-board-render.html`,
   `tools/hexkeep-boat-render.html` and `tools/hexkeep-tower-render.html`, never
   by the game.
+
+## Strike Ops (games/strike-ops.js, games/strike-ops.css)
+
+- **Characters:** `assets/strike-ops/characters/enemy-hazmat.glb` and its 70% LOD
+  `enemy-hazmat-lod.glb` — Quaternius, "Character Hazmat" (Toon Shooter Game Kit,
+  https://poly.pizza/m/z3TSQYx1Kn); extra weapons removed, head merged, materials
+  collapsed to `Team`/`Trim`, clip prefix stripped.
+- **Environment:** `assets/strike-ops/env/` — Kenney City Kit (Industrial) 2.0,
+  Survival Kit and Fantasy Town Kit 2.0 GLBs with their `Textures/colormap.png`
+  palettes and unmodified `License.txt` files; `colormap-shed.png` is a recolour of
+  the Fantasy Town palette; `kaykit-barricade.glb` is Kay Lousberg's KayKit
+  Medieval Hexagon Pack `fence_stone_straight` (the repo's
+  `assets/hexkeep/source/barricade.gltf`, packed to GLB); `ground/*.png` are
+  generated in-house.
+- **Also used in place:** the embedded assault rifle and crate in
+  `assets/models/shooter/shooter_models.js` (Quaternius Ultimate Guns Pack and
+  "Crate", CC0).
+- **Credits:** per-file titles, sources, sizes and modifications are in
+  `assets/strike-ops/CREDITS.md`.
+- **License:** Creative Commons Zero (CC0) for every file — free for commercial
+  use, no attribution required.
+- **Runtime:** three.js r128 and GLTFLoader load the GLBs at runtime; all of them
+  are precached by `service-worker.js` (`STRIKE_OPS_ASSETS`). Sounds are
+  synthesized with WebAudio; no audio files are added.

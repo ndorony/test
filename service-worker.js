@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v226-scribble-transitions';
+const CACHE_NAME = 'my-app-cache-v234-strike-ops-narrow-grid';
 // Third-party libraries, vendored under /vendor at the versions index.html used
 // to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
 // are what the app cannot start without: with no internet and no local copy,
@@ -113,7 +113,7 @@ const CORE_ASSETS = [
   "/assets/models/shooter/shooter_models.js",
   "/data.js?v=2",
   "/firebase.js",
-  "/tester.js?v=21",
+  "/tester.js?v=22",
   '/',
   '/index.html',
   '/adventure.html',
@@ -226,6 +226,8 @@ const CORE_ASSETS = [
   '/games/scribble-transition-cycle.css?v=3',
   '/games/crystal-arena.js',
   '/games/crystal-arena.css',
+  '/games/strike-ops.js',
+  '/games/strike-ops.css',
   '/tools/scribble-bridge-preview.html',
   '/tools/scribble-magic-door-preview.html',
   '/tools/scribble-fall-transition-preview.html',
@@ -311,8 +313,43 @@ const PLATFORMER_ART = ['tile_grass', 'tile', 'tile_top', 'tile_block', 'tile_br
 
 const KNOWLEDGE_DEFENSE_ART = ["battlefield.png","build-pad.png","coin.png","enemy-captain.png","enemy-guard.png","enemy-runner.png","enemy-scout.png","flower-red.png","flower-yellow.png","grass-a.png","grass-edge.png","ground.png","keep.png","mushroom.png","portal.png","road-tile.png","road-tile2.png","rock-a.png","rock-b.png","rock-pile.png","rocket.png","shell.png","shrub.png","spark.png","tower-archer.png","tower-crystal.png","tower-rocket.png","tree-large.png","tree-oak.png","tree-small.png"].map(name => `/assets/knowledge-defense/${name}`);
 
+// Strike Ops runtime models: the complete set of URLs that game may fetch.
+const STRIKE_OPS_ASSETS = [
+  '/assets/strike-ops/characters/enemy-hazmat.glb',
+  '/assets/strike-ops/characters/enemy-hazmat-lod.glb',
+  '/assets/strike-ops/env/kenney-industrial/water-tower.glb',
+  '/assets/strike-ops/env/kenney-industrial/shipping-container-a.glb',
+  '/assets/strike-ops/env/kenney-industrial/shipping-container-b.glb',
+  '/assets/strike-ops/env/kenney-industrial/shipping-container-c.glb',
+  '/assets/strike-ops/env/kenney-industrial/Textures/colormap.png',
+  '/assets/strike-ops/env/kenney-survival/barrel.glb',
+  '/assets/strike-ops/env/kenney-survival/rock-a.glb',
+  '/assets/strike-ops/env/kenney-survival/rock-b.glb',
+  '/assets/strike-ops/env/kenney-survival/tree.glb',
+  '/assets/strike-ops/env/kenney-survival/tree-tall.glb',
+  '/assets/strike-ops/env/kenney-survival/grass-large.glb',
+  '/assets/strike-ops/env/kenney-survival/Textures/colormap.png',
+  '/assets/strike-ops/env/kenney-fantasy/wall-wood.glb',
+  '/assets/strike-ops/env/kenney-fantasy/wall-wood-detail-cross.glb',
+  '/assets/strike-ops/env/kenney-fantasy/wall-wood-doorway-square-wide.glb',
+  '/assets/strike-ops/env/kenney-fantasy/roof-flat.glb',
+  '/assets/strike-ops/env/kenney-fantasy/roof.glb',
+  '/assets/strike-ops/env/kenney-fantasy/planks.glb',
+  '/assets/strike-ops/env/kenney-fantasy/wall-block-half.glb',
+  '/assets/strike-ops/env/kenney-fantasy/fence.glb',
+  '/assets/strike-ops/env/kenney-fantasy/tree.glb',
+  '/assets/strike-ops/env/kenney-fantasy/tree-high-round.glb',
+  '/assets/strike-ops/env/kenney-fantasy/hedge-large.glb',
+  '/assets/strike-ops/env/kenney-fantasy/Textures/colormap.png',
+  '/assets/strike-ops/env/kenney-fantasy/Textures/colormap-shed.png',
+  '/assets/strike-ops/env/kaykit-barricade.glb',
+  '/assets/strike-ops/env/ground/ground-grass.png',
+  '/assets/strike-ops/env/ground/ground-dirt.png',
+];
+
 const urlsToCache = [...new Set(VENDOR_ASSETS.concat(CORE_ASSETS).concat(LETTER_SOUNDS).concat(COMPANION_ANIMATIONS)
-  .concat(KNOWLEDGE_DEFENSE_ART).concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART).concat(PLATFORMER_ART))];
+  .concat(KNOWLEDGE_DEFENSE_ART).concat(ADVENTURE_ART).concat(FACTORY_ART).concat(DUNGEON_ART).concat(PLATFORMER_ART)
+  .concat(STRIKE_OPS_ASSETS))];
 
 self.addEventListener('install', event => {
   self.skipWaiting();

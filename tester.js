@@ -10015,6 +10015,11 @@ if (typeof createCrystalArenaComponent === 'function') {
     CrystalArenaComponent = createCrystalArenaComponent(BaseGameComponent);
 }
 
+var StrikeOpsComponent = null;
+if (typeof createStrikeOpsComponent === 'function') {
+    StrikeOpsComponent = createStrikeOpsComponent(BaseGameComponent);
+}
+
 const routes = [
     {path: '/', component: MenuComponent,},
     {path: '/user', component: UserComponent},
@@ -10063,6 +10068,10 @@ if (ScribblePlatformerComponent) {
 
 if (CrystalArenaComponent) {
     routes.push({path: '/play/crystal_arena/:currentAppId', component: CrystalArenaComponent, props: true});
+}
+
+if (StrikeOpsComponent) {
+    routes.push({path: '/play/strike_ops/:currentAppId', component: StrikeOpsComponent, props: true});
 }
 
 // Adventure mode routes (adventure.js) — appended only when the module is loaded

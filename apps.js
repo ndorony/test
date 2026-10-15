@@ -29,6 +29,7 @@ apps =  {
             {icon: 'sports_kabaddi', name:'דו-קרב', type: 'app', appType: 'duel_shooter', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'ענה נכון, מלא את המחסנית ונצח בדו-קרב!'},
             {icon: 'auto_fix_high', name:'דו-קרב הקוסמים', type: 'app', appType: 'wizard_duel', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'ענה נכון והטל כדורי אש על המפלצת!'},
             {icon: 'map', name:'מבוך הקלף', type: 'app', appType: 'scribble_dungeon', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 6, title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+            {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', appType: 'strike_ops', listName: 'QUESTION', questionIndex: 'english_name', resultIndex: 'question_word_hebrew', setItems: 3, title: 'פגעו בחייל עם התשובה הנכונה'},
           ]
         },
         {icon: 'format_shapes', name:'שם לאות', type: 'app', appType: 'mcq', listName: 'ABC', questionIndex: 'hebrewTransliteration', resultIndex: 'englishLowerCase' },
@@ -348,6 +349,9 @@ apps =  {
                     {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-ch51h-0'},
                   ]
                 },
+                // Appended after the reverse submenu so that submenu keeps its id
+                // (0_48_8); the link order still matches SHARED_GROUPS.ch51.games.
+                {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-ch51-8'},
               ]
             },
         {

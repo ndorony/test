@@ -136,6 +136,10 @@ const SHARED_GROUPS = {
 ['ch51', 'ch51s', 'g611'].forEach(groupId => {
     SHARED_GROUPS[groupId].games.push({appType: 'momentum_factory', icon: 'precision_manufacturing', name: 'מפעל תנופה', title: 'למדו, הוסיפו מכונות והפכו את המפעל לאוטומטי'});
 });
+
+// Strike Ops is appended; existing positional IDs and shared knowledge stay stable.
+const STRIKE_OPS_GROUP_GAME = {appType: 'strike_ops', icon: 'gps_fixed', name: 'כוח פריצה', title: 'פגעו בחייל עם התשובה הנכונה'};
+['ch51'].forEach(groupId => SHARED_GROUPS[groupId].games.push(STRIKE_OPS_GROUP_GAME));
 // The 5_1 word list the OTHER way round: the Hebrew word is shown and spoken,
 // and the answer is the English one. Producing a word is a different skill from
 // recognising it, so this is its own group with its own key (grp-ch51h) — the
