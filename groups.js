@@ -125,7 +125,47 @@ const SHARED_GROUPS = {
             {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים',     title: 'החזיקו את החפץ בפינה עם התרגום הנכון'},
         ],
     },
+
+    // HEY! Unit 1 vocabulary. Every game below shares one progress key.
+    unit1: {
+        listName: 'ENGLISH_UNIT_1',
+        questionIndex: 'english_name',
+        resultIndex: 'hebrew',
+        questionType: 'text_to_speech',
+        setItems: 10,
+        games: [
+            {appType: 'mcq',               icon: 'format_shapes',  name: 'בחירה מרובה',  title: 'בחרו את התרגום הנכון'},
+            {appType: 'balloon_shooter',   icon: 'sports_esports', name: 'מטווח בלונים', title: 'פגעו בבלון עם התרגום הנכון'},
+            {appType: 'word_link',         icon: 'timeline',       name: 'חבר במילים',   title: 'מתחו קו מהמילה אל התרגום שלה'},
+            {appType: 'treasure_maze',     icon: 'sports_esports', name: 'מבוך האוצר',   title: 'בחרו את הדלת עם התרגום הנכון'},
+            {appType: 'knowledge_defense', icon: 'security',       name: 'הגנת הידע',    title: 'בנו מערך הגנה והצילו את הממלכה'},
+            {appType: 'crystal_arena',     icon: 'back_hand',      name: 'זירת הגבישים', title: 'החזיקו את החפץ בפינה עם התרגום הנכון'},
+            {appType: 'platformer',        icon: 'directions_run', name: 'הרפתקת ריצה',  title: 'רוצו אל התרגום הנכון'},
+            {appType: 'duel_shooter',      icon: 'sports_kabaddi', name: 'דו־קרב',       title: 'ענו נכון ונצחו בדו־קרב'},
+            {appType: 'wizard_duel',       icon: 'auto_fix_high',  name: 'דו־קרב הקוסמים', title: 'ענו נכון והטילו קסמים'},
+            {appType: 'water_pipeline',    icon: 'water_drop',     name: 'מסע המים',     title: 'פתחו את החסימות והחזירו את המים'},
+            {appType: 'falling_answers',   icon: 'arrow_downward', name: 'תשובות נופלות', title: 'לחצו על התשובה הנכונה'},
+            {appType: 'strike_ops',        icon: 'gps_fixed',      name: 'כוח פריצה',    title: 'פגעו בחייל עם התשובה הנכונה'},
+            {appType: 'hexkeep',           icon: 'holiday_village', name: 'Hexkeep · הכפר החי', title: 'תרגלו את המילים ובנו כפר חי'},
+            {appType: 'momentum_factory',  icon: 'precision_manufacturing', name: 'מפעל תנופה', title: 'למדו והפכו את המפעל לאוטומטי'},
+        ],
+    },
+
+    // Reverse direction: Hebrew -> English has its own shared progress key.
+    unit1h: {
+        listName: 'ENGLISH_UNIT_1',
+        questionIndex: 'hebrew',
+        resultIndex: 'english',
+        questionType: 'text_to_speech',
+        speakAnswerOnCorrect: true,
+        setItems: 10,
+        games: [],
+    },
 };
+
+// Keep both Unit 1 directions in the same game order; their progress keys
+// remain separate because the direction represents a different skill.
+SHARED_GROUPS.unit1h.games = SHARED_GROUPS.unit1.games;
 
 // Append only: preserve every existing shared-game index and knowledge key.
 ['ch51', 'ch51s', 'g611'].forEach(groupId => {

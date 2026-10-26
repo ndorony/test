@@ -614,6 +614,58 @@ apps =  {
                 },
           ]
         },
+        {
+          name: 'E',
+          type: 'menu',
+          items: [
+            {
+              name: 'Unit 1',
+              type: 'menu',
+              items: [
+                {
+                  name: 'אנגלית לעברית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes', name:'בחירה מרובה', type: 'app', link: '/play/mcq/grp-unit1-0'},
+                    {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-unit1-1'},
+                    {icon: 'timeline', name:'חבר במילים', type: 'app', link: '/play/word_link/grp-unit1-2'},
+                    {icon: 'sports_esports', name:'מבוך האוצר', type: 'app', link: '/play/treasure_maze/grp-unit1-3'},
+                    {icon: 'security', name:'הגנת הידע', type: 'app', link: '/play/knowledge_defense/grp-unit1-4'},
+                    {icon: 'back_hand', name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-unit1-5'},
+                    {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', link: '/play/platformer/grp-unit1-6'},
+                    {icon: 'sports_kabaddi', name:'דו־קרב', type: 'app', link: '/play/duel_shooter/grp-unit1-7'},
+                    {icon: 'auto_fix_high', name:'דו־קרב הקוסמים', type: 'app', link: '/play/wizard_duel/grp-unit1-8'},
+                    {icon: 'water_drop', name:'מסע המים', type: 'app', link: '/play/water_pipeline/grp-unit1-9'},
+                    {icon: 'arrow_downward', name:'תשובות נופלות', type: 'app', link: '/play/falling_answers/grp-unit1-10'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-unit1-11'},
+                    {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-unit1-12'},
+                    {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-unit1-13'},
+                  ]
+                },
+                {
+                  name: 'עברית לאנגלית',
+                  type: 'menu',
+                  items: [
+                    {icon: 'format_shapes', name:'בחירה מרובה', type: 'app', link: '/play/mcq/grp-unit1h-0'},
+                    {icon: 'sports_esports', name:'מטווח בלונים', type: 'app', link: '/play/balloon_shooter/grp-unit1h-1'},
+                    {icon: 'timeline', name:'חבר במילים', type: 'app', link: '/play/word_link/grp-unit1h-2'},
+                    {icon: 'sports_esports', name:'מבוך האוצר', type: 'app', link: '/play/treasure_maze/grp-unit1h-3'},
+                    {icon: 'security', name:'הגנת הידע', type: 'app', link: '/play/knowledge_defense/grp-unit1h-4'},
+                    {icon: 'back_hand', name:'זירת הגבישים', type: 'app', link: '/play/crystal_arena/grp-unit1h-5'},
+                    {icon: 'directions_run', name:'הרפתקת ריצה', type: 'app', link: '/play/platformer/grp-unit1h-6'},
+                    {icon: 'sports_kabaddi', name:'דו־קרב', type: 'app', link: '/play/duel_shooter/grp-unit1h-7'},
+                    {icon: 'auto_fix_high', name:'דו־קרב הקוסמים', type: 'app', link: '/play/wizard_duel/grp-unit1h-8'},
+                    {icon: 'water_drop', name:'מסע המים', type: 'app', link: '/play/water_pipeline/grp-unit1h-9'},
+                    {icon: 'arrow_downward', name:'תשובות נופלות', type: 'app', link: '/play/falling_answers/grp-unit1h-10'},
+                    {icon: 'gps_fixed', name:'כוח פריצה', type: 'app', link: '/play/strike_ops/grp-unit1h-11'},
+                    {icon: 'holiday_village', name:'Hexkeep · הכפר החי', type: 'app', link: '/play/hexkeep/grp-unit1h-12'},
+                    {icon: 'precision_manufacturing', name:'מפעל תנופה', type: 'app', link: '/play/momentum_factory/grp-unit1h-13'},
+                  ]
+                },
+              ]
+            },
+          ]
+        },
       ]
     },
     {

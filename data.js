@@ -7623,6 +7623,35 @@ const ENGLISH_NEW_CHAPTER4_LISTS = [
 ];
 DATA.ENGLISH_NEW_CHAPTER4_ALL = ENGLISH_NEW_CHAPTER4_LISTS.flat();
 
+// HEY! Unit 1 vocabulary. The compact source pairs keep this 81-word list
+// easy to edit while generating the same fields used by the learning engine.
+const ENGLISH_UNIT_1_WORDS = [
+    ['age', 'גיל'], ['also', 'גם'], ['begin', 'להתחיל'], ['birthday', 'יום הולדת'],
+    ['different', 'שונה, אחר'], ['hobby', 'תחביב'], ['month', 'חודש'], ['pool', 'בריכה'],
+    ['the same', 'אותו הדבר'], ['year', 'שנה'], ['play', 'לנגן, לשחק'], ['game', 'משחק, תחרות, ציד'],
+    ['a lot of', 'הרבה'], ['chess', 'שחמט'], ['first', 'ראשון / ראשונה'], ['important', 'חשוב'],
+    ['learn', 'ללמוד'], ['ninety', 'תשעים'], ['old', 'ישן, זקן, מבוגר'], ['people', 'אנשים'],
+    ['person', 'איש / אישה'], ['special', 'מיוחד'], ['together', 'ביחד, יחד'], ['win', 'לנצח, לזכות'],
+    ['young', 'צעיר'], ['best', 'הכי טוב, הטוב ביותר'], ['better', 'יותר טוב'], ['call', 'להתקשר, לקרוא'],
+    ['choose', 'לבחור'], ['information', 'מידע, אינפורמציה'], ['more', 'יותר, עוד'], ['next', 'הבא'],
+    ['wait', 'לחכות, להמתין'], ['at night', 'בלילה'], ['blanket', 'שמיכה'], ['brush', 'להבריש, לצחצח'],
+    ['every', 'כל'], ['give', 'לתת'], ['put', 'לשים, להניח'], ['take care of', 'לטפל ב / לדאוג ל'],
+    ['time', 'זמן, שעה, פעם'], ['toy', 'צעצוע'], ['wash', 'לרחוץ, לשטוף'], ['with', 'עם'],
+    ['always', 'תמיד'], ['but', 'אבל'], ['fast', 'מהר, מהיר'], ['hard', 'קשה, מסובך'], ['help', 'לעזור'],
+    ['if', 'אם'], ['kid', 'ילד / ילדה'], ['like', 'כמו'], ['other', 'אחר'], ['another', 'עוד אחד'],
+    ['team', 'קבוצה, נבחרת'], ['beautiful', 'יפה מאוד'], ['because', 'כי, מכיוון ש'], ['break', 'לשבור, הפסקה'],
+    ['for', 'ל / עבור'], ['into', 'לתוך / אל תוך'], ['near', 'קרוב ל'], ['race', 'מרוץ'], ['road', 'כביש'],
+    ['their', 'שלהם / שלהן'], ['idea', 'רעיון'], ['money', 'כסף'], ['now', 'עכשיו'], ['use', 'להשתמש'],
+    ['closed', 'סגור / סגורה'], ['find', 'למצוא'], ['flower', 'פרח'], ['look for', 'לחפש את'],
+    ['nice', 'נחמד / נחמדה'], ['secret', 'סודי, סוד'], ['tell a story', 'לספר סיפור'], ['cry', 'לבכות'],
+    ["I'm sorry", 'אני מצטער / מצטערת'], ['perhaps', 'אולי'], ['sick', 'חולה'], ['too', 'גם'], ['handsome', 'יפה תואר'],
+];
+DATA.ENGLISH_UNIT_1 = ENGLISH_UNIT_1_WORDS.map(([english, hebrew]) => ({
+    hebrew: {type: 'text', value: hebrew},
+    english: {type: 'text', value: english},
+    english_name: {type: 'text_to_speech', value: english},
+}));
+
 
 
 function filterABCByString(lettersStr, abcList) {
