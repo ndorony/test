@@ -7,6 +7,20 @@ apps =  {
       type: 'menu',
       items: [
         {
+          name: '5',
+          type: 'menu',
+          items: [
+            ...[2, 3, 4].map(unit => ({
+              name: String(unit),
+              type: 'menu',
+              items: [
+                {name: 'עברית לאנגלית', type: 'menu', items: getSharedGroupMenuItems(`unit${unit}h`)},
+                {name: 'אנגלית לעברית', type: 'menu', items: getSharedGroupMenuItems(`unit${unit}`)},
+              ],
+            })),
+          ],
+        },
+        {
           name: 'ציורים',
           type: 'menu',
           items: [

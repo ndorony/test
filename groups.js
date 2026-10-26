@@ -161,11 +161,31 @@ const SHARED_GROUPS = {
         setItems: 10,
         games: [],
     },
+
+    // Units 2–4: each direction has its own shared-progress key.
+    // The game list is shared within a direction, never between directions.
+    unit2: { listName: 'ENGLISH_UNIT_2', questionIndex: 'english_name', resultIndex: 'hebrew', questionType: 'text_to_speech', setItems: 10, games: [] },
+    unit2h: { listName: 'ENGLISH_UNIT_2', questionIndex: 'hebrew', resultIndex: 'english', questionType: 'text_to_speech', speakAnswerOnCorrect: true, setItems: 10, games: [] },
+    unit3: { listName: 'ENGLISH_UNIT_3', questionIndex: 'english_name', resultIndex: 'hebrew', questionType: 'text_to_speech', setItems: 10, games: [] },
+    unit3h: { listName: 'ENGLISH_UNIT_3', questionIndex: 'hebrew', resultIndex: 'english', questionType: 'text_to_speech', speakAnswerOnCorrect: true, setItems: 10, games: [] },
+    unit4: { listName: 'ENGLISH_UNIT_4', questionIndex: 'english_name', resultIndex: 'hebrew', questionType: 'text_to_speech', setItems: 10, games: [] },
+    unit4h: { listName: 'ENGLISH_UNIT_4', questionIndex: 'hebrew', resultIndex: 'english', questionType: 'text_to_speech', speakAnswerOnCorrect: true, setItems: 10, games: [] },
 };
 
 // Keep both Unit 1 directions in the same game order; their progress keys
 // remain separate because the direction represents a different skill.
 SHARED_GROUPS.unit1h.games = SHARED_GROUPS.unit1.games;
+
+const UNIT_SHARED_GAMES = [
+    {appType: 'mcq', icon: 'format_shapes', name: 'בחירה מרובה', title: 'בחרו את התשובה הנכונה'},
+    {appType: 'balloon_shooter', icon: 'sports_esports', name: 'מטווח בלונים', title: 'פגעו בתשובה הנכונה'},
+    {appType: 'word_link', icon: 'timeline', name: 'חבר במילים', title: 'חברו בין המילים'},
+    {appType: 'treasure_maze', icon: 'sports_esports', name: 'מבוך האוצר', title: 'בחרו את הדלת הנכונה'},
+    {appType: 'knowledge_defense', icon: 'security', name: 'הגנת הידע', title: 'הגנו על הידע'},
+];
+['unit2', 'unit2h', 'unit3', 'unit3h', 'unit4', 'unit4h'].forEach(groupId => {
+    SHARED_GROUPS[groupId].games = UNIT_SHARED_GAMES;
+});
 
 // Append only: preserve every existing shared-game index and knowledge key.
 ['ch51', 'ch51s', 'g611'].forEach(groupId => {

@@ -7652,6 +7652,35 @@ DATA.ENGLISH_UNIT_1 = ENGLISH_UNIT_1_WORDS.map(([english, hebrew]) => ({
     english_name: {type: 'text_to_speech', value: english},
 }));
 
+// English book units 2–4.  Keep the vocabulary in the same compact shape as
+// the existing lists so every learning game can use both directions.
+// Unit 2 vocabulary from the photographed textbook pages (body, health,
+// sports, food and daily habits).
+const ENGLISH_UNIT_2_WORDS = [
+    ['arm', 'זרוע'], ['body', 'גוף'], ['foot', 'כף רגל'], ['head', 'ראש'],
+    ['heart', 'לב'], ['knee', 'ברך'], ['leg', 'רגל'], ['move', 'לנוע'],
+    ['shoulder', 'כתף'], ['sports', 'ספורט'], ['exercise', 'פעילות גופנית'],
+    ['healthy', 'בריא'], ['strong', 'חזק'], ['tired', 'עייף'], ['life', 'חיים'],
+    ['sleep', 'לישון'], ['drink', 'לשתות'], ['water', 'מים'], ['wash', 'לרחוץ'],
+    ['hands', 'ידיים'], ['breakfast', 'ארוחת בוקר'], ['every morning', 'כל בוקר'],
+    ['advice', 'עצה'], ['before', 'לפני'], ['after', 'אחרי'], ['should', 'צריך'],
+    ["don't forget", 'אל תשכח'], ['field', 'מגרש'], ['football', 'כדורגל'],
+    ['goal', 'שער'], ['lose', 'להפסיד'], ['pass', 'למסור'], ['player', 'שחקן'],
+    ['tennis', 'טניס'], ['win', 'לנצח'], ['run', 'לרוץ'], ['swim', 'לשחות'],
+    ['jump', 'לקפוץ'], ['candy', 'ממתק'], ['fruit salad', 'סלט פירות'],
+    ['sandwich', 'כריך'], ['fruit pizza', 'פיצה עם פירות'], ['ice cream', 'גלידה'],
+    ['choose', 'לבחור'], ['cook', 'לבשל'], ['fast food', 'מזון מהיר'],
+    ['meal', 'ארוחה'], ['rice', 'אורז'], ['snack', 'חטיף / ארוחת ביניים'],
+    ['soup', 'מרק'], ['sweet', 'מתוק'], ['healthy food', 'אוכל בריא'],
+];
+DATA.ENGLISH_UNIT_2 = ENGLISH_UNIT_2_WORDS.map(([english, hebrew]) => ({
+    hebrew: {type: 'text', value: hebrew},
+    english: {type: 'text', value: english},
+    english_name: {type: 'text_to_speech', value: english},
+}));
+DATA.ENGLISH_UNIT_3 = DATA.ENGLISH_CHAPTER4_ALL;
+DATA.ENGLISH_UNIT_4 = DATA.ENGLISH_CHAPTER5_ALL;
+
 
 
 function filterABCByString(lettersStr, abcList) {
