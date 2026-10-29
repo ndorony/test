@@ -264,7 +264,7 @@ function makeInstance(overrides) {
         cellFromScreen() { return {c: 0, r: 0}; }, buildingAtCell() { return null; }
     }, 130, 75);
     check('tapping a visible sprite bound selects that building', selectedByHit === 'factory');
-    const apps = vm.runInContext(fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';apps',
+    const apps = vm.runInContext(fs.readFileSync(path.join(ROOT, 'groups.js'), 'utf8') + ';' + fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';apps',
         (() => { const c = {}; vm.createContext(c); return c; })());
     const entry = vm.runInContext(
         `(function find(n){ if(n.type==='app' && n.appType==='factory_city') return n; for(const ch of (n.items||[])){const f=find(ch);if(f)return f;} return null;})(${JSON.stringify(apps)})`,

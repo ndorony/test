@@ -3,7 +3,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');let checks=0;
 const check=(v,label)=>{assert.ok(v,label);checks++;};
 let reports=[],generated=0,saved=0,keep=true,scheduled=new Map(),serial=0;const records=new Map();
 const ctx={console,Vue:{component:(n,o)=>o,extend:o=>o},getLocalStorage:(k,d)=>records.has(k)?JSON.parse(records.get(k)):d,setLocalStorage:(k,v)=>records.set(k,JSON.stringify(v)),generateFromList:()=>{generated++;return {question:'word',options:['1','2','3','4'],result:'2',questionIndex:7,action(){}};},getSetItems:()=>10,updateWeightForKey:(...args)=>reports.push(args),setTimeout:fn=>{scheduled.set(++serial,fn);return serial;},clearTimeout:id=>scheduled.delete(id),document:{hidden:false,addEventListener(){},removeEventListener(){}},matchMedia:()=>({matches:false})};
-vm.createContext(ctx);for(const file of ['games/hexkeep-map.js','games/hexkeep.js','themes.js','apps.js','worlds.js'])vm.runInContext(fs.readFileSync(file,'utf8'),ctx);
+vm.createContext(ctx);for(const file of ['games/hexkeep-map.js','games/hexkeep.js','themes.js','groups.js','apps.js','worlds.js'])vm.runInContext(fs.readFileSync(file,'utf8'),ctx);
 const H=ctx.HEXKEEP,M=ctx.HEXKEEP_MAP;
 check(M.tiles.length===48,'full tiled battlefield');for(let i=1;i<M.path.length;i++)check(M.distance(M.path[i-1],M.path[i])===1,'continuous winding road');
 check(Object.keys(H.types).join()==='guard,archer,mage,catapult,shipyard','five towers, two of which garrison a route instead of shooting it');

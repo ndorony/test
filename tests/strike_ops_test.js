@@ -1372,8 +1372,8 @@ test('10 slice registrations, route, load order, offline assets and the migratio
     vm.createContext(ctx);
     const load = (file, suffix) => vm.runInContext(read(file) + (suffix || ''), ctx, {filename: file});
     load('data.js', ';globalThis.DATA=DATA;');
-    load('apps.js', ';globalThis.apps=apps;');
-    load('groups.js', ';globalThis.SHARED_GROUPS=SHARED_GROUPS;globalThis.resolveSharedGroupApp=resolveSharedGroupApp;globalThis.getSharedGroupMenuItems=getSharedGroupMenuItems;');
+        load('groups.js', ';globalThis.SHARED_GROUPS=SHARED_GROUPS;globalThis.resolveSharedGroupApp=resolveSharedGroupApp;globalThis.getSharedGroupMenuItems=getSharedGroupMenuItems;');
+load('apps.js', ';globalThis.apps=apps;');
     load('worlds.js');
     load('storage.js');
     vm.runInContext('var Vue = {component: function (name, def) { return def; }};', ctx);
@@ -1390,9 +1390,10 @@ test('10 slice registrations, route, load order, offline assets and the migratio
         });
     })(ctx.apps, null);
     // The English shared-progress groups: ch51 and its listening twin ch51s,
-    // g611 (whose games g611h shares) and the ten grade-6 MOE groups.
+    // g611 (whose games g611h shares), the ten grade-6 MOE groups and Unit 1.
     const sharedIds = ['grp-ch51-8', 'grp-ch51s-8', 'grp-g611-14', 'grp-g611h-14'];
     [1, 2, 3, 4, 5].forEach(part => ['e', 'h'].forEach(dir => sharedIds.push('grp-g6p' + part + dir + '-7')));
+    sharedIds.push('grp-unit1-11', 'grp-unit1h-11');
     assert.deepStrictEqual(found.sort(), ['0_4_8'].concat(sharedIds).sort());
     sharedIds.forEach(id => {
         const app = ctx.getItemById(ctx.apps, id);
@@ -1411,8 +1412,8 @@ test('10 slice registrations, route, load order, offline assets and the migratio
     assert.strictEqual(ctx.getItemById(ctx.apps, '0_48_8').name, 'עברית לאנגלית');
     const apps = read('apps.js'), groups = read('groups.js');
     const balloon = s => (s.match(/appType:\s*'balloon_shooter'|\/balloon_shooter\//g) || []).length;
-    assert.strictEqual(balloon(apps), 23);
-    assert.strictEqual(balloon(groups), 5);
+    assert.strictEqual(balloon(apps), 25);
+    assert.strictEqual(balloon(groups), 7);
     ['mcq', 'balloon_shooter', 'platformer', 'treasure_maze', 'word_link', 'duel_shooter', 'wizard_duel', 'scribble_dungeon']
         .forEach((type, i) => assert.strictEqual(ctx.getItemById(ctx.apps, '0_4_' + i).appType, type, '0_4_' + i));
     assert.ok(tester.indexOf("'/play/strike_ops/:currentAppId'") !== -1, 'route registered');

@@ -28,6 +28,7 @@ function check(name, cond, extra) {
     else { failed++; console.log('  FAIL', name, extra !== undefined ? '| ' + extra : ''); }
 }
 
+load('groups.js');
 load('apps.js', fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';globalThis.apps=apps;');
 const topLevel = run('apps.items.length');
 

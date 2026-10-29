@@ -36,12 +36,12 @@ function load(file, code) {
 }
 
 load('data.js', fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8') + ';globalThis.DATA = DATA;');
-load('apps.js', fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';globalThis.apps = apps;');
 load('groups.js', fs.readFileSync(path.join(ROOT, 'groups.js'), 'utf8') +
     ';globalThis.SHARED_GROUPS = SHARED_GROUPS;'
     + 'globalThis.getSharedGroupMenuItems = getSharedGroupMenuItems;'
     + 'globalThis.resolveSharedGroupApp = resolveSharedGroupApp;'
     + 'globalThis.getSharedGroupKnowledgeKey = getSharedGroupKnowledgeKey;');
+load('apps.js', fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';globalThis.apps = apps;');
 load('storage.js');
 const testerSource = fs.readFileSync(path.join(ROOT, 'tester.js'), 'utf8');
 const coreEnd = testerSource.indexOf('var ProgressBarComponent');
@@ -116,11 +116,11 @@ check('every game type has a registered route',
     group.games.every(game => testerSource.includes('/play/' + game.appType + '/:currentAppId')),
     group.games.map(game => game.appType).join(', '));
 
-const groupMenu = run('(function () { const menu = apps.items.find(item => item.name === "אנגלית"); return menu.items[menu.items.length - 1]; })()');
+const groupMenu = run('(function () { const menu = apps.items.find(item => item.name === "אנגלית"); return menu.items[51]; })()');
 const expectedLinks = run('getSharedGroupMenuItems("g611").map(item => item.link)');
 check('the former grade-6 menu is renamed old without moving it',
-    run('(function () { const menu = apps.items.find(item => item.name === "אנגלית"); return menu.items[menu.items.length - 2].name; })()') === 'old');
-check('the 6.1_1 chapter container is now named 6 and stays last',
+    run('(function () { const menu = apps.items.find(item => item.name === "אנגלית"); return menu.items[50].name; })()') === 'old');
+check('the 6.1_1 chapter container is now named 6 and keeps its place',
     groupMenu.name === '6');
 check('6.1_1 contains both translation directions',
     groupMenu.items.length === 1 && groupMenu.items[0].name === 'פרק 1'

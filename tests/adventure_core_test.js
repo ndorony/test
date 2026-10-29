@@ -38,6 +38,7 @@ function load(file, code) {
 
 // load real files, exposing top-level consts to the context
 load('data.js', fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8') + ';globalThis.DATA=DATA;');
+load('groups.js');
 load('apps.js', fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';globalThis.apps=typeof apps!=="undefined"?apps:undefined;');
 load('worlds.js');
 load('storage.js');

@@ -40,11 +40,11 @@ function load(file, code) {
 
 // load real files, exposing what the test drives onto the context (mirrors index.html order)
 load('data.js', fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8') + ';globalThis.DATA=DATA;');
-load('apps.js', fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';globalThis.apps=typeof apps!=="undefined"?apps:undefined;');
 load('groups.js', fs.readFileSync(path.join(ROOT, 'groups.js'), 'utf8') +
     ';globalThis.SHARED_GROUPS=SHARED_GROUPS;globalThis.resolveSharedGroupApp=resolveSharedGroupApp;' +
     'globalThis.normalizeSharedGroupKey=normalizeSharedGroupKey;globalThis.getSharedGroupMenuItems=getSharedGroupMenuItems;' +
     'globalThis.GRADE6_MOE_GAMES=GRADE6_MOE_GAMES;globalThis.GRADE6_MOE_PARTS=GRADE6_MOE_PARTS;');
+load('apps.js', fs.readFileSync(path.join(ROOT, 'apps.js'), 'utf8') + ';globalThis.apps=typeof apps!=="undefined"?apps:undefined;');
 load('worlds.js');
 load('storage.js');
 vm.runInContext('var Vue = {component: function(name, def){ return def; }};', ctx);
@@ -153,12 +153,12 @@ check('every group has its own knowledge key',
 
 console.log('--- 4. the old grade-6 menu, retained at the end of אנגלית ---');
 const english = run(`apps.items.find(i => i.name === 'אנגלית')`);
-const six = run(`apps.items.find(i => i.name === 'אנגלית').items[apps.items.find(i => i.name === 'אנגלית').items.length - 2]`);
+const six = run(`apps.items.find(i => i.name === 'אנגלית').items[50]`);
 check('the former grade-6 menu is named "old"', six && six.name === 'old', six && six.name);
 // appending is the only safe edit: menu ids are position-based (route_index)
 check('it was appended, so no existing item changed position',
     run(`(function(){ const e = apps.items.find(i => i.name === 'אנגלית');
-        return e.items[e.items.length - 3].name; })()`) === '5_1 שמיעה (התקדמות משותפת)');
+        return e.items[49].name; })()`) === '5_1 שמיעה (התקדמות משותפת)');
 check('"6" holds exactly five parts', six.items.length === 5, six.items.map(i => i.name).join(', '));
 check('the parts are named חלק 1..5',
     six.items.every((it, i) => it.name === `חלק ${i + 1}`), six.items.map(i => i.name).join(', '));

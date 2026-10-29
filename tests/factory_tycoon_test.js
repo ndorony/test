@@ -347,6 +347,7 @@ ctx.successSound = {play() {}};
         vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8') + suffix, integration, {filename: file});
     }
     load('data.js', ';globalThis.DATA=DATA;');
+    load('groups.js');
     load('apps.js', ';globalThis.apps=apps;');
     load('worlds.js');
     load('storage.js');
