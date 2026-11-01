@@ -1422,6 +1422,9 @@
                             return;
                         }
                         this._modeTransition = null;
+                        if (typeof commitScribbleModeTransition === 'function') {
+                            commitScribbleModeTransition(this.currentAppId, nextMode, this.score);
+                        }
                         this.$router.push({
                             path: '/play/' + nextMode + '/' + this.currentAppId,
                             query: nextMode === 'scribble_platformer' ? {scribbleArrival: 'ladder'} : {},
@@ -1463,9 +1466,6 @@
                     g.state = 'transitioning';
                     this.locked = true;
                     this.hotspots = [];
-                    if (typeof commitScribbleModeTransition === 'function') {
-                        commitScribbleModeTransition(this.currentAppId, nextMode, this.score);
-                    }
                     let run = this._modeTransition;
                     if (!run || run.nextMode !== nextMode) {
                         run = this.createModeTransition(nextMode, false);
