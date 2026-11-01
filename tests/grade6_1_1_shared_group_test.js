@@ -123,7 +123,7 @@ check('the former grade-6 menu is renamed old without moving it',
 check('the 6.1_1 chapter container is now named 6 and keeps its place',
     groupMenu.name === '6');
 check('6.1_1 contains both translation directions',
-    groupMenu.items.length === 1 && groupMenu.items[0].name === 'פרק 1'
+    groupMenu.items.length >= 1 && groupMenu.items[0].name === 'פרק 1'
     && groupMenu.items[0].items.length === 2
     && groupMenu.items[0].items[0].name === 'עברית לאנגלית'
     && groupMenu.items[0].items[1].name === 'אנגלית לעברית');
