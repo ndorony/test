@@ -256,6 +256,17 @@ const GRADE6_MOE_GAMES = [
 ];
 GRADE6_MOE_GAMES.push(STRIKE_OPS_GROUP_GAME); // appended: index 7 in all ten g6p groups
 
+// Extend the smaller vocabulary lineups without changing any existing IDs.
+// Reuse the same generic games already offered for Unit 1 in both directions.
+const EXTRA_SHARED_VOCAB_GAMES = SHARED_GROUPS.unit1.games.concat([
+    {appType: 'scribble_dungeon', icon: 'map', name: 'מבוך הקלף', title: 'בחרו את הדלת הנכונה וציירו את המבוך'},
+]);
+[UNIT_SHARED_GAMES, GRADE6_MOE_GAMES, SHARED_GROUPS.ch51h.games].forEach(games => {
+    EXTRA_SHARED_VOCAB_GAMES.forEach(game => {
+        if (!games.some(existing => existing.appType === game.appType)) games.push(game);
+    });
+});
+
 // One shared games array for all ten groups, so their ids can never drift
 // apart. The same append-only rule applies: a game's index IS its id
 // (grp-g6p1e-<index>), so new games go at the END of GRADE6_MOE_GAMES only.

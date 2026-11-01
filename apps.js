@@ -780,6 +780,25 @@ apps =  {
 };
 
 // Append only: existing positional app IDs stay unchanged.
+// Add newly registered shared games at the end of their existing menu. Menus
+// may also contain submenus, so determine the group from direct links only.
+function appendMissingSharedGameMenus(items) {
+  if (!Array.isArray(items)) return;
+  items.forEach(item => {
+    if (!item || !Array.isArray(item.items)) return;
+    appendMissingSharedGameMenus(item.items);
+    const links = item.items.map(child => child && child.link).filter(Boolean);
+    const ids = links.map(link => /\/play\/[^/]+\/grp-([a-z0-9]+)-\d+$/.exec(link)).filter(Boolean);
+    const groupId = ids.length ? ids[0][1] : null;
+    if (!groupId || ids.some(match => match[1] !== groupId)) return;
+    const present = new Set(links);
+    getSharedGroupMenuItems(groupId).forEach(game => {
+      if (!present.has(game.link)) item.items.push(game);
+    });
+  });
+}
+appendMissingSharedGameMenus(apps.items);
+
 apps.items.push({name: 'Hexkeep · הכפר החי', hidden: true, type: 'menu', items: [
   {icon: 'holiday_village', name: 'Hexkeep: The Living Village', type: 'app', appType: 'hexkeep', listName: 'ADDITION', questionIndex: 'question', resultIndex: 'answer', setItems: 10, title: 'בנו כפר חי והגנו עליו בעזרת הלמידה'}
 ]});
