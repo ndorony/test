@@ -6,7 +6,7 @@
     // A visual mode lasts at least MIN_STAGES completed stages; from then on
     // every completed stage switches it with probability SWITCH_CHANCE, so a
     // run alternates unpredictably but never in quick succession.
-    const MODE_CYCLE = {minStages: 10, switchChance: 1 / 20};
+    const MODE_CYCLE = {minStages: 10, switchChance: 1 / 20, increaseAfter: 30, increasePerStage: 1 / 20};
     const CYCLE_SUFFIX = '_scribble_transition_cycle';
     let pendingArrival = null;
 
@@ -78,16 +78,17 @@
         if (cycle.mode !== currentMode) cycle = {mode: currentMode, segmentStartScore: score};
         const stages = (typeof cycle.stages === 'number' ? cycle.stages : 0) + 1;
         const roll = (typeof random === 'function' ? random : Math.random)();
-        if (stages < MODE_CYCLE.minStages || roll >= MODE_CYCLE.switchChance) {
-            if (typeof setLocalStorage === 'function') {
-                setLocalStorage(appId + CYCLE_SUFFIX, {mode: currentMode, segmentStartScore: cycle.segmentStartScore, stages: stages});
-            }
+        const chance = Math.min(1, MODE_CYCLE.switchChance +
+            Math.max(0, stages - MODE_CYCLE.increaseAfter) * MODE_CYCLE.increasePerStage);
+        console.info('[Scribble] שלב ' + stages + ': סיכוי למעבר ' +
+            (stages < MODE_CYCLE.minStages ? 0 : Math.round(chance * 100)) + '%');
+        if (typeof setLocalStorage === 'function') {
+            setLocalStorage(appId + CYCLE_SUFFIX, {mode: currentMode, segmentStartScore: cycle.segmentStartScore, stages: stages});
+        }
+        if (stages < MODE_CYCLE.minStages || roll >= chance) {
             return null;
         }
         const next = MODES[(MODES.indexOf(currentMode) + 1) % MODES.length];
-        if (typeof setLocalStorage === 'function') {
-            setLocalStorage(appId + CYCLE_SUFFIX, {mode: next, segmentStartScore: score});
-        }
         return next;
     }
 

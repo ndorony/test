@@ -273,9 +273,28 @@ test('a mode lasts at least ten stages, then switches with a one-in-twenty chanc
     }
     assert.strictEqual(next(0.05, 10), null, 'a roll of 1/20 or more keeps the mode');
     assert.strictEqual(next(0.049, 11), 'scribble_platformer', 'below 1/20 it switches');
-    assert.strictEqual(store.app_scribble_transition_cycle.mode, 'scribble_platformer');
+    assert.strictEqual(store.app_scribble_transition_cycle.mode, 'scribble_dungeon');
+    context.commitScribbleModeTransition('app', 'scribble_platformer', 11);
     // The next mode starts counting afresh.
     assert.strictEqual(context.scribbleNextModeForScore('app', 'scribble_platformer', 12, () => 0), null);
+    assert.strictEqual(store.app_scribble_transition_cycle.stages, 1);
+    delete context.getLocalStorage;
+    delete context.setLocalStorage;
+});
+
+test('the chance grows after thirty stages and resets only on a completed handoff', () => {
+    const store = {};
+    context.getLocalStorage = (key, fallback) => key in store ? store[key] : fallback;
+    context.setLocalStorage = (key, value) => { store[key] = JSON.parse(JSON.stringify(value)); };
+    const next = roll => context.scribbleNextModeForScore('app', 'scribble_dungeon', 1, () => roll);
+    for (let stage = 1; stage <= 30; stage++) assert.strictEqual(next(0.99), null);
+    assert.strictEqual(next(0.09), 'scribble_platformer'); // stage 31: 10%
+    assert.strictEqual(store.app_scribble_transition_cycle.stages, 31);
+    assert.strictEqual(next(0.14), 'scribble_platformer'); // selection alone does not reset
+    for (let stage = 33; stage < 49; stage++) assert.strictEqual(next(0.999), null);
+    assert.strictEqual(next(0.999), 'scribble_platformer'); // stage 49: 100%
+    context.commitScribbleModeTransition('app', 'scribble_platformer', 1);
+    assert.strictEqual(context.scribbleNextModeForScore('app', 'scribble_platformer', 1, () => 0), null);
     assert.strictEqual(store.app_scribble_transition_cycle.stages, 1);
     delete context.getLocalStorage;
     delete context.setLocalStorage;

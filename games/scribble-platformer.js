@@ -1008,9 +1008,6 @@
                     g.state = 'transitioning';
                     this.locked = true;
                     this.hotspots = [];
-                    if (typeof commitScribbleModeTransition === 'function') {
-                        commitScribbleModeTransition(this.currentAppId, nextMode, this.score);
-                    }
                     const liveFrame = function () {
                         const room = g.current;
                         const centre = room.x0 + ROOM_W / 2;
@@ -1070,6 +1067,9 @@
                     run.promise.then(() => {
                         if (this._destroyed || this._modeTransition !== run) return;
                         this._modeTransition = null;
+                        if (typeof commitScribbleModeTransition === 'function') {
+                            commitScribbleModeTransition(this.currentAppId, nextMode, this.score);
+                        }
                         this.$router.push({
                             path: '/play/' + nextMode + '/' + this.currentAppId,
                             query: nextMode === 'scribble_dungeon' ? {scribbleArrival: 'fall'} : {},
