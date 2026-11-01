@@ -280,6 +280,12 @@ for (let part = 1; part <= GRADE6_MOE_PARTS; part++) {
     };
 }
 
+// Textbook units share the chapter 1 game lineup, with separate progress per direction.
+for (let unit = 2; unit <= 5; unit++) {
+    SHARED_GROUPS[`g6u${unit}`] = { ...SHARED_GROUPS.g611, listName: `GRADE6_UNIT_${unit}` };
+    SHARED_GROUPS[`g6u${unit}h`] = { ...SHARED_GROUPS.g611h, listName: `GRADE6_UNIT_${unit}` };
+}
+
 const SHARED_GROUP_ID_RE = /^grp-([a-z0-9]+)-(\d+)$/;
 
 // Dev-time warning for invalid group ids (they would break key normalization)

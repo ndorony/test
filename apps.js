@@ -612,6 +612,14 @@ apps =  {
                     },
                   ]
                 },
+                ...[2, 3, 4, 5].map(unit => ({
+                  name: `פרק ${unit}`,
+                  type: 'menu',
+                  items: [
+                    {name: 'עברית לאנגלית', type: 'menu', items: getSharedGroupMenuItems(`g6u${unit}h`)},
+                    {name: 'אנגלית לעברית', type: 'menu', items: getSharedGroupMenuItems(`g6u${unit}`)},
+                  ],
+                })),
           ]
         },
         {
