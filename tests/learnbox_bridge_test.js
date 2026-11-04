@@ -754,6 +754,32 @@ async function run() {
         assert.strictEqual(first.reloads, 0, 'a page already playing is not reloaded');
     }
 
+    // --- An open assignment keeps a Scribble view switch in the game ---------
+    // The switch arrives with a query (?scribbleArrival=ladder); the gate must
+    // read the game id without it, or the child is sent out at its end.
+    {
+        async function gate(hash) {
+            const made = makeContext(call => {
+                if (call.url.indexOf('/child/me') !== -1) return ok(CHILD);
+                if (call.url.indexOf('/child/assignment') !== -1) {
+                    return ok({restricted: true, topics: [{topic_key: 'grp-ch51'}]});
+                }
+                return ok({});
+            });
+            made.ctx.location = {hash: hash, href: 'http://box/' + hash, reload: () => {}};
+            vm.runInContext(BRIDGE, made.ctx);
+            await settle(12);
+            return made.ctx.location.href;
+        }
+        for (const hash of ['#/play/scribble_dungeon/grp-ch51-3',
+            '#/play/scribble_platformer/grp-ch51-3?scribbleArrival=ladder',
+            '#/play/scribble_dungeon/grp-ch51-3?scribbleArrival=fall']) {
+            assert.strictEqual(await gate(hash), 'http://box/' + hash, hash + ' stays in the game');
+        }
+        assert.strictEqual(await gate('#/play/mcq/grp-g611-0?x=1'), '/portal/child/learn.html',
+            'a game outside the assignment is still sent back');
+    }
+
     console.log('learnbox_bridge_test: all assertions passed');
 }
 

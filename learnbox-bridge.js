@@ -369,7 +369,9 @@
     // It stays entirely inside this file. Nothing in the learning application
     // is aware of it, and with no LearnBox behind the origin it never runs.
     var LEARN_SCREEN = '/portal/child/learn.html';
-    var PLAY_ROUTE = /^#\/(?:play\/[a-z_]+|app)\/(.+)$/;
+    // The id ends at the query: a Scribble view switch arrives as
+    // #/play/scribble_platformer/grp-ch51-3?scribbleArrival=ladder.
+    var PLAY_ROUTE = /^#\/(?:play\/[a-z_]+|app)\/([^?]+)/;
     // The routes that exist to choose something rather than to play it. LearnBox
     // serves the menu itself, so these are where the child gets sent back — and
     // the sign-in screens are here too because LearnBox has already said who the
