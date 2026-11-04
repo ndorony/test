@@ -1389,11 +1389,13 @@ load('apps.js', ';globalThis.apps=apps;');
             walk(item, childId);
         });
     })(ctx.apps, null);
-    // The English shared-progress groups: ch51 and its listening twin ch51s,
-    // g611 (whose games g611h shares), the ten grade-6 MOE groups and Unit 1.
-    const sharedIds = ['grp-ch51-8', 'grp-ch51s-8', 'grp-g611-14', 'grp-g611h-14'];
-    [1, 2, 3, 4, 5].forEach(part => ['e', 'h'].forEach(dir => sharedIds.push('grp-g6p' + part + dir + '-7')));
-    sharedIds.push('grp-unit1-11', 'grp-unit1h-11');
+    // Every shared-progress group that offers Strike Ops has a menu link to it,
+    // and nothing else links to the game.
+    const sharedIds = Object.keys(ctx.SHARED_GROUPS).map(groupId => {
+        const index = ctx.SHARED_GROUPS[groupId].games.findIndex(game => game.appType === 'strike_ops');
+        return index === -1 ? null : 'grp-' + groupId + '-' + index;
+    }).filter(Boolean);
+    assert.ok(sharedIds.length >= 17, 'the English groups offer it: ' + sharedIds.join(', '));
     assert.deepStrictEqual(found.sort(), ['0_4_8'].concat(sharedIds).sort());
     sharedIds.forEach(id => {
         const app = ctx.getItemById(ctx.apps, id);

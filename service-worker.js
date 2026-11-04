@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-app-cache-v239-shared-games';
+const CACHE_NAME = 'my-app-cache-v243-scribble-twenty-stages';
 // Third-party libraries, vendored under /vendor at the versions index.html used
 // to pull from unpkg/cdnjs/jsdelivr/gstatic. They are listed first because they
 // are what the app cannot start without: with no internet and no local copy,
@@ -113,7 +113,7 @@ const CORE_ASSETS = [
   "/assets/models/shooter/shooter_models.js",
   "/data.js?v=2",
   "/firebase.js",
-  "/tester.js?v=22",
+  "/tester.js?v=23",
   '/',
   '/index.html',
   '/adventure.html',
@@ -218,11 +218,11 @@ const CORE_ASSETS = [
   '/games/knowledge-defense.js',
   '/games/knowledge-defense.css',
   '/games/scribble-bridge.js?v=121',
-  '/games/scribble-dungeon.js?v=23',
+  '/games/scribble-dungeon.js?v=24',
   '/games/scribble-dungeon.css',
-  '/games/scribble-platformer.js?v=18',
+  '/games/scribble-platformer.js?v=19',
   '/games/scribble-platformer.css',
-  '/games/scribble-transition-cycle.js?v=21',
+  '/games/scribble-transition-cycle.js?v=25',
   '/games/scribble-transition-cycle.css?v=3',
   '/games/crystal-arena.js',
   '/games/crystal-arena.css',

@@ -4,9 +4,10 @@
 
     const MODES = ['scribble_dungeon', 'scribble_platformer'];
     // A visual mode lasts at least MIN_STAGES completed stages; from then on
-    // every completed stage switches it with probability SWITCH_CHANCE, so a
-    // run alternates unpredictably but never in quick succession.
-    const MODE_CYCLE = {minStages: 10, switchChance: 1 / 20, increaseAfter: 30, increasePerStage: 1 / 20};
+    // every completed stage switches it with probability SWITCH_CHANCE, which
+    // grows by INCREASE_PER_STAGE each stage past INCREASE_AFTER: 5% on the
+    // twentieth stage, 10% on the next, certain on the thirty-ninth.
+    const MODE_CYCLE = {minStages: 20, switchChance: 1 / 20, increaseAfter: 20, increasePerStage: 1 / 20};
     const CYCLE_SUFFIX = '_scribble_transition_cycle';
     let pendingArrival = null;
 
@@ -21,6 +22,20 @@
         if (query.scribbleEntry === 'bridge') return {path: '/play/scribble_dungeon/' + appId, query: {scribbleEntry: 'bridge'}};
         if (query.scribbleEntry !== 'fall') return null;
         return {path: '/play/scribble_platformer/' + appId, query: {scribbleEntry: 'fall'}};
+    }
+
+    /**
+     * The menu always opens the dungeon. A child who left in the platformer
+     * goes back there, so the mode and its stage count both carry over instead
+     * of the dungeon restarting the count at 0. Transition and entry routes
+     * carry a query and are never redirected.
+     */
+    function resumeRoute(appId, query) {
+        if (!appId || typeof getLocalStorage !== 'function') return null;
+        if (query && (query.scribbleArrival || query.scribbleEntry)) return null;
+        const stored = getLocalStorage(appId + CYCLE_SUFFIX, null);
+        if (!stored || stored.mode !== 'scribble_platformer') return null;
+        return {path: '/play/scribble_platformer/' + appId};
     }
 
     /** The pawn colour a game persists, defaulting to red. */
@@ -409,7 +424,9 @@
                     const end = 1 + tail;
                     const progress = reduced ? end : Math.max(0, Math.min(end, (elapsed - entryDuration) / duration));
                     stage = elapsed < entryDuration ? 'entry' : progress < end ? 'travel' : 'exit';
-                    drawFrame(progress);
+                    // A frame that throws would end this chain and leave the game
+                    // behind a still picture; skip the rest of the route instead.
+                    try { drawFrame(progress); } catch (error) { finish(false); return; }
                     if (elapsed >= entryDuration + duration * end + exitDuration) { finish(true); return; }
                     frame = requestAnimationFrame(render);
                 }
@@ -458,6 +475,7 @@
     global.scribbleNextModeForScore = nextModeForScore;
     global.SCRIBBLE_MODE_CYCLE = MODE_CYCLE;
     global.scribbleTransitionEntryRoute = entryRoute;
+    global.scribbleResumeRoute = resumeRoute;
     global.ensureScribbleModeSegment = ensureModeSegment;
     global.commitScribbleModeTransition = commitModeTransition;
     global.runScribbleModeTransition = runScribbleModeTransition;

@@ -22,6 +22,21 @@ assert.equal(context.scribbleTransitionEntryRoute(app, '0_46', {}), null);
 assert.equal(context.scribbleTransitionEntryRoute({appType: 'mcq'}, '0_1', {scribbleEntry: 'fall'}), null);
 assert.equal(context.scribbleTransitionEntryRoute(app, '0_46', {scribbleEntry: 'invalid'}), null);
 
+// Opening the maze from the menu returns to the mode the child left in.
+{
+    const store = {};
+    context.getLocalStorage = (key, fallback) => key in store ? store[key] : fallback;
+    assert.equal(context.scribbleResumeRoute('0_46', {}), null, 'nothing saved: the dungeon');
+    store['0_46_scribble_transition_cycle'] = {mode: 'scribble_dungeon', segmentStartScore: 0, stages: 12};
+    assert.equal(context.scribbleResumeRoute('0_46', {}), null, 'left in the dungeon: stay');
+    store['0_46_scribble_transition_cycle'] = {mode: 'scribble_platformer', segmentStartScore: 0, stages: 12};
+    assert.deepEqual(plain(context.scribbleResumeRoute('0_46', {})), {path: '/play/scribble_platformer/0_46'});
+    assert.equal(context.scribbleResumeRoute('0_46', {scribbleArrival: 'fall'}), null, 'a transition arrives where it says');
+    assert.equal(context.scribbleResumeRoute('0_46', {scribbleEntry: 'bridge'}), null);
+    assert.equal(context.scribbleResumeRoute('1_2', {}), null, 'per game id');
+    delete context.getLocalStorage;
+}
+
 function instance(factory, query, gameKey) {
     const methods = factory({}).methods;
     const state = Object.assign({}, methods, {

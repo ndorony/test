@@ -10059,7 +10059,13 @@ if (FactoryTycoonComponent) {
 }
 
 if (ScribbleDungeonComponent) {
-    routes.push({path: '/play/scribble_dungeon/:currentAppId', component: ScribbleDungeonComponent, props: true});
+    routes.push({path: '/play/scribble_dungeon/:currentAppId', component: ScribbleDungeonComponent, props: true,
+        // Back to the side view when that is where the child left off.
+        beforeEnter: (to, from, next) => {
+            const resume = typeof scribbleResumeRoute === 'function'
+                ? scribbleResumeRoute(to.params.currentAppId, to.query) : null;
+            next(resume || undefined);
+        }});
 }
 
 if (ScribblePlatformerComponent) {

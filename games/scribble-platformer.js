@@ -2715,8 +2715,10 @@
                     if (g.state === 'question') g.signIn = Math.min(1, g.signIn + dt * this.rate(0.45));
 
                     // Watchdog: if a queued transition is ever dropped, resume rather
-                    // than sit forever with nothing to click.
-                    if (g.state !== 'question' && !g.walk) {
+                    // than sit forever with nothing to click. The 3D fall owns its
+                    // own ending and can outlast this timer on a slow device; a
+                    // round dealt under it would restart the fall when answered.
+                    if (g.state !== 'question' && g.state !== 'transitioning' && !g.walk) {
                         g.idleFor = (g.idleFor || 0) + dt;
                         if (g.idleFor > 7) { g.idleFor = 0; if (!this._destroyed) this.prepareRound(); }
                     } else {

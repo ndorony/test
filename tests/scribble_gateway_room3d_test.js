@@ -263,36 +263,36 @@ test('the shaft room only follows a room the pawn leaves sideways', () => {
     });
 });
 
-test('a mode lasts at least ten stages, then switches with a one-in-twenty chance', () => {
+test('a mode lasts at least twenty stages, then switches with a one-in-twenty chance', () => {
     const store = {};
     context.getLocalStorage = (key, fallback) => (key in store ? store[key] : fallback);
     context.setLocalStorage = (key, value) => { store[key] = JSON.parse(JSON.stringify(value)); };
     const next = (roll, score) => context.scribbleNextModeForScore('app', 'scribble_dungeon', score, () => roll);
-    for (let stage = 1; stage < 10; stage++) {
+    for (let stage = 1; stage < 20; stage++) {
         assert.strictEqual(next(0, stage), null, 'stage ' + stage + ' never switches, even on a lucky roll');
     }
-    assert.strictEqual(next(0.05, 10), null, 'a roll of 1/20 or more keeps the mode');
-    assert.strictEqual(next(0.049, 11), 'scribble_platformer', 'below 1/20 it switches');
+    assert.strictEqual(next(0.05, 20), null, 'a roll of 1/20 or more keeps the mode');
+    assert.strictEqual(next(0.099, 21), 'scribble_platformer', 'stage 21: below 10% it switches');
     assert.strictEqual(store.app_scribble_transition_cycle.mode, 'scribble_dungeon');
-    context.commitScribbleModeTransition('app', 'scribble_platformer', 11);
+    context.commitScribbleModeTransition('app', 'scribble_platformer', 21);
     // The next mode starts counting afresh.
-    assert.strictEqual(context.scribbleNextModeForScore('app', 'scribble_platformer', 12, () => 0), null);
+    assert.strictEqual(context.scribbleNextModeForScore('app', 'scribble_platformer', 22, () => 0), null);
     assert.strictEqual(store.app_scribble_transition_cycle.stages, 1);
     delete context.getLocalStorage;
     delete context.setLocalStorage;
 });
 
-test('the chance grows after thirty stages and resets only on a completed handoff', () => {
+test('the chance grows by 5% a stage after twenty and resets only on a completed handoff', () => {
     const store = {};
     context.getLocalStorage = (key, fallback) => key in store ? store[key] : fallback;
     context.setLocalStorage = (key, value) => { store[key] = JSON.parse(JSON.stringify(value)); };
     const next = roll => context.scribbleNextModeForScore('app', 'scribble_dungeon', 1, () => roll);
-    for (let stage = 1; stage <= 30; stage++) assert.strictEqual(next(0.99), null);
-    assert.strictEqual(next(0.09), 'scribble_platformer'); // stage 31: 10%
-    assert.strictEqual(store.app_scribble_transition_cycle.stages, 31);
-    assert.strictEqual(next(0.14), 'scribble_platformer'); // selection alone does not reset
-    for (let stage = 33; stage < 49; stage++) assert.strictEqual(next(0.999), null);
-    assert.strictEqual(next(0.999), 'scribble_platformer'); // stage 49: 100%
+    for (let stage = 1; stage <= 21; stage++) assert.strictEqual(next(0.99), null);
+    assert.strictEqual(next(0.149), 'scribble_platformer'); // stage 22: 15%
+    assert.strictEqual(store.app_scribble_transition_cycle.stages, 22);
+    assert.strictEqual(next(0.199), 'scribble_platformer'); // selection alone does not reset
+    for (let stage = 24; stage < 39; stage++) assert.strictEqual(next(0.999), null);
+    assert.strictEqual(next(0.999), 'scribble_platformer'); // stage 39: 100%
     context.commitScribbleModeTransition('app', 'scribble_platformer', 1);
     assert.strictEqual(context.scribbleNextModeForScore('app', 'scribble_platformer', 1, () => 0), null);
     assert.strictEqual(store.app_scribble_transition_cycle.stages, 1);

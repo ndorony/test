@@ -257,4 +257,28 @@ test('answers are refused once the round is locked or the block is spent', () =>
     assert.strictEqual(r.calls.length, before, 'no further reports were made');
 });
 
+test('the watchdog never deals a round under the 3D fall, however long it runs', () => {
+    const component = context.createScribblePlatformerComponent({ name: 'base' });
+    let dealt = 0;
+    const state = {
+        reduced: false, pace: 1, mapMode: false, locked: true, hotspots: [], _destroyed: false,
+        rate: component.methods.rate, dur: component.methods.dur,
+        prepareRound() { dealt += 1; },
+        _sp: {
+            state: 'transitioning', time: 0, idleFor: 0, signIn: 0, shakeAmp: 0,
+            cam: { x: 0, y: 0, z: 1, tx: 0, ty: 0, tz: 1 }, view: { w: 800, h: 600 },
+            rooms: [], fx: [], shots: [], motes: [], pawn: { x: 0, y: 0 },
+        },
+    };
+    // A slow tablet: the fall is still playing well past the 7 s watchdog.
+    for (let t = 0; t < 30; t += 0.05) component.methods.step.call(state, 0.05);
+    assert.strictEqual(dealt, 0, 'answering a round dealt here would restart the fall');
+    assert.strictEqual(state._sp.state, 'transitioning');
+
+    // A genuinely dropped hand-off still resumes the game.
+    state._sp.state = 'idle';
+    for (let t = 0; t < 8; t += 0.05) component.methods.step.call(state, 0.05);
+    assert.strictEqual(dealt, 1);
+});
+
 console.log(`\n${passed} Scribble Platformer tests passed`);

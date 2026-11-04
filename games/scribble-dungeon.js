@@ -1920,6 +1920,9 @@
                             this.prepareModeTransition(to.transitionGateway, () => {
                                 if (this._destroyed || g.current !== to) return;
                                 if (this._modeTransition) this._room3d = {room: to, mix: 0, key: ''};
+                                // A slow build may already have been overtaken by the
+                                // watchdog's round, or even by its answer; keep that.
+                                if (g.state !== 'wand-pickup') return;
                                 this.feedback = 'השרביט ביד — בחרו תשובה';
                                 g.state = 'idle';
                                 this.own(() => {
